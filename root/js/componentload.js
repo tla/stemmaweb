@@ -1,6 +1,10 @@
 function loadTradition( textid ) {
+    
+    // TODO: scale #stemma_grpah both horizontally and vertically
+    // TODO: load svgs from SVG.Jquery (to make scaling react in Safari)
 	$('#stemma_graph').load( "stemma/" + textid , function() {
     	var stemma_svg_element = $('#stemma_graph svg').svg().svg('get').root();
+    	console.log( stemma_svg_element );
     	stemma_svg_element.height.baseVal.value = $('#stemma_graph').height();
 	});
     $('#variant_graph').load( "variantgraph/" + textid , function() {
