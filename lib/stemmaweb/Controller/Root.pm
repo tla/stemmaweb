@@ -51,17 +51,31 @@ sub directory :Local :Args(0) {
     my $user = $c->request->param( 'user' ) || 'ALL';
     my @textlist;
     foreach my $id ( $m->tradition_ids ) {
-    	my $data = { 
-    		'id' => $id,
-    		'name' => $m->name( $id ),
-    	};
-    	push( @textlist, $data );
+    	my $t = $m->info( $id );
+    	push( @textlist, $t );
     }
     
     $c->stash->{texts} = \@textlist;
 	$c->stash->{template} = 'directory.tt';
 }
 
+=head2 variantgraph
+
+ GET /variantgraph/$textid
+ 
+Returns the variant graph for the text specified at $textid, in SVG form.
+
+=cut
+
+sub variantgraph :Local :Args(1) {
+	my( $self, $c, $textid ) = @_;
+	my $m = $c->model('Directory');
+	my $collation = $m->tradition( $textid )->collation;
+
+	$c->stash->{'result'} = $collation->as_svg;
+	$c->forward('View::SVG');
+}
+	
 =head2 alignment
 
  GET /alignment/$textid

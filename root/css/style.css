@@ -1,4 +1,6 @@
 <style type="text/css" media="screen">
+
+/* General site-wide layout */
 body { 
     margin: 0; 
     padding: 20px; 
@@ -6,12 +8,40 @@ body {
     font-size: 85%; 
     color: #666;
 }
-#svg_graph {
+h1 {
+    border-bottom: 1px solid #488dd2;
+    color: #488dd2;
+    font-size: 24px;
+    font-weight: 100;
+    margin: 0 0 17px;
+    padding: 0;
+    width: 650px;
+}
+h2 {
+    margin-top: 0px;
+} 
+
+/* Index page components */
+
+#directory {
+	float: left;
+	width: 300px;
+	height: 450px;
+	border: 1px #c6dcf1 solid;
+}
+#variant_graph {
+	clear: both;
+	width: 900px;
+	height: 400px;
+	border: 1px #c6dcf1 solid;	
+}
+#stemma_graph {
     float: left;
     width: 500px;
     height: 450px;
-    border-right: 1px #c6dcf1 solid;
+    border: 1px #c6dcf1 solid;
 }
+/* Additional components for the stexaminer */
 #variants_table {
     float: left;
     width: 450px;
@@ -26,18 +56,6 @@ body {
     position: relative;
     top: -15px;
 }
-h1 {
-    border-bottom: 1px solid #488dd2;
-    color: #488dd2;
-    font-size: 24px;
-    font-weight: 100;
-    margin: 0 0 17px;
-    padding: 0;
-    width: 280px;
-}
-h2 {
-    margin-top: 0px;
-} 
 .genealogical {
     background: #88ffaa;
 }
@@ -48,11 +66,11 @@ h2 {
     background: #ff6666;
 }
 .active_variant_row {
-    #background: #c6dcf1;
+    background: #c6dcf1;
     font-style: italic;
 }
 .active_variant_cell {
-    #background: #e8f1fe;
+    background: #e8f1fe;
 }
 .cellb0 {
     border-right: 20px solid #ffeeaa;

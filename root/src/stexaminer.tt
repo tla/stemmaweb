@@ -1,8 +1,24 @@
-[% BLOCK js %]
-    <script type="text/javascript" src="js/jquery-1.4.4.min.js"></script>
-    <script type="text/javascript" src="js/jquery-ui-1.8.10.custom.min.js"></script>
-    <script type="text/javascript" src="js/interaction.js"></script>
-[% END %]
+[% PROCESS header.tt
+	pagetitle = "Stexaminer - $text_title"
+	applicationjs = "/js/stexaminer.js"
+%]
+    <h1>Stexaminer</h1>
+    <h2>[% text_title %]</h2>
+    <div id="statistics">
+      <p>Analyzed [% total %] variant locations, of which [% genealogical %] entirely followed the stemma.  [% conflict %] readings conflicted with the stemma.</p>
+    </div>
+    <div id="stemma_graph">
+      [% svg %]
+    </div>
+    <div id="variants_table">
+      <table>
+[% FOREACH row IN variants -%]
+[% INCLUDE variantrow %]
+[% END -%]
+     </table>
+    </div>
+[% PROCESS footer.tt %]
+    
 
 [% BLOCK variantrow -%]
 [% SET rowclass = 'class="genealogical"' IF row.genealogical -%]
@@ -19,19 +35,3 @@
 [% END -%]
         </tr>
 [% END -%]
-    <h1>Stexaminer</h1>
-    <h2>[% text_title %]</h2>
-    <div id="statistics">
-      <p>Analyzed [% total %] variant locations, of which [% genealogical %] entirely followed the stemma.  [% conflict %] readings conflicted with the stemma.</p>
-    </div>
-    <div id="svg_graph">
-      [% svg %]
-    </div>
-    <div id="variants_table">
-      <table>
-[% FOREACH row IN variants -%]
-[% INCLUDE variantrow %]
-[% END -%]
-     </table>
-    </div>
-

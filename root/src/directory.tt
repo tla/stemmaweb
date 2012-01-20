@@ -3,10 +3,7 @@
       <ul>
 [% SET i = 0 -%]
 [% FOREACH t IN texts -%]
-        <li>[% t.name %] | <a href="relationships?textid=[% t.id %]">Relationship mapper</a>
-[% IF t.has_stemma -%]
-         | <a href="stexaminer?textid=[% t.id %]">Stexaminer</a>
-[% END -%]</li>
+        <li><span class="traditionname" onClick="loadTradition('[% t.id %]')">[% t.name %]</span></li>
 [% i = i + 1 -%]
 [% END -%]
      </table>
