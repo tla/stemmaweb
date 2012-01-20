@@ -6,6 +6,8 @@
     <link type="text/css" href="[% c.uri_for('/css/style.css') %]" rel="stylesheet" />
     <script type="text/javascript" src="/js/jquery-1.4.4.min.js"></script>
     <script type="text/javascript" src="/js/jquery-ui-1.8.10.custom.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.svg.js"></script>
+    <script type="text/javascript" src="/js/jquery.svgdom.js"></script>
     <script type="text/javascript" src="[% applicationjs %]"></script>
     [% content %]
     <title>[% pagetitle %]</title>
