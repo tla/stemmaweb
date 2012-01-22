@@ -2,7 +2,9 @@ package stemmaweb::Controller::Microservice;
 use Moose;
 use namespace::autoclean;
 use JSON;
+use TryCatch;
 use Text::Tradition;
+#use Text::Tradition::Error;
 use Text::Tradition::Stemma;
 use Text::Tradition::StemmaUtil qw/ character_input phylip_pars newick_to_svg /;
 
@@ -45,8 +47,12 @@ Parse the passed collation data and return an SVG of the collated text.
 sub renderSVG :Local :Args(0) {
 	my( $self, $c ) = @_;
 	my $tradition = _parse_to_tradition( $c->request );
-	$c->stash->{'result'} = $tradition->collation->as_svg;
-	$c->forward('View::SVG');
+	try {
+		$c->stash->{'result'} = $tradition->collation->as_svg;
+		$c->forward('View::SVG');
+	} catch( Text::Tradition::Error $e ) {
+		$c->detach( 'error', [ $e ] );
+	}
 }
 
 =head1 STEMMA / DISTANCE TREE URLs
@@ -62,7 +68,12 @@ Parameter: dot => a string containing the dot description of the stemma.
 sub stemma_svg :Local :Args(0) {
 	my( $self, $c ) = @_;
 	my $t = Text::Tradition->new();
-	my $stemma = $t->add_stemma( 'dot' => $c->req->param('dot') );
+	my $stemma;
+	try {
+		$stemma = $t->add_stemma( 'dot' => $c->req->param('dot') );
+	} catch( Text::Tradition::Error $e ) {
+		$c->detach( 'error', [ $e ] );
+	}
 	$c->stash->{'result'} = $stemma->as_svg;
 	$c->forward('View::SVG');
 }
@@ -108,8 +119,6 @@ Exactly one of 'alignment' or 'matrix' must be specified.
 
 sub run_pars :Local :Args(0) {
 	my( $self, $c ) = @_;
-	my $error;
-	my $view = 'View::JSON';
 	my $matrix;
 	if( $c->request->param('matrix') ) {
 		$matrix = $c->request->param('matrix');
@@ -118,34 +127,35 @@ sub run_pars :Local :Args(0) {
 		my $table = from_json( $c->request->param('alignment') );
 		$matrix = character_input( $table );
 	} else {
-		$error = "Must pass either an alignment or a matrix";
+		$c->detach( 'error', [ "Must pass either an alignment or a matrix" ] );
 	}
 	
 	# Got the matrix, so try to run pars.
-	my( $result, $output );
-	unless( $error ) {
-		( $result, $output ) = phylip_pars( $matrix );
-		$error = $output unless( $result );
+	my $output;
+	try {
+		$output = phylip_pars( $matrix );
+	} catch( Text::Tradition::Error $e ) {
+		$c->detach( 'error', [ $e ] );
 	}
 	
 	# Did we want newick or a graph?
-	unless( $error ) {
-		my $format = 'newick';
-		$format = $c->request->param('format') if $c->request->param('format');
-		if( $format eq 'svg' ) {
-			# Do something
+	my $view = 'View::JSON';
+	my $format = 'newick';
+	$format = $c->request->param('format') if $c->request->param('format');
+	if( $format eq 'svg' ) {
+		# Do something
+		try {
 			$c->stash->{'result'} = newick_to_svg( $output );
 			$view = 'View::SVG';
-		} elsif( $format ne 'newick' ) {
-			$error = "Requested output format $format unknown";
-		} else {
-			$c->stash->{'result'} = { 'tree' => $output };
+		} catch( Text::Tradition::Error $e ) {
+			$c->detach( 'error', [ $e ] );
 		}
+	} elsif( $format ne 'newick' ) {
+		$c->detach( 'error', [ "Requested output format $format unknown" ] );
+	} else {
+		$c->stash->{'result'} = { 'tree' => $output };
 	}
 
-	if( $error ) {
-		$c->stash->{'error'} = $error;
-	} # else the stash is populated.
 	$c->forward( $view );
 }
 
@@ -183,6 +193,23 @@ sub view_svg :Local :Args(0) {
     $c->stash->{template} = 'stemma_gadget.tt';
 }
 
+=head2 error
+
+Default response when actions generate Text::Tradition::Error exceptions
+
+=cut
+
+sub error :Private {
+	my( $self, $c, $error ) = @_;
+	my $errstr = $error;
+	if( ref( $error ) eq 'Text::Tradition::Error' ) {
+		$errstr = $error->ident . ": " . $error->message;
+	}
+	$c->response->code( 500 );
+	$c->stash->{'error'} = $errstr;
+	$c->stash->{'template'} = 'error.tt';
+}
+
 =head2 default
 
 Standard 404 error page
@@ -212,13 +239,6 @@ sub _parse_to_tradition {
 	return Text::Tradition->new( $opts );
 }
 
-=head2 end
-
-Attempt to render a view, if needed.
-
-=cut
-
-sub end : ActionClass('RenderView') {}
 
 =head1 AUTHOR
 
