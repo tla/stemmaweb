@@ -1,0 +1,59 @@
+[% WRAPPER header.tt
+	pagetitle = "Stemmaweb - Relationship mapper"
+	applicationjs = "../js/relationship.js"
+%]
+<script type="text/javascript">
+$(function() {
+  $('#svgbasics').svg({loadURL: '[% svg_string %]', onLoad: svgLoaded});
+  $('#svgenlargement').svg({loadURL: '[% svg_string %]', onLoad: svgEnlargementLoaded});
+});
+</script>
+<link type="text/css" href="[% c.uri_for('/css/relationship.css') %]" rel="stylesheet" />
+[% END %]
+
+	<div id="graph_container">	
+        <div id="graph_underlay"></div>
+	    <div id="visor"></div>
+	    <div id="graph">
+		    <!-- width seems to need to be as wide as the graph -->
+		    <!-- a translation of -487 in the svg itself was needed to adjust the graph to the left of the div -->
+		    <!-- unclear how to cope with height that doesn't fit box -->
+		    <div id="svgbasics" style="height: 100px;"></div>
+		</div>
+	</div>
+
+	<div id="enlargement_container">	
+		<div id="enlargement">
+	        <div id="svgenlargement" style="height: 500px;"></div>
+		</div>
+	</div>
+	
+	<div id="update_workspace_button"></div>
+	
+	<div id="dialog-form" title="Create relation between two nodes..">
+		<form id="collapse_node_form">
+		<fieldset>
+			<input type="hidden" name="source_id" id="source_node_id"/>
+			<input type="hidden" name="target_id" id="target_node_id"/>
+			<label for="rel_type">Relation type..&nbsp;</label>
+			<select name="rel_type" id="rel_type" class=".ui-widget select">
+			</select>
+			<br/><br/>
+			<label for="scope">Scope of relation..&nbsp;</label>
+			<select name="scope" id="scope" class=".ui-widget select">
+			</select>
+			<br/><br/>
+			<label for="note">Annotation on note..&nbsp;</label>
+			<input type="text" width="60" name="note" id="note" class=".ui-widget input" />
+		</fieldset>
+    	<div id="status"></div>		
+		</form>
+	</div>
+	<div id="dialog_overlay"></div>
+
+    <div id="keymap">
+        <ul id="keymaplist">
+        </ul>
+    </div>
+    
+[% PROCESS footer.tt %]

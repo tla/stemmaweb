@@ -1,0 +1,117 @@
+<style type="text/css" media="screen">
+body { 
+    margin: 0; 
+    padding: 0 20px; 
+    font: 1em "Trebuchet MS", verdana, arial, sans-serif; 
+    font-size: 85%; 
+    background: #EDF1FA;
+}
+.error {
+    color: red;
+}
+#graph_container {
+    height: 104px;
+    width: 90%;
+    margin-top: 5px;
+    border: 2px solid #B0C6F7;
+}
+#enlargement_container {
+    height: 504px;
+    width: 90%;
+    margin-top: 5px;
+    border: 2px solid #B0C6F7;
+    background: #fff;
+    padding-top: 5px;
+    padding-bottom: 5px;    
+}
+#dialog_overlay {
+    display: none;
+    position: absolute;
+    background-image: url("../css/cupertino/images/ui-bg_diagonals-thick_90_eeeeee_40x40.png");
+    background-repeat: repeat;
+    background-attachment: scroll;
+    background-position: 50% 50%;
+    background-color: #EEEEEE; 
+    opacity: 0.7;
+    padding-bottom: 5px;
+    padding-top: 5px;
+    border: 2px solid #B0C6F7;
+}
+#update_workspace_button {
+    position: relative;
+    top: -538px;
+    left: 44%;
+    height: 17px;
+    width: 17px;
+    margin-top: 8px;
+    border: 1px solid #B0C6F7;
+    background-image: url('../images/act_arrs.gif');
+    background-position: 0px 0px;
+    background-color: #fcfcfc;
+    z-index: 50;
+}
+#workspace_container {
+    height: 504px;
+    width: 43%;
+    position: relative;
+    top: -545px;
+    left: 47%;
+    margin-top: 10px;
+    border: 2px solid #B0C6F7;
+    background: #fff;
+}
+#graph_underlay {
+    height: 100%; 
+    width: 100%; 
+    background: #fff;
+    position: relative;
+    z-index: -2;
+}
+#visor {
+    height: 100px; 
+    width: 20%; 
+    background-color: #61EDAE; 
+    opacity: 0.15; 
+    position: relative;
+    left: 40%; 
+    top: -104px;
+    z-index: -1;
+    border-left: 2px solid #3C73FA;
+    border-right: 2px solid #3C73FA;
+    border-bottom: 2px solid #B0C6F7;
+    border-top: 2px solid #B0C6F7;
+}
+#graph {
+    position: relative; top: -208px;
+    padding: 0px;
+    overflow: auto;
+    /* cursor: -moz-grab !important; */ /* should this be applied with JS? */
+}
+#enlargement {
+    padding: 0px;
+    overflow: hidden;
+}
+#workspace {
+    padding: 0px;
+    overflow: hidden;
+}
+#keymap {
+    position: absolute;
+    left: 80%;
+    top: 100px;
+    border: 2px solid #B0C6F7;
+    background: #fff;
+}
+#keymap ul {
+    padding: 10px;
+    padding-left: 14px;
+    padding-right: 14px;
+    margin: 0px;
+}
+#keymap li {
+    border-left: 16px solid #fff;
+    padding-left: 8px;
+    list-style: none;
+    margin-bottom: 3px;
+}
+</style>
