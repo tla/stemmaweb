@@ -1,5 +1,11 @@
 function loadTradition( textid ) {
-    
+    // First insert the placeholder image
+    var imghtml = '<img src="/images/ajax-loader.gif" alt="Loading SVG..."/>'
+    $('#stemma_graph').empty();
+    $('#variant_graph').empty();
+    $('#stemma_graph').append( imghtml );
+    $('#variant_graph').append( imghtml );
+    // Then get and load the actual content.
     // TODO: scale #stemma_grpah both horizontally and vertically
     // TODO: load svgs from SVG.Jquery (to make scaling react in Safari)
 	$('#stemma_graph').load( "stemma/" + textid , function() {
