@@ -128,8 +128,8 @@ sub stemma :Local :Args(1) {
 		$m->store( $tradition );
 	}
 	
-	$c->stash->{'result'} = $tradition->stemma
-		? $tradition->stemma->as_svg
+	$c->stash->{'result'} = $tradition->stemma_count
+		? $tradition->stemma(0)->as_svg
 		: '';
 	$c->forward('View::SVG');
 }

@@ -1,6 +1,9 @@
 function loadTradition( textid ) {
     // First insert the placeholder image
     var basepath = window.location.pathname
+    if( basepath.lastIndexOf('/') == basepath.length - 1 ) { 
+    	basepath = basepath.slice( 0, basepath.length - 1) 
+    };
     var imghtml = '<img src="' + basepath + '/images/ajax-loader.gif" alt="Loading SVG..."/>'
     $('#stemma_graph').empty();
     $('#variant_graph').empty();
