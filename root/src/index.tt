@@ -1,6 +1,6 @@
 [% WRAPPER header.tt
 	pagetitle = "Stemmaweb - Text tradition tools"
-	applicationjs = "js/componentload.js"
+	applicationjs = c.uri_for( 'js/componentload.js' )
 %]
     <script type="text/javascript">
 $(document).ready(function() {
