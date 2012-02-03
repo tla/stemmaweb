@@ -1,10 +1,13 @@
-function getRelativePath( action ) {
-    path_elements = window.location.pathname.split('/'); 
-    if( path_elements[1].length > 0 ) {
-        return window.location.pathname.split('/')[1] + '/' + action;
-    } else {
-        return action;
-    }
+function getTextPath() {
+    var currpath = window.location.pathname
+    if( currpath.lastIndexOf('/') == currpath.length - 1 ) { 
+    	currpath = currpath.slice( 0, currpath.length - 1) 
+    };
+    var path_elements = currpath.split('/');
+    var textid = path_elements.pop();
+    var basepath = path_elements.join( '/' );
+    var path_parts = [ basepath, textid ];
+    return path_parts;
 }
 
 function svgLoaded() {
@@ -32,9 +35,33 @@ function svgEnlargementLoaded() {
   var svg_element_width = svg_vbwidth/svg_vbheight * parseInt(svg_element.attr('height'));
   svg_element_width += scroll_padding;
   svg_element.attr( 'width', svg_element_width );
-  $('ellipse').attr( {stroke:'black', fill:'#fff'} );
+    $('ellipse').attr({
+        stroke: 'black',
+        fill: '#fff'
+    });
   var svg_height = parseInt( $('#svgenlargement').height() );
   scroll_enlargement_ratio = svg_height/svg_vbheight;
+    add_relations();
+}
+
+function add_relations() {
+	var pathparts = getTextPath();
+    $.getJSON( pathparts[0] + '/definitions', function(data) {
+        var rel_types = data.types.sort();
+        var pathparts = getTextPath();
+        $.getJSON( pathparts[0] + '/' + pathparts[1] + '/relationships',
+        function(data) {
+            $.each(data, function( index, rel_info ) {
+                var type_index = $.inArray(rel_info.type, rel_types);
+                if( type_index != -1 ) {
+                    console.log( 'drawing' );
+                    relation_manager.create( rel_info.source, rel_info.target, type_index );
+                } else {
+                    console.log( 'not drawing' );
+                }
+            })
+        });    
+    });
 }
 
 function get_ellipse( node_id ) {
@@ -269,8 +296,10 @@ function relation_factory() {
         //TODO: Protect from (color_)index out of bound..
         var relation_color = self.relation_colors[ color_index ];
         draw_relation( source_node_id, target_node_id, relation_color );
-        get_node_obj( source_node_id ).update_elements();
-        get_node_obj( target_node_id ).update_elements();
+        var source_node = get_node_obj( source_node_id );
+        var target_node = get_node_obj( target_node_id );
+        if( source_node != null ) { source_node.update_elements() };
+        if( target_node != null ) { target_node.update_elements() };
     }
     this.remove = function( source_node_id, target_id ) {
         //TODO (When needed)
@@ -343,7 +372,8 @@ $(document).ready(function () {
       "Ok": function() {
         $('#status').empty();
         form_values = $('#collapse_node_form').serialize()
-        ncpath = window.location.pathname + '/relationship';
+        pathparts = getTextPath();
+        ncpath = pathparts[0] + '/' + pathparts[1] + '/relationship';
         var jqjson = $.post( ncpath, form_values, function(data) {
             $.each( data, function(item, source_target) { 
                 relation_manager.create( source_target[0], source_target[1], $('#rel_type').attr('selectedIndex') );
@@ -360,7 +390,8 @@ $(document).ready(function () {
     create: function(event, ui) { 
         $(this).data( 'relation_drawn', false );
         //TODO? Err handling?
-        var jqjson = $.getJSON( 'relationship_definition', function(data) {
+        var pathparts = getTextPath();
+        var jqjson = $.getJSON( pathparts[0] + '/definitions', function(data) {
             var types = data.types.sort();
             $.each( types, function(index, value) {   
                  $('#rel_type').append( $('<option>').attr( "value", value ).text(value) ); 
