@@ -37,19 +37,19 @@ sub index :Path :Args(1) {
 
 sub dispatcher :Path :Args(2) {
 	my( $self, $c, $textid, $forward ) = @_;
-	$c->stash->{'collation'} = $c->model('Directory')->tradition( $textid )->collation;
+	$c->stash->{'tradition'} = $c->model('Directory')->tradition( $textid );
 	$c->forward( $forward );	
 }
 
 =head2 relationship_definition
 
- GET relation/relationship_definition
+ GET relation/definitions
  
 Returns a data structure giving the valid types and scopes for a relationship.
 
 =cut
 
-sub relationship_definition :Local :Args(0) {
+sub definitions :Local :Args(0) {
 	my( $self, $c ) = @_;
 	my $valid_relationships = [ qw/ spelling orthographic grammatical meaning / ];
 	my $valid_scopes = [ qw/ local global / ];
@@ -57,7 +57,7 @@ sub relationship_definition :Local :Args(0) {
 	$c->forward('View::JSON');
 }
 
-=head2 set_relationship
+=head2 relationship
 
  POST relation/$textid/relationship
    source_id: $source, target_id: $target, rel_type: $type, scope: $scope
@@ -70,7 +70,8 @@ returns 403 and an { error: message } struct on failure.
 
 sub relationship :Private {
 	my( $self, $c ) = @_;
-	my $collation = delete $c->stash->{'collation'};
+	my $tradition = delete $c->stash->{'tradition'};
+	my $collation = $tradition->collation;
 	my $node = $c->request->param('source_id');
 	my $target = $c->request->param('target_id');
 	my $relation = $c->request->param('rel_type');
@@ -82,6 +83,8 @@ sub relationship :Private {
 	
 	try {
 		my @vectors = $collation->add_relationship( $node, $target, $opts );
+		my $m = $c->model('Directory');
+		$m->save( $tradition );
 		$c->stash->{'result'} = \@vectors;
 	} catch( Text::Tradition::Error $e ) {
 		$c->response->status( '403' );
@@ -101,7 +104,7 @@ relationship is returned in a struct that looks like:
 
 =cut
 
-sub get_relationships :Private {
+sub relationships :Private {
 	my( $self, $c ) = @_;
 	my $collation = delete $c->stash->{'collation'};
 	# TODO make this API
