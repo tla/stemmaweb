@@ -106,7 +106,8 @@ relationship is returned in a struct that looks like:
 
 sub relationships :Private {
 	my( $self, $c ) = @_;
-	my $collation = delete $c->stash->{'collation'};
+	my $tradition = delete $c->stash->{'tradition'};
+	my $collation = $tradition->collation;
 	# TODO make this API
 	my @pairs = $collation->relationships; # returns the edges
 	my @all_relations;
