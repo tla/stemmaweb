@@ -1,6 +1,6 @@
 [% PROCESS header.tt
 	pagetitle = "Stexaminer - $text_title"
-	applicationjs = "/js/stexaminer.js"
+	applicationjs = base _ "js/stexaminer.js"
 %]
     <h1>Stexaminer</h1>
     <h2>[% text_title %]</h2>

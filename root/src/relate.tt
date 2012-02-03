@@ -1,6 +1,6 @@
 [% WRAPPER header.tt
 	pagetitle = "Stemmaweb - Relationship mapper"
-	applicationjs = "../js/relationship.js"
+	applicationjs = base _ "/js/relationship.js"
 %]
 <script type="text/javascript">
 $(function() {
