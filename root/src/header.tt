@@ -4,12 +4,17 @@
     <META http-equiv="Content-Type" content="text/html; charset=utf-8">
     <link type="text/css" href="[% c.uri_for('/css/cupertino/jquery-ui-1.8.13.custom.css') %]" rel="stylesheet" />
     <link type="text/css" href="[% c.uri_for('/css/style.css') %]" rel="stylesheet" />
+[% IF applicationstyle -%]
+	<link type="text/css" href="[% applicationstyle %]" rel="stylesheet" />
+[% END -%]
     <script type="text/javascript" src="[% c.uri_for('/js/jquery-1.4.4.min.js') %]"></script>
     <script type="text/javascript" src="[% c.uri_for('/js/jquery-ui-1.8.10.custom.min.js') %]"></script>
     <script type="text/javascript" src="[% c.uri_for('/js/jquery.mousewheel.min.js') %]"></script>
     <script type="text/javascript" src="[% c.uri_for('/js/jquery.svg.js') %]"></script>
     <script type="text/javascript" src="[% c.uri_for('/js/jquery.svgdom.js') %]"></script>
+[% IF applicationjs -%]
     <script type="text/javascript" src="[% applicationjs %]"></script>
+[% END -%]
     [% content %]
     <title>[% pagetitle %]</title>
   </head>

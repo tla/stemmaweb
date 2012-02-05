@@ -3,6 +3,7 @@
 	applicationjs = c.uri_for( 'js/componentload.js' )
 %]
     <script type="text/javascript">
+var selectedTextID;
 $(document).ready(function() {
     // call out to load the directory div
     $('#directory').load( "[% c.uri_for( 'directory' ) %]" );
@@ -22,7 +23,23 @@ $(document).ready(function() {
     	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" />
       </div>
     </div>
-    <div id="stemma_graph"></div>
-    <div id="variant_graph"></div>
+    <div id="stemma_container">
+      <h2>Stemma for <span class="texttitle">selected text</span></h2>
+      <div id="stemma_graph"></div>
+      <form id="run_stexaminer" action="" method="GET" name="run_stexaminer">
+        <div class="button" id="stexaminer_button" onClick="$('#run_stexaminer').submit()">
+      	  <span>Examine variants against this stemma</span>
+        </div>
+      </form>
+    </div>
+    <div id="variant_container">
+      <div style="float: left"><h2>Variant graph for <span class="texttitle">selected text</span></h2></div>
+      <form id="run_relater" action="" method="GET" name="run_relater">
+        <div class="button" id="relater_button" onClick="$('#run_relater').submit()">
+          <span>Run relationship mapper</span>
+        </div>
+      </form>
+      <div id="variant_graph"></div>
+    </div>
 
 [% PROCESS footer.tt %]

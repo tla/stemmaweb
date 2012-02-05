@@ -1,0 +1,61 @@
+#variants_table {
+    float: left;
+    width: 450px;
+    height: 550px;
+    border-right: 1px #c6dcf1 solid;
+    margin-left: 20px;
+    overflow: auto;
+}
+#stemma_graph {
+    height: 450px;
+    float: left;
+    width: 500px;
+    text-align: center;
+    border: 1px #c6dcf1 solid;
+}
+#statistics {
+    font-style: italic;
+    margin-bottom: 25px;
+    position: relative;
+    top: -15px;
+}
+.genealogical {
+    background: #88ffaa;
+}
+.coincidental {
+    background: #fff;
+}
+.conflict {
+    background: #ff6666;
+}
+.active_variant_row {
+    background: #c6dcf1;
+    font-style: italic;
+}
+.active_variant_cell {
+    background: #e8f1fe;
+}
+.cellb0 {
+    border-right: 20px solid #ffeeaa;
+}
+.cellb1 {
+    border-right: 20px solid #afc6e9;
+}
+.cellb2 {
+    border-right: 20px solid #d5fff6;
+}
+.cellb3 {
+    border-right: 20px solid #ffccaa;
+}
+.cellb4 {
+    border-right: 20px solid #ffaaaa;
+}
+.cellb5 {
+    border-right: 20px solid #e5ff80;
+}
+.cellb6 {
+    border-right: 20px solid #e5d5ff;
+}
+.cellb7 {
+    border-right: 20px solid #ffd5e5;
+}

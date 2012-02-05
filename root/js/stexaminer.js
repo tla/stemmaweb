@@ -3,7 +3,7 @@ var row_triggered = false;
 $(document).ready(function() {
   $('.rowid').click( function() {
     row_triggered = true;
-    $('ellipse').attr( {stroke:'black', fill:'#fff'} );
+    $('ellipse').attr( {stroke:'white', fill:'#fff'} );
     $('.node').children('polygon').attr( {stroke:'#fff', fill:'#fff'} );
     $('.node').children('text').attr( {stroke:'none', fill:'#000'} );
     $('tr.active_variant_row').children('td').removeClass('cellb0 cellb1 cellb2 cellb3 cellb4 cellb5 cellb6 cellb7'); 
@@ -17,7 +17,7 @@ function color_nodes( column_index, arr_node_ids, arr_greynode_ids ) {
   if( !row_triggered ) {
     $('tr.active_variant_row').children('td').removeClass('cellb0 cellb1 cellb2 cellb3 cellb4 cellb5 cellb6 cellb7'); 
     $('td.active_variant_cell').removeClass('active_variant_cell');
-    $('ellipse').attr( {stroke:'black', fill:'#fff'} );
+    $('ellipse').attr( {stroke:'white', fill:'#fff'} );
     $('.node').children('polygon').attr( {stroke:'#fff', fill:'#fff'} );
     $('.node').children('text').attr( {stroke:'none', fill:'#000'} );
   }; 

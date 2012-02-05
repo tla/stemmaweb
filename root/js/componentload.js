@@ -1,4 +1,4 @@
-function loadTradition( textid ) {
+function loadTradition( textid, textname ) {
     // First insert the placeholder image
     var basepath = window.location.pathname
     if( basepath.lastIndexOf('/') == basepath.length - 1 ) { 
@@ -25,4 +25,13 @@ function loadTradition( textid ) {
     	variant_svg_element.height.baseVal.value = container_height;
     	variant_svg_element.width.baseVal.value = (svg_width/svg_height * container_height);
 	});
+	
+	// Then populate the various elements with the right text name/ID.
+	// Stemma and variant graph titles
+	$('.texttitle').empty();
+	$('.texttitle').append( textname );
+	// Stexaminer submit action
+	$('#run_stexaminer').attr( 'action', basepath + "/stexaminer/" + textid );
+	// Relationship mapper submit action
+	$('#run_relater').attr( 'action', basepath + "/relation/" + textid );
 }

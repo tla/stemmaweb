@@ -1,6 +1,7 @@
 [% WRAPPER header.tt
 	pagetitle = "Stemmaweb - Relationship mapper"
-	applicationjs = base _ "/js/relationship.js"
+	applicationjs = c.uri_for('/js/relationship.js')
+	applicationstyle = c.uri_for('/css/relationship.css')
 %]
 <script type="text/javascript">
 $(function() {
@@ -8,7 +9,6 @@ $(function() {
   $('#svgenlargement').svg({loadURL: '[% svg_string %]', onLoad: svgEnlargementLoaded});
 });
 </script>
-<link type="text/css" href="[% c.uri_for('/css/relationship.css') %]" rel="stylesheet" />
 [% END %]
 
 	<div id="graph_container">	

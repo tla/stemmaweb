@@ -1,5 +1,3 @@
-<style type="text/css" media="screen">
-
 /* General site-wide layout */
 body { 
     margin: 0; 
@@ -28,6 +26,39 @@ h3 {
 	font-style: italic;
 }
 
+div.button {
+  background: transparent url('../images/b_button_a.png') no-repeat scroll top right;
+  color: #fff;
+  display: block;
+  float: left;
+  font: normal 12px Times, Times New Roman, Serif; /* arial, sans-serif; */
+  height: 24px;
+  margin-right: 6px;
+  padding-right: 18px; /* sliding doors padding */
+  text-decoration: none;
+}
+div.button.reset {
+  background: transparent url('../images/c_button_a.png') no-repeat scroll top right;
+}
+div.button span {
+  background: transparent url('../images/b_button_span.png') no-repeat;
+  display: block;
+  line-height: 14px;
+  padding: 5px 0 5px 18px;
+}
+div.button.reset span {
+  background: transparent url('../images/c_button_span.png') no-repeat;
+}
+div.button:hover {
+  background-position: bottom right;
+  color: #444;
+  outline: none; /* hide dotted outline in Firefox */
+}
+div.button:hover span {
+  background-position: bottom left;
+}
+
+
 /* Index page components */
 
 #directory_container {
@@ -37,6 +68,7 @@ h3 {
 	border: 1px #c6dcf1 solid;
 }
 #directory {
+	margin-left: 10px;
 }
 .traditionname {
 	text-decoration: underline;
@@ -55,79 +87,43 @@ h3 {
 .mainnav a {
 	color: #488dd2;
 }
-#variant_graph {
+#variant_container {
 	clear: both;
-	/* width: 900px; */
 	height: 400px;
+	padding-top: 20px;
+}
+#variant_graph {
+	/* width: 900px; */
+	clear: both;
 	overflow: auto;	
 	text-align: center;
 }
 #variant_graph img {
 	margin-top: expression(( 400 - this.height ) / 2);
 }
+#stemma_container {
+	float: left;
+	height: 450px;
+	margin-left: 40px;
+}
+#stemma_container h2 h3 {
+	color: #666;
+}
 #stemma_graph {
-    float: left;
+    height: 375px;
     width: 500px;
-    height: 450px;
     text-align: center;
-    margin-left: 50px;
+    border: 1px #c6dcf1 solid;
 }
 #stemma_graph img {
 	margin-top: expression(( 450 - this.height ) / 2);
 }
-/* Additional components for the stexaminer */
-#variants_table {
-    float: left;
-    width: 450px;
-    height: 550px;
-    border-right: 1px #c6dcf1 solid;
-    margin-left: 20px;
-    overflow: auto;
+#stexaminer_button {
+	bottom: 0;
+	margin-top: 5px;
 }
-#statistics {
-    font-style: italic;
-    margin-bottom: 25px;
-    position: relative;
-    top: -15px;
+#relater_button {
+	float: left;
+	margin-left: 83px;
+    margin-top:  7px;
 }
-.genealogical {
-    background: #88ffaa;
-}
-.coincidental {
-    background: #fff;
-}
-.conflict {
-    background: #ff6666;
-}
-.active_variant_row {
-    background: #c6dcf1;
-    font-style: italic;
-}
-.active_variant_cell {
-    background: #e8f1fe;
-}
-.cellb0 {
-    border-right: 20px solid #ffeeaa;
-}
-.cellb1 {
-    border-right: 20px solid #afc6e9;
-}
-.cellb2 {
-    border-right: 20px solid #d5fff6;
-}
-.cellb3 {
-    border-right: 20px solid #ffccaa;
-}
-.cellb4 {
-    border-right: 20px solid #ffaaaa;
-}
-.cellb5 {
-    border-right: 20px solid #e5ff80;
-}
-.cellb6 {
-    border-right: 20px solid #e5d5ff;
-}
-.cellb7 {
-    border-right: 20px solid #ffd5e5;
-}
-</style>

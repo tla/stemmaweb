@@ -1,6 +1,7 @@
 [% PROCESS header.tt
 	pagetitle = "Stexaminer - $text_title"
-	applicationjs = base _ "js/stexaminer.js"
+	applicationjs = c.uri_for('/js/stexaminer.js')
+	applicationstyle = c.uri_for('/css/stexaminer.css')
 %]
     <h1>Stexaminer</h1>
     <h2>[% text_title %]</h2>

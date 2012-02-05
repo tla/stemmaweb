@@ -3,7 +3,7 @@
       <ul>
 [% SET i = 0 -%]
 [% FOREACH t IN texts -%]
-        <li><span class="traditionname" onClick="$('.traditionname').removeClass('selected');$(this).addClass('selected');loadTradition('[% t.id %]')">[% t.name %]</span></li>
+        <li><span class="traditionname" onClick="$('.traditionname').removeClass('selected');$(this).addClass('selected');loadTradition('[% t.id %]','[% t.name %]')">[% t.name %]</span></li>
 [% i = i + 1 -%]
 [% END -%]
      </table>
