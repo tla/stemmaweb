@@ -1,4 +1,4 @@
-    <h2>Choose a text to examine</h2>
+    <h3>Choose a text to examine</h3>
     <div id="text_list">
       <ul>
 [% SET i = 0 -%]

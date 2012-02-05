@@ -15,10 +15,12 @@ $(document).ready(function() {
       <h1>Stemmaweb - a collection of tools for analysis of collated texts</h1>
       <span class="mainnav"><a href="[% c.uri_for( 'about.html' ) %]">About<a> | <a href="[% c.uri_for( 'doc.html' ) %]">Help</a></span>
     </div>
-    
-    <div id="directory">
+    <div id="directory_container">
+      <h2>Text directory</h2>
+      <div id="directory">
     	<h3>Loading texts, please wait...</h3>
     	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" />
+      </div>
     </div>
     <div id="stemma_graph"></div>
     <div id="variant_graph"></div>
