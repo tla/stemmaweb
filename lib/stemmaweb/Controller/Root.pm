@@ -70,9 +70,11 @@ Returns the variant graph for the text specified at $textid, in SVG form.
 sub variantgraph :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
 	my $m = $c->model('Directory');
-	my $collation = $m->tradition( $textid )->collation;
-
+	my $tradition = $m->tradition( $textid );
+	my $collation = $tradition->collation;
+	my $needsave = !$collation->has_cached_svg;
 	$c->stash->{'result'} = $collation->as_svg;
+	$m->save( $tradition );
 	$c->forward('View::SVG');
 }
 	
