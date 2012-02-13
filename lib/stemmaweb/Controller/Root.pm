@@ -90,7 +90,7 @@ sub alignment :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
 	my $m = $c->model('Directory');
 	my $collation = $m->tradition( $textid )->collation;
-	my $alignment = $collation->make_alignment_table;
+	my $alignment = $collation->alignment_table;
 	
 	# Turn the table, so that witnesses are by column and the rows
 	# are by rank.
