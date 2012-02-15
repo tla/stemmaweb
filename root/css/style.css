@@ -94,6 +94,7 @@ div.button:hover span {
 }
 #variant_graph {
 	/* width: 900px; */
+	height: 350px;
 	clear: both;
 	overflow: auto;	
 	text-align: center;
