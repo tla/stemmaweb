@@ -5,21 +5,14 @@
 %]
 <script type="text/javascript">
 $(function() {
-  $('#svgbasics').svg({loadURL: '[% svg_string %]', onLoad: svgLoaded});
   $('#svgenlargement').svg({loadURL: '[% svg_string %]', onLoad: svgEnlargementLoaded});
 });
 </script>
 [% END %]
 
-	<div id="graph_container">	
-        <div id="graph_underlay"></div>
-	    <div id="visor"></div>
-	    <div id="graph">
-		    <!-- width seems to need to be as wide as the graph -->
-		    <!-- a translation of -487 in the svg itself was needed to adjust the graph to the left of the div -->
-		    <!-- unclear how to cope with height that doesn't fit box -->
-		    <div id="svgbasics" style="height: 100px;"></div>
-		</div>
+	<div id="topbanner">
+		<h1>Relationship mapper</h1>
+		<h2>[% text_title %]</h2>
 	</div>
 
 	<div id="enlargement_container">	
@@ -51,6 +44,15 @@ $(function() {
 	</div>
 	<div id="dialog_overlay"></div>
 
+	<div id="delete-form" title="Relation info..">
+		<form id="delete_relation_form">
+			<input type="hidden" name="source_id" id="delete_source_node_id"/>
+			<input type="hidden" name="target_id" id="delete_target_node_id"/>
+		</form>
+		<div id="delete-form-text"></div>
+	</div>
+    	
+    <p/><p/>	
     <div id="keymap">
         <ul id="keymaplist">
         </ul>

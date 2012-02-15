@@ -8,11 +8,53 @@ body {
 .error {
     color: red;
 }
-#graph_container {
-    height: 104px;
-    width: 90%;
-    margin-top: 5px;
-    border: 2px solid #B0C6F7;
+#topbanner {
+	width: 100%;
+	height: 100px;
+	margin-top: 20px;
+}
+#logoimg {
+	float: left;
+	margin-left: 20px;
+}
+#logotitle {
+	float: left;
+	margin-left: 30px;
+	height: 55px;
+	padding-top: 40px;
+}
+h1.title a:link, h1.title a:visited, h1.title a:active {
+	color: #666;
+	font-weight: bold;
+	text-decoration: none;
+}
+h1.title a:hover {
+	color: #222;
+}
+h1.title {
+	margin: 0;
+	padding: 0;
+	letter-spacing: -1px;
+	line-height: 1.0em;
+	font-family: tahoma, arial, sans-serif;
+	font-size: 240%;
+}
+p.tagline {
+	margin: 0;
+	padding: 0;
+	font-size: 1.2em;
+	font-weight: bold;
+	color: #666;
+}
+.term {
+	font-style: italic;
+}
+p.api {
+	font-weight: bold;
+	font-family: Courier;
+}
+span.apimore {
+	font-family: Courier;
 }
 #enlargement_container {
     height: 504px;
@@ -26,7 +68,7 @@ body {
 #dialog_overlay {
     display: none;
     position: absolute;
-    background-image: url("../css/cupertino/images/ui-bg_diagonals-thick_90_eeeeee_40x40.png");
+    background-image: url("/css/cupertino/images/ui-bg_diagonals-thick_90_eeeeee_40x40.png");
     background-repeat: repeat;
     background-attachment: scroll;
     background-position: 50% 50%;
@@ -37,16 +79,17 @@ body {
     border: 2px solid #B0C6F7;
 }
 #update_workspace_button {
-    position: relative;
-    top: -538px;
-    left: 44%;
-    height: 17px;
-    width: 17px;
-    margin-top: 8px;
-    border: 1px solid #B0C6F7;
-    background-image: url('../images/act_arrs.gif');
-    background-position: 0px 0px;
-    background-color: #fcfcfc;
+    position: absolute;
+    left: 74.5%;
+    top: 126px;
+    height: 44px;
+    width: 46px;
+    margin-top: 17px;
+    border: none;
+    background-image: url('/images/act_icons.png');
+    background-position: 0px 44px;
+    background-color: none;
+    background-repeat: none;
     z-index: 50;
 }
 #workspace_container {
@@ -97,9 +140,14 @@ body {
 #keymap {
     position: absolute;
     left: 80%;
-    top: 100px;
+    top: 140px;
     border: 2px solid #B0C6F7;
     background: #fff;
+    background: url("/css/cupertino/images/ui-bg_highlight-hard_100_f2f5f7_1x100.png");
+    background-repeat: repeat-x;
+    background-scroll: scroll;
+    background-position: 50% top;
+    background-color: #F2F5F7;
 }
 #keymap ul {
     padding: 10px;

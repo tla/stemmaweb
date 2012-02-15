@@ -24,24 +24,12 @@ Renders the application for the text identified by $textid.
 
 =cut
 
-sub index :Path :Args(1) {
-	my( $self, $c, $textid ) = @_;
-	my $m = $c->model('Directory');
-	my $tradition = $m->tradition( $textid );
-	my $collation = $tradition->collation;
-	my $svg_str = $collation->as_svg;
-	$svg_str =~ s/\n//gs;
-	$c->stash->{'svg_string'} = $svg_str;
+sub index :Path :Args(0) {
+	my( $self, $c ) = @_;
 	$c->stash->{'template'} = 'relate.tt';
 }
 
-sub dispatcher :Path :Args(2) {
-	my( $self, $c, $textid, $forward ) = @_;
-	$c->stash->{'tradition'} = $c->model('Directory')->tradition( $textid );
-	$c->forward( $forward );	
-}
-
-=head2 relationship_definition
+=head2 definitions
 
  GET relation/definitions
  
@@ -51,76 +39,100 @@ Returns a data structure giving the valid types and scopes for a relationship.
 
 sub definitions :Local :Args(0) {
 	my( $self, $c ) = @_;
-	my $valid_relationships = [ qw/ spelling orthographic grammatical meaning / ];
+	my $valid_relationships = [ qw/ spelling orthographic grammatical meaning 
+									lexical transposition / ];
 	my $valid_scopes = [ qw/ local global / ];
 	$c->stash->{'result'} = { 'types' => $valid_relationships, 'scopes' => $valid_scopes };
 	$c->forward('View::JSON');
 }
 
-=head2 relationship
+=head2 text
 
- POST relation/$textid/relationship
-   source_id: $source, target_id: $target, rel_type: $type, scope: $scope
-   
-Sets the specified relationship between the readings in $source and $target.
-Returns 200 and a list of node pairs where the relationship was added on success;
-returns 403 and an { error: message } struct on failure.
-
+ GET relation/$textid/
+ 
+ Runs the relationship mapper for the specified text ID.
+ 
 =cut
 
-sub relationship :Private {
+sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
+	my( $self, $c, $textid ) = @_;
+	$c->stash->{'tradition'} = $c->model('Directory')->tradition( $textid );
+}
+
+sub main :Chained('text') :PathPart('') :Args(0) {
 	my( $self, $c ) = @_;
 	my $tradition = delete $c->stash->{'tradition'};
 	my $collation = $tradition->collation;
-	my $node = $c->request->param('source_id');
-	my $target = $c->request->param('target_id');
-	my $relation = $c->request->param('rel_type');
-	my $note = $c->request->param('note');
-	my $scope = $c->request->param('scope');
+	my $svg_str = $collation->as_svg;
+	$svg_str =~ s/\n//gs;
+	$c->stash->{'svg_string'} = $svg_str;
+	$c->stash->{'text_title'} = $tradition->name;
+	$c->stash->{'template'} = 'relate.tt';
 
-	my $opts = { 'type' => $relation,
-				 'scope' => $scope };
-	
-	try {
-		my @vectors = $collation->add_relationship( $node, $target, $opts );
-		my $m = $c->model('Directory');
-		$m->save( $tradition );
-		$c->stash->{'result'} = \@vectors;
-	} catch( Text::Tradition::Error $e ) {
-		$c->response->status( '403' );
-		$c->stash->{'result'} = { 'error' => $e->message };
-	}
-	$c->forward('View::JSON');
 }
 
 =head2 relationships
 
- GET relation/$textid/relationships
+ GET $textid/relationships
 
-Returns a list of relationships that exist in the specified text. Each
-relationship is returned in a struct that looks like:
+Returns the list of relationships defined for this text.
 
-{ source: $sid, target: $tid, type: $rel_type, scope: $rel_scope }
+ POST $textid/relationships { request }
+ 
+Attempts to define the requested relationship within the text. Returns 200 on
+success or 403 on error.
+
+ DELETE $textid/relationships { request }
+ 
 
 =cut
 
-sub relationships :Private {
+sub relationships :Chained('text') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $tradition = delete $c->stash->{'tradition'};
 	my $collation = $tradition->collation;
-	# TODO make this API
-	my @pairs = $collation->relationships; # returns the edges
-	my @all_relations;
-	foreach my $p ( @pairs ) {
-		my $relobj = $collation->relations->get_relationship( @$p );
-		push( @all_relations, 
-			{ source => $p->[0], target => $p->[1], 
-			  type => $relobj->type, scope => $relobj->scope } );
+	if( $c->request->method eq 'GET' ) {
+		my @pairs = $collation->relationships; # returns the edges
+		my @all_relations;
+		foreach my $p ( @pairs ) {
+			my $relobj = $collation->relations->get_relationship( @$p );
+			push( @all_relations, 
+				{ source => $p->[0], target => $p->[1], 
+				  type => $relobj->type, scope => $relobj->scope } );
+		}
+		$c->stash->{'result'} = \@all_relations;
+	} elsif( $c->request->method eq 'POST' ) {
+		my $node = $c->request->param('source_id');
+		my $target = $c->request->param('target_id');
+		my $relation = $c->request->param('rel_type');
+		my $note = $c->request->param('note');
+		my $scope = $c->request->param('scope');
+	
+		my $opts = { 'type' => $relation,
+					 'scope' => $scope };
+		
+		try {
+			my @vectors = $collation->add_relationship( $node, $target, $opts );
+			$c->stash->{'result'} = \@vectors;
+		} catch( Text::Tradition::Error $e ) {
+			$c->response->status( '403' );
+			$c->stash->{'result'} = { 'error' => $e->message };
+		}
+	} elsif( $c->request->method eq 'DELETE' ) {
+		my $node = $c->request->param('source_id');
+		my $target = $c->request->param('target_id');
+	
+		try {
+			my @vectors = $collation->del_relationship( $node, $target );
+			$c->stash->{'result'} = \@vectors;
+		} catch( Text::Tradition::Error $e ) {
+			$c->response->status( '403' );
+			$c->stash->{'result'} = { 'error' => $e->message };
+		}	
 	}
-	$c->stash->{'result'} = \@all_relations;
 	$c->forward('View::JSON');
 }		
-
+		
 
 =head2 end
 

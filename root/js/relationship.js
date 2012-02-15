@@ -10,54 +10,62 @@ function getTextPath() {
     return path_parts;
 }
 
-function svgLoaded() {
-  // some initial scaling
-  var svg_element = $('#svgbasics').children('svg');
-  var svg_graph = svg_element.svg().svg('get').root();
-  var svg_vbwidth = svg_graph.viewBox.baseVal.width;
-  var svg_vbheight = svg_graph.viewBox.baseVal.height;
-  var scroll_padding = $('#graph_container').width();
-  // (Use attr('width') to set width attr, otherwise style="width: npx;" is set.)
-  var svg_element_width = svg_vbwidth/svg_vbheight * parseInt(svg_element.attr('height'));
-  svg_element_width += scroll_padding;
-  svg_element.attr( 'width', svg_element_width );
-  $('ellipse').attr( {stroke:'black', fill:'#fff'} );
+function getRelativePath() {
+	var path_parts = getTextPath();
+	return path_parts[0];
+}
+
+function getRelationshipURL() {
+	var path_parts = getTextPath();
+	return path_parts[0] + '/' + path_parts[1] + '/relationships';
 }
 
 function svgEnlargementLoaded() {
-  // some initial scaling
-  var svg_element = $('#svgenlargement').children('svg');
-  var svg_graph = svg_element.svg().svg('get').root()
-  var svg_vbwidth = svg_graph.viewBox.baseVal.width;
-  var svg_vbheight = svg_graph.viewBox.baseVal.height;
-  var scroll_padding = $('#enlargement_container').width();
-  // (Use attr('width') to set width attr, otherwise style="width: npx;" is set.)
-  var svg_element_width = svg_vbwidth/svg_vbheight * parseInt(svg_element.attr('height'));
-  svg_element_width += scroll_padding;
-  svg_element.attr( 'width', svg_element_width );
-    $('ellipse').attr({
-        stroke: 'black',
-        fill: '#fff'
-    });
-  var svg_height = parseInt( $('#svgenlargement').height() );
-  scroll_enlargement_ratio = svg_height/svg_vbheight;
+    //Set viewbox widht and height to widht and height of $('#svgenlargement svg').
+    //This is essential to make sure zooming and panning works properly.
+    $('#svgenlargement ellipse').attr( {stroke:'green', fill:'#b3f36d'} );
+    var graph_svg = $('#svgenlargement svg');
+    var svg_g = $('#svgenlargement svg g')[0];
+    svg_root = graph_svg.svg().svg('get').root();
+    svg_root.viewBox.baseVal.width = graph_svg.attr( 'width' );
+    svg_root.viewBox.baseVal.height = graph_svg.attr( 'height' );
+    //Now set scale and translate so svg height is about 150px and vertically centered in viewbox.
+    //This is just to create a nice starting enlargement.
+    var initial_svg_height = 250;
+    var scale = initial_svg_height/graph_svg.attr( 'height' );
+    var additional_translate = (graph_svg.attr( 'height' ) - initial_svg_height)/(2*scale);
+    var transform = svg_g.getAttribute('transform');
+    var translate = parseFloat( transform.match( /translate\([^\)]*\)/ )[0].split('(')[1].split(' ')[1].split(')')[0] );
+    translate += additional_translate;
+    var transform = 'rotate(0) scale(' + scale + ') translate(4 ' + translate + ')';
+    svg_g.setAttribute('transform', transform);
+    //used to calculate min and max zoom level:
+    start_element_height = $("#svgenlargement .node title:contains('#START#')").siblings('ellipse')[0].getBBox().height;
     add_relations();
 }
 
 function add_relations() {
-	var pathparts = getTextPath();
-    $.getJSON( pathparts[0] + '/definitions', function(data) {
+	var basepath = getRelativePath();
+	var textrelpath = getRelationshipURL();
+    $.getJSON( basepath + '/definitions', function(data) {
         var rel_types = data.types.sort();
-        var pathparts = getTextPath();
-        $.getJSON( pathparts[0] + '/' + pathparts[1] + '/relationships',
+        $.getJSON( textrelpath,
         function(data) {
             $.each(data, function( index, rel_info ) {
                 var type_index = $.inArray(rel_info.type, rel_types);
                 if( type_index != -1 ) {
-                    relation_manager.create( rel_info.source, rel_info.target, type_index );
+                    var relation = relation_manager.create( rel_info.source, rel_info.target, type_index );
+                    relation.data( 'type', rel_info.type );
+                    relation.data( 'scope', rel_info.scope );
+                    var node_obj = get_node_obj(rel_info.source);
+                    node_obj.set_draggable( false );
+                    node_obj.ellipse.data( 'node_obj', null );
+                    node_obj = get_node_obj(rel_info.target);
+                    node_obj.set_draggable( false );
+                    node_obj.ellipse.data( 'node_obj', null );
                 }
             })
-        });    
+        });
     });
 }
 
@@ -68,7 +76,11 @@ function get_ellipse( node_id ) {
 }
 
 function get_node_obj( node_id ) {
-  return get_ellipse( node_id ).data( 'node_obj' );
+    var node_ellipse = get_ellipse( node_id );
+    if( node_ellipse.data( 'node_obj' ) == null ) {
+        node_ellipse.data( 'node_obj', new node_obj(node_ellipse) );
+    };
+    return node_ellipse.data( 'node_obj' );
 }
 
 function get_edge( edge_id ) {
@@ -115,11 +127,8 @@ function node_obj(ellipse) {
   }
 
   this.mousemove_listener = function(evt) {
-    // magnification on workspace lock temporarily disabled
-    // self.dx = (evt.clientX - self.x) / mousemove_enlargement_ratio;
-    // self.dy = (evt.clientY - self.y) / mousemove_enlargement_ratio;
-    self.dx = (evt.clientX - self.x) / scroll_enlargement_ratio;
-    self.dy = (evt.clientY - self.y) / scroll_enlargement_ratio;
+    self.dx = (evt.clientX - self.x) / mouse_scale;
+    self.dy = (evt.clientY - self.y) / mouse_scale;
     self.move_elements();
   }
 
@@ -135,7 +144,7 @@ function node_obj(ellipse) {
     $('body').unbind('mouseup');
     self.ellipse.attr( 'fill', '#fff' );
     self.ellipse.hover( self.enter_node, self.leave_node );
-        self.reset_elements();
+    self.reset_elements();
   }
 
   this.cpos = function() {
@@ -270,13 +279,13 @@ function relation_factory() {
     this.relation_colors = [ "#5CCCCC", "#67E667", "#F9FE72", "#6B90D4", "#FF7673", "#E467B3", "#AA67D5", "#8370D8", "#FFC173" ];
 
     this.create_temporary = function( source_node_id, target_node_id ) {
-    var relation = $('#svgenlargement .relation').filter( function(index) {
-        var relation_id = $(this).children('title').text();
+        var relation = $('#svgenlargement .relation').filter( function(index) {
+            var relation_id = $(this).children('title').text();
             if( ( relation_id == ( source_node_id + '->' + target_node_id ) ) || ( relation_id == ( target_node_id + '->' + source_node_id ) ) ) {
-            return true;
-        } 
-    } );
-    if( relation.size() == 0 ) {
+                return true;
+            } 
+        } );
+        if( relation.size() == 0 ) { 
             draw_relation( source_node_id, target_node_id, self.temp_color );
         } else {
             self.color_memo = relation.children('path').attr( 'stroke' );
@@ -289,74 +298,140 @@ function relation_factory() {
             path_element.attr( 'stroke', self.color_memo );
             self.color_memo = null;
         } else {
-            path_element.parent('g').remove();
+            var temporary = path_element.parent('g').remove();
+            temporary.empty();
+            temporary = null; 
         }
     }
     this.create = function( source_node_id, target_node_id, color_index ) {
         //TODO: Protect from (color_)index out of bound..
         var relation_color = self.relation_colors[ color_index ];
-        draw_relation( source_node_id, target_node_id, relation_color );
-        var source_node = get_node_obj( source_node_id );
-        var target_node = get_node_obj( target_node_id );
-        if( source_node != null ) { source_node.update_elements() };
-        if( target_node != null ) { target_node.update_elements() };
+        var relation = draw_relation( source_node_id, target_node_id, relation_color );
+        get_node_obj( source_node_id ).update_elements();
+        get_node_obj( target_node_id ).update_elements();
+        return relation;
     }
-    this.remove = function( source_node_id, target_id ) {
-        //TODO (When needed)
-        console.log( "Unsupported function node_obj.remove()." );
+    this.toggle_active = function( relation_id ) {
+        var relation = $("#svgenlargement .relation:has(title:contains('" + relation_id + "'))");
+        var relation_path = relation.children('path');
+        if( !relation.data( 'active' ) ) {
+            relation_path.css( {'cursor':'pointer'} );
+            relation_path.mouseenter( function(event) { 
+                outerTimer = setTimeout( function() { 
+                    timer = setTimeout( function() { 
+                        var title = relation.children('title').text();
+                        var source_node_id = title.substring( 0, title.indexOf( "->" ) );
+                        var target_node_id = title.substring( (title.indexOf( "->" ) + 2) );
+                        $('#delete_source_node_id').val( source_node_id );
+                        $('#delete_target_node_id').val( target_node_id );
+                        self.showinfo(relation); 
+                    }, 500 ) 
+                }, 1000 );
+            });
+            relation_path.mouseleave( function(event) {
+                clearTimeout(outerTimer); 
+                if( timer != null ) { clearTimeout(timer); } 
+            });
+            relation.data( 'active', true );
+        } else {
+            relation_path.unbind( 'mouseenter' );
+            relation_path.unbind( 'mouseleave' );
+            relation_path.css( {'cursor':'inherit'} );
+            relation.data( 'active', false );
+        }
+    }
+    this.showinfo = function(relation) {
+        $('#delete-form-text').html( 'type: ' + relation.data( 'type' ) + '<br/>scope: ' + relation.data( 'scope' ) );
+        var points = relation.children('path').attr('d').slice(1).replace('C',' ').split(' ');
+        var xs = parseFloat( points[0].split(',')[0] );
+        var xe = parseFloat( points[1].split(',')[0] );
+        var ys = parseFloat( points[0].split(',')[1] );
+        var ye = parseFloat( points[3].split(',')[1] );
+        var p = svg_root.createSVGPoint();
+        p.x = xs + ((xe-xs)*1.1);
+        p.y = ye - ((ye-ys)/2);
+        var ctm = svg_root.children[0].getScreenCTM();
+        var nx = p.matrixTransform(ctm).x;
+        var ny = p.matrixTransform(ctm).y;
+        var dialog_aria = $ ("div[aria-labelledby='ui-dialog-title-delete-form']");
+        $('#delete-form').dialog( 'open' );
+        dialog_aria.offset({ left: nx, top: ny });
+    }
+    this.remove = function( relation_id ) {
+        var relation = $("#svgenlargement .relation:has(title:contains('" + relation_id + "'))");
+        relation.remove();
     }
 }
 
 function draw_relation( source_id, target_id, relation_color ) {
-        var source_ellipse = get_ellipse( source_id );
-        var target_ellipse = get_ellipse( target_id );
-        var svg = $('#svgenlargement').children('svg').svg().svg('get');
-        var path = svg.createPath(); 
-        var sx = parseInt( source_ellipse.attr('cx') );
-        var rx = parseInt( source_ellipse.attr('rx') );
-        var sy = parseInt( source_ellipse.attr('cy') );
-        var ex = parseInt( target_ellipse.attr('cx') );
-        var ey = parseInt( target_ellipse.attr('cy') );
-        var relation = svg.group( $("#svgenlargement svg g"), {'class':'relation'} );
-        svg.title( relation, source_id + '->' + target_id );
-        svg.path( relation, path.move( sx, sy ).curveC( sx + (2*rx), sy, ex + (2*rx), ey, ex, ey ), {fill: 'none', stroke: relation_color, strokeWidth: 4});
+    var source_ellipse = get_ellipse( source_id );
+    var target_ellipse = get_ellipse( target_id );
+    var svg = $('#svgenlargement').children('svg').svg().svg('get');
+    var path = svg.createPath(); 
+    var sx = parseInt( source_ellipse.attr('cx') );
+    var rx = parseInt( source_ellipse.attr('rx') );
+    var sy = parseInt( source_ellipse.attr('cy') );
+    var ex = parseInt( target_ellipse.attr('cx') );
+    var ey = parseInt( target_ellipse.attr('cy') );
+    var relation = svg.group( $("#svgenlargement svg g"), {'class':'relation'} );
+    svg.title( relation, source_id + '->' + target_id );
+    svg.path( relation, path.move( sx, sy ).curveC( sx + (2*rx), sy, ex + (2*rx), ey, ex, ey ), {fill: 'none', stroke: relation_color, strokeWidth: 4});
     var relation_element = $('#svgenlargement .relation').filter( ':last' );
     relation_element.insertBefore( $('#svgenlargement g g').filter(':first') );
+    return relation_element;
 }
 
+
 $(document).ready(function () {
-  
+    
+  timer = null;
   relation_manager = new relation_factory();
+  $('#update_workspace_button').data('locked', false);
   
-  scroll_ratio =  $('#enlargement').height() / $('#graph').height();
-  
-  $('#graph').mousedown(function (event) {
+  $('#enlargement').mousedown(function (event) {
     $(this)
-      .data('down', true)
-      .data('x', event.clientX)
-      .data('scrollLeft', this.scrollLeft);
-      return false;
+        .data('down', true)
+        .data('x', event.clientX)
+        .data('y', event.clientY)
+        .data('scrollLeft', this.scrollLeft)
+        stateTf = svg_root.children[0].getCTM().inverse();
+        var p = svg_root.createSVGPoint();
+        p.x = event.clientX;
+        p.y = event.clientY;
+        stateOrigin = p.matrixTransform(stateTf);
+        return false;
   }).mouseup(function (event) {
-    $(this).data('down', false);
+        $(this).data('down', false);
   }).mousemove(function (event) {
-    if ($(this).data('down') == true ) {
-      if ( $('#update_workspace_button').data('locked') != true ) {
-          var scroll_left = $(this).data('scrollLeft') + $(this).data('x') - event.clientX;
-          this.scrollLeft = scroll_left;
-          var enlarged_scroll_left = scroll_left * scroll_ratio; 
-          $('#enlargement').scrollLeft( enlarged_scroll_left );
-          color_enlarged();
-      }
+    if( timer != null ) { clearTimeout(timer); } 
+    if ( ($(this).data('down') == true) && ($('#update_workspace_button').data('locked') == false) ) {
+        var p = svg_root.createSVGPoint();
+        p.x = event.clientX;
+        p.y = event.clientY;
+        p = p.matrixTransform(stateTf);
+        var matrix = stateTf.inverse().translate(p.x - stateOrigin.x, p.y - stateOrigin.y);
+        var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
+        svg_root.children[0].setAttribute("transform", s);
     }
   }).mousewheel(function (event, delta) {
-      if ( $('#update_workspace_button').data('locked') != true ) {
-          var scroll_left = delta * 30;
-          this.scrollLeft -= scroll_left;
-          var enlarged_scroll_left = $('#enlargement').scrollLeft();
-          enlarged_scroll_left -= (scroll_left * scroll_ratio);
-          $('#enlargement').scrollLeft( enlarged_scroll_left );
-          color_enlarged();
-      }
+    event.returnValue = false;
+    event.preventDefault();
+    if ( $('#update_workspace_button').data('locked') == false ) {
+        if( delta < -9 ) { delta = -9 }; 
+        var z = 1 + delta/10;
+        var g = svg_root.children[0];
+        if( (z<1 && (g.getScreenCTM().a * start_element_height) > 4.0) || (z>1 && (g.getScreenCTM().a * start_element_height) < 100) ) {
+            var root = svg_root;
+            var p = root.createSVGPoint();
+            p.x = event.clientX;
+            p.y = event.clientY;
+            p = p.matrixTransform(g.getCTM().inverse());
+            var k = root.createSVGMatrix().translate(p.x, p.y).scale(z).translate(-p.x, -p.y);
+            var matrix = g.getCTM().multiply(k);
+            var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
+            g.setAttribute("transform", s);
+        }
+    }
   }).css({
     'overflow' : 'hidden',
     'cursor' : '-moz-grab'
@@ -372,26 +447,27 @@ $(document).ready(function () {
       "Ok": function() {
         $('#status').empty();
         form_values = $('#collapse_node_form').serialize()
-        pathparts = getTextPath();
-        ncpath = pathparts[0] + '/' + pathparts[1] + '/relationship';
+        ncpath = getRelationshipURL();
+        $(':button :contains("Ok")').attr("disabled", true);
         var jqjson = $.post( ncpath, form_values, function(data) {
             $.each( data, function(item, source_target) { 
-                relation_manager.create( source_target[0], source_target[1], $('#rel_type').attr('selectedIndex') );
+                var relation = relation_manager.create( source_target[0], source_target[1], $('#rel_type').attr('selectedIndex') );
+                relation.data( 'type', $('#rel_type :selected').text()  );
+                relation.data( 'scope', $('#scope :selected').text()  );
+                relation_manager.toggle_active( relation.children('title').text() );
             });
-            relation_manager.remove_temporary();
             $( "#dialog-form" ).dialog( "close" );
-        }, 'json');
+        }, 'json' );
       },
       Cancel: function() {
-          relation_manager.remove_temporary();
           $( this ).dialog( "close" );
       }
     },
     create: function(event, ui) { 
         $(this).data( 'relation_drawn', false );
         //TODO? Err handling?
-        var pathparts = getTextPath();
-        var jqjson = $.getJSON( pathparts[0] + '/definitions', function(data) {
+		var basepath = getRelativePath();
+        var jqjson = $.getJSON( basepath + '/definitions', function(data) {
             var types = data.types.sort();
             $.each( types, function(index, value) {   
                  $('#rel_type').append( $('<option>').attr( "value", value ).text(value) ); 
@@ -405,98 +481,114 @@ $(document).ready(function () {
     },
     open: function() {
         relation_manager.create_temporary( $('#source_node_id').val(), $('#target_node_id').val() );
-      $(".ui-widget-overlay").css("background", "none");
-      $("#dialog_overlay").show();
-      $("#dialog_overlay").height( $("#enlargement_container").height() );
-      $("#dialog_overlay").width( $("#enlargement_container").width() );
-      $("#dialog_overlay").offset( $("#enlargement_container").offset() );
+        $(".ui-widget-overlay").css("background", "none");
+        $("#dialog_overlay").show();
+        $("#dialog_overlay").height( $("#enlargement_container").height() );
+        $("#dialog_overlay").width( $("#enlargement_container").width() );
+        $("#dialog_overlay").offset( $("#enlargement_container").offset() );
     },
     close: function() {
+        relation_manager.remove_temporary();
         $( '#status' ).empty();
         $("#dialog_overlay").hide();
     }
   }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-      if( ( ajaxSettings.url.split("?")[0] == 'set_relationship' ) && jqXHR.status == 403 ) {
-          $('#status').append( '<p class="error">The relationship can not be made in this way between these nodes.</p>' );
+      if( ( ajaxSettings.type == 'POST' ) && jqXHR.status == 403 ) {
+      	  var errobj = jQuery.parseJSON( jqXHR.responseText );
+          $('#status').append( '<p class="error">Error: ' + errobj.error + '</br>The relationship cannot be made.</p>' );
       }
   } );
 
+  $( "#delete-form" ).dialog({
+    autoOpen: false,
+    height: 120,
+    width: 160,
+    modal: false,
+    buttons: {
+        Cancel: function() {
+            $( this ).dialog( "close" );
+        },
+        Delete: function() {
+          form_values = $('#delete_relation_form').serialize()
+          ncpath = getRelationshipURL()
+          var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
+              $.each( data, function(item, source_target) { 
+                  relation_manager.remove( source_target[0] + '->' + source_target[1] );
+              });
+              $( "#delete-form" ).dialog( "close" );
+          }, dataType: 'json', type: 'DELETE' });
+        }
+    },
+    create: function(event, ui) {
+        var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
+        buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
+        var dialog_aria = $("div[aria-labelledby='ui-dialog-title-delete-form']");  
+        dialog_aria.mouseenter( function() {
+            if( mouseWait != null ) { clearTimeout(mouseWait) };
+        })
+        dialog_aria.mouseleave( function() {
+            mouseWait = setTimeout( function() { $("#delete-form").dialog( "close" ) }, 2000 );
+        })
+    },
+    open: function() {
+        mouseWait = setTimeout( function() { $("#delete-form").dialog( "close" ) }, 2000 );
+    },
+    close: function() {
+    }
+  });
+
   $('#update_workspace_button').click( function() {
      var svg_enlargement = $('#svgenlargement').svg().svg('get').root();
-     if( $(this).data('locked')==true) {
-         $.each( ellipses_in_magnifier, function( index, ellipse ) {
-             ellipse.data( 'node_obj' ).ungreyout_edges();
-             ellipse.data( 'node_obj' ).set_draggable( false );
-             ellipse.data( 'node_obj', null );
-         })
-         // magnification on workspace lock temporarily disabled
-         // svg_enlargement.children[0].setAttribute( 'transform', $(this).data('transform_memo') );
-         // $('#enlargement').scrollLeft( $(this).data('scrollleft_memo') );
-         $(this).data('locked', false);
-         $(this).css('background-position', '0px 0px');
-     } else {
-         $(this).css('background-position', '0px 17px');
-         var y_min = parseInt( ellipses_in_magnifier[0].attr('cy') ) - parseInt( ellipses_in_magnifier[0].attr('ry') ); 
-         var y_max = parseInt( ellipses_in_magnifier[0].attr('cy') ) + parseInt( ellipses_in_magnifier[0].attr('ry') ); 
-         $.each( ellipses_in_magnifier, function( index, ellipse ) {
-             var ny_min = parseInt( ellipse.attr('cy') ) - parseInt( ellipse.attr('ry') ); 
-             var ny_max = parseInt( ellipse.attr('cy') ) + parseInt( ellipse.attr('ry') ); 
-             if( ny_min < y_min ) { y_min = ny_min }; 
-             if( ny_max > y_max ) { y_max = ny_max };
-             if( ellipse.data( 'node_obj' ) == null ) {
-                 ellipse.data( 'node_obj', new node_obj( ellipse ) );
-             } else {
-                 ellipse.data( 'node_obj' ).set_draggable( true );
+     mouse_scale = svg_root.children[0].getScreenCTM().a;
+     if( $(this).data('locked') == true ) {
+         $('#svgenlargement ellipse' ).each( function( index ) {
+             if( $(this).data( 'node_obj' ) != null ) {
+                 $(this).data( 'node_obj' ).ungreyout_edges();
+                 $(this).data( 'node_obj' ).set_draggable( false );
+                 var node_id = $(this).data( 'node_obj' ).get_id();
+                 toggle_relation_active( node_id );
+                 $(this).data( 'node_obj', null );
              }
-             ellipse.data( 'node_obj' ).greyout_edges();
          })
-         // magnification on workspace lock temporarily disabled
-         // var graph_frag_height = y_max - y_min ;
-         // var svg_enlargement_vbheight = svg_enlargement.viewBox.baseVal.height;
-         // var svg_enlargement_vbwidth = svg_enlargement.viewBox.baseVal.width;
-         // var scale = svg_enlargement_vbheight / graph_frag_height;
-         // mousemove_enlargement_ratio = scroll_enlargement_ratio * scale;
-         // var scroll_padding = $('#enlargement_container').width();
-         // var scroll_scale =  svg_enlargement_vbwidth / ( parseFloat( $('#svgenlargement svg').attr('width') ) - scroll_padding );
-         // var vbx_of_scroll = ( $('#enlargement').scrollLeft() ) * scroll_scale;
-         // var translate_x = vbx_of_scroll;
-         // var transform = svg_enlargement.children[0].getAttribute('transform');
-         // $(this).data('transform_memo', transform );
-         // $(this).data('scrollleft_memo', $('#enlargement').scrollLeft() ); 
+         $(this).data('locked', false);
+         $(this).css('background-position', '0px 44px');
+     } else {
+         var left = $('#enlargement').offset().left;
+         var right = left + $('#enlargement').width();
+         var tf = svg_root.children[0].getScreenCTM().inverse(); 
+         var p = svg_root.createSVGPoint();
+         p.x=left;
+         p.y=100;
+         var cx_min = p.matrixTransform(tf).x;
+         p.x=right;
+         var cx_max = p.matrixTransform(tf).x;
+         $('#svgenlargement ellipse').each( function( index ) {
+             var cx = parseInt( $(this).attr('cx') );
+             if( cx > cx_min && cx < cx_max) { 
+                 if( $(this).data( 'node_obj' ) == null ) {
+                     $(this).data( 'node_obj', new node_obj( $(this) ) );
+                 } else {
+                     $(this).data( 'node_obj' ).set_draggable( true );
+                 }
+                 $(this).data( 'node_obj' ).greyout_edges();
+                 var node_id = $(this).data( 'node_obj' ).get_id();
+                 toggle_relation_active( node_id );
+             }
+         });
+         $(this).css('background-position', '0px 0px');
          $(this).data('locked', true );
-         // $('#enlargement').scrollLeft(0);
-         // transform = 'scale(' + scale + ') translate(' + (-1 * translate_x) + ',' + (-1 * y_min) + ')';
-         // svg_enlargement.children[0].setAttribute( 'transform', transform );
      }
   });
   
-});
-
-$(window).mouseout(function (event) {
-  if ($('#graph').data('down')) {
-    try {
-      if (event.originalTarget.nodeName == 'BODY' || event.originalTarget.nodeName == 'HTML') {
-        $('#graph').data('down', false);
-      }                
-    } catch (e) {}
+  function toggle_relation_active( node_id ) {
+      $('#svgenlargement .relation').find( "title:contains('" + node_id +  "')" ).each( function(index) {
+          matchid = new RegExp( "^" + node_id );
+          if( $(this).text().match( matchid ) != null ) {
+              relation_manager.toggle_active( $(this).text() );
+          };
+      });
   }
+
 });
-
-function color_enlarged() {
-    ellipses_in_magnifier = [];
-    var scroll_offset = parseInt( $('#enlargement').scrollLeft() );
-    var scroll_padding = $('#enlargement_container').width()/2;
-    $('#svgenlargement ellipse,#svgbasics ellipse' ).each( function( index ) {
-        var cpos_inscrollcoor = parseInt( $(this).attr('cx') ) * scroll_enlargement_ratio;
-        if ( ( cpos_inscrollcoor > (scroll_offset - scroll_padding) ) && ( cpos_inscrollcoor < ( scroll_offset + scroll_padding ) ) ) {
-           $(this).attr( {stroke:'green', fill:'#b3f36d'} );
-           if( $(this).parents('#svgenlargement').size() == 1 ) { ellipses_in_magnifier.push( $(this) ) };
-        } else {
-           $(this).attr( {stroke:'black', fill:'#fff'} );
-        }
-    });   
-}
-
-
 
 
