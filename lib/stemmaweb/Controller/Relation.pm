@@ -91,6 +91,7 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $tradition = delete $c->stash->{'tradition'};
 	my $collation = $tradition->collation;
+	my $m = $c->model('Directory');
 	if( $c->request->method eq 'GET' ) {
 		my @pairs = $collation->relationships; # returns the edges
 		my @all_relations;
@@ -114,6 +115,7 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		try {
 			my @vectors = $collation->add_relationship( $node, $target, $opts );
 			$c->stash->{'result'} = \@vectors;
+			$m->save( $tradition );
 		} catch( Text::Tradition::Error $e ) {
 			$c->response->status( '403' );
 			$c->stash->{'result'} = { 'error' => $e->message };
@@ -124,6 +126,7 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 	
 		try {
 			my @vectors = $collation->del_relationship( $node, $target );
+			$m->save( $tradition );
 			$c->stash->{'result'} = \@vectors;
 		} catch( Text::Tradition::Error $e ) {
 			$c->response->status( '403' );

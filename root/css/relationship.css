@@ -68,7 +68,7 @@ span.apimore {
 #dialog_overlay {
     display: none;
     position: absolute;
-    background-image: url("/css/cupertino/images/ui-bg_diagonals-thick_90_eeeeee_40x40.png");
+    background-image: url("cupertino/images/ui-bg_diagonals-thick_90_eeeeee_40x40.png");
     background-repeat: repeat;
     background-attachment: scroll;
     background-position: 50% 50%;
@@ -86,7 +86,7 @@ span.apimore {
     width: 46px;
     margin-top: 17px;
     border: none;
-    background-image: url('/images/act_icons.png');
+    background-image: url('../images/act_icons.png');
     background-position: 0px 44px;
     background-color: none;
     background-repeat: none;
@@ -143,7 +143,7 @@ span.apimore {
     top: 140px;
     border: 2px solid #B0C6F7;
     background: #fff;
-    background: url("/css/cupertino/images/ui-bg_highlight-hard_100_f2f5f7_1x100.png");
+    background: url("cupertino/images/ui-bg_highlight-hard_100_f2f5f7_1x100.png");
     background-repeat: repeat-x;
     background-scroll: scroll;
     background-position: 50% top;
