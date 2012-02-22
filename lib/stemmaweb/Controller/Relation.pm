@@ -110,7 +110,8 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		my $scope = $c->request->param('scope');
 	
 		my $opts = { 'type' => $relation,
-					 'scope' => $scope };
+					 'scope' => $scope,
+					 'annotation' => $note };
 		
 		try {
 			my @vectors = $collation->add_relationship( $node, $target, $opts );
