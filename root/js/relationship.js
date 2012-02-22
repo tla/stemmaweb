@@ -57,6 +57,7 @@ function add_relations() {
                     var relation = relation_manager.create( rel_info.source, rel_info.target, type_index );
                     relation.data( 'type', rel_info.type );
                     relation.data( 'scope', rel_info.scope );
+                    relation.data( 'note', rel_info.note );
                     var node_obj = get_node_obj(rel_info.source);
                     node_obj.set_draggable( false );
                     node_obj.ellipse.data( 'node_obj', null );
@@ -341,7 +342,11 @@ function relation_factory() {
         }
     }
     this.showinfo = function(relation) {
-        $('#delete-form-text').html( 'type: ' + relation.data( 'type' ) + '<br/>scope: ' + relation.data( 'scope' ) );
+    	var htmlstr = 'type: ' + relation.data( 'type' ) + '<br/>scope: ' + relation.data( 'scope' );
+    	if( relation.data( 'note' ) ) {
+    		htmlstr = htmlstr + '<br/>note: ' + relation.data( 'note' );
+    	}
+        $('#delete-form-text').html( htmlstr );
         var points = relation.children('path').attr('d').slice(1).replace('C',' ').split(' ');
         var xs = parseFloat( points[0].split(',')[0] );
         var xe = parseFloat( points[1].split(',')[0] );
@@ -454,6 +459,7 @@ $(document).ready(function () {
                 var relation = relation_manager.create( source_target[0], source_target[1], $('#rel_type').attr('selectedIndex') );
                 relation.data( 'type', $('#rel_type :selected').text()  );
                 relation.data( 'scope', $('#scope :selected').text()  );
+                relation.data( 'note', $('#note').val()  );
                 relation_manager.toggle_active( relation.children('title').text() );
             });
             $( "#dialog-form" ).dialog( "close" );
@@ -501,7 +507,7 @@ $(document).ready(function () {
 
   $( "#delete-form" ).dialog({
     autoOpen: false,
-    height: 120,
+    height: 135,
     width: 160,
     modal: false,
     buttons: {

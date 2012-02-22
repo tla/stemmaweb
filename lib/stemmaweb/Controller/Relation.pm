@@ -97,9 +97,10 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		my @all_relations;
 		foreach my $p ( @pairs ) {
 			my $relobj = $collation->relations->get_relationship( @$p );
-			push( @all_relations, 
-				{ source => $p->[0], target => $p->[1], 
-				  type => $relobj->type, scope => $relobj->scope } );
+			my $relhash = { source => $p->[0], target => $p->[1], 
+				  type => $relobj->type, scope => $relobj->scope };
+			$relhash->{'note'} = $relobj->annotation if $relobj->has_annotation;
+			push( @all_relations, $relhash );
 		}
 		$c->stash->{'result'} = \@all_relations;
 	} elsif( $c->request->method eq 'POST' ) {
@@ -110,8 +111,8 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		my $scope = $c->request->param('scope');
 	
 		my $opts = { 'type' => $relation,
-					 'scope' => $scope,
-					 'annotation' => $note };
+					 'scope' => $scope };
+		$opts->{'annotation'} = $note if $note;
 		
 		try {
 			my @vectors = $collation->add_relationship( $node, $target, $opts );
