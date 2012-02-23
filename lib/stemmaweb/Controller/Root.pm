@@ -49,12 +49,7 @@ sub directory :Local :Args(0) {
     my $m = $c->model('Directory');
     # TODO not used yet, will load user texts later
     my $user = $c->request->param( 'user' ) || 'ALL';
-    my @textlist;
-    $m->scan( sub { 
-    	push( @textlist, {
-    		'id' => $m->object_to_id( @_ ),
-    		'name' => $_[0]->name } ) 
-    	} );    
+    my @textlist = $m->traditionlist();
     $c->stash->{texts} = \@textlist;
 	$c->stash->{template} = 'directory.tt';
 }
