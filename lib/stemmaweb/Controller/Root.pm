@@ -69,7 +69,7 @@ sub variantgraph :Local :Args(1) {
 	my $collation = $tradition->collation;
 	my $needsave = !$collation->has_cached_svg;
 	$c->stash->{'result'} = $collation->as_svg;
-	$m->save( $tradition );
+	$m->save( $tradition );  # to save generate SVG in the cache
 	$c->forward('View::SVG');
 }
 	
@@ -96,7 +96,6 @@ sub alignment :Local :Args(1) {
 			@{$alignment->{'alignment'}};
 		push( @$rows, { 'rank' => $i+1, 'readings' => \@rankrdgs } );
 	}
-	$c->log->debug( Dumper( $rows ) );
 	$c->stash->{'witnesses'} = $wits;
 	$c->stash->{'table'} = $rows;
 	$c->stash->{'template'} = 'alignment.tt';
