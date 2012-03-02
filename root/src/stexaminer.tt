@@ -29,7 +29,7 @@
 [% FOREACH reading IN row.readings -%]
 [% SET cellclass = 'clickable conflict' IF reading.conflict -%]
 [% SET cellclass = 'clickable' IF !reading.conflict -%]
-          <td class="[% cellclass %]"><span onclick="color_nodes($(this).parent().index(), [% reading.group %], [% reading.missing %]);$(this).parents('tr').addClass('active_variant_row');$(this).parent().addClass('active_variant_cell cellb'+($(this).parent().index()-1))">[% reading.text %]</span></td>
+          <td class="[% cellclass %]"><span onclick="color_nodes($(this).parent().index(), [% reading.group %], [% row.missing %]);$(this).parents('tr').addClass('active_variant_row');$(this).parent().addClass('active_variant_cell cellb'+($(this).parent().index()-1))">[% reading.text %]</span></td>
 [% END -%]
 [% FILTER repeat( row.empty ) -%]
           <td/>

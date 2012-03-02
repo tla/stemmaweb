@@ -3,7 +3,7 @@ use Moose;
 use namespace::autoclean;
 use File::Temp;
 use JSON;
-use Text::Tradition::Analysis qw/ run_analysis /;
+use Text::Tradition::Analysis qw/ run_analysis wit_stringify /;
 
 BEGIN { extends 'Catalyst::Controller' }
 
@@ -38,6 +38,15 @@ sub index :Path :Args(1) {
 		$c->stash->{template} = 'stexaminer.tt'; 
 		# TODO Run the analysis as AJAX from the loaded page.
 		my $t = run_analysis( $tradition );
+		# Stringify the reading groups
+		foreach my $loc ( @{$t->{'variants'}} ) {
+			my $mst = wit_stringify( $loc->{'missing'} );
+			$loc->{'missing'} = $mst;
+			foreach my $rhash ( @{$loc->{'readings'}} ) {
+				my $gst = wit_stringify( $rhash->{'group'} );
+				$rhash->{'group'} = $gst;
+			}
+		}
 		$c->stash->{variants} = $t->{'variants'};
 		$c->stash->{total} = $t->{'variant_count'};
 		$c->stash->{genealogical} = $t->{'genealogical_count'};
