@@ -586,6 +586,15 @@ $(document).ready(function () {
      }
   });
   
+  $('.helptag').popupWindow({ 
+	  height:500, 
+	  width:800, 
+	  top:50, 
+	  left:50,
+	  scrollbars:1 
+  }); 
+
+  
   function toggle_relation_active( node_id ) {
       $('#svgenlargement .relation').find( "title:contains('" + node_id +  "')" ).each( function(index) {
           matchid = new RegExp( "^" + node_id );

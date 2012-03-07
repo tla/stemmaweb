@@ -1,0 +1,40 @@
+[% PROCESS header.tt
+	pagetitle = "Stemmaweb - Relationship mapper"
+	applicationstyle = c.uri_for('/css/relationship.css')
+%]
+
+<div id="docco">
+ <h2>Text relationship mapper</h2>
+ <h3>An Interedition prototype interface</h3>
+ 
+ <p>The relationship mapper is a tool born of the joint requirements of the <a href="http://byzantini.st/treeoftexts/">Tree of Texts</a> project at the KU Leuven, and the <a href="http://www.bibelwissenschaft.de/start/editionsprojekte/editio-critica-maior-ecm/">Editio Critica Maior</a> project at the Institute for New Testament Research (INTF), University of Münster.</p>
+ 
+ <p>The premise of the tool is that, once a set of texts has been collated, there will be a need to chart the relationships between the variants—are they substantially the same word? Different words meaning the same thing? Is one an orthographic variant of the other that should be excluded from any eventual apparatus?</p>
+ 
+ <h3>Instructions for use</h3>
+ 
+ <p>The tool itself is an interface for allowing these relationships to be declared.  The collation is presented as a variant graph running from left to right.  In a variant graph, each node is a reading, and each witness takes a single path through the readings from beginning to end.  When readings appear vertically aligned with each other, it is an indication that they are variant readings, occurring at the same point in the text.
+ 
+ <p>In 'select' mode, when the nodes are green, you can navigate through the graph. Scrolling up or down will zoom in and out, respectively; dragging the graph will pan it in that direction.  Use this navigation to hone in on the part of the graph to be worked with.</p>
+ 
+ <p> When you are ready to draw relationships, click the 'pencil' icon to enter edit mode.  Here, dragging a reading node onto another reading will establish a relationship link between them. Fill in the details of the relationship as follows:</p>
+<p><em>Type</em> can be one of:</p>
+<ul>
+	<li>Orthographic - these are interchangeable representations of the same reading</li>
+	<li>Spelling - these are variant spellings of the same reading</li>
+	<li>Grammatical - these readings are word forms with the same lemma</li>
+	<li>Lexical - these readings fulfill corresponding functions in the text. Use the "Annotation" field to elaborate.</li>
+	<li>Meaning - these readings have corresponding meanings (e.g. synonyms, antonyms). Use the "Annotation" field to elaborate.</li>
+	<li>Transposition - this pair actually represents the same reading, but its location varies between witnesses.
+</ul>
+<p><em>Scope</em> can be one of:</p>
+<ul>
+	<li>Local - the relationship applies only at this point in the text</li>
+	<li>Global - the relationship applies throughout the text</li>
+</ul>
+ 
+ <p>The relationships are displayed as colored paths between readings; while in 'edit' mode, clicking on a relationship path will display the information associated with it, and give the user an option to delete it.  Deletion of a 'global' relationship will remove that relationship throughout the graph.  When you are ready to move elsewhere in the graph, click the 'hand' icon to return to select mode.<p>
+ 
+ <p>Please note that this tool is known to work with recent versions of Firefox (e.g. 8, 9, 10); it is known not to work with Safari and Chrome.</p>
+ 
+[% PROCESS footer.tt %]

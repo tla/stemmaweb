@@ -29,6 +29,19 @@ sub index :Path :Args(0) {
 	$c->stash->{'template'} = 'relate.tt';
 }
 
+=head2 help
+
+ GET relation/help
+
+Returns the help window HTML.
+
+=cut
+
+sub help :Local :Args(0) {
+	my( $self, $c ) = @_;
+	$c->stash->{'template'} = 'relatehelp.tt';
+}
+
 =head2 definitions
 
  GET relation/definitions

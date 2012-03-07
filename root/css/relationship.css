@@ -13,9 +13,18 @@ body {
 	height: 100px;
 	margin-top: 20px;
 }
+#bannerinfo {
+	float: right;
+	margin-right: 12%;
+	margin-top: 15px;
+}
 #logoimg {
 	float: left;
 	margin-left: 20px;
+}
+.helptag {
+	color: #488dd2;
+	text-decoration: underline;
 }
 #logotitle {
 	float: left;
