@@ -110,6 +110,7 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		my @all_relations;
 		foreach my $p ( @pairs ) {
 			my $relobj = $collation->relations->get_relationship( @$p );
+			next if $relobj->type eq 'collated'; # Don't show these
 			my $relhash = { source => $p->[0], target => $p->[1], 
 				  type => $relobj->type, scope => $relobj->scope };
 			$relhash->{'note'} = $relobj->annotation if $relobj->has_annotation;
