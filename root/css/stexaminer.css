@@ -1,15 +1,15 @@
 #variants_table {
     float: left;
-    width: 450px;
-    height: 550px;
-    border-right: 1px #c6dcf1 solid;
-    margin-left: 20px;
+    width: 90%;
+    height: 90px;
+    border: 1px #c6dcf1 solid;
+    margin-bottom: 20px;
     overflow: auto;
 }
 #stemma_graph {
     height: 450px;
     float: left;
-    width: 500px;
+    width: 700px;
     text-align: center;
     border: 1px #c6dcf1 solid;
 }

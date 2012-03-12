@@ -8,15 +8,15 @@
     <div id="statistics">
       <p>Analyzed [% total %] variant locations, of which [% genealogical %] entirely followed the stemma.  [% conflict %] readings conflicted with the stemma.</p>
     </div>
-    <div id="stemma_graph">
-      [% svg %]
-    </div>
     <div id="variants_table">
       <table>
 [% FOREACH row IN variants -%]
 [% INCLUDE variantrow %]
 [% END -%]
      </table>
+    </div>
+    <div id="stemma_graph">
+      [% svg %]
     </div>
 [% PROCESS footer.tt %]
     
