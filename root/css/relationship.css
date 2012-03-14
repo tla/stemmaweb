@@ -74,6 +74,15 @@ span.apimore {
     padding-top: 5px;
     padding-bottom: 5px;    
 }
+#loading_overlay {
+	display: none;
+	position: absolute;
+	height: 500px;
+	width: 89%;
+	z-index: 2;
+	opacity: 0.7;
+	background-color: #c5c5c5;
+}
 #dialog_overlay {
     display: none;
     position: absolute;

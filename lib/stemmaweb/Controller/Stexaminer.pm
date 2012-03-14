@@ -37,7 +37,7 @@ sub index :Path :Args(1) {
 		$c->stash->{text_title} = $tradition->name;
 		$c->stash->{template} = 'stexaminer.tt'; 
 		# TODO Run the analysis as AJAX from the loaded page.
-		my $t = run_analysis( $tradition );
+		my $t = run_analysis( $tradition, 'exclude_type1' => 1 );
 		# Stringify the reading groups
 		foreach my $loc ( @{$t->{'variants'}} ) {
 			my $mst = wit_stringify( $loc->{'missing'} );

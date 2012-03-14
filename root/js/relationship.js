@@ -21,6 +21,8 @@ function getRelationshipURL() {
 }
 
 function svgEnlargementLoaded() {
+	//Give some visual evidence that we are working
+	$('#loading_overlay').show();
     //Set viewbox widht and height to widht and height of $('#svgenlargement svg').
     //This is essential to make sure zooming and panning works properly.
     $('#svgenlargement ellipse').attr( {stroke:'green', fill:'#b3f36d'} );
@@ -42,6 +44,7 @@ function svgEnlargementLoaded() {
     //used to calculate min and max zoom level:
     start_element_height = $("#svgenlargement .node title:contains('#START#')").siblings('ellipse')[0].getBBox().height;
     add_relations();
+    // $('#loading_overlay').hide();
 }
 
 function add_relations() {
