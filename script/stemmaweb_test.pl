@@ -1,4 +1,5 @@
 #!/usr/bin/env perl
+eval { no warnings; $DB::deep = 1000; binmode $DB::OUT, ':utf8' };
 
 use Catalyst::ScriptRunner;
 Catalyst::ScriptRunner->run('stemmaweb', 'Test');
