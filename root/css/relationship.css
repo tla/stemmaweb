@@ -74,6 +74,28 @@ span.apimore {
     padding-top: 5px;
     padding-bottom: 5px;    
 }
+#loading_overlay {
+	display: none;
+	position: absolute;
+	height: 500px;
+	width: 89%;
+	z-index: 2;
+	opacity: 0.7;
+    background-image: url("cupertino/images/ui-bg_diagonals-thick_90_eeeeee_40x40.png");
+    background-repeat: repeat;
+    background-attachment: scroll;
+    background-position: 50% 50%;
+    background-color: #EEEEEE; 
+}
+#loading_message {
+	position: relative;
+	background-color: #EDF1FA;
+	color: #222222;
+    border: 2px solid #B0C6F7;
+	height: 20px;
+	width: 150px;
+	padding: 20px;
+}
 #dialog_overlay {
     display: none;
     position: absolute;
