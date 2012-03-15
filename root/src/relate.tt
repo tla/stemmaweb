@@ -19,7 +19,10 @@ $(function() {
 	</div>
 
 	<div id="enlargement_container">	
-		<div id="loading_overlay"></div>
+		<div id="loading_overlay">
+			<div id="loading_message"><span>Loading, please wait...</span></div>
+		</div>
+		<div id="dialog_overlay"></div>
 		<div id="enlargement">
 	        <div id="svgenlargement" style="height: 500px;"></div>
 		</div>

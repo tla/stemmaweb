@@ -23,6 +23,14 @@ function getRelationshipURL() {
 function svgEnlargementLoaded() {
 	//Give some visual evidence that we are working
 	$('#loading_overlay').show();
+	lo_height = $("#enlargement_container").outerHeight();
+	lo_width = $("#enlargement_container").outerWidth();
+	$("#loading_overlay").height( lo_height );
+	$("#loading_overlay").width( lo_width );
+	$("#loading_overlay").offset( $("#enlargement_container").offset() );
+	$("#loading_message").offset(
+		{ 'top': lo_height / 2 - $("#loading_message").height() / 2,
+		  'left': lo_width / 2 - $("#loading_message").width() / 2 });
     //Set viewbox widht and height to widht and height of $('#svgenlargement svg').
     //This is essential to make sure zooming and panning works properly.
     $('#svgenlargement ellipse').attr( {stroke:'green', fill:'#b3f36d'} );
@@ -43,11 +51,10 @@ function svgEnlargementLoaded() {
     svg_g.setAttribute('transform', transform);
     //used to calculate min and max zoom level:
     start_element_height = $("#svgenlargement .node title:contains('#START#')").siblings('ellipse')[0].getBBox().height;
-    add_relations();
-    // $('#loading_overlay').hide();
+    add_relations( function() { $('#loading_overlay').hide(); });
 }
 
-function add_relations() {
+function add_relations( callback_fn ) {
 	var basepath = getRelativePath();
 	var textrelpath = getRelationshipURL();
     $.getJSON( basepath + '/definitions', function(data) {
@@ -68,7 +75,8 @@ function add_relations() {
                     node_obj.set_draggable( false );
                     node_obj.ellipse.data( 'node_obj', null );
                 }
-            })
+            });
+            callback_fn.call();
         });
     });
 }
@@ -493,7 +501,7 @@ $(document).ready(function () {
         $(".ui-widget-overlay").css("background", "none");
         $("#dialog_overlay").show();
         $("#dialog_overlay").height( $("#enlargement_container").height() );
-        $("#dialog_overlay").width( $("#enlargement_container").width() );
+        $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
         $("#dialog_overlay").offset( $("#enlargement_container").offset() );
     },
     close: function() {
