@@ -8,16 +8,24 @@
 }
 #stemma_graph {
     height: 450px;
+    clear: both;
     float: left;
     width: 700px;
     text-align: center;
     border: 1px #c6dcf1 solid;
+}
+#row_statistics {
+	float: left;
+	padding: 30px;
 }
 #statistics {
     font-style: italic;
     margin-bottom: 25px;
     position: relative;
     top: -15px;
+}
+#stats_template {
+	display: none;
 }
 .genealogical {
     background: #88ffaa;

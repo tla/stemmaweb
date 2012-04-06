@@ -1,13 +1,21 @@
-[% PROCESS header.tt
+[% WRAPPER header.tt
 	pagetitle = "Stexaminer - $text_title"
 	applicationjs = c.uri_for('/js/stexaminer.js')
 	applicationstyle = c.uri_for('/css/stexaminer.css')
 %]
+<script type="text/javascript">
+var readingstats = [% reading_statistics %];
+function show_stats( row_index ) {
+	var rs = readingstats[row_index];
+	var rshtml = $('#stats_template').clone();
+	rshtml.find('#statrank').append( rs.id );
+	$('#row_statistics').empty();
+	$('#row_statistics').append( rshtml.contents() );
+};
+</script>
+[% END -%]
     <h1>Stexaminer</h1>
     <h2>[% text_title %]</h2>
-    <div id="statistics">
-      <p>Analyzed [% total %] variant locations, of which [% genealogical %] entirely followed the stemma.  [% conflict %] readings conflicted with the stemma.</p>
-    </div>
     <div id="variants_table">
       <table>
 [% FOREACH row IN variants -%]
@@ -18,6 +26,19 @@
     <div id="stemma_graph">
       [% svg %]
     </div>
+    <div id="row_statistics">
+      <h3>Aggregate text statistics</h3>
+      <ul>
+      	<li>Total number of variant locations analyzed: [% total %]</li>
+        <li>Number of fully genealogical locations: [% genealogical %]</li>
+        <li>Number of readings that conflict with the stemma: [% conflict %]</li>
+      </ul>
+      <p>(Choose a row in the table to display statistics about individual readings.)</p>
+    </div>
+    <div id="stats_template">
+	    <h3>Statistics for readings at <span id="statrank"></span></h3>
+    </div>
+
 [% PROCESS footer.tt %]
     
 
@@ -25,7 +46,7 @@
 [% SET rowclass = 'class="genealogical"' IF row.genealogical -%]
 [% SET rowclass = 'class="coincidental"' UNLESS row.genealogical -%]
         <tr [% rowclass %]>
-          <th><span class="rowid">[% row.id %]</span></th>
+          <th><span class="rowid" onclick="color_row($(this));show_stats($(this).parent().parent().index())">[% row.id %]</span></th>
 [% FOREACH reading IN row.readings -%]
 [% SET cellclass = 'clickable conflict' IF reading.conflict -%]
 [% SET cellclass = 'clickable' IF !reading.conflict -%]

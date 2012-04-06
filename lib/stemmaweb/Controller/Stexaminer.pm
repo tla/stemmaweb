@@ -47,10 +47,13 @@ sub index :Path :Args(1) {
 				$rhash->{'group'} = $gst;
 			}
 		}
+		# Values for TT rendering
 		$c->stash->{variants} = $t->{'variants'};
 		$c->stash->{total} = $t->{'variant_count'};
 		$c->stash->{genealogical} = $t->{'genealogical_count'};
-		$c->stash->{conflict} = $t->{'conflict_count'};
+		$c->stash->{conflict} = $t->{'conflict_count'};		
+		# Also make a JSON stash of the data for the statistics tables
+		$c->stash->{reading_statistics} = to_json( $t->{'variants'} );
 	} else {
 		$c->stash->{error} = 'Tradition ' . $tradition->name 
 			. 'has no stemma for analysis.';

@@ -1,18 +1,17 @@
 var colors = ['#ffeeaa','#afc6e9','#d5fff6','#ffccaa','#ffaaaa','#e5ff80','#e5d5ff','#ffd5e5'];
 var row_triggered = false;
-$(document).ready(function() {
-  $('.rowid').click( function() {
+
+function color_row( row ) {
     row_triggered = true;
     $('ellipse').attr( {stroke:'white', fill:'#fff'} );
     $('.node').children('polygon').attr( {stroke:'#fff', fill:'#fff'} );
     $('.node').children('text').attr( {stroke:'none', fill:'#000'} );
     $('tr.active_variant_row').children('td').removeClass('cellb0 cellb1 cellb2 cellb3 cellb4 cellb5 cellb6 cellb7'); 
-    $(this).parent().nextAll('.clickable').children('span').click();
+    row.parent().nextAll('.clickable').children('span').click();
     $('td.active_variant_cell').removeClass('active_variant_cell');
     row_triggered = false;
-  });
-  $('svg').width('485px');
-})
+}
+
 function color_nodes( column_index, arr_node_ids, arr_greynode_ids ) {
   if( !row_triggered ) {
     $('tr.active_variant_row').children('td').removeClass('cellb0 cellb1 cellb2 cellb3 cellb4 cellb5 cellb6 cellb7'); 
