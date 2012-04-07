@@ -16,6 +16,13 @@ $(function() {
 		</div>
 		<h1>Relationship mapper</h1>
 		<h2>[% text_title %]</h2>
+		<div id="segmentation">
+[% FOREACH segment IN textsegments -%]
+			<a href="[% c.uri_for( "/relation/$textid" ) %]?start=[% segment.start %]">
+				<span class="segment_guide">[% segment.start %] – [% segment.end %]</span>
+			</a>
+[% END -%]
+		</div>
 	</div>
 
 	<div id="enlargement_container">	

@@ -1,7 +1,12 @@
 function getTextPath() {
     var currpath = window.location.pathname
+    // Get rid of trailing slash
     if( currpath.lastIndexOf('/') == currpath.length - 1 ) { 
     	currpath = currpath.slice( 0, currpath.length - 1) 
+    };
+    // Get rid of query parameters
+    if( currpath.lastIndexOf('?') != -1 ) {
+    	currpath = currpath.slice( 0, currpath.lastIndexOf('?') );
     };
     var path_elements = currpath.split('/');
     var textid = path_elements.pop();
@@ -50,7 +55,7 @@ function svgEnlargementLoaded() {
     var transform = 'rotate(0) scale(' + scale + ') translate(4 ' + translate + ')';
     svg_g.setAttribute('transform', transform);
     //used to calculate min and max zoom level:
-    start_element_height = $("#svgenlargement .node title:contains('#START#')").siblings('ellipse')[0].getBBox().height;
+    start_element_height = $("#svgenlargement .node title:contains('START#')").siblings('ellipse')[0].getBBox().height;
     add_relations( function() { $('#loading_overlay').hide(); });
 }
 
@@ -63,7 +68,9 @@ function add_relations( callback_fn ) {
         function(data) {
             $.each(data, function( index, rel_info ) {
                 var type_index = $.inArray(rel_info.type, rel_types);
-                if( type_index != -1 ) {
+                var source_found = get_ellipse( rel_info.source );
+                var target_found = get_ellipse( rel_info.target );
+                if( type_index != -1 && source_found.size() && target_found.size() ) {
                     var relation = relation_manager.create( rel_info.source, rel_info.target, type_index );
                     relation.data( 'type', rel_info.type );
                     relation.data( 'scope', rel_info.scope );

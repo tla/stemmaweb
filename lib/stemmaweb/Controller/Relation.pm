@@ -69,33 +69,66 @@ sub definitions :Local :Args(0) {
 
 sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	my( $self, $c, $textid ) = @_;
-	$c->stash->{'tradition'} = $c->model('Directory')->tradition( $textid );
+	# If the tradition has more than 500 ranks or so, split it up.
+	my $tradition = $c->model('Directory')->tradition( $textid );
+	my $length = $tradition->collation->end->rank;
+	if( $length > 700 ) {
+		# Segment the tradition in order not to overload the browser.
+		# Split it up into units of 500 ranks, but have each segment show
+		# 550 ranks so that overlap works.
+		my @divs;
+		my $r = 0;
+		while( $r + 50 < $length ) {
+			push( @divs, $r );
+			$r += 500;
+		}
+		$c->stash->{'textsegments'} = [];
+		foreach my $start ( @divs ) {
+			my $seg = { 'start' => $start };
+			$seg->{'end'} = $start + 550 > $length ? $length : $start + 550;
+			push( @{$c->stash->{'textsegments'}}, $seg );
+		}
+	}
+	$c->stash->{'textid'} = $textid;
+	$c->stash->{'tradition'} = $tradition;
 }
 
 sub main :Chained('text') :PathPart('') :Args(0) {
 	my( $self, $c ) = @_;
+	my $startseg = $c->req->param('start');
 	my $tradition = delete $c->stash->{'tradition'};
 	my $collation = $tradition->collation;
-	my $svg_str = $collation->as_svg;
+	my $svgopts;
+	if( $startseg ) {
+		# Only render the subgraph from startseg to +500 or end,
+		# whichever is less.
+		$svgopts = { 'from' => $startseg };
+		$svgopts->{'to'} = $startseg + 550
+			if $startseg + 550 < $collation->end->rank;
+	} elsif( exists $c->stash->{'textsegments'} ) {
+		# This is the unqualified load of a long tradition. We implicitly start 
+		# at zero, but go only as far as 550.
+		$svgopts = { 'to' => 550 };
+	}
+	my $svg_str = $collation->as_svg( $svgopts );
 	$svg_str =~ s/\n//gs;
 	$c->stash->{'svg_string'} = $svg_str;
 	$c->stash->{'text_title'} = $tradition->name;
 	$c->stash->{'template'} = 'relate.tt';
-
 }
 
 =head2 relationships
 
- GET $textid/relationships
+ GET relation/$textid/relationships
 
 Returns the list of relationships defined for this text.
 
- POST $textid/relationships { request }
+ POST relation/$textid/relationships { request }
  
 Attempts to define the requested relationship within the text. Returns 200 on
 success or 403 on error.
 
- DELETE $textid/relationships { request }
+ DELETE relation/$textid/relationships { request }
  
 
 =cut
