@@ -18,9 +18,13 @@ $(function() {
 		<h2>[% text_title %]</h2>
 		<div id="segmentation">
 [% FOREACH segment IN textsegments -%]
+[% IF segment.start != startseg -%]
 			<a href="[% c.uri_for( "/relation/$textid" ) %]?start=[% segment.start %]">
-				<span class="segment_guide">[% segment.start %] – [% segment.end %]</span>
+				<span class="segment_guide">[% segment.display %]</span>
 			</a>
+[% ELSE -%]
+			<span class="segment_guide selected">[% segment.display %]</span>
+[% END -%]
 [% END -%]
 		</div>
 	</div>

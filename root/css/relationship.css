@@ -33,8 +33,12 @@ body {
 	padding-top: 40px;
 }
 .segment_guide {
+	color: #488dd2;
 	padding-left: 30px;
 	padding-right: 30px;
+}
+.selected {
+	background-color: #dadada;
 }
 h1.title a:link, h1.title a:visited, h1.title a:active {
 	color: #666;

@@ -83,12 +83,13 @@ sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 			$r += 500;
 		}
 		$c->stash->{'textsegments'} = [];
-		foreach my $start ( @divs ) {
-			my $seg = { 'start' => $start };
-			$seg->{'end'} = $start + 550 > $length ? $length : $start + 550;
+		foreach my $i ( 0..$#divs ) {
+			my $seg = { 'start' => $divs[$i] };
+			$seg->{'display'} = "Segment " . ($i+1);
 			push( @{$c->stash->{'textsegments'}}, $seg );
 		}
 	}
+	$DB::single = 1;
 	$c->stash->{'textid'} = $textid;
 	$c->stash->{'tradition'} = $tradition;
 }
@@ -100,7 +101,7 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	my $collation = $tradition->collation;
 	my $svgopts;
 	if( $startseg ) {
-		# Only render the subgraph from startseg to +500 or end,
+		# Only render the subgraph from startseg to +550 or end,
 		# whichever is less.
 		$svgopts = { 'from' => $startseg };
 		$svgopts->{'to'} = $startseg + 550
@@ -108,10 +109,12 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	} elsif( exists $c->stash->{'textsegments'} ) {
 		# This is the unqualified load of a long tradition. We implicitly start 
 		# at zero, but go only as far as 550.
+		$startseg = 0;
 		$svgopts = { 'to' => 550 };
 	}
 	my $svg_str = $collation->as_svg( $svgopts );
 	$svg_str =~ s/\n//gs;
+	$c->stash->{'startseg'} = $startseg if defined $startseg;
 	$c->stash->{'svg_string'} = $svg_str;
 	$c->stash->{'text_title'} = $tradition->name;
 	$c->stash->{'template'} = 'relate.tt';
