@@ -124,12 +124,14 @@ function node_obj(ellipse) {
   
   this.set_draggable = function( draggable ) {
     if( draggable ) {
-      self.ellipse.attr( {stroke:'black', fill:'#fff'} );
-      self.ellipse.mousedown( this.mousedown_listener );
-      self.ellipse.hover( this.enter_node, this.leave_node );  
+      $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
+      $(self.ellipse).parent().mousedown( this.mousedown_listener );
+      $(self.ellipse).parent().hover( this.enter_node, this.leave_node ); 
+      self.ellipse.siblings('text').attr('class', 'noselect draggable');
     } else {
-      self.ellipse.unbind('mouseenter').unbind('mouseleave').unbind('mousedown');
-      self.ellipse.attr( {stroke:'green', fill:'#b3f36d'} );
+      self.ellipse.siblings('text').attr('class', '');
+      $(self.ellipse).parent().unbind('mouseenter').unbind('mouseleave').unbind('mousedown');     
+      $(self.ellipse).attr( {stroke:'green', fill:'#b3f36d'} );
     }
   }
 
@@ -139,7 +141,7 @@ function node_obj(ellipse) {
     self.y = evt.clientY;
     $('body').mousemove( self.mousemove_listener );
     $('body').mouseup( self.mouseup_listener );
-    self.ellipse.unbind('mouseenter').unbind('mouseleave')
+    $(self.ellipse).parent().unbind('mouseenter').unbind('mouseleave')
     self.ellipse.attr( 'fill', '#ff66ff' );
     first_node_g_element = $("#svgenlargement g .node" ).filter( ":first" );
     if( first_node_g_element.attr('id') !== self.get_g().attr('id') ) { self.get_g().insertBefore( first_node_g_element ) };
@@ -149,20 +151,27 @@ function node_obj(ellipse) {
     self.dx = (evt.clientX - self.x) / mouse_scale;
     self.dy = (evt.clientY - self.y) / mouse_scale;
     self.move_elements();
+    evt.returnValue = false;
+    evt.preventDefault();
+    return false;
   }
 
   this.mouseup_listener = function(evt) {    
     if( $('ellipse[fill="#ffccff"]').size() > 0 ) {
         var source_node_id = self.ellipse.siblings('title').text();
+        var source_node_text = self.ellipse.siblings('text').text();
         var target_node_id = $('ellipse[fill="#ffccff"]').siblings("title").text();
+        var target_node_text = $('ellipse[fill="#ffccff"]').siblings("text").text();
         $('#source_node_id').val( source_node_id );
+        $('#source_node_text').val( source_node_text );
         $('#target_node_id').val( target_node_id );
+        $('#target_node_text').val( target_node_text );
         $('#dialog-form').dialog( 'open' );
     };
     $('body').unbind('mousemove');
     $('body').unbind('mouseup');
     self.ellipse.attr( 'fill', '#fff' );
-    self.ellipse.hover( self.enter_node, self.leave_node );
+    $(self.ellipse).parent().hover( self.enter_node, self.leave_node );
     self.reset_elements();
   }
 
@@ -250,12 +259,14 @@ function svgpath( path_element, svg_element ) {
       if( this.svg_element.parent(filter).size() != 0 ) {
           this.svg_element.attr('stroke', '#e5e5e5');
           this.svg_element.siblings('text').attr('fill', '#e5e5e5');
+          this.svg_element.siblings('text').attr('class', 'noselect');
       }
   }
   this.un_grey_out = function(filter) {
       if( this.svg_element.parent(filter).size() != 0 ) {
           this.svg_element.attr('stroke', '#000000');
           this.svg_element.siblings('text').attr('fill', '#000000');
+          this.svg_element.siblings('text').attr('class', '');
       }
   }
 }
