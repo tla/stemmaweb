@@ -52,8 +52,7 @@ Returns a data structure giving the valid types and scopes for a relationship.
 
 sub definitions :Local :Args(0) {
 	my( $self, $c ) = @_;
-	my $valid_relationships = [ qw/ spelling orthographic grammatical meaning 
-									lexical transposition / ];
+	my $valid_relationships = [ qw/ spelling orthographic grammatical lexical transposition / ];
 	my $valid_scopes = [ qw/ local global / ];
 	$c->stash->{'result'} = { 'types' => $valid_relationships, 'scopes' => $valid_scopes };
 	$c->forward('View::JSON');
