@@ -70,18 +70,30 @@ sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	my( $self, $c, $textid ) = @_;
 	# If the tradition has more than 500 ranks or so, split it up.
 	my $tradition = $c->model('Directory')->tradition( $textid );
+	# See how big the tradition is. Edges are more important than nodes
+	# when it comes to rendering difficulty.
+	my $numnodes = scalar $tradition->collation->readings;
+	my $numedges = scalar $tradition->collation->paths;
 	my $length = $tradition->collation->end->rank;
-	if( $length > 700 ) {
+	# We should display no more than roughly 500 nodes, or roughly 700
+	# edges, at a time.
+	my $segments = $numnodes / 500;
+	if( $numedges / 700 > $segments ) {
+		$segments = $numedges / 700;
+	}
+	my $segsize = sprintf( "%.0f", $length / $segments );
+	my $margin = sprintf( "%.0f", $segsize / 10 );
+	if( $segments > 1 ) {
 		# Segment the tradition in order not to overload the browser.
-		# Split it up into units of 500 ranks, but have each segment show
-		# 550 ranks so that overlap works.
 		my @divs;
 		my $r = 0;
-		while( $r + 50 < $length ) {
+		while( $r + $margin < $length ) {
 			push( @divs, $r );
-			$r += 500;
+			$r += $segsize;
 		}
 		$c->stash->{'textsegments'} = [];
+		$c->stash->{'segsize'} = $segsize;
+		$c->stash->{'margin'} = $margin;
 		foreach my $i ( 0..$#divs ) {
 			my $seg = { 'start' => $divs[$i] };
 			$seg->{'display'} = "Segment " . ($i+1);
@@ -100,16 +112,17 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	my $collation = $tradition->collation;
 	my $svgopts;
 	if( $startseg ) {
-		# Only render the subgraph from startseg to +550 or end,
+		# Only render the subgraph from startseg to endseg or to END,
 		# whichever is less.
+		my $endseg = $startseg + $c->stash->{'segsize'} + $c->stash->{'margin'};
 		$svgopts = { 'from' => $startseg };
-		$svgopts->{'to'} = $startseg + 550
-			if $startseg + 550 < $collation->end->rank;
+		$svgopts->{'to'} = $endseg if $endseg < $collation->end->rank;
 	} elsif( exists $c->stash->{'textsegments'} ) {
 		# This is the unqualified load of a long tradition. We implicitly start 
 		# at zero, but go only as far as 550.
+		my $endseg = $c->stash->{'segsize'} + $c->stash->{'margin'};
 		$startseg = 0;
-		$svgopts = { 'to' => 550 };
+		$svgopts = { 'to' => $endseg };
 	}
 	my $svg_str = $collation->as_svg( $svgopts );
 	$svg_str =~ s/\n//gs;
