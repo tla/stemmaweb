@@ -7,9 +7,6 @@ use base 'Catalyst::View::TT';
 
 __PACKAGE__->config(
     TEMPLATE_EXTENSION => '.tt',
-    INCLUDE_PATH => [
-    	stemmaweb->path_to( 'root', 'src' ),
-    ],
     ENCODING => 'utf-8',
     render_die => 1,
 );

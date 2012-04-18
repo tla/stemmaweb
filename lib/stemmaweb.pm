@@ -43,6 +43,11 @@ __PACKAGE__->config(
 	'View::JSON' => {
 		expose_stash => 'result',
 	},
+	'View::TT' => {
+		INCLUDE_PATH => [
+			stemmaweb->path_to( 'root', 'src' ),
+		],
+	},
 );
 
 # Start the application
