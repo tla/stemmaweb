@@ -70,6 +70,12 @@ sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	my( $self, $c, $textid ) = @_;
 	# If the tradition has more than 500 ranks or so, split it up.
 	my $tradition = $c->model('Directory')->tradition( $textid );
+    # Account for a bad interaction between FastCGI and KiokuDB
+    unless( $tradition->collation->tradition ) {
+        $c->log->warn( "Fixing broken tradition link" );
+        $tradition->collation->_set_tradition( $tradition );
+        $c->model('Directory')->save( $tradition );
+    }
 	# See how big the tradition is. Edges are more important than nodes
 	# when it comes to rendering difficulty.
 	my $numnodes = scalar $tradition->collation->readings;
@@ -100,7 +106,6 @@ sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 			push( @{$c->stash->{'textsegments'}}, $seg );
 		}
 	}
-	$DB::single = 1;
 	$c->stash->{'textid'} = $textid;
 	$c->stash->{'tradition'} = $tradition;
 }
@@ -159,6 +164,7 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		foreach my $p ( @pairs ) {
 			my $relobj = $collation->relations->get_relationship( @$p );
 			next if $relobj->type eq 'collated'; # Don't show these
+			next if $p->[0] eq $p->[1]; # HACK until bugfix
 			my $relhash = { source => $p->[0], target => $p->[1], 
 				  type => $relobj->type, scope => $relobj->scope };
 			$relhash->{'note'} = $relobj->annotation if $relobj->has_annotation;
