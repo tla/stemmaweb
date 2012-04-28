@@ -485,11 +485,15 @@ $(document).ready(function () {
         $(':button :contains("Ok")').attr("disabled", true);
         var jqjson = $.post( ncpath, form_values, function(data) {
             $.each( data, function(item, source_target) { 
-                var relation = relation_manager.create( source_target[0], source_target[1], $('#rel_type').attr('selectedIndex') );
-                relation.data( 'type', $('#rel_type :selected').text()  );
-                relation.data( 'scope', $('#scope :selected').text()  );
-                relation.data( 'note', $('#note').val()  );
-                relation_manager.toggle_active( relation.children('title').text() );
+            	var source_found = get_ellipse( source_target[0] );
+            	var target_found = get_ellipse( source_target[1] );
+            	if( source_found.size() && target_found.size() ) {
+					var relation = relation_manager.create( source_target[0], source_target[1], $('#rel_type').attr('selectedIndex') );
+					relation.data( 'type', $('#rel_type :selected').text()  );
+					relation.data( 'scope', $('#scope :selected').text()  );
+					relation.data( 'note', $('#note').val()  );
+					relation_manager.toggle_active( relation.children('title').text() );
+				}
             });
             $( "#dialog-form" ).dialog( "close" );
         }, 'json' );
