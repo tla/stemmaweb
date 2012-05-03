@@ -4,8 +4,9 @@
 	applicationstyle = c.uri_for('/css/relationship.css')
 %]
 <script type="text/javascript">
-$(function() {
-  $('#svgenlargement').svg({loadURL: '[% svg_string %]', onLoad: svgEnlargementLoaded});
+
+$(document).ready(function () {
+  loadSVG('[% svg_string %]');
 });
 </script>
 [% END %]
@@ -29,41 +30,45 @@ $(function() {
 		</div>
 	</div>
 
-	<div id="enlargement_container">	
+	<div id="enlargement_container" class="fillPage">	
 		<div id="loading_overlay">
 			<div id="loading_message"><span>Loading, please wait...</span></div>
 		</div>
 		<div id="dialog_overlay"></div>
-		<div id="enlargement">
-	        <div id="svgenlargement" style="height: 500px;"></div>
+		<div id="enlargement" style="">
+	        <div id="svgenlargement"  class="fillPage"></div>
 		</div>
 	</div>
 	
 	<div id="update_workspace_button"></div>
 	
-	<div id="dialog-form" title="Create relation between two nodes..">
-		<form id="collapse_node_form">
+	<div id="dialog-form" title="Create relation between two nodes...">
+		<form id="collapse_node_form" action="#">
 		<fieldset>
 			<input type="hidden" name="source_id" id="source_node_id"/>
+			<input type="hidden" name="source_text" id="source_node_text"/>
 			<input type="hidden" name="target_id" id="target_node_id"/>
+			<input type="hidden" name="target_text" id="target_node_text"/>
 			<label for="rel_type">Relation type..&nbsp;</label>
 			<select name="rel_type" id="rel_type" class=".ui-widget select">
+				<option></option>
 			</select>
 			<br/><br/>
 			<label for="scope">Scope of relation..&nbsp;</label>
 			<select name="scope" id="scope" class=".ui-widget select">
+				<option></option>
 			</select>
 			<br/><br/>
 			<label for="note">Annotation or note..&nbsp;</label>
-			<input type="text" width="60" name="note" id="note" class=".ui-widget input" />
+			<textarea rows="3" style="width:100%;" name="note" id="note" class=".ui-widget input"></textarea>
 		</fieldset>
     	<div id="status"></div>		
 		</form>
 	</div>
 	<div id="dialog_overlay"></div>
 
-	<div id="delete-form" title="Relation info..">
-		<form id="delete_relation_form">
+	<div id="delete-form" title="Relation info...">
+		<form id="delete_relation_form" action="#">
 			<input type="hidden" name="source_id" id="delete_source_node_id"/>
 			<input type="hidden" name="target_id" id="delete_target_node_id"/>
 		</form>
@@ -73,6 +78,7 @@ $(function() {
     <p/><p/>	
     <div id="keymap">
         <ul id="keymaplist">
+          <li></li>
         </ul>
     </div>
     

@@ -1,5 +1,11 @@
+var MARGIN=30;
+var svg_root = null;
+var svg_root_element = null;
+var start_element_height = 0;
+var reltypes = {};
+
 function getTextPath() {
-    var currpath = window.location.pathname
+    var currpath = window.location.pathname;
     // Get rid of trailing slash
     if( currpath.lastIndexOf('/') == currpath.length - 1 ) { 
     	currpath = currpath.slice( 0, currpath.length - 1) 
@@ -37,11 +43,55 @@ function svgEnlargementLoaded() {
 		{ 'top': lo_height / 2 - $("#loading_message").height() / 2,
 		  'left': lo_width / 2 - $("#loading_message").width() / 2 });
     //Set viewbox widht and height to widht and height of $('#svgenlargement svg').
+    $('#update_workspace_button').data('locked', false);
+    $('#update_workspace_button').css('background-position', '0px 44px');
     //This is essential to make sure zooming and panning works properly.
     $('#svgenlargement ellipse').attr( {stroke:'green', fill:'#b3f36d'} );
     var graph_svg = $('#svgenlargement svg');
     var svg_g = $('#svgenlargement svg g')[0];
+    if (!svg_g) return;
     svg_root = graph_svg.svg().svg('get').root();
+
+    // Find the real root and ignore any text nodes
+    for (i = 0; i < svg_root.childNodes.length; ++i) {
+        if (svg_root.childNodes[i].nodeName != '#text') {
+		svg_root_element = svg_root.childNodes[i];
+		break;
+	   }
+    }
+
+    // This might be a little application specific and should be pushed to the backend
+    // but... This collapes corrector hands when they agree with the original
+    // e.g., P46-*,P46-C becomes simply P46
+    $(svg_root).find('text').each(function () {
+		var t = $(this).text();
+		var ws = t.split(',');
+		for (i = 0; i < ws.length; ++i) {
+			if (ws[i].indexOf('-*')> -1) {
+				var collapse = false;
+				var main = $.trim(ws[i].substring(0,ws[i].indexOf('-')));
+				for (j = 0; j < ws.length; ++j) {
+					if (i != j && ws[j].indexOf('-')> -1) {
+						var pair = $.trim(ws[j].substring(0,ws[j].indexOf('-')));
+						if (main == pair) {
+							collapse = true;
+							ws[j] = '';
+						}
+					}
+				}
+				if (collapse) ws[i] = main;
+			}
+		}
+		t = '';
+		for (i = 0; i < ws.length; ++i) {
+			if (ws[i].length) {
+				if (t.length>0) t+=', ';
+				t+=ws[i];
+			}
+		}
+		$(this).text(t);
+	});
+
     svg_root.viewBox.baseVal.width = graph_svg.attr( 'width' );
     svg_root.viewBox.baseVal.height = graph_svg.attr( 'height' );
     //Now set scale and translate so svg height is about 150px and vertically centered in viewbox.
@@ -384,7 +434,7 @@ function relation_factory() {
         var p = svg_root.createSVGPoint();
         p.x = xs + ((xe-xs)*1.1);
         p.y = ye - ((ye-ys)/2);
-        var ctm = svg_root.children[0].getScreenCTM();
+        var ctm = svg_root_element.getScreenCTM();
         var nx = p.matrixTransform(ctm).x;
         var ny = p.matrixTransform(ctm).y;
         var dialog_aria = $ ("div[aria-labelledby='ui-dialog-title-delete-form']");
@@ -428,11 +478,13 @@ $(document).ready(function () {
         .data('x', event.clientX)
         .data('y', event.clientY)
         .data('scrollLeft', this.scrollLeft)
-        stateTf = svg_root.children[0].getCTM().inverse();
+        stateTf = svg_root_element.getCTM().inverse();
         var p = svg_root.createSVGPoint();
         p.x = event.clientX;
         p.y = event.clientY;
         stateOrigin = p.matrixTransform(stateTf);
+        event.returnValue = false;
+        event.preventDefault();
         return false;
   }).mouseup(function (event) {
         $(this).data('down', false);
@@ -445,22 +497,28 @@ $(document).ready(function () {
         p = p.matrixTransform(stateTf);
         var matrix = stateTf.inverse().translate(p.x - stateOrigin.x, p.y - stateOrigin.y);
         var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
-        svg_root.children[0].setAttribute("transform", s);
+        svg_root_element.setAttribute("transform", s);
     }
+    event.returnValue = false;
+    event.preventDefault();
   }).mousewheel(function (event, delta) {
     event.returnValue = false;
     event.preventDefault();
     if ( $('#update_workspace_button').data('locked') == false ) {
+        if (!delta || delta == null || delta == 0) delta = event.originalEvent.wheelDelta;
+        if (!delta || delta == null || delta == 0) delta = -1 * event.originalEvent.detail;
         if( delta < -9 ) { delta = -9 }; 
         var z = 1 + delta/10;
-        var g = svg_root.children[0];
-        if( (z<1 && (g.getScreenCTM().a * start_element_height) > 4.0) || (z>1 && (g.getScreenCTM().a * start_element_height) < 100) ) {
+        z = delta > 0 ? 1 : -1;
+        var g = svg_root_element;
+        if (g && ((z<1 && (g.getScreenCTM().a * start_element_height) > 4.0) || (z>=1 && (g.getScreenCTM().a * start_element_height) < 100))) {
             var root = svg_root;
             var p = root.createSVGPoint();
-            p.x = event.clientX;
-            p.y = event.clientY;
+            p.x = event.originalEvent.clientX;
+            p.y = event.originalEvent.clientY;
             p = p.matrixTransform(g.getCTM().inverse());
-            var k = root.createSVGMatrix().translate(p.x, p.y).scale(z).translate(-p.x, -p.y);
+            var scaleLevel = 1+(z/20);
+            var k = root.createSVGMatrix().translate(p.x, p.y).scale(scaleLevel).translate(-p.x, -p.y);
             var matrix = g.getCTM().multiply(k);
             var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
             g.setAttribute("transform", s);
@@ -480,7 +538,7 @@ $(document).ready(function () {
     buttons: {
       "Ok": function() {
         $('#status').empty();
-        form_values = $('#collapse_node_form').serialize()
+        form_values = $('#collapse_node_form').serialize();
         ncpath = getRelationshipURL();
         $(':button :contains("Ok")').attr("disabled", true);
         var jqjson = $.post( ncpath, form_values, function(data) {
@@ -488,7 +546,7 @@ $(document).ready(function () {
             	var source_found = get_ellipse( source_target[0] );
             	var target_found = get_ellipse( source_target[1] );
             	if( source_found.size() && target_found.size() ) {
-					var relation = relation_manager.create( source_target[0], source_target[1], $('#rel_type').attr('selectedIndex') );
+                var relation = relation_manager.create( source_target[0], source_target[1], $('#rel_type')[0].selectedIndex-1 );
 					relation.data( 'type', $('#rel_type :selected').text()  );
 					relation.data( 'scope', $('#scope :selected').text()  );
 					relation.data( 'note', $('#note').val()  );
@@ -509,12 +567,12 @@ $(document).ready(function () {
         var jqjson = $.getJSON( basepath + '/definitions', function(data) {
             var types = data.types.sort();
             $.each( types, function(index, value) {   
-                 $('#rel_type').append( $('<option>').attr( "value", value ).text(value) ); 
+                 $('#rel_type').append( $('<option />').attr( "value", value ).text(value) ); 
                  $('#keymaplist').append( $('<li>').css( "border-color", relation_manager.relation_colors[index] ).text(value) ); 
             });
             var scopes = data.scopes;
             $.each( scopes, function(index, value) {   
-                 $('#scope').append( $('<option>').attr( "value", value ).text(value) ); 
+                 $('#scope').append( $('<option />').attr( "value", value ).text(value) ); 
             });
         });        
     },
@@ -576,9 +634,12 @@ $(document).ready(function () {
     }
   });
 
+  // function for reading form dialog should go here; for now hide the element
+  $('#reading_form').hide();
+
   $('#update_workspace_button').click( function() {
      var svg_enlargement = $('#svgenlargement').svg().svg('get').root();
-     mouse_scale = svg_root.children[0].getScreenCTM().a;
+     mouse_scale = svg_root_element.getScreenCTM().a;
      if( $(this).data('locked') == true ) {
          $('#svgenlargement ellipse' ).each( function( index ) {
              if( $(this).data( 'node_obj' ) != null ) {
@@ -594,7 +655,7 @@ $(document).ready(function () {
      } else {
          var left = $('#enlargement').offset().left;
          var right = left + $('#enlargement').width();
-         var tf = svg_root.children[0].getScreenCTM().inverse(); 
+         var tf = svg_root_element.getScreenCTM().inverse(); 
          var p = svg_root.createSVGPoint();
          p.x=left;
          p.y=100;
@@ -637,6 +698,51 @@ $(document).ready(function () {
       });
   }
 
+  expandFillPageClients();
+  $(window).resize(function() {
+    expandFillPageClients();
+  });
+
 });
 
 
+function expandFillPageClients() {
+	$('.fillPage').each(function () {
+		$(this).height($(window).height() - $(this).offset().top - MARGIN);
+	});
+}
+
+function loadSVG(svgData) {
+	var svgElement = $('#svgenlargement');
+
+	$(svgElement).svg('destroy');
+
+	$(svgElement).svg({
+		loadURL: svgData,
+		onLoad : svgEnlargementLoaded
+	});
+}
+
+
+/*	OS Gadget stuff
+
+function svg_select_callback(topic, data, subscriberData) {
+	svgData = data;
+	loadSVG(svgData);
+}
+
+function loaded() {
+	var prefs = new gadgets.Prefs();
+	var preferredHeight = parseInt(prefs.getString('height'));
+	if (gadgets.util.hasFeature('dynamic-height')) gadgets.window.adjustHeight(preferredHeight);
+	expandFillPageClients();
+}
+
+if (gadgets.util.hasFeature('pubsub-2')) {
+	gadgets.HubSettings.onConnect = function(hum, suc, err) {
+		subId = gadgets.Hub.subscribe("interedition.svg.selected", svg_select_callback);
+		loaded();
+	};
+}
+else gadgets.util.registerOnLoadHandler(loaded);
+*/
