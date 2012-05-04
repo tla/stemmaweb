@@ -74,7 +74,23 @@ $(document).ready(function () {
 		</form>
 		<div id="delete-form-text"></div>
 	</div>
-    	
+	
+	<div id="reading-form" title="Reading info...">
+		<form id="reading_data_form" action="#">
+			<input type="hidden" name="reading_id" id="reading_data_id"/>
+			<label for="reading_nonsense">This is a nonsense word</label>
+			<input type="checkbox" name="reading_nonsense" id="reading_nonsense_id"/>
+			<label for="reading_badgrammar">This word's grammar cannot be right</label>
+			<input type="checkbox" name="reading_badgrammar" id="reading_badgrammar_id"/>
+				<!-- Morphological options will go here -->
+			<br/><br/>
+			<label for="morphology">Lemma / part of speech:</label>
+			<select name="morphology" id="morphology" class=".ui-widget select">
+				<option></option>
+			</select>
+		</form>
+    </div>
+	
     <p/><p/>	
     <div id="keymap">
         <ul id="keymaplist">

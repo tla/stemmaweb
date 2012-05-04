@@ -31,6 +31,11 @@ function getRelationshipURL() {
 	return path_parts[0] + '/' + path_parts[1] + '/relationships';
 }
 
+// Make an XML ID into a valid selector
+function jq(myid) { 
+	return '#' + myid.replace(/(:|\.)/g,'\\$1');
+}
+
 function svgEnlargementLoaded() {
 	//Give some visual evidence that we are working
 	$('#loading_overlay').show();
@@ -105,7 +110,7 @@ function svgEnlargementLoaded() {
     var transform = 'rotate(0) scale(' + scale + ') translate(4 ' + translate + ')';
     svg_g.setAttribute('transform', transform);
     //used to calculate min and max zoom level:
-    start_element_height = $("#svgenlargement .node title:contains('START#')").siblings('ellipse')[0].getBBox().height;
+    start_element_height = $('#__START__ ellipse')[0].getBBox().height;
     add_relations( function() { $('#loading_overlay').hide(); });
 }
 
@@ -139,9 +144,7 @@ function add_relations( callback_fn ) {
 }
 
 function get_ellipse( node_id ) {
-  return $('#svgenlargement .node').children('title').filter( function(index) {
-    return $(this).text() == node_id;
-  }).siblings('ellipse');
+	return $( jq( node_id ) + ' ellipse');
 }
 
 function get_node_obj( node_id ) {
@@ -150,12 +153,6 @@ function get_node_obj( node_id ) {
         node_ellipse.data( 'node_obj', new node_obj(node_ellipse) );
     };
     return node_ellipse.data( 'node_obj' );
-}
-
-function get_edge( edge_id ) {
-  return $('#svgenlargement .edge').filter( function(index) {
-    return $(this).children( 'title' ).text() == $('<div/>').html(edge_id).text() ;
-  });
 }
 
 function node_obj(ellipse) {
@@ -169,7 +166,7 @@ function node_obj(ellipse) {
   this.node_elements = node_elements_for(self.ellipse);
 
   this.get_id = function() {
-    return self.ellipse.siblings('title').text()
+    return $(self.ellipse).parent().attr('id')
   }
   
   this.set_draggable = function( draggable ) {
@@ -208,9 +205,9 @@ function node_obj(ellipse) {
 
   this.mouseup_listener = function(evt) {    
     if( $('ellipse[fill="#ffccff"]').size() > 0 ) {
-        var source_node_id = self.ellipse.siblings('title').text();
+        var source_node_id = $(self.ellipse).parent().attr('id');
         var source_node_text = self.ellipse.siblings('text').text();
-        var target_node_id = $('ellipse[fill="#ffccff"]').siblings("title").text();
+        var target_node_id = $('ellipse[fill="#ffccff"]').parent().attr('id');
         var target_node_text = $('ellipse[fill="#ffccff"]').siblings("text").text();
         $('#source_node_id').val( source_node_id );
         $('#source_node_text').val( source_node_text );
@@ -330,7 +327,7 @@ function node_elements_for( ellipse ) {
 
 function get_edge_elements_for( ellipse ) {
   edge_elements = new Array();
-  node_id = ellipse.siblings('title').text();
+  node_id = ellipse.parent().attr('id');
   edge_in_pattern = new RegExp( node_id + '$' );
   edge_out_pattern = new RegExp( '^' + node_id );
   $.each( $('#svgenlargement .edge,#svgenlargement .relation').children('title'), function(index) {
@@ -359,12 +356,8 @@ function relation_factory() {
     this.relation_colors = [ "#5CCCCC", "#67E667", "#F9FE72", "#6B90D4", "#FF7673", "#E467B3", "#AA67D5", "#8370D8", "#FFC173" ];
 
     this.create_temporary = function( source_node_id, target_node_id ) {
-        var relation = $('#svgenlargement .relation').filter( function(index) {
-            var relation_id = $(this).children('title').text();
-            if( ( relation_id == ( source_node_id + '->' + target_node_id ) ) || ( relation_id == ( target_node_id + '->' + source_node_id ) ) ) {
-                return true;
-            } 
-        } );
+    	var relation_id = get_relation_id( source_node_id, target_node_id );
+        var relation = $( jq( relation_id ) );
         if( relation.size() == 0 ) { 
             draw_relation( source_node_id, target_node_id, self.temp_color );
         } else {
@@ -392,16 +385,16 @@ function relation_factory() {
         return relation;
     }
     this.toggle_active = function( relation_id ) {
-        var relation = $("#svgenlargement .relation:has(title:contains('" + relation_id + "'))");
+        var relation = $( jq( relation_id ) );
         var relation_path = relation.children('path');
         if( !relation.data( 'active' ) ) {
             relation_path.css( {'cursor':'pointer'} );
             relation_path.mouseenter( function(event) { 
                 outerTimer = setTimeout( function() { 
                     timer = setTimeout( function() { 
-                        var title = relation.children('title').text();
-                        var source_node_id = title.substring( 0, title.indexOf( "->" ) );
-                        var target_node_id = title.substring( (title.indexOf( "->" ) + 2) );
+                        var related_nodes = get_related_nodes( relation_id );
+                        var source_node_id = related_nodes[0];
+                        var target_node_id = related_nodes[1];
                         $('#delete_source_node_id').val( source_node_id );
                         $('#delete_target_node_id').val( target_node_id );
                         self.showinfo(relation); 
@@ -442,14 +435,28 @@ function relation_factory() {
         dialog_aria.offset({ left: nx, top: ny });
     }
     this.remove = function( relation_id ) {
-        var relation = $("#svgenlargement .relation:has(title:contains('" + relation_id + "'))");
+        var relation = $( jq( relation_id ) );
         relation.remove();
     }
+}
+
+// Utility function to create/return the ID of a relation link between
+// a source and target.
+function get_relation_id( source_id, target_id ) {
+	var idlist = [ source_id, target_id ];
+	idlist.sort();
+	return 'relation-' + idlist[0] + '-...-' + idlist[1];
+}
+
+function get_related_nodes( relation_id ) {
+	var srctotarg = relation_id.substr( 9 );
+	return srctotarg.split('-...-');
 }
 
 function draw_relation( source_id, target_id, relation_color ) {
     var source_ellipse = get_ellipse( source_id );
     var target_ellipse = get_ellipse( target_id );
+    var relation_id = get_relation_id( source_id, target_id );
     var svg = $('#svgenlargement').children('svg').svg().svg('get');
     var path = svg.createPath(); 
     var sx = parseInt( source_ellipse.attr('cx') );
@@ -457,7 +464,8 @@ function draw_relation( source_id, target_id, relation_color ) {
     var sy = parseInt( source_ellipse.attr('cy') );
     var ex = parseInt( target_ellipse.attr('cx') );
     var ey = parseInt( target_ellipse.attr('cy') );
-    var relation = svg.group( $("#svgenlargement svg g"), {'class':'relation'} );
+    var relation = svg.group( $("#svgenlargement svg g"), 
+    	{ 'class':'relation', 'id':relation_id } );
     svg.title( relation, source_id + '->' + target_id );
     svg.path( relation, path.move( sx, sy ).curveC( sx + (2*rx), sy, ex + (2*rx), ey, ex, ey ), {fill: 'none', stroke: relation_color, strokeWidth: 4});
     var relation_element = $('#svgenlargement .relation').filter( ':last' );
@@ -546,11 +554,11 @@ $(document).ready(function () {
             	var source_found = get_ellipse( source_target[0] );
             	var target_found = get_ellipse( source_target[1] );
             	if( source_found.size() && target_found.size() ) {
-                var relation = relation_manager.create( source_target[0], source_target[1], $('#rel_type')[0].selectedIndex-1 );
+                    var relation = relation_manager.create( source_target[0], source_target[1], $('#rel_type')[0].selectedIndex-1 );
 					relation.data( 'type', $('#rel_type :selected').text()  );
 					relation.data( 'scope', $('#scope :selected').text()  );
 					relation.data( 'note', $('#note').val()  );
-					relation_manager.toggle_active( relation.children('title').text() );
+					relation_manager.toggle_active( relation.attr('id') );
 				}
             });
             $( "#dialog-form" ).dialog( "close" );
@@ -610,7 +618,7 @@ $(document).ready(function () {
           ncpath = getRelationshipURL()
           var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
               $.each( data, function(item, source_target) { 
-                  relation_manager.remove( source_target[0] + '->' + source_target[1] );
+                  relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
               });
               $( "#delete-form" ).dialog( "close" );
           }, dataType: 'json', type: 'DELETE' });
@@ -635,7 +643,34 @@ $(document).ready(function () {
   });
 
   // function for reading form dialog should go here; for now hide the element
-  $('#reading_form').hide();
+  $('#reading-form').dialog({
+  	autoOpen: false,
+  	height: 400,
+  	width: 200,
+  	modal: true,
+  	buttons: {
+  		Cancel: function() {
+  			$( this ).dialog( "close" );
+  		},
+  		Update: function() {
+  			form_values = $('#reading_data_form').serialize();
+			ncpath = getReadingURL();
+			var reading_element = get_node_obj( $('#reading_data_id').val() );
+			$(':button :contains("Update")').attr("disabled", true);
+			var jqjson = $.post( ncpath, form_values, function(data) {
+				$.each( data, function(key, value) { 
+					reading_element.data( key, value );
+				});
+				$( "#reading-form" ).dialog( "close" );
+			});
+  		}
+  	},
+  	create: function() {},
+  	open: function() {},
+	close: function() {
+		$("#dialog_overlay").hide();
+	}
+  });
 
   $('#update_workspace_button').click( function() {
      var svg_enlargement = $('#svgenlargement').svg().svg('get').root();
@@ -693,7 +728,8 @@ $(document).ready(function () {
       $('#svgenlargement .relation').find( "title:contains('" + node_id +  "')" ).each( function(index) {
           matchid = new RegExp( "^" + node_id );
           if( $(this).text().match( matchid ) != null ) {
-              relation_manager.toggle_active( $(this).text() );
+          	  var relation_id = $(this).parent().attr('id');
+              relation_manager.toggle_active( relation_id );
           };
       });
   }
