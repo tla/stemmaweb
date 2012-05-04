@@ -58,6 +58,7 @@ function svgEnlargementLoaded() {
     $('#update_workspace_button').css('background-position', '0px 44px');
     //This is essential to make sure zooming and panning works properly.
     $('#svgenlargement ellipse').attr( {stroke:'green', fill:'#b3f36d'} );
+    $('#svgenlargement ellipse').dblclick( node_dblclick_listener );
     var graph_svg = $('#svgenlargement svg');
     var svg_g = $('#svgenlargement svg g')[0];
     if (!svg_g) return;
@@ -70,38 +71,6 @@ function svgEnlargementLoaded() {
 		break;
 	   }
     }
-
-    // This might be a little application specific and should be pushed to the backend
-    // but... This collapes corrector hands when they agree with the original
-    // e.g., P46-*,P46-C becomes simply P46
-    $(svg_root).find('text').each(function () {
-		var t = $(this).text();
-		var ws = t.split(',');
-		for (i = 0; i < ws.length; ++i) {
-			if (ws[i].indexOf('-*')> -1) {
-				var collapse = false;
-				var main = $.trim(ws[i].substring(0,ws[i].indexOf('-')));
-				for (j = 0; j < ws.length; ++j) {
-					if (i != j && ws[j].indexOf('-')> -1) {
-						var pair = $.trim(ws[j].substring(0,ws[j].indexOf('-')));
-						if (main == pair) {
-							collapse = true;
-							ws[j] = '';
-						}
-					}
-				}
-				if (collapse) ws[i] = main;
-			}
-		}
-		t = '';
-		for (i = 0; i < ws.length; ++i) {
-			if (ws[i].length) {
-				if (t.length>0) t+=', ';
-				t+=ws[i];
-			}
-		}
-		$(this).text(t);
-	});
 
     svg_root.viewBox.baseVal.width = graph_svg.attr( 'width' );
     svg_root.viewBox.baseVal.height = graph_svg.attr( 'height' );
@@ -227,7 +196,7 @@ function node_obj(ellipse) {
     $(self.ellipse).parent().hover( self.enter_node, self.leave_node );
     self.reset_elements();
   }
-
+  
   this.cpos = function() {
     return { x: self.ellipse.attr('cx'), y: self.ellipse.attr('cy') };
   }
@@ -353,6 +322,60 @@ function get_edge_elements_for( ellipse ) {
   });
   return edge_elements;
 } 
+
+function node_dblclick_listener( evt ) {
+  	// Open the reading dialogue for the given node.
+  	// First get the reading info
+  	var reading_id = $(this).attr('id');
+  	var reading_info = readingdata[reading_id];
+  	// and then populate the dialog box with it.
+  	// Set the easy properties first
+  	$('#reading-form').dialog( 'option', 'title', 'Reading information for "' + reading_info['text'] + '"' );
+  	$('#reading_id').val( reading_id );
+  	$('#reading_is_nonsense').val( reading_info['is_nonsense'] );
+  	$('#reading_grammar_invalid').val( reading_info['grammar_invalid'] );
+  	// Use .text as a backup for .normal_form
+  	var normal_form = reading_info['normal_form'];
+  	if( !normal_form ) {
+  		normal_form = reading_info['text'];
+  	}
+  	$('#reading_normal_form').val( normal_form );
+  	// Now do the morphological properties.
+  	// and then open the dialog.
+  	var form_morph_elements = [];
+  	$.each( reading_info['lexemes'], function( idx, lex ) {
+  		var morphoptions = [];
+  		$.each( lex['wordform_matchlist'], function( tdx, tag ) {
+  			var tagstr = stringify_wordform( tag );
+  			morphoptions.push( tagstr );
+  		});
+  		var formtag = 'morphology_' + idx;
+  		var formlabel = $('#label_morphology_0').clone();
+  		formlabel.attr('id', 'label_' + formtag );
+  		formlabel.text( lex['string'] + ': ' );
+  		var forminput = $('#reading_morphology_0').clone();
+  		forminput.attr('id', 'reading_' + formtag );
+  		forminput.attr('name', 'reading_' + formtag );
+  		forminput.autocomplete({ source: morphoptions, minLength: 0, disabled: false });
+  		//forminput.autocomplete('search', '');
+  		if( lex['form'] ) {
+  			var formstr = stringify_wordform( lex['form'] );
+  			forminput.val( formstr );
+  		} else {
+  			forminput.val( '' );
+  		}
+  		form_morph_elements.push( formlabel, forminput, $('<br/>') );
+  	});
+  	$('#morphology').empty();
+  	$.each( form_morph_elements, function( idx, el ) {
+  		$('#morphology').append( el );
+  	});
+  	$('#reading-form').dialog("open");
+}
+
+function stringify_wordform ( tag ) {
+	return tag['lemma'] + ' // ' + tag['morphology'];
+}
 
 function relation_factory() {
     var self = this;
@@ -656,7 +679,7 @@ $(document).ready(function () {
   $('#reading-form').dialog({
   	autoOpen: false,
   	height: 400,
-  	width: 200,
+  	width: 600,
   	modal: true,
   	buttons: {
   		Cancel: function() {
@@ -676,7 +699,13 @@ $(document).ready(function () {
   		}
   	},
   	create: function() {},
-  	open: function() {},
+  	open: function() {
+        $(".ui-widget-overlay").css("background", "none");
+        $("#dialog_overlay").show();
+        $("#dialog_overlay").height( $("#enlargement_container").height() );
+        $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
+        $("#dialog_overlay").offset( $("#enlargement_container").offset() );
+  	},
 	close: function() {
 		$("#dialog_overlay").hide();
 	}

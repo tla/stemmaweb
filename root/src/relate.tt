@@ -77,16 +77,22 @@ $(document).ready(function () {
 	
 	<div id="reading-form" title="Reading info...">
 		<form id="reading_data_form" action="#">
-			<input type="hidden" name="reading_id" id="reading_data_id"/>
-			<label for="reading_nonsense">This is a nonsense word</label>
-			<input type="checkbox" name="reading_nonsense" id="reading_nonsense_id"/>
-			<label for="reading_badgrammar">This word's grammar cannot be right</label>
-			<input type="checkbox" name="reading_badgrammar" id="reading_badgrammar_id"/>
-				<!-- Morphological options will go here -->
+			<input type="hidden" name="reading_id" id="reading_id"/>
+			<input type="checkbox" name="reading_is_nonsense" id="reading_is_nonsense"/>
+			<label for="reading_is_nonsense">This is a nonsense word</label>
+			<br/>
+			<input type="checkbox" name="reading_grammar_invalid" id="reading_grammar_invalid"/>
+			<label for="reading_grammar_invalid">This word's grammar cannot be right</label>
 			<br/><br/>
-			<label for="morphology">Lemma / part of speech:</label>
-			<select name="morphology" id="morphology" class=".ui-widget select">
-				<option></option>
+			<!-- Morphological options go here -->
+			<label for="reading_normal_form">Normalized form: </label>
+			<input type="text" name="reading_normal_form" id="reading_normal_form"></input>
+			<br/><br/>
+			<label>Lemma / part of speech:</label><br/>
+			<div id="morphology">
+				<label for="reading_morphology_0" id="label_morphology_0"></label>
+				<input name="reading_morphology_0" id="reading_morphology_0" size="40"></input><br/>
+			</div>
 			</select>
 		</form>
     </div>
