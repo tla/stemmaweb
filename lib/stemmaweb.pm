@@ -4,6 +4,10 @@ use namespace::autoclean;
 
 use Catalyst::Runtime 5.80;
 
+use Search::GIN::Extract::Class;
+use Search::GIN::Extract::Attributes;
+use Search::GIN::Extract::Multiplex;
+
 # Set flags and add plugins for the application.
 #
 # Note that ORDERING IS IMPORTANT here as plugins are initialized in order,
@@ -20,6 +24,11 @@ use Catalyst qw/
     ConfigLoader
     Static::Simple
     Unicode::Encoding
+    +CatalystX::SimpleLogin
+    Authentication
+    Session
+    Session::Store::File
+    Session::State::Cookie
 /;
 
 extends 'Catalyst';
@@ -48,6 +57,20 @@ __PACKAGE__->config(
 			stemmaweb->path_to( 'root', 'src' ),
 		],
 	},
+    ## kiokudb auth store testing
+    'Plugin::Authentication' => {
+        default => {
+            credential => {
+                class => 'Password',
+                password_field => 'password',
+                password_type => 'self_check',
+            },
+            store => {
+                class => 'Model::KiokuDB',
+                model_name => 'User',
+            },
+        }
+    },
 );
 
 # Start the application

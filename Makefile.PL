@@ -18,6 +18,13 @@ requires 'Catalyst::Model::KiokuDB';
 requires 'Catalyst::View::Download::Plain';
 requires 'Catalyst::View::JSON';
 requires 'Catalyst::View::TT';
+## Auth:
+requires 'Catalyst::Plugin::Authentication';
+requires 'Catalyst::Plugin::Session';
+requires 'Catalyst::Plugin::Session::Store::File';
+requires 'Catalyst::Plugin::Session::State::Cookie';
+requires 'CatalystX::SimpleLogin';
+##
 requires 'Moose';
 requires 'TryCatch';
 requires 'namespace::autoclean';
