@@ -204,8 +204,79 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		}	
 	}
 	$c->forward('View::JSON');
-}		
-		
+}
+
+=head2 readings
+
+ GET relation/$textid/readings
+
+Returns the list of readings defined for this text along with their metadata.
+
+=cut
+
+sub _reading_struct {
+	my( $reading ) = @_;
+	# Return a JSONable struct of the useful keys.  Keys meant to be writable
+	# have a true value; read-only keys have a false value.
+	my %read_write_keys = (
+		'id' => 0,
+		'text' => 0,
+		'is_meta' => 0,
+		'grammar_invalid' => 1,
+		'is_nonsense' => 1,
+		'normal_form' => 1,
+		'lexemes' => 1,  # special case?
+	);
+	my $struct = {};
+	map { $struct->{$_} = $reading->$_ } keys( %read_write_keys );
+	# Special case
+	$struct->{'lexemes'} = [ $reading->lexemes ];
+	return $struct;
+}
+
+sub readings :Chained('text') :PathPart :Args(0) {
+	my( $self, $c ) = @_;
+	my $tradition = delete $c->stash->{'tradition'};
+	my $collation = $tradition->collation;
+	my $m = $c->model('Directory');
+	if( $c->request->method eq 'GET' ) {
+		my $rdginfo = {};
+		foreach my $rdg ( $collation->readings ) {
+			$rdginfo->{$rdg->id} = _reading_struct( $rdg );
+		}
+		$c->stash->{'result'} = $rdginfo;
+	}
+	$c->forward('View::JSON');
+}
+
+=head2 reading
+
+ GET relation/$textid/reading/$id
+
+Returns the list of readings defined for this text along with their metadata.
+
+ POST relation/$textid/reading/$id { request }
+ 
+Alters the reading according to the values in request. Returns 403 Forbidden if
+the alteration isn't allowed.
+
+=cut
+
+sub reading :Chained('text') :PathPart :Args(1) {
+	my( $self, $c, $reading_id ) = @_;
+	my $tradition = delete $c->stash->{'tradition'};
+	my $collation = $tradition->collation;
+	my $m = $c->model('Directory');
+	if( $c->request->method eq 'GET' ) {
+		my $rdg = $collation->reading( $reading_id );
+		$c->stash->{'result'} = $rdg ? _reading_struct( $rdg )
+			: { 'error' => "No reading with ID $reading_id" };
+	} elsif ( $c->request->method eq 'POST' ) {
+		# TODO Update the reading if we can.
+	}
+	$c->forward('View::JSON');
+
+}
 
 =head2 end
 

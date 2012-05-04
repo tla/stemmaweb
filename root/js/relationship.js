@@ -3,6 +3,7 @@ var svg_root = null;
 var svg_root_element = null;
 var start_element_height = 0;
 var reltypes = {};
+var readingdata = {};
 
 function getTextPath() {
     var currpath = window.location.pathname;
@@ -26,9 +27,14 @@ function getRelativePath() {
 	return path_parts[0];
 }
 
-function getRelationshipURL() {
+function getTextURL( which ) {
 	var path_parts = getTextPath();
-	return path_parts[0] + '/' + path_parts[1] + '/relationships';
+	return path_parts[0] + '/' + path_parts[1] + '/' + which;
+}
+
+function getReadingURL( reading_id ) {
+	var path_parts = getTextPath();
+	return path_parts[0] + '/' + path_parts[1] + '/reading/' + reading_id;
 }
 
 // Make an XML ID into a valid selector
@@ -116,7 +122,7 @@ function svgEnlargementLoaded() {
 
 function add_relations( callback_fn ) {
 	var basepath = getRelativePath();
-	var textrelpath = getRelationshipURL();
+	var textrelpath = getTextURL( 'relationships' );
     $.getJSON( basepath + '/definitions', function(data) {
         var rel_types = data.types.sort();
         $.getJSON( textrelpath,
@@ -537,6 +543,10 @@ $(document).ready(function () {
     'cursor' : '-moz-grab'
   });
   
+  var rdgpath = getTextURL( 'readings' );
+  $.getJSON( rdgpath, function( data ) {
+  	readingdata = data;
+  });
 
   $( "#dialog-form" ).dialog({
     autoOpen: false,
@@ -547,7 +557,7 @@ $(document).ready(function () {
       "Ok": function() {
         $('#status').empty();
         form_values = $('#collapse_node_form').serialize();
-        ncpath = getRelationshipURL();
+        ncpath = getTextURL( 'relationships' );
         $(':button :contains("Ok")').attr("disabled", true);
         var jqjson = $.post( ncpath, form_values, function(data) {
             $.each( data, function(item, source_target) { 
@@ -614,8 +624,8 @@ $(document).ready(function () {
             $( this ).dialog( "close" );
         },
         Delete: function() {
-          form_values = $('#delete_relation_form').serialize()
-          ncpath = getRelationshipURL()
+          form_values = $('#delete_relation_form').serialize();
+          ncpath = getTextURL( 'relationships' );
           var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
               $.each( data, function(item, source_target) { 
                   relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
