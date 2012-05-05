@@ -113,6 +113,19 @@ function morph_elements ( formtag, formtxt, currform, morphoptions ) {
 	return morphel;
 }
 
+function color_inactive ( el ) {
+	var reading_id = $(el).parent().attr('id');
+	var reading_info = readingdata[reading_id];
+	// If the reading info has any non-disambiguated lexemes, color it yellow;
+	// otherwise color it green.
+	$(el).attr( {stroke:'green', fill:'#b3f36d'} );
+	$.each( reading_info['lexemes'], function ( idx, lex ) {
+		if( !lex['is_disambiguated'] ) {
+			$(el).attr( {stroke:'orange', fill:'#fee233'} );
+		}
+	});
+}
+
 // Initialize the SVG once it exists
 function svgEnlargementLoaded() {
 	//Give some visual evidence that we are working
@@ -129,7 +142,11 @@ function svgEnlargementLoaded() {
     $('#update_workspace_button').data('locked', false);
     $('#update_workspace_button').css('background-position', '0px 44px');
     //This is essential to make sure zooming and panning works properly.
-    $('#svgenlargement ellipse').attr( {stroke:'green', fill:'#b3f36d'} );
+	var rdgpath = getTextURL( 'readings' );
+		$.getJSON( rdgpath, function( data ) {
+  		readingdata = data;
+	    $('#svgenlargement ellipse').each( function( i, el ) { color_inactive( el ) });
+  	});
     $('#svgenlargement ellipse').parent().dblclick( node_dblclick_listener );
     var graph_svg = $('#svgenlargement svg');
     var svg_g = $('#svgenlargement svg g')[0];
@@ -157,7 +174,7 @@ function svgEnlargementLoaded() {
     var transform = 'rotate(0) scale(' + scale + ') translate(4 ' + translate + ')';
     svg_g.setAttribute('transform', transform);
     //used to calculate min and max zoom level:
-    start_element_height = $('#__START__ ellipse')[0].getBBox().height;
+    start_element_height = $('#__START__').children('ellipse')[0].getBBox().height;
     add_relations( function() { $('#loading_overlay').hide(); });
 }
 
@@ -224,8 +241,8 @@ function node_obj(ellipse) {
       self.ellipse.siblings('text').attr('class', 'noselect draggable');
     } else {
       self.ellipse.siblings('text').attr('class', '');
-      $(self.ellipse).parent().unbind('mouseenter').unbind('mouseleave').unbind('mousedown');     
-      $(self.ellipse).attr( {stroke:'green', fill:'#b3f36d'} );
+	  $(self.ellipse).parent().unbind( 'mouseenter' ).unbind( 'mouseleave' ).unbind( 'mousedown' );     
+      color_inactive( self.ellipse );
     }
   }
 
@@ -584,10 +601,6 @@ $(document).ready(function () {
     'cursor' : '-moz-grab'
   });
   
-  var rdgpath = getTextURL( 'readings' );
-  $.getJSON( rdgpath, function( data ) {
-  	readingdata = data;
-  });
 
   $( "#dialog-form" ).dialog({
     autoOpen: false,
@@ -728,6 +741,8 @@ $(document).ready(function () {
 		$("#dialog_overlay").hide();
 	}
   });
+  
+  $('#reading_relemmatize').button();
 
   $('#update_workspace_button').click( function() {
      var svg_enlargement = $('#svgenlargement').svg().svg('get').root();
