@@ -75,17 +75,13 @@ function node_dblclick_listener( evt ) {
   			morphoptions.push( tagstr );
   		});
   		var formtag = 'morphology_' + idx;
-  		var form_morph_elements = morph_elements( formtag );
-  		form_morph_elements[0].text( lex['string'] + ': ' );
-  		form_morph_elements[1].autocomplete({ 
-  			source: morphoptions, 
-  			minLength: 0
-  		});
   		//forminput.autocomplete('search', '');
+  		var formstr = '';
   		if( lex['form'] ) {
-  			var formstr = stringify_wordform( lex['form'] );
-  			form_morph_elements[1].val( formstr );
+  			formstr = stringify_wordform( lex['form'] );
   		} 
+  		var form_morph_elements = morph_elements( 
+  			formtag, lex['string'], formstr, morphoptions );
 		$.each( form_morph_elements, function( idx, el ) {
 			$('#morphology').append( el );
 		});
@@ -97,11 +93,22 @@ function stringify_wordform ( tag ) {
 	return tag['lemma'] + ' // ' + tag['morphology'];
 }
 
-function morph_elements ( formtag ) {
+function morph_elements ( formtag, formtxt, currform, morphoptions ) {
+	var clicktag = '(Click to select)';
+	if ( !currform ) {
+		currform = clicktag;
+	}
 	var formlabel = $('<label/>').attr( 'id', 'label_' + formtag ).attr( 
-		'for', 'reading_' + formtag );
+		'for', 'reading_' + formtag ).text( formtxt + ': ' );
 	var forminput = $('<input/>').attr( 'id', 'reading_' + formtag ).attr( 
-		'name', 'reading_' + formtag ).attr( 'size', '50' );
+		'name', 'reading_' + formtag ).attr( 'size', '50' ).val( currform );
+	forminput.autocomplete({ source: morphoptions, minLength: 0	});
+	forminput.focus( function() { 
+		if( $(this).val() == clicktag ) {
+			$(this).val('');
+		}
+		$(this).autocomplete('search', '') 
+	});
 	var morphel = [ formlabel, forminput, $('<br/>') ];
 	return morphel;
 }
