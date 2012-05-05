@@ -213,3 +213,9 @@ span.apimore {
 -ms-user-select: none;
 user-select: none;
 }
+
+#morphology {
+	float: left;
+	text-align: right;
+	margin: 10px;
+}

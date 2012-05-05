@@ -90,8 +90,6 @@ $(document).ready(function () {
 			<br/><br/>
 			<label>Lemma / part of speech:</label><br/>
 			<div id="morphology">
-				<label for="reading_morphology_0" id="label_morphology_0"></label>
-				<input name="reading_morphology_0" id="reading_morphology_0" size="40"></input><br/>
 			</div>
 			</select>
 		</form>

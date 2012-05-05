@@ -42,6 +42,71 @@ function jq(myid) {
 	return '#' + myid.replace(/(:|\.)/g,'\\$1');
 }
 
+// Actions for opening the reading panel
+function node_dblclick_listener( evt ) {
+  	// Open the reading dialogue for the given node.
+  	// First get the reading info
+  	var reading_id = $(this).attr('id');
+  	var reading_info = readingdata[reading_id];
+  	// and then populate the dialog box with it.
+  	// Set the easy properties first
+  	$('#reading-form').dialog( 'option', 'title', 'Reading information for "' + reading_info['text'] + '"' );
+  	$('#reading_id').val( reading_id );
+  	$('#reading_is_nonsense').val( reading_info['is_nonsense'] );
+  	$('#reading_grammar_invalid').val( reading_info['grammar_invalid'] );
+  	// Use .text as a backup for .normal_form
+  	var normal_form = reading_info['normal_form'];
+  	if( !normal_form ) {
+  		normal_form = reading_info['text'];
+  	}
+  	var nfboxsize = 10;
+  	if( normal_form.length > 9 ) {
+  		nfboxsize = normal_form.length + 1;
+  	}
+  	$('#reading_normal_form').attr( 'size', nfboxsize )
+  	$('#reading_normal_form').val( normal_form );
+  	// Now do the morphological properties.
+  	// and then open the dialog.
+  	$('#morphology').empty();
+  	$.each( reading_info['lexemes'], function( idx, lex ) {
+  		var morphoptions = [];
+  		$.each( lex['wordform_matchlist'], function( tdx, tag ) {
+  			var tagstr = stringify_wordform( tag );
+  			morphoptions.push( tagstr );
+  		});
+  		var formtag = 'morphology_' + idx;
+  		var form_morph_elements = morph_elements( formtag );
+  		form_morph_elements[0].text( lex['string'] + ': ' );
+  		form_morph_elements[1].autocomplete({ 
+  			source: morphoptions, 
+  			minLength: 0
+  		});
+  		//forminput.autocomplete('search', '');
+  		if( lex['form'] ) {
+  			var formstr = stringify_wordform( lex['form'] );
+  			form_morph_elements[1].val( formstr );
+  		} 
+		$.each( form_morph_elements, function( idx, el ) {
+			$('#morphology').append( el );
+		});
+  	});
+  	$('#reading-form').dialog("open");
+}
+
+function stringify_wordform ( tag ) {
+	return tag['lemma'] + ' // ' + tag['morphology'];
+}
+
+function morph_elements ( formtag ) {
+	var formlabel = $('<label/>').attr( 'id', 'label_' + formtag ).attr( 
+		'for', 'reading_' + formtag );
+	var forminput = $('<input/>').attr( 'id', 'reading_' + formtag ).attr( 
+		'name', 'reading_' + formtag ).attr( 'size', '50' );
+	var morphel = [ formlabel, forminput, $('<br/>') ];
+	return morphel;
+}
+
+// Initialize the SVG once it exists
 function svgEnlargementLoaded() {
 	//Give some visual evidence that we are working
 	$('#loading_overlay').show();
@@ -58,7 +123,7 @@ function svgEnlargementLoaded() {
     $('#update_workspace_button').css('background-position', '0px 44px');
     //This is essential to make sure zooming and panning works properly.
     $('#svgenlargement ellipse').attr( {stroke:'green', fill:'#b3f36d'} );
-    $('#svgenlargement ellipse').dblclick( node_dblclick_listener );
+    $('#svgenlargement ellipse').parent().dblclick( node_dblclick_listener );
     var graph_svg = $('#svgenlargement svg');
     var svg_g = $('#svgenlargement svg g')[0];
     if (!svg_g) return;
@@ -322,60 +387,6 @@ function get_edge_elements_for( ellipse ) {
   });
   return edge_elements;
 } 
-
-function node_dblclick_listener( evt ) {
-  	// Open the reading dialogue for the given node.
-  	// First get the reading info
-  	var reading_id = $(this).attr('id');
-  	var reading_info = readingdata[reading_id];
-  	// and then populate the dialog box with it.
-  	// Set the easy properties first
-  	$('#reading-form').dialog( 'option', 'title', 'Reading information for "' + reading_info['text'] + '"' );
-  	$('#reading_id').val( reading_id );
-  	$('#reading_is_nonsense').val( reading_info['is_nonsense'] );
-  	$('#reading_grammar_invalid').val( reading_info['grammar_invalid'] );
-  	// Use .text as a backup for .normal_form
-  	var normal_form = reading_info['normal_form'];
-  	if( !normal_form ) {
-  		normal_form = reading_info['text'];
-  	}
-  	$('#reading_normal_form').val( normal_form );
-  	// Now do the morphological properties.
-  	// and then open the dialog.
-  	var form_morph_elements = [];
-  	$.each( reading_info['lexemes'], function( idx, lex ) {
-  		var morphoptions = [];
-  		$.each( lex['wordform_matchlist'], function( tdx, tag ) {
-  			var tagstr = stringify_wordform( tag );
-  			morphoptions.push( tagstr );
-  		});
-  		var formtag = 'morphology_' + idx;
-  		var formlabel = $('#label_morphology_0').clone();
-  		formlabel.attr('id', 'label_' + formtag );
-  		formlabel.text( lex['string'] + ': ' );
-  		var forminput = $('#reading_morphology_0').clone();
-  		forminput.attr('id', 'reading_' + formtag );
-  		forminput.attr('name', 'reading_' + formtag );
-  		forminput.autocomplete({ source: morphoptions, minLength: 0, disabled: false });
-  		//forminput.autocomplete('search', '');
-  		if( lex['form'] ) {
-  			var formstr = stringify_wordform( lex['form'] );
-  			forminput.val( formstr );
-  		} else {
-  			forminput.val( '' );
-  		}
-  		form_morph_elements.push( formlabel, forminput, $('<br/>') );
-  	});
-  	$('#morphology').empty();
-  	$.each( form_morph_elements, function( idx, el ) {
-  		$('#morphology').append( el );
-  	});
-  	$('#reading-form').dialog("open");
-}
-
-function stringify_wordform ( tag ) {
-	return tag['lemma'] + ' // ' + tag['morphology'];
-}
 
 function relation_factory() {
     var self = this;
