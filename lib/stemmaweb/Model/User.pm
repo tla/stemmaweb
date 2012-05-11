@@ -8,6 +8,8 @@ extends 'Catalyst::Model::KiokuDB';
 
 has '+model_class' => ( default => 'Text::Tradition::UserStore' );
 
+1;
+
 =head1 NAME
 
 stemmaweb::Model::User - User/Auth KiokuDB model for stemmaweb
@@ -46,5 +48,3 @@ stores the Users alongside the Traditions.
 To replace the source of users for authentication, add the
 configuration shown in the L</SYNOPSIS> to your stemmaweb.conf file,
 and adjust as necessary.
-
-1;

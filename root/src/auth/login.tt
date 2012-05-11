@@ -1,0 +1,39 @@
+[% IF status_msg %]
+			<p>[% status_msg | html %]</p>
+[% END %]
+[% IF error_msg %]
+			<p class="error">[% error_msg | html %]</p>
+[% END %]
+
+[% IF form.has_errors %]
+			<p class="error">Some fields had errors:</p>
+					
+			<ul class="errors">
+	[% FOREACH msg IN form.errors %]
+				<li>[% msg | html %]</li>
+	[% END %]
+			</ul>
+[% END %]
+
+	<form method="post" action="[% c.uri_for_action('/users/login').hostless | html %]" autocomplete="off">
+
+    <select name="realm">
+     <option value="default">Local</option>
+     <option value="openid">OpenID</option>
+    </select>
+
+<div id="field-openid-identifier">
+<label for="openid_identifier">OpenID login/url</label>
+<input type="text" name="openid_identifier" id="openid_identifier"/><br>
+</div>
+
+<!--
+<div style="display:none">
+	[% form.field('username').render %]
+	[% form.field('password').render %]
+</div>
+-->
+    [% form.field('remember').render %]
+	[% form.field('submit').render %]
+
+	</form>

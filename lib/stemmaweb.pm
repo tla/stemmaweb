@@ -24,11 +24,11 @@ use Catalyst qw/
     ConfigLoader
     Static::Simple
     Unicode::Encoding
-    +CatalystX::SimpleLogin
     Authentication
     Session
     Session::Store::File
     Session::State::Cookie
+    StatusMessage
 /;
 
 extends 'Catalyst';
@@ -69,7 +69,29 @@ __PACKAGE__->config(
                 class => 'Model::KiokuDB',
                 model_name => 'User',
             },
-        }
+        },
+        openid => {
+            credential => {
+                class => 'OpenID',
+            },
+            store => {
+                class => 'Model::KiokuDB',
+                model_name => 'User',
+            },
+            auto_create_user => 1,
+        },
+    },
+    ## Auth with CatalystX::Controller::Auth
+    'Controller::Users' => {
+        model => 'User',
+        login_id_field => 'username',
+        login_db_field => 'username',
+        action_after_login => '/index',
+        send_register_email => 0,
+        realm => 'openid',
+        login_fields => { openid => [], # qw/openid_identifier/],
+                          default => [qw/username password/],
+        },
     },
 );
 

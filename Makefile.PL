@@ -23,7 +23,7 @@ requires 'Catalyst::Plugin::Authentication';
 requires 'Catalyst::Plugin::Session';
 requires 'Catalyst::Plugin::Session::Store::File';
 requires 'Catalyst::Plugin::Session::State::Cookie';
-requires 'CatalystX::SimpleLogin';
+requires 'CatalystX::Controller::Auth';
 ##
 requires 'Moose';
 requires 'TryCatch';
