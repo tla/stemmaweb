@@ -22,17 +22,16 @@
      <option value="openid">OpenID</option>
     </select>
 
+    [% form.field('openid_identifier').render %]
+<!--
 <div id="field-openid-identifier">
 <label for="openid_identifier">OpenID login/url</label>
 <input type="text" name="openid_identifier" id="openid_identifier"/><br>
 </div>
-
-<!--
-<div style="display:none">
+-->
 	[% form.field('username').render %]
 	[% form.field('password').render %]
-</div>
--->
+
     [% form.field('remember').render %]
 	[% form.field('submit').render %]
 

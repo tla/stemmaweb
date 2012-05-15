@@ -89,7 +89,7 @@ __PACKAGE__->config(
         action_after_login => '/index',
         send_register_email => 0,
         realm => 'openid',
-        login_fields => { openid => [], # qw/openid_identifier/],
+        login_fields => { openid => [qw/openid_identifier/],
                           default => [qw/username password/],
         },
     },
