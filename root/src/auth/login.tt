@@ -17,18 +17,16 @@
 
 	<form method="post" action="[% c.uri_for_action('/users/login').hostless | html %]" autocomplete="off">
 
-    <select name="realm">
-     <option value="default">Local</option>
-     <option value="openid">OpenID</option>
-    </select>
+    <input type="hidden" name="realm" value="openid"/>
+    <input type="hidden" name="openid_identifier" value="https://www.google.com/accounts/o8/id"/>
+    <input type="submit" value="Sign in with Google"/>
 
-    [% form.field('openid_identifier').render %]
-<!--
-<div id="field-openid-identifier">
-<label for="openid_identifier">OpenID login/url</label>
-<input type="text" name="openid_identifier" id="openid_identifier"/><br>
-</div>
--->
+	</form>
+
+	<form method="post" action="[% c.uri_for_action('/users/login').hostless | html %]" autocomplete="off">
+
+    <input type="hidden" name="realm" value="default"/>
+
 	[% form.field('username').render %]
 	[% form.field('password').render %]
 
