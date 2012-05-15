@@ -24,6 +24,7 @@ requires 'Catalyst::Plugin::Session';
 requires 'Catalyst::Plugin::Session::Store::File';
 requires 'Catalyst::Plugin::Session::State::Cookie';
 requires 'CatalystX::Controller::Auth';
+requires 'LWP::Protocol::https';
 ##
 requires 'Moose';
 requires 'TryCatch';
