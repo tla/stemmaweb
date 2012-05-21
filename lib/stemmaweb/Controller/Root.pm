@@ -41,15 +41,17 @@ sub index :Path :Args(0) {
 
  GET /directory
 
-Serves a snippet of HTML that lists the available texts.  Eventually this will be available texts by user.
+Serves a snippet of HTML that lists the available texts.  This returns texts belonging to the logged-in user if any, otherwise it returns all public texts.
 
 =cut
+
 sub directory :Local :Args(0) {
 	my( $self, $c ) = @_;
     my $m = $c->model('Directory');
     # TODO not used yet, will load user texts later
-    my $user = $c->request->param( 'user' ) || 'ALL';
-    my @textlist = $m->traditionlist();
+    my $user = $c->user_exists ? $c->user->id : 'public';
+#    my $user = $c->request->param( 'user' ) || 'ALL';
+    my @textlist = $m->traditionlist($user);
     $c->stash->{texts} = \@textlist;
 	$c->stash->{template} = 'directory.tt';
 }
