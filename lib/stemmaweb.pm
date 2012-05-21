@@ -67,7 +67,7 @@ __PACKAGE__->config(
             },
             store => {
                 class => 'Model::KiokuDB',
-                model_name => 'User',
+                model_name => 'Directory',
             },
         },
         openid => {
