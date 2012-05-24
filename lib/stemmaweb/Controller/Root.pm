@@ -48,9 +48,7 @@ Serves a snippet of HTML that lists the available texts.  This returns texts bel
 sub directory :Local :Args(0) {
 	my( $self, $c ) = @_;
     my $m = $c->model('Directory');
-    # TODO not used yet, will load user texts later
     my $user = $c->user_exists ? $c->user->get_object : 'public';
-#    my $user = $c->request->param( 'user' ) || 'ALL';
     my @textlist = $m->traditionlist($user);
     $c->stash->{texts} = \@textlist;
 	$c->stash->{template} = 'directory.tt';
