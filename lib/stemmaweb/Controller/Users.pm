@@ -19,7 +19,7 @@ Catalyst Controller.
 sub base :Chained('/') :PathPart('') :CaptureArgs(0)
 {
         my ( $self, $c ) = @_;
- 
+
         $self->next::method( $c );
 }
 
