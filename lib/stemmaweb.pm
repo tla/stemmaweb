@@ -79,9 +79,10 @@ __PACKAGE__->config(
                         uri         => 'http://openid.net/srv/ax/1.0',
                         mode        => 'fetch_request',
                         required    => 'email',
-                        type        => {
-                            email => 'http://axschema.org/contact/email'
-                        }
+                        'type.email' => 'http://axschema.org/contact/email',
+                        # type        => {
+                        #     email => 'http://axschema.org/contact/email'
+                        # }
                     }
                     ],
             },
