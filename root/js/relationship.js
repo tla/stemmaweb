@@ -66,9 +66,14 @@ function node_dblclick_listener( evt ) {
   	$('#reading_normal_form').attr( 'size', nfboxsize )
   	$('#reading_normal_form').val( normal_form );
   	// Now do the morphological properties.
+  	morphology_form( reading_info['lexemes'] );
   	// and then open the dialog.
+  	$('#reading-form').dialog("open");
+}
+
+function morphology_form ( lexlist ) {
   	$('#morphology').empty();
-  	$.each( reading_info['lexemes'], function( idx, lex ) {
+  	$.each( lexlist, function( idx, lex ) {
   		var morphoptions = [];
   		$.each( lex['wordform_matchlist'], function( tdx, tag ) {
   			var tagstr = stringify_wordform( tag );
@@ -86,11 +91,11 @@ function node_dblclick_listener( evt ) {
 			$('#morphology').append( el );
 		});
   	});
-  	$('#reading-form').dialog("open");
 }
 
 function stringify_wordform ( tag ) {
-	return tag['lemma'] + ' // ' + tag['morphology'];
+	var elements = tag.split(' // ');
+	return elements[1] + ' // ' + elements[2];
 }
 
 function morph_elements ( formtag, formtxt, currform, morphoptions ) {
@@ -101,7 +106,8 @@ function morph_elements ( formtag, formtxt, currform, morphoptions ) {
 	var formlabel = $('<label/>').attr( 'id', 'label_' + formtag ).attr( 
 		'for', 'reading_' + formtag ).text( formtxt + ': ' );
 	var forminput = $('<input/>').attr( 'id', 'reading_' + formtag ).attr( 
-		'name', 'reading_' + formtag ).attr( 'size', '50' ).val( currform );
+		'name', 'reading_' + formtag ).attr( 'size', '50' ).attr(
+		'class', 'reading_morphology' ).val( currform );
 	forminput.autocomplete({ source: morphoptions, minLength: 0	});
 	forminput.focus( function() { 
 		if( $(this).val() == clicktag ) {
@@ -717,19 +723,58 @@ $(document).ready(function () {
   			$( this ).dialog( "close" );
   		},
   		Update: function() {
-  			form_values = $('#reading_data_form').serialize();
-			ncpath = getReadingURL();
-			var reading_element = get_node_obj( $('#reading_data_id').val() );
+			var reading_id = $('#reading_id').val()
+  			form_values = {
+  				'id' : reading_id,
+  				'is_nonsense': $('#reading_is_nonsense').val(),
+  				'grammar_invalid': $('#reading_grammar_invalid').val(),
+  				'normal_form': $('#reading_normal_form').val() };
+  			// Add the morphology values
+  			$('.reading_morphology').each( function() {
+  				var rmid = $(this).attr('id');
+  				rmid = rmid.substring(8);
+  				form_values[rmid] = $(this).val();
+  			});
+  			// Make the JSON call
+			ncpath = getReadingURL( reading_id );
+			var reading_element = readingdata[reading_id];
 			$(':button :contains("Update")').attr("disabled", true);
 			var jqjson = $.post( ncpath, form_values, function(data) {
 				$.each( data, function(key, value) { 
-					reading_element.data( key, value );
+					reading_element[key] = value;
 				});
+				if( $('#update_workspace_button').data('locked') == false ) {
+					color_inactive( get_ellipse( reading_id ) );
+				}
 				$( "#reading-form" ).dialog( "close" );
 			});
+			// Re-color the node if necessary
+			return false;
   		}
   	},
-  	create: function() {},
+  	create: function() {
+  		// $('#reading_relemmatize').button();
+		$('#reading_relemmatize').click( function () {
+			// Send the reading for a new lemmatization and reopen the form.
+			alert( "Got a click function for relemmatize button" );
+			var reading_id = $('#reading_id').val()
+			ncpath = getReadingURL( reading_id );
+			form_values = { 
+				'normal_form': $('#reading_normal_form').val(), 
+				'relemmatize': 1 };
+			var jqjson = $.post( ncpath, form_values, function( data ) {
+				// Update the form with the return
+				if( 'reading_id' in data ) {
+					// We got back a good answer. Stash it
+					readingdata[reading_id] = data;
+					// and regenerate the morphology form.
+					morphology_form( data['lexemes'] );
+				} // else throw an error with what is in ['error']
+			});
+			// Prevent submit
+			return false;
+		});
+  	},
   	open: function() {
         $(".ui-widget-overlay").css("background", "none");
         $("#dialog_overlay").show();
@@ -742,7 +787,6 @@ $(document).ready(function () {
 	}
   });
   
-  $('#reading_relemmatize').button();
 
   $('#update_workspace_button').click( function() {
      var svg_enlargement = $('#svgenlargement').svg().svg('get').root();
