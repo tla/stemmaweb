@@ -87,7 +87,7 @@ $(document).ready(function () {
 			<!-- Morphological options go here -->
 			<label for="reading_normal_form">Normalized form: </label>
 			<input type="text" name="reading_normal_form" id="reading_normal_form"></input>
-			<button id="#reading_relemmatize">Re-lemmatize</button>
+			<button id="#reading_relemmatize" onclick="relemmatize(); return false;">Re-lemmatize</button>
 			<br/><br/>
 			<label>Lemma / part of speech:</label><br/>
 			<div id="morphology">

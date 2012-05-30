@@ -287,6 +287,7 @@ sub reading :Chained('text') :PathPart :Args(1) {
 			my $nf = $c->request->param('normal_form');
 			# TODO throw error unless $nf
 			$rdg->normal_form( $nf );
+			# TODO throw error if lemmatization fails
 			$rdg->lemmatize();
 		} else {
 			# Set all the values that we have for the reading.
@@ -307,7 +308,8 @@ sub reading :Chained('text') :PathPart :Args(1) {
 					}
 					$lx->disambiguate( $idx );
 				} elsif( $read_write_keys{$p} ) {
-					$rdg->$p( $c->request->param( $p ) );
+					my $val = _clean_booleans( $rdg, $p, $c->request->param( $p ) );
+					$rdg->$p( $val );
 				}
 			}		
 		}
@@ -317,6 +319,15 @@ sub reading :Chained('text') :PathPart :Args(1) {
 	}
 	$c->forward('View::JSON');
 
+}
+
+sub _clean_booleans {
+	my( $rdg, $param, $val ) = @_;
+	if( $rdg->meta->get_attribute( $param )->type_constraint->name eq 'Bool' ) {
+		$val = 1 if $val eq 'true';
+		$val = undef if $val eq 'false';
+	} 
+	return $val;
 }
 
 =head2 end

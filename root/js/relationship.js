@@ -52,8 +52,8 @@ function node_dblclick_listener( evt ) {
   	// Set the easy properties first
   	$('#reading-form').dialog( 'option', 'title', 'Reading information for "' + reading_info['text'] + '"' );
   	$('#reading_id').val( reading_id );
-  	$('#reading_is_nonsense').val( reading_info['is_nonsense'] );
-  	$('#reading_grammar_invalid').val( reading_info['grammar_invalid'] );
+  	$('#reading_is_nonsense').attr( 'checked', reading_info['is_nonsense'] );
+  	$('#reading_grammar_invalid').attr( 'checked', reading_info['grammar_invalid'] );
   	// Use .text as a backup for .normal_form
   	var normal_form = reading_info['normal_form'];
   	if( !normal_form ) {
@@ -80,7 +80,6 @@ function morphology_form ( lexlist ) {
   			morphoptions.push( tagstr );
   		});
   		var formtag = 'morphology_' + idx;
-  		//forminput.autocomplete('search', '');
   		var formstr = '';
   		if( lex['form'] ) {
   			formstr = stringify_wordform( lex['form'] );
@@ -128,6 +127,26 @@ function color_inactive ( el ) {
 	$.each( reading_info['lexemes'], function ( idx, lex ) {
 		if( !lex['is_disambiguated'] ) {
 			$(el).attr( {stroke:'orange', fill:'#fee233'} );
+		}
+	});
+}
+
+function relemmatize () {
+	// Send the reading for a new lemmatization and reopen the form.
+	var reading_id = $('#reading_id').val()
+	ncpath = getReadingURL( reading_id );
+	form_values = { 
+		'normal_form': $('#reading_normal_form').val(), 
+		'relemmatize': 1 };
+	var jqjson = $.post( ncpath, form_values, function( data ) {
+		// Update the form with the return
+		if( 'id' in data ) {
+			// We got back a good answer. Stash it
+			readingdata[reading_id] = data;
+			// and regenerate the morphology form.
+			morphology_form( data['lexemes'] );
+		} else {
+			alert("Could not relemmatize as requested: " + data['error']);
 		}
 	});
 }
@@ -726,8 +745,8 @@ $(document).ready(function () {
 			var reading_id = $('#reading_id').val()
   			form_values = {
   				'id' : reading_id,
-  				'is_nonsense': $('#reading_is_nonsense').val(),
-  				'grammar_invalid': $('#reading_grammar_invalid').val(),
+  				'is_nonsense': $('#reading_is_nonsense').is(':checked'),
+  				'grammar_invalid': $('#reading_grammar_invalid').is(':checked'),
   				'normal_form': $('#reading_normal_form').val() };
   			// Add the morphology values
   			$('.reading_morphology').each( function() {
@@ -753,27 +772,6 @@ $(document).ready(function () {
   		}
   	},
   	create: function() {
-  		// $('#reading_relemmatize').button();
-		$('#reading_relemmatize').click( function () {
-			// Send the reading for a new lemmatization and reopen the form.
-			alert( "Got a click function for relemmatize button" );
-			var reading_id = $('#reading_id').val()
-			ncpath = getReadingURL( reading_id );
-			form_values = { 
-				'normal_form': $('#reading_normal_form').val(), 
-				'relemmatize': 1 };
-			var jqjson = $.post( ncpath, form_values, function( data ) {
-				// Update the form with the return
-				if( 'reading_id' in data ) {
-					// We got back a good answer. Stash it
-					readingdata[reading_id] = data;
-					// and regenerate the morphology form.
-					morphology_form( data['lexemes'] );
-				} // else throw an error with what is in ['error']
-			});
-			// Prevent submit
-			return false;
-		});
   	},
   	open: function() {
         $(".ui-widget-overlay").css("background", "none");
