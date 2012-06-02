@@ -11,7 +11,7 @@
  
  <p>The premise of the tool is that, once a set of texts has been collated, there will be a need to chart the relationships between the variants—are they substantially the same word? Different words meaning the same thing? Is one an orthographic variant of the other that should be excluded from any eventual apparatus?</p>
  
- <h3>Instructions for use</h3>
+ <h3>Making relationships between words</h3>
  
  <p>The tool itself is an interface for allowing these relationships to be declared.  The collation is presented as a variant graph running from left to right.  In a variant graph, each node is a reading, and each witness takes a single path through the readings from beginning to end.  When readings appear vertically aligned with each other, it is an indication that they are variant readings, occurring at the same point in the text.
  
@@ -35,6 +35,41 @@
  
  <p>The relationships are displayed as colored paths between readings; while in 'edit' mode, clicking on a relationship path will display the information associated with it, and give the user an option to delete it.  Deletion of a 'global' relationship will remove that relationship throughout the graph.  When you are ready to move elsewhere in the graph, click the 'hand' icon to return to select mode.<p>
  
- <p>Please note that this tool is known to work with recent versions of Firefox (e.g. 8, 9, 10); it is known not to work with Safari and Chrome.</p>
+[% IF language != 'NONE' %]
+ <h3>Adding [% language %] morphological information to readings</h3>
  
+ <p>It is also possible to add morphological information to the readings in this text (that is, lemma and morphological tagging).  Double click on any reading to bring up the morphology info.  The options therein are:</p>
+ 
+ <ul>
+	<li>Indicate if the word is a nonsense word</li>
+	<li>Indicate if the word (whether sensical or not) cannot be grammatically correct here</li>
+	<li>Indicate the "normal" form of the word for lemmatization purposes.  Any readings linked to this one via 'spelling' or 'orthographic' links will appear when the entry text box is clicked.</li>
+	<li>Indicate the correct morphological form of this reading.  The shorthand syntax is:<br/>
+		&lt;LEMMA&gt; // cat@&lt;CATEGORY&gt; (type@&lt;TYPE&gt; etc.)<br/>
+		Each form must have at least a lemma and a category, and may have a number of additional features depending on the category (e.g. type, gender, number, case.) The possible options are as follows:
+		<ul>
+[% FOREACH stype IN tagset.structures -%]
+			<li>Category [% stype.id -%]
+[% IF stype.use_features.size -%]
+ has features [% stype.use_features.join(', ') %]
+[% END -%]
+			</li>
+[% END -%]
+		</ul>
+		<ul>
+[% FOREACH ftype IN tagset.features.keys -%]
+			<li>Feature [% ftype %] can have values:
+				<ul>
+[% FOREACH fval IN tagset.features.$ftype.values -%]
+					<li>[% fval.short %] =&gt; [% fval.long %]</li>
+[% END -%]
+				</ul>
+			</li>
+[% END -%]
+		</ul>
+	</li>
+  </ul>
+  
+  <p>If initial lemmatization has been performed on the text, a number of readings may appear in yellow rather than green; this means that there are multiple possible morphologies for the reading in question. Double click on the reading to select and save the correct morphology.</p>
+[% END -%]
 [% PROCESS footer.tt %]

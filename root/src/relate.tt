@@ -13,7 +13,7 @@ $(document).ready(function () {
 
 	<div id="topbanner">
 		<div id="bannerinfo">
-			<a href="help" title="Relationship mapper help" class="helptag">Help / About</a>
+			<a href="help/[% text_lang %]" title="Relationship mapper help" class="helptag">Help / About</a>
 		</div>
 		<h1>Relationship mapper</h1>
 		<h2>[% text_title %]</h2>

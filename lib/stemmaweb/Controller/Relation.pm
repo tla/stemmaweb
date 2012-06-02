@@ -1,5 +1,6 @@
 package stemmaweb::Controller::Relation;
 use Moose;
+use Module::Load;
 use namespace::autoclean;
 use TryCatch;
 
@@ -27,19 +28,6 @@ Renders the application for the text identified by $textid.
 sub index :Path :Args(0) {
 	my( $self, $c ) = @_;
 	$c->stash->{'template'} = 'relate.tt';
-}
-
-=head2 help
-
- GET relation/help
-
-Returns the help window HTML.
-
-=cut
-
-sub help :Local :Args(0) {
-	my( $self, $c ) = @_;
-	$c->stash->{'template'} = 'relatehelp.tt';
 }
 
 =head2 definitions
@@ -134,7 +122,36 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	$c->stash->{'startseg'} = $startseg if defined $startseg;
 	$c->stash->{'svg_string'} = $svg_str;
 	$c->stash->{'text_title'} = $tradition->name;
+	$c->stash->{'text_lang'} = $tradition->language;
 	$c->stash->{'template'} = 'relate.tt';
+}
+
+=head2 help
+
+ GET relation/help/$language
+
+Returns the help window HTML.
+
+=cut
+
+sub help :Local :Args(1) {
+	my( $self, $c, $lang ) = @_;
+	# Display the morphological help for the language if it is defined.
+	if( $lang && $lang ne 'Default' ) {
+		my $mod = 'Text::Tradition::Language::' . $lang;
+		try {
+			load( $mod );
+		} catch {
+			$c->log->debug("Warning: could not load $mod");
+		}
+		my $has_mod = $mod->can('morphology_tags');
+		$DB::single = 1;
+		if( $has_mod ) {
+			my $tagset = &$has_mod;
+			$c->stash->{'tagset'} = $tagset;
+		}
+	}
+	$c->stash->{'template'} = 'relatehelp.tt';
 }
 
 =head2 relationships
