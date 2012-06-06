@@ -49,7 +49,9 @@
 		Each form must have at least a lemma and a category, and may have a number of additional features depending on the category (e.g. type, gender, number, case.) The possible options are as follows:
 		<ul>
 [% FOREACH stype IN tagset.structures -%]
-			<li>Category [% stype.id -%]
+	[% IF stype.desc != 'use_features' -%]
+			<li>Category [% stype.id -%] ([% stype.desc %])
+	[% END -%]
 [% IF stype.use_features.size -%]
  has features [% stype.use_features.join(', ') %]
 [% END -%]
@@ -57,7 +59,7 @@
 [% END -%]
 		</ul>
 		<ul>
-[% FOREACH ftype IN tagset.features.keys -%]
+[% FOREACH ftype IN tagset.features.keys.sort -%]
 			<li>Feature [% ftype %] can have values:
 				<ul>
 [% FOREACH fval IN tagset.features.$ftype.values -%]
