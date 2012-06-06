@@ -145,7 +145,6 @@ sub help :Local :Args(1) {
 			$c->log->debug("Warning: could not load $mod");
 		}
 		my $has_mod = $mod->can('morphology_tags');
-		$DB::single = 1;
 		if( $has_mod ) {
 			my $tagset = &$has_mod;
 			$c->stash->{'tagset'} = $tagset;

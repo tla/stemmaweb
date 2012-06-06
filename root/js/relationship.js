@@ -75,13 +75,15 @@ function morphology_form ( lexlist ) {
   	$('#morphology').empty();
   	$.each( lexlist, function( idx, lex ) {
   		var morphoptions = [];
-  		$.each( lex['wordform_matchlist'], function( tdx, tag ) {
-  			var tagstr = stringify_wordform( tag );
-  			morphoptions.push( tagstr );
-  		});
+  		if( 'wordform_matchlist' in lex ) {
+			$.each( lex['wordform_matchlist'], function( tdx, tag ) {
+				var tagstr = stringify_wordform( tag );
+				morphoptions.push( tagstr );
+			});
+		}
   		var formtag = 'morphology_' + idx;
   		var formstr = '';
-  		if( lex['form'] ) {
+  		if( 'form' in lex ) {
   			formstr = stringify_wordform( lex['form'] );
   		} 
   		var form_morph_elements = morph_elements( 
@@ -93,8 +95,11 @@ function morphology_form ( lexlist ) {
 }
 
 function stringify_wordform ( tag ) {
-	var elements = tag.split(' // ');
-	return elements[1] + ' // ' + elements[2];
+	if( tag ) {
+		var elements = tag.split(' // ');
+		return elements[1] + ' // ' + elements[2];
+	}
+	return ''
 }
 
 function morph_elements ( formtag, formtxt, currform, morphoptions ) {
