@@ -692,7 +692,8 @@ $(document).ready(function () {
         $("#dialog_overlay").hide();
     }
   }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-      if( ( ajaxSettings.type == 'POST' ) && jqXHR.status == 403 ) {
+      if( ajaxSettings.url == getTextURL('relationships') 
+      	&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
       	  var errobj = jQuery.parseJSON( jqXHR.responseText );
           $('#status').append( '<p class="error">Error: ' + errobj.error + '</br>The relationship cannot be made.</p>' );
       }
@@ -747,6 +748,7 @@ $(document).ready(function () {
   			$( this ).dialog( "close" );
   		},
   		Update: function() {
+  			$('#reading_status').empty();
 			var reading_id = $('#reading_id').val()
   			form_values = {
   				'id' : reading_id,
@@ -781,6 +783,7 @@ $(document).ready(function () {
   	open: function() {
         $(".ui-widget-overlay").css("background", "none");
         $("#dialog_overlay").show();
+        $('#reading_status').empty();
         $("#dialog_overlay").height( $("#enlargement_container").height() );
         $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
         $("#dialog_overlay").offset( $("#enlargement_container").offset() );
@@ -788,6 +791,12 @@ $(document).ready(function () {
 	close: function() {
 		$("#dialog_overlay").hide();
 	}
+  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+      if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1
+      	&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
+      	  var errobj = jQuery.parseJSON( jqXHR.responseText );
+          $('#reading_status').append( '<p class="error">Error: ' + errobj.error + '</p>' );
+      }
   });
   
 

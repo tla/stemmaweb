@@ -298,12 +298,14 @@ sub reading :Chained('text') :PathPart :Args(1) {
 		$c->stash->{'result'} = $rdg ? _reading_struct( $rdg )
 			: { 'error' => "No reading with ID $reading_id" };
 	} elsif ( $c->request->method eq 'POST' ) {
+		my $errmsg;
 		# Are we re-lemmatizing?
 		if( $c->request->param('relemmatize') ) {
 			my $nf = $c->request->param('normal_form');
 			# TODO throw error unless $nf
 			$rdg->normal_form( $nf );
 			# TODO throw error if lemmatization fails
+			# TODO skip this if normal form hasn't changed
 			$rdg->lemmatize();
 		} else {
 			# Set all the values that we have for the reading.
@@ -320,9 +322,14 @@ sub reading :Chained('text') :PathPart :Args(1) {
 					unless( defined $idx ) {
 						# Make the word form and add it to the lexeme.
 						$c->log->debug("Adding new form for $strrep");
-						$idx = $lx->add_matching_form( $strrep ) - 1;
+						try {
+							$idx = $lx->add_matching_form( $strrep ) - 1;
+						} catch( Text::Tradition::Error $e ) {
+							$c->response->status( '403' );
+							$errmsg = $e->message;
+						}
 					}
-					$lx->disambiguate( $idx );
+					$lx->disambiguate( $idx ) if defined $idx;
 				} elsif( $read_write_keys{$p} ) {
 					my $val = _clean_booleans( $rdg, $p, $c->request->param( $p ) );
 					$rdg->$p( $val );
@@ -330,7 +337,8 @@ sub reading :Chained('text') :PathPart :Args(1) {
 			}		
 		}
 		$m->save( $tradition );
-		$c->stash->{'result'} = _reading_struct( $rdg );
+		$c->stash->{'result'} = $errmsg ? { 'error' => $errmsg }
+			: _reading_struct( $rdg );
 
 	}
 	$c->forward('View::JSON');

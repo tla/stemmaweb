@@ -93,6 +93,7 @@ $(document).ready(function () {
 			<div id="morphology">
 			</div>
 			</select>
+			<div id="reading_status"></div>
 		</form>
     </div>
 	
