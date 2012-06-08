@@ -214,8 +214,20 @@ span.apimore {
 user-select: none;
 }
 
-#morphology {
+#normalization {
 	float: left;
+	padding: 10px;
+}
+#relemmatize_pending {
+	float: left;
+	padding: 10px;
+	display: none;
+}
+#morph_outer {
+	clear: both;
+	float: left;
+}
+#morphology {
 	text-align: right;
 	margin: 10px;
 }

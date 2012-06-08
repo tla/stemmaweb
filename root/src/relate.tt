@@ -85,12 +85,18 @@ $(document).ready(function () {
 			<label for="reading_grammar_invalid">This word's grammar cannot be right</label>
 			<br/><br/>
 			<!-- Morphological options go here -->
-			<label for="reading_normal_form">Normalized form: </label>
-			<input type="text" name="reading_normal_form" id="reading_normal_form"></input>
-			<button id="#reading_relemmatize" onclick="relemmatize(); return false;">Re-lemmatize</button>
+			<div id="normalization">
+				<label for="reading_normal_form">Normalized form: </label>
+				<input type="text" name="reading_normal_form" id="reading_normal_form"></input>
+				<button id="#reading_relemmatize" onclick="relemmatize(); return false;">Re-lemmatize</button>
+			</div>
+			<div id="relemmatize_pending">
+				<img src="[% c.uri_for('/images/ajax-loader.gif') %]"/>
+			</div>
 			<br/><br/>
-			<label>Lemma / part of speech:</label><br/>
-			<div id="morphology">
+			<div id="morph_outer">
+				<label>Lemma / part of speech:</label><br/>
+				<div id="morphology"></div>
 			</div>
 			</select>
 			<div id="reading_status"></div>

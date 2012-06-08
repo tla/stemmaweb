@@ -145,6 +145,7 @@ function color_inactive ( el ) {
 
 function relemmatize () {
 	// Send the reading for a new lemmatization and reopen the form.
+	$('#relemmatize_pending').show();
 	var reading_id = $('#reading_id').val()
 	ncpath = getReadingURL( reading_id );
 	form_values = { 
@@ -160,6 +161,7 @@ function relemmatize () {
 		} else {
 			alert("Could not relemmatize as requested: " + data['error']);
 		}
+		$('#relemmatize_pending').hide();
 	});
 }
 
@@ -754,7 +756,9 @@ $(document).ready(function () {
   		Cancel: function() {
   			$( this ).dialog( "close" );
   		},
-  		Update: function() {
+  		Update: function( evt ) {
+  			// Disable the button
+  			$(evt.target).button("disable");
   			$('#reading_status').empty();
 			var reading_id = $('#reading_id').val()
   			form_values = {
@@ -771,7 +775,7 @@ $(document).ready(function () {
   			// Make the JSON call
 			ncpath = getReadingURL( reading_id );
 			var reading_element = readingdata[reading_id];
-			$(':button :contains("Update")').attr("disabled", true);
+			// $(':button :contains("Update")').attr("disabled", true);
 			var jqjson = $.post( ncpath, form_values, function(data) {
 				$.each( data, function(key, value) { 
 					reading_element[key] = value;
@@ -779,6 +783,7 @@ $(document).ready(function () {
 				if( $('#update_workspace_button').data('locked') == false ) {
 					color_inactive( get_ellipse( reading_id ) );
 				}
+  				$(evt.target).button("enable");
 				$( "#reading-form" ).dialog( "close" );
 			});
 			// Re-color the node if necessary
@@ -803,6 +808,7 @@ $(document).ready(function () {
       	&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
       	  var errobj = jQuery.parseJSON( jqXHR.responseText );
           $('#reading_status').append( '<p class="error">Error: ' + errobj.error + '</p>' );
+		  $(event.target).parent().find('.ui-button').button("enable");
       }
   });
   
