@@ -52,8 +52,8 @@ function node_dblclick_listener( evt ) {
   	// Set the easy properties first
   	$('#reading-form').dialog( 'option', 'title', 'Reading information for "' + reading_info['text'] + '"' );
   	$('#reading_id').val( reading_id );
-  	$('#reading_is_nonsense').attr( 'checked', reading_info['is_nonsense'] );
-  	$('#reading_grammar_invalid').attr( 'checked', reading_info['grammar_invalid'] );
+  	toggle_checkbox( $('#reading_is_nonsense'), reading_info['is_nonsense'] );
+  	toggle_checkbox( $('#reading_grammar_invalid'), reading_info['grammar_invalid'] );
   	// Use .text as a backup for .normal_form
   	var normal_form = reading_info['normal_form'];
   	if( !normal_form ) {
@@ -69,6 +69,13 @@ function node_dblclick_listener( evt ) {
   	morphology_form( reading_info['lexemes'] );
   	// and then open the dialog.
   	$('#reading-form').dialog("open");
+}
+
+function toggle_checkbox( box, value ) {
+	if( value == null ) {
+		value = false;
+	}
+	box.attr('checked', value );
 }
 
 function morphology_form ( lexlist ) {
