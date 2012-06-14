@@ -647,11 +647,11 @@ $(document).ready(function () {
     width: 290,
     modal: true,
     buttons: {
-      "Ok": function() {
+      "Ok": function( evt ) {
+      	$(evt.target).button("disable");
         $('#status').empty();
         form_values = $('#collapse_node_form').serialize();
         ncpath = getTextURL( 'relationships' );
-        $(':button :contains("Ok")').attr("disabled", true);
         var jqjson = $.post( ncpath, form_values, function(data) {
             $.each( data, function(item, source_target) { 
             	var source_found = get_ellipse( source_target[0] );
@@ -663,7 +663,8 @@ $(document).ready(function () {
 					relation.data( 'note', $('#note').val()  );
 					relation_manager.toggle_active( relation.attr('id') );
 				}
-            });
+   				$(evt.target).button("enable");
+           });
             $( "#dialog-form" ).dialog( "close" );
         }, 'json' );
       },
@@ -705,6 +706,7 @@ $(document).ready(function () {
       	&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
       	  var errobj = jQuery.parseJSON( jqXHR.responseText );
           $('#status').append( '<p class="error">Error: ' + errobj.error + '</br>The relationship cannot be made.</p>' );
+		  $(event.target).parent().find('.ui-button').button("enable");
       }
   } );
 
