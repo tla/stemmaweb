@@ -336,7 +336,7 @@ sub reading :Chained('text') :PathPart :Args(1) {
 				}
 			}		
 		}
-		$m->save( $tradition );
+		$m->save( $rdg );
 		$c->stash->{'result'} = $errmsg ? { 'error' => $errmsg }
 			: _reading_struct( $rdg );
 
