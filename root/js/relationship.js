@@ -137,7 +137,7 @@ function color_inactive ( el ) {
 	// otherwise color it green.
 	$(el).attr( {stroke:'green', fill:'#b3f36d'} );
 	$.each( reading_info['lexemes'], function ( idx, lex ) {
-		if( !lex['is_disambiguated'] ) {
+		if( !lex['is_disambiguated'] || lex['is_disambiguated'] == 0 ) {
 			$(el).attr( {stroke:'orange', fill:'#fee233'} );
 		}
 	});
