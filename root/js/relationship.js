@@ -136,11 +136,13 @@ function color_inactive ( el ) {
 	// If the reading info has any non-disambiguated lexemes, color it yellow;
 	// otherwise color it green.
 	$(el).attr( {stroke:'green', fill:'#b3f36d'} );
-	$.each( reading_info['lexemes'], function ( idx, lex ) {
-		if( !lex['is_disambiguated'] || lex['is_disambiguated'] == 0 ) {
-			$(el).attr( {stroke:'orange', fill:'#fee233'} );
-		}
-	});
+	if( reading_info ) {
+		$.each( reading_info['lexemes'], function ( idx, lex ) {
+			if( !lex['is_disambiguated'] || lex['is_disambiguated'] == 0 ) {
+				$(el).attr( {stroke:'orange', fill:'#fee233'} );
+			}
+		});
+	}
 }
 
 function relemmatize () {
