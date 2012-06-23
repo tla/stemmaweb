@@ -708,8 +708,8 @@ $(document).ready(function () {
       	&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
       	  var errobj = jQuery.parseJSON( jqXHR.responseText );
           $('#status').append( '<p class="error">Error: ' + errobj.error + '</br>The relationship cannot be made.</p>' );
-		  $(event.target).parent().find('.ui-button').button("enable");
       }
+	  $(event.target).parent().find('.ui-button').button("enable");
   } );
 
   $( "#delete-form" ).dialog({
@@ -812,8 +812,8 @@ $(document).ready(function () {
       	&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
       	  var errobj = jQuery.parseJSON( jqXHR.responseText );
           $('#reading_status').append( '<p class="error">Error: ' + errobj.error + '</p>' );
-		  $(event.target).parent().find('.ui-button').button("enable");
       }
+	  $(event.target).parent().find('.ui-button').button("enable");
   });
   
 

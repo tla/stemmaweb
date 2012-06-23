@@ -313,18 +313,18 @@ sub reading :Chained('text') :PathPart :Args(1) {
 			foreach my $p ( keys %{$c->request->params} ) {
 				if( $p =~ /^morphology_(\d+)$/ ) {
 					# Set the form on the correct lexeme
+					my $morphval = $c->request->param( $p );
+					next unless $morphval;
 					my $midx = $1;
-					$c->log->debug( "Fetching lexeme $midx" );
 					my $lx = $rdg->lexeme( $midx );
-					my $strrep = $rdg->language . ' // ' 
-						. $c->request->param( $p );
+					my $strrep = $rdg->language . ' // ' . $morphval;
 					my $idx = $lx->has_form( $strrep );
 					unless( defined $idx ) {
 						# Make the word form and add it to the lexeme.
-						$c->log->debug("Adding new form for $strrep");
 						try {
 							$idx = $lx->add_matching_form( $strrep ) - 1;
 						} catch( Text::Tradition::Error $e ) {
+							# TODO catch other errors e.g. Moose ones
 							$c->response->status( '403' );
 							$errmsg = $e->message;
 						}
