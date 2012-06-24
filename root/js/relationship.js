@@ -772,9 +772,11 @@ $(document).ready(function () {
   				'normal_form': $('#reading_normal_form').val() };
   			// Add the morphology values
   			$('.reading_morphology').each( function() {
-  				var rmid = $(this).attr('id');
-  				rmid = rmid.substring(8);
-  				form_values[rmid] = $(this).val();
+   				if( $(this).val() != '(Click to select)' ) {
+					var rmid = $(this).attr('id');
+					rmid = rmid.substring(8);
+	  				form_values[rmid] = $(this).val();
+	  			}
   			});
   			// Make the JSON call
 			ncpath = getReadingURL( reading_id );
@@ -803,6 +805,7 @@ $(document).ready(function () {
         $("#dialog_overlay").height( $("#enlargement_container").height() );
         $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
         $("#dialog_overlay").offset( $("#enlargement_container").offset() );
+        $("#reading-form").parent().find('.ui-button').button("enable");
   	},
 	close: function() {
 		$("#dialog_overlay").hide();

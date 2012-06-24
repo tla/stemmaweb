@@ -324,9 +324,12 @@ sub reading :Chained('text') :PathPart :Args(1) {
 						try {
 							$idx = $lx->add_matching_form( $strrep ) - 1;
 						} catch( Text::Tradition::Error $e ) {
-							# TODO catch other errors e.g. Moose ones
 							$c->response->status( '403' );
 							$errmsg = $e->message;
+						} catch {
+							# Something else went wrong, probably a Moose error
+							$c->response->status( '403' );
+							$errmsg = 'Something went wrong with the request';	
 						}
 					}
 					$lx->disambiguate( $idx ) if defined $idx;
