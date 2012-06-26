@@ -5,13 +5,6 @@
 %]
 <script type="text/javascript">
 var readingstats = [% reading_statistics %];
-function show_stats( row_index ) {
-	var rs = readingstats[row_index];
-	var rshtml = $('#stats_template').clone();
-	rshtml.find('#statrank').append( rs.id );
-	$('#row_statistics').empty();
-	$('#row_statistics').append( rshtml.contents() );
-};
 </script>
 [% END -%]
     <h1>Stexaminer</h1>
@@ -32,12 +25,30 @@ function show_stats( row_index ) {
       	<li>Total number of variant locations analyzed: [% total %]</li>
         <li>Number of fully genealogical locations: [% genealogical %]</li>
         <li>Number of readings that conflict with the stemma: [% conflict %]</li>
+        <li>Genealogical reading transitions by relationship type: [% todo %]</li>
       </ul>
       <p>(Choose a row in the table to display statistics about individual readings.)</p>
     </div>
-    <div id="stats_template">
-	    <h3>Statistics for readings at <span id="statrank"></span></h3>
+    
+    <div id="stats_template" class="template">
+	    <h3>Statistics for readings at <span id="statrank"></span>:</h3>
+	    <!-- reading_template will be appended here for each reading -->
     </div>
+    
+	<div id="reading_template" class="template">  
+		<div class="reading_statistics">
+			<span class="readinglabel"></span> - copied <span class="reading_copied"></span> times, changed <span class="reading_changed"></span> times<br/>
+			Reading root(s) at <span class="readingroots"></span><br/>
+			<!-- reading_parent_template will be appended here if there are parents -->
+		</div>
+    </div>
+    
+	<div id="reading_parent_template" class="template">
+		<div class="parent_statistics">
+			Reading parent(s):
+			<ul class="reading_parent_list"></ul>
+		</div>
+	</div>
 
 [% PROCESS footer.tt %]
     

@@ -37,3 +37,42 @@ function color_nodes( column_index, arr_node_ids, arr_greynode_ids ) {
       });
   });
 }
+
+function show_stats( row_index ) {
+	var rs = readingstats[row_index];
+	var rshtml = $('#stats_template').clone();
+	rshtml.find('#statrank').append( rs.id );
+	$.each( rs.readings, function( idx, rdghash ) {
+		var readinglabel = rdghash.readingid;
+		if( rdghash.text ) {
+			readinglabel += ' (' + rdghash.text + ')';
+		}
+		var readingroots = rdghash.independent_occurrence.join( ', ' );
+		var rdgstats = $('#reading_template').clone();
+		rdgstats.find('.readinglabel').append( readinglabel );
+		rdgstats.find('.reading_copied').append( rdghash.followed );
+		rdgstats.find('.reading_changed').append( rdghash.not_followed );
+		rdgstats.find('.reading_unclear').append( rdghash.follow_unknown );
+		rdgstats.find('.readingroots').append( readingroots );
+		if( ! $.isEmptyObject( rdghash.reading_parents ) ) {
+			var parentstats = $('#reading_parent_template').clone();
+			$.each( rdghash.reading_parents, function( parentid, pdata ) {
+				var parentdesc = pdata.label;
+				if( pdata.relation ) {
+					parentdesc += ' - variant type ' + pdata.relation.type;
+					if( pdata.relation.annotation ) {
+						parentdesc += ' [ ' + pdata.relation.annotation + ' ]';
+					}
+				} else {
+					parentdesc += ' - no syntactic relation';
+				}
+				var parentitem = $('<li>').append( parentdesc );
+				parentstats.find('.reading_parent_list').append( parentitem );
+			});
+			rdgstats.find('.reading_statistics').append( parentstats.contents() );
+		}
+		rshtml.append( rdgstats.contents() );
+	});
+	$('#row_statistics').empty();
+	$('#row_statistics').append( rshtml.contents() );
+};

@@ -24,7 +24,7 @@
     position: relative;
     top: -15px;
 }
-#stats_template {
+.template {
 	display: none;
 }
 .genealogical {
