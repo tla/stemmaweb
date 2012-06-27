@@ -125,7 +125,7 @@ sub stemma :Local :Args(1) {
 	}
 	
 	$c->stash->{'result'} = $tradition->stemma_count
-		? $tradition->stemma(0)->as_svg
+		? $tradition->stemma(0)->as_svg( { size => [ 500, 375 ] } )
 		: '';
 	$c->forward('View::SVG');
 }

@@ -121,10 +121,9 @@ div.button:hover span {
 }
 #stexaminer_button {
 	bottom: 0;
-	margin-top: 5px;
+	margin-top: 13px;
 }
 #relater_button {
 	float: left;
-	margin-left: 83px;
-    margin-top:  7px;
+    margin-left:  100px;
 }

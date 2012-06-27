@@ -31,15 +31,13 @@ $(document).ready(function() {
       	  <span>Examine variants against this stemma</span>
         </div>
       </form>
-    </div>
-    <div id="variant_container">
-      <div style="float: left"><h2>Variant graph for <span class="texttitle">selected text</span></h2></div>
       <form id="run_relater" action="" method="GET" name="run_relater">
         <div class="button" id="relater_button" onClick="$('#run_relater').submit()">
           <span>Run relationship mapper</span>
         </div>
       </form>
-      <div id="variant_graph"></div>
+    </div>
+    <div id="variant_container">
     </div>
 
 [% PROCESS footer.tt %]
