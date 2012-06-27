@@ -1,9 +1,12 @@
 package stemmaweb::Controller::Stexaminer;
 use Moose;
 use namespace::autoclean;
+use Encode qw/ decode_utf8 /;
 use File::Temp;
 use JSON;
 use Text::Tradition::Analysis qw/ run_analysis wit_stringify /;
+use Text::Tradition::Collation;
+use Text::Tradition::Stemma;
 
 BEGIN { extends 'Catalyst::Controller' }
 
@@ -18,11 +21,11 @@ The stemma analysis tool with the pretty colored table.
 
 =head1 METHODS
 
+=head2 index
+
  GET stexaminer/$textid
  
 Renders the application for the text identified by $textid.
-
-=head2 index
 
 =cut
 
@@ -32,8 +35,8 @@ sub index :Path :Args(1) {
 	my $tradition = $m->tradition( $textid );
 	if( $tradition->stemma_count ) {
 		my $stemma = $tradition->stemma(0);
-		# TODO Think about caching the stemma in a session 
-		$c->stash->{svg} = $stemma->as_svg;
+		$c->stash->{svg} = $stemma->as_svg( { size => [ 600, 350 ] } );
+		$c->stash->{graphdot} = $stemma->editable({ linesep => ' ' });
 		$c->stash->{text_title} = $tradition->name;
 		$c->stash->{template} = 'stexaminer.tt'; 
 		# TODO Run the analysis as AJAX from the loaded page.
@@ -58,6 +61,34 @@ sub index :Path :Args(1) {
 		$c->stash->{error} = 'Tradition ' . $tradition->name 
 			. 'has no stemma for analysis.';
 	}
+}
+
+=head2 graphsvg
+
+  POST stexaminer/graphsvg
+  	dot: <stemmagraph dot string> 
+  	layerwits: [ <a.c. witnesses ] 
+  
+Returns an SVG string of the given graph, extended to include the given 
+layered witnesses.
+
+=cut
+
+sub graphsvg :Local {
+	my( $self, $c ) = @_;
+	my $dot = $c->request->param('dot');
+	my @layerwits = $c->request->param('layerwits[]');
+	open my $stemma_fh, '<', \$dot;
+	binmode( $stemma_fh, ':encoding(UTF-8)' );
+	my $emptycoll = Text::Tradition::Collation->new();
+	my $tempstemma = Text::Tradition::Stemma->new( 
+		collation => $emptycoll, 'dot' => $stemma_fh );
+	my $svgopts = { size => [ 600, 350 ] };
+	if( @layerwits ) {
+		$svgopts->{'layerwits'} = \@layerwits;
+	}
+	$c->stash->{'result'} = $tempstemma->as_svg( $svgopts );
+	$c->forward('View::SVG');
 }
 
 =head2 end

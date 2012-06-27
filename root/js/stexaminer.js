@@ -1,5 +1,26 @@
 var colors = ['#ffeeaa','#afc6e9','#d5fff6','#ffccaa','#ffaaaa','#e5ff80','#e5d5ff','#ffd5e5'];
 var row_triggered = false;
+var original_svg;
+
+function handle_row_click( row ) {
+	var ridx = row.parent().parent().index()
+	var rs = readingstats[ridx];
+    var imghtml = '<img src="../images/ajax-loader.gif" alt="Loading SVG..."/>'
+    $('#stemma_graph').empty();
+    $('#stemma_graph').append( imghtml );
+	if( rs.layerwits ) {
+		var stemma_form = { 'dot': graphdot, 'layerwits': rs.layerwits };
+		$('#stemma_graph').load( 'graphsvg', stemma_form, function() {
+			color_row( row );
+			show_stats( rs );
+		});
+	} else {
+		$('#stemma_graph').empty();
+		$('#stemma_graph').append( original_svg );
+		color_row( row );
+		show_stats( rs );
+	}
+}
 
 function color_row( row ) {
     row_triggered = true;
@@ -38,14 +59,13 @@ function color_nodes( column_index, arr_node_ids, arr_greynode_ids ) {
   });
 }
 
-function show_stats( row_index ) {
-	var rs = readingstats[row_index];
+function show_stats( rs ) {
 	var rshtml = $('#stats_template').clone();
 	rshtml.find('#statrank').append( rs.id );
 	$.each( rs.readings, function( idx, rdghash ) {
 		var readinglabel = rdghash.readingid;
 		if( rdghash.text ) {
-			readinglabel += ' (' + rdghash.text + ')';
+			readinglabel = rdghash.text;
 		}
 		var readingroots = rdghash.independent_occurrence.join( ', ' );
 		var rdgstats = $('#reading_template').clone();
@@ -76,3 +96,8 @@ function show_stats( row_index ) {
 	$('#row_statistics').empty();
 	$('#row_statistics').append( rshtml.contents() );
 };
+
+// Save the original unextended SVG for when we need it.
+$(document).ready(function () {
+	original_svg = $('#stemma_graph > svg').clone();
+});
