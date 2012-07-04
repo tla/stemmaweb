@@ -29,6 +29,7 @@ use Catalyst qw/
     Session::Store::File
     Session::State::Cookie
     StatusMessage
+    StackTrace
 /;
 
 extends 'Catalyst';
@@ -100,7 +101,7 @@ __PACKAGE__->config(
         login_db_field => 'username',
         action_after_login => '/index',
         send_register_email => 0,
-        realm => 'openid',
+#        realm => 'openid',
         login_fields => { openid => [qw/openid_identifier/],
                           default => [qw/username password/],
         },
