@@ -48,6 +48,11 @@ sub index :Path :Args(1) {
 			foreach my $rhash ( @{$loc->{'readings'}} ) {
 				my $gst = wit_stringify( $rhash->{'group'} );
 				$rhash->{'group'} = $gst;
+				my $roots = join( ', ', @{$rhash->{'independent_occurrence'}} );
+				$rhash->{'independent_occurrence'} = $roots;
+				unless( $rhash->{'text'} ) {
+					$rhash->{'text'} = $rhash->{'readingid'};
+				}
 			}
 		}
 		# Values for TT rendering

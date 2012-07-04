@@ -63,17 +63,12 @@ function show_stats( rs ) {
 	var rshtml = $('#stats_template').clone();
 	rshtml.find('#statrank').append( rs.id );
 	$.each( rs.readings, function( idx, rdghash ) {
-		var readinglabel = rdghash.readingid;
-		if( rdghash.text ) {
-			readinglabel = rdghash.text;
-		}
-		var readingroots = rdghash.independent_occurrence.join( ', ' );
 		var rdgstats = $('#reading_template').clone();
-		rdgstats.find('.readinglabel').append( readinglabel );
+		rdgstats.find('.readinglabel').append( rdghash.text );
 		rdgstats.find('.reading_copied').append( rdghash.followed );
 		rdgstats.find('.reading_changed').append( rdghash.not_followed );
 		rdgstats.find('.reading_unclear').append( rdghash.follow_unknown );
-		rdgstats.find('.readingroots').append( readingroots );
+		rdgstats.find('.readingroots').append( rdghash.independent_occurrence );
 		if( ! $.isEmptyObject( rdghash.reading_parents ) ) {
 			var parentstats = $('#reading_parent_template').clone();
 			$.each( rdghash.reading_parents, function( parentid, pdata ) {
