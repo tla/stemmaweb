@@ -33,6 +33,11 @@ sub index :Path :Args(0) {
     $c->response->body('Matched stemmaweb::Controller::Users in Users.');
 }
 
+before login => sub {
+  my($self, $c) = @_;
+  $c->req->param( realm => 'openid')
+    if $c->req->param('openid-check');
+};
 
 =head1 AUTHOR
 

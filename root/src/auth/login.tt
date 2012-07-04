@@ -23,13 +23,16 @@
 
 	</form>
 
+[% UNLESS c.req.param('realm') == 'openid' %]
 	<form method="post" action="[% c.uri_for_action('/users/login').hostless | html %]" autocomplete="off">
 
     <input type="hidden" name="realm" value="default"/>
 
 	[% form.field('username').render %]
 	[% form.field('password').render %]
+	[% form.field('remember').render %]
 
 	[% form.field('submit').render %]
 
 	</form>
+[% END %]
