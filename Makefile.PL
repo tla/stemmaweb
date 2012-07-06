@@ -18,6 +18,7 @@ requires 'Catalyst::Model::KiokuDB';
 requires 'Catalyst::View::Download::Plain';
 requires 'Catalyst::View::JSON';
 requires 'Catalyst::View::TT';
+requires 'Catalyst::View::Email::Template';
 ## Auth:
 requires 'Catalyst::Plugin::Authentication';
 requires 'Catalyst::Plugin::Session';
