@@ -100,7 +100,7 @@ __PACKAGE__->config(
         login_id_field => 'username',
         login_db_field => 'username',
         action_after_login => '/index',
-        send_register_email => 0,
+	action_after_register => '/index', 
         realm => 'default',
         login_fields => { openid => [qw/openid_identifier/],
                           default => [qw/username password remember/],
