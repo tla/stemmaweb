@@ -112,6 +112,11 @@ __PACKAGE__->config(
     'View::Email::Template' => {
         stash_key => 'email_template',
     },
+
+    recaptcha => {
+        pub_key => '',
+        priv_key => '',
+    },
 );
 
 # Start the application

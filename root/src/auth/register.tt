@@ -21,6 +21,11 @@
 	[% form.field('password').render %]
 	[% form.field('confirm_password').render %]
 
+    [% IF recaptcha_error %]
+	   <p class="error">[% recaptcha_error | html %]</p>
+    [% END %]
+    [% recaptcha %]
+
 	[% form.field('submit').render %]
 
 	</form>
