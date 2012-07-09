@@ -100,14 +100,17 @@ __PACKAGE__->config(
         login_id_field => 'username',
         login_db_field => 'username',
         action_after_login => '/index',
-	action_after_register => '/index', 
-	register_email_from  => '"MyApp" <somebody@example.com>',
-	register_email_subject => 'Confirm registration to stemmaweb',
-	register_email_template_plain => 'register-plain.tt',
+        action_after_register => '/index', 
+        register_email_from  => '"MyApp" <somebody@example.com>',
+        register_email_subject => 'Registration to stemmaweb',
+        register_email_template_plain => 'register-plain.tt',
         realm => 'default',
         login_fields => { openid => [qw/openid_identifier/],
                           default => [qw/username password remember/],
         },
+    },
+    'View::Email::Template' => {
+        stash_key => 'email_template',
     },
 );
 
