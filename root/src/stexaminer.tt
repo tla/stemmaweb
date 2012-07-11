@@ -10,6 +10,22 @@ var graphdot = '[% graphdot %]';
 [% END -%]
     <h1>Stexaminer</h1>
     <h2>[% text_title %]</h2>
+    <div id="options">
+    	<h3>Analysis options:</h3>
+    	<form id="use_variants_form" name="use_variants_form" class="clearfix" method="POST">
+    		<div class="optionformelement">
+    			<input type="radio" name="ignore_variant" value="none" [% 'checked="true"' IF ignore_variant == 'none' %]>Analyze all variation</input><br/>
+	    		<input type="radio" name="ignore_variant" value="orthographic" [% 'checked="true"' IF ignore_variant == 'orthographic' %]>Ignore orthographic variation</input><br/>
+    			<input type="radio" name="ignore_variant" value="spelling" [% 'checked="true"' IF ignore_variant == 'spelling' %]>Ignore orthographic and spelling variation</input>
+    		</div>
+    		<div class="optionformelement">
+    			<input type="checkbox" name="show_type1" [% 'checked="true"' IF show_type1 %]>Include type-1 variation</input>
+    		</div>
+    		<div id="options_button" class="button optionformelement" onclick="$('#use_variants_form').submit()">
+    			<span>Re-analyze</span>
+    		</div>
+    	</form>
+    </div>
     <div id="variants_table">
       <table>
 [% FOREACH row IN variants -%]
