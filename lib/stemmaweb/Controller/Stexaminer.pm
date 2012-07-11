@@ -39,8 +39,25 @@ sub index :Path :Args(1) {
 		$c->stash->{graphdot} = $stemma->editable({ linesep => ' ' });
 		$c->stash->{text_title} = $tradition->name;
 		$c->stash->{template} = 'stexaminer.tt'; 
+		
+		# Get the analysis options
+		my( $use_type1, $ignore_sort ) = ( 0, 'none' );
+		if( $c->req->method eq 'POST' ) {
+			$use_type1 = $c->req->param( 'show_type1' ) eq 'on' ? 1 : 0;
+			$ignore_sort = $c->req->param( 'ignore_variant' );
+		}
+		$c->stash->{'show_type1'} = $use_type1;
+		$c->stash->{'ignore_variant'} = $ignore_sort;
 		# TODO Run the analysis as AJAX from the loaded page.
-		my $t = run_analysis( $tradition, 'exclude_type1' => 1 );
+		my %analysis_options;
+		$analysis_options{'exclude_type1'} = !$use_type1;
+		if( $ignore_sort eq 'spelling' ) {
+			$analysis_options{'collapse'} = [ qw/ spelling orthographic / ];
+		} elsif( $ignore_sort eq 'orthographic' ) {
+			$analysis_options{'collapse'} = 'orthographic';
+		}
+			
+		my $t = run_analysis( $tradition, %analysis_options );
 		# Stringify the reading groups
 		foreach my $loc ( @{$t->{'variants'}} ) {
 			my $mst = wit_stringify( $loc->{'missing'} );

@@ -1,5 +1,22 @@
+#options {
+	position: relative;
+	border: 1px #c6dcf1 solid;
+	margin-left: 20px;
+	margin-bottom: 20px;
+	padding: 10px;
+	width: 500px;
+}
+.optionformelement {
+	float: left;
+	padding-left: 15px;
+}
+#options_button {
+	position: absolute;
+	bottom: 20px;
+	right: 20px;
+}
 #variants_table {
-    float: left;
+    clear: both;
     width: 90%;
     height: 190px;
     border: 1px #c6dcf1 solid;
@@ -83,4 +100,26 @@
 }
 .cellb7 {
     border-right: 20px solid #ffd5e5;
+}
+
+/* Clearfix hack to make div container height work */
+.clearfix:after {
+	content: ".";
+	display: block;
+	clear: both;
+	visibility: hidden;
+	line-height: 0;
+	height: 0;
+}
+ 
+.clearfix {
+	display: inline-block;
+}
+ 
+html[xmlns] .clearfix {
+	display: block;
+}
+ 
+* html .clearfix {
+	height: 1%;
 }
