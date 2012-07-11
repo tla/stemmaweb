@@ -1,0 +1,31 @@
+[% IF status_msg %]
+			<p>[% status_msg | html %]</p>
+[% END %]
+[% IF error_msg %]
+			<p class="error">[% error_msg | html %]</p>
+[% END %]
+
+[% IF form.has_errors %]
+			<p class="error">Some fields had errors:</p>
+					
+			<ul class="errors">
+	[% FOREACH msg IN form.errors %]
+				<li>[% msg | html %]</li>
+	[% END %]
+			</ul>
+[% END %]
+
+	<form method="post" action="[% c.uri_for_action('/users/register').hostless | html %]" autocomplete="off">
+
+	[% form.field('username').render %] (email)
+	[% form.field('password').render %]
+	[% form.field('confirm_password').render %]
+
+    [% IF recaptcha_error %]
+	   <p class="error">[% recaptcha_error | html %]</p>
+    [% END %]
+    [% recaptcha %]
+
+	[% form.field('submit').render %]
+
+	</form>

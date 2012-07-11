@@ -4,6 +4,10 @@ use namespace::autoclean;
 
 use Catalyst::Runtime 5.80;
 
+use Search::GIN::Extract::Class;
+use Search::GIN::Extract::Attributes;
+use Search::GIN::Extract::Multiplex;
+
 # Set flags and add plugins for the application.
 #
 # Note that ORDERING IS IMPORTANT here as plugins are initialized in order,
@@ -20,6 +24,12 @@ use Catalyst qw/
     ConfigLoader
     Static::Simple
     Unicode::Encoding
+    Authentication
+    Session
+    Session::Store::File
+    Session::State::Cookie
+    StatusMessage
+    StackTrace
 /;
 
 extends 'Catalyst';
@@ -48,6 +58,65 @@ __PACKAGE__->config(
 			stemmaweb->path_to( 'root', 'src' ),
 		],
 	},
+    ## kiokudb auth store testing
+    'Plugin::Authentication' => {
+        default => {
+            credential => {
+                class => 'Password',
+                password_field => 'password',
+                password_type => 'self_check',
+            },
+            store => {
+                class => 'Model::KiokuDB',
+                model_name => 'Directory',
+            },
+        },
+        openid => {
+            credential => {
+                class => 'OpenID',
+                extensions => ['http://openid.net/srv/ax/1.0' => 
+                    {
+                        ns          => 'ax',
+                        uri         => 'http://openid.net/srv/ax/1.0',
+                        mode        => 'fetch_request',
+                        required    => 'email',
+                        'type.email' => 'http://axschema.org/contact/email',
+                        # type        => {
+                        #     email => 'http://axschema.org/contact/email'
+                        # }
+                    }
+                    ],
+            },
+            store => {
+                class => 'Model::KiokuDB',
+                model_name => 'Directory',
+            },
+            auto_create_user => 1,
+        },
+    },
+    ## Auth with CatalystX::Controller::Auth
+    'Controller::Users' => {
+        model => 'User',
+        login_id_field => 'username',
+        login_db_field => 'username',
+        action_after_login => '/index',
+        action_after_register => '/index', 
+        register_email_from  => '"MyApp" <somebody@example.com>',
+        register_email_subject => 'Registration to stemmaweb',
+        register_email_template_plain => 'register-plain.tt',
+        realm => 'default',
+        login_fields => { openid => [qw/openid_identifier/],
+                          default => [qw/username password remember/],
+        },
+    },
+    'View::Email::Template' => {
+        stash_key => 'email_template',
+    },
+
+    recaptcha => {
+        pub_key => '',
+        priv_key => '',
+    },
 );
 
 # Start the application

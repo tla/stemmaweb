@@ -14,7 +14,7 @@ $(document).ready(function() {
 
     <div id="topbanner">
       <h1>Stemmaweb - a collection of tools for analysis of collated texts</h1>
-      <span class="mainnav"><a href="[% c.uri_for( 'about.html' ) %]">About<a> | <a href="[% c.uri_for( 'doc.html' ) %]">Help</a></span>
+      <span class="mainnav">[% IF c.user_exists %]Hello! [% c.user.get_object.email %] [% ELSE %]<a href="[% c.uri_for('/login') %]">Login</a> | <a href="[% c.uri_for('/register') %]">Register</a> | [% END %]<a href="[% c.uri_for( 'about.html' ) %]">About<a> | <a href="[% c.uri_for( 'doc.html' ) %]">Help</a></span>
     </div>
     <div id="directory_container">
       <h2>Text directory</h2>

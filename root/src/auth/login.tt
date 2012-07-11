@@ -1,0 +1,38 @@
+[% IF status_msg %]
+			<p>[% status_msg | html %]</p>
+[% END %]
+[% IF error_msg %]
+			<p class="error">[% error_msg | html %]</p>
+[% END %]
+
+[% IF form.has_errors %]
+			<p class="error">Some fields had errors:</p>
+					
+			<ul class="errors">
+	[% FOREACH msg IN form.errors %]
+				<li>[% msg | html %]</li>
+	[% END %]
+			</ul>
+[% END %]
+
+	<form method="post" action="[% c.uri_for_action('/users/login').hostless | html %]" autocomplete="off">
+
+    <input type="hidden" name="realm" value="openid"/>
+    <input type="hidden" name="openid_identifier" value="https://www.google.com/accounts/o8/id"/>
+    <input type="submit" value="Sign in with Google"/>
+
+	</form>
+
+[% UNLESS c.req.param('realm') == 'openid' %]
+	<form method="post" action="[% c.uri_for_action('/users/login').hostless | html %]" autocomplete="off">
+
+    <input type="hidden" name="realm" value="default"/>
+
+	[% form.field('username').render %]
+	[% form.field('password').render %]
+	[% form.field('remember').render %]
+
+	[% form.field('submit').render %]
+
+	</form>
+[% END %]
