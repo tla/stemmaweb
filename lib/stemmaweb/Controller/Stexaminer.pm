@@ -43,7 +43,7 @@ sub index :Path :Args(1) {
 		# Get the analysis options
 		my( $use_type1, $ignore_sort ) = ( 0, 'none' );
 		if( $c->req->method eq 'POST' ) {
-			$use_type1 = $c->req->param( 'show_type1' ) eq 'on' ? 1 : 0;
+			$use_type1 = $c->req->param( 'show_type1' ) ? 1 : 0;
 			$ignore_sort = $c->req->param( 'ignore_variant' );
 		}
 		$c->stash->{'show_type1'} = $use_type1;
@@ -52,9 +52,9 @@ sub index :Path :Args(1) {
 		my %analysis_options;
 		$analysis_options{'exclude_type1'} = !$use_type1;
 		if( $ignore_sort eq 'spelling' ) {
-			$analysis_options{'collapse'} = [ qw/ spelling orthographic / ];
+			$analysis_options{'merge_types'} = [ qw/ spelling orthographic / ];
 		} elsif( $ignore_sort eq 'orthographic' ) {
-			$analysis_options{'collapse'} = 'orthographic';
+			$analysis_options{'merge_types'} = 'orthographic';
 		}
 			
 		my $t = run_analysis( $tradition, %analysis_options );

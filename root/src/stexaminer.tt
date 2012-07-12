@@ -8,8 +8,13 @@ var readingstats = [% reading_statistics %];
 var graphdot = '[% graphdot %]';
 </script>
 [% END -%]
-    <h1>Stexaminer</h1>
-    <h2>[% text_title %]</h2>
+	<div id="topbanner">
+		<div id="bannerinfo">
+			<a href="help" title="Stexaminer help" class="helptag">Help / About</a>
+		</div>
+	    <h1>Stexaminer</h1>
+    	<h2>[% text_title %]</h2>
+    </div>
     <div id="options">
     	<h3>Analysis options:</h3>
     	<form id="use_variants_form" name="use_variants_form" class="clearfix" method="POST">
