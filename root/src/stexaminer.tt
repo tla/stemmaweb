@@ -10,26 +10,11 @@ var graphdot = '[% graphdot %]';
 [% END -%]
 	<div id="topbanner">
 		<div id="bannerinfo">
-			<a href="help" title="Stexaminer help" class="helptag">Help / About</a>
+			<a href="help" title="Stexaminer help" class="navlink" id="aboutlink">Help / About</a>
 		</div>
 	    <h1>Stexaminer</h1>
     	<h2>[% text_title %]</h2>
-    </div>
-    <div id="options">
-    	<h3>Analysis options:</h3>
-    	<form id="use_variants_form" name="use_variants_form" class="clearfix" method="POST">
-    		<div class="optionformelement">
-    			<input type="radio" name="ignore_variant" value="none" [% 'checked="true"' IF ignore_variant == 'none' %]>Analyze all variation</input><br/>
-	    		<input type="radio" name="ignore_variant" value="orthographic" [% 'checked="true"' IF ignore_variant == 'orthographic' %]>Ignore orthographic variation</input><br/>
-    			<input type="radio" name="ignore_variant" value="spelling" [% 'checked="true"' IF ignore_variant == 'spelling' %]>Ignore orthographic and spelling variation</input>
-    		</div>
-    		<div class="optionformelement">
-    			<input type="checkbox" name="show_type1" [% 'checked="true"' IF show_type1 %]>Include type-1 variation</input>
-    		</div>
-    		<div id="options_button" class="button optionformelement" onclick="$('#use_variants_form').submit()">
-    			<span>Re-analyze</span>
-    		</div>
-    	</form>
+    	<p><span class="navlink" onClick="$('#options').dialog('open')">Analysis options</span></p>
     </div>
     <div id="variants_table">
       <table>
@@ -73,6 +58,20 @@ var graphdot = '[% graphdot %]';
 			<ul class="reading_parent_list"></ul>
 		</div>
 	</div>
+	
+	<div id="options" title="Analysis options...">
+    	<form id="use_variants_form" name="use_variants_form">
+    		<fieldset>
+    			<input type="radio" name="ignore_variant" value="none" [% 'checked="true"' IF ignore_variant == 'none' %]>Analyze all variation</input><br/>
+	    		<input type="radio" name="ignore_variant" value="orthographic" [% 'checked="true"' IF ignore_variant == 'orthographic' %]>Ignore orthographic variation</input><br/>
+    			<input type="radio" name="ignore_variant" value="spelling" [% 'checked="true"' IF ignore_variant == 'spelling' %]>Ignore orthographic and spelling variation</input>
+    		</fieldset>
+    		<fieldset>
+    			<input type="checkbox" name="show_type1" [% 'checked="true"' IF show_type1 %]>Include type-1 variation</input>
+    		</fieldset>
+     	</form>
+    </div>
+
 
 [% PROCESS footer.tt %]
     

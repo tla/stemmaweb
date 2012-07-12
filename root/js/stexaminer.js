@@ -95,4 +95,27 @@ function show_stats( rs ) {
 // Save the original unextended SVG for when we need it.
 $(document).ready(function () {
 	original_svg = $('#stemma_graph > svg').clone();
+	
+	$('#aboutlink').popupWindow({ 
+		height:500, 
+		width:800, 
+		top:50, 
+		left:50,
+		scrollbars:1 
+	}); 
+	$('#options').dialog({
+		autoOpen: false,
+		height: 200,
+		width: 300,
+		modal: true,
+		buttons: {
+			Cancel: function() {
+				$(this).dialog( "close" );
+			},
+			Reanalyze: function() {
+				$('#use_variants_form').submit();
+			},
+		}
+	});
+
 });

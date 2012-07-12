@@ -8,23 +8,6 @@
 	margin-right: 12%;
 	margin-top: 15px;
 }
-#options {
-	position: relative;
-	border: 1px #c6dcf1 solid;
-	margin-left: 20px;
-	margin-bottom: 20px;
-	padding: 10px;
-	width: 500px;
-}
-.optionformelement {
-	float: left;
-	padding-left: 15px;
-}
-#options_button {
-	position: absolute;
-	bottom: 20px;
-	right: 20px;
-}
 #variants_table {
     clear: both;
     width: 90%;
