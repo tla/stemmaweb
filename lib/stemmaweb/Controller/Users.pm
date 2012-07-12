@@ -47,7 +47,7 @@ sub index :Path :Args(0) {
 Logging in with openid/google requires two passes through the login
 action, on the 2nd pass the C<openid-check> value is passed in when
 the openid providing webserver links the user back to the stemmaweb
-site. This adaption to the C<login> action sets the realm we are
+site. This adaptation to the C<login> action sets the realm we are
 authenticating against to be C<openid> in this case.
 
 =cut
@@ -85,6 +85,31 @@ before register => sub {
         }
     }
 };
+
+=head2 success
+
+A stub page returned on login / registration success.
+
+=cut
+
+sub success :Local :Args(0) {
+    my ( $self, $c ) = @_;
+
+	$c->load_status_msgs;
+    $c->stash->{template} = 'auth/success.tt';
+}
+
+=head2 post_logout
+
+Return to the index page, not to the login page.
+
+=cut
+
+sub post_logout {
+	my( $self, $c ) = @_;
+	$c->response->redirect( $c->uri_for_action( '/index' ) );
+	$c->detach;
+}
 
 =head1 AUTHOR
 

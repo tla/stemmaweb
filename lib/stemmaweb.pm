@@ -99,9 +99,9 @@ __PACKAGE__->config(
         model => 'User',
         login_id_field => 'username',
         login_db_field => 'username',
-        action_after_login => '/index',
-        action_after_register => '/index', 
-        register_email_from  => '"MyApp" <somebody@example.com>',
+        action_after_login => '/users/success',
+        action_after_register => '/users/success', 
+        register_email_from  => '"Stemmaweb" <stemmaweb@byzantini.st>',
         register_email_subject => 'Registration to stemmaweb',
         register_email_template_plain => 'register-plain.tt',
         realm => 'default',
@@ -114,8 +114,8 @@ __PACKAGE__->config(
     },
 
     recaptcha => {
-        pub_key => '',
-        priv_key => '',
+        pub_key => '6LfR19MSAAAAACy2meHvLfZGRn3PM2rRYIAfh665',
+        priv_key => '6LfR19MSAAAAAMlQb8BdyecWNRE1bAL2YSgz2sah',
     },
 );
 

@@ -1,3 +1,30 @@
+[% WRAPPER header.tt
+	pagetitle = "Stemmaweb - Sign in"
+	applicationstyle = c.uri_for('/css/auth.css')
+%]
+    <script type="text/javascript">
+$(document).ready(function() {
+    // call out to load the directory div
+    $('#login_actions').accordion();
+    $('.login_button').button();
+    $('#submit').button();
+    
+    var status = '[% status_msg %]';
+    if( status == 'Logged in!' ) {
+    	setInterval( function ( e ) {
+    		window.opener.location.reload(true);
+    		window.close();
+    		e.preventDefault();
+    	}, 2000 );
+    }
+});
+    </script>
+[% END %]
+	<div id="topbanner">
+		<h1>Stemmaweb - Sign in</h1>
+	</div>
+
+<div id="login_status">
 [% IF status_msg %]
 			<p>[% status_msg | html %]</p>
 [% END %]
@@ -14,25 +41,47 @@
 	[% END %]
 			</ul>
 [% END %]
+</div>
+[% UNLESS status_msg == 'Logged in!' %]
+<div id="login_actions">
+	<h3><a href="#">Sign in with Google</a></h3>
+	<div>
+		<p>If you have a Google account, you may use it to sign into Stemmaweb.</p>
+		<form method="post" action="[% c.uri_for_action('/users/login') | html %]" autocomplete="off">
+			<input type="hidden" name="realm" value="openid"/>
+			<input type="hidden" name="openid_identifier" value="https://www.google.com/accounts/o8/id"/>
+			<input type="submit" class="login_button" id="#login_google" value="Sign in with Google"></input>
+		</form>
+	</div>
 
-	<form method="post" action="[% c.uri_for_action('/users/login').hostless | html %]" autocomplete="off">
-
-    <input type="hidden" name="realm" value="openid"/>
-    <input type="hidden" name="openid_identifier" value="https://www.google.com/accounts/o8/id"/>
-    <input type="submit" value="Sign in with Google"/>
-
-	</form>
+	<h3><a href="#">Sign in with OpenID</a></h3>
+	<div>
+		<p>If you have an account with an <a href="http://openid.net/get-an-openid/" target="_blank">OpenID provider</a> (e.g. WordPress, Blogger, Flickr, Yahoo), you may use it to sign into Stemmaweb.
+		<form method="post" action="[% c.uri_for_action('/users/login') | html %]" autocomplete="off">
+			<input type="hidden" name="realm" value="openid"/>
+			<input type="text" name="openid_identifier"/>
+			<input type="submit" class="login_button" id="#login_openid" value="Sign in with OpenID"/>
+		</form>
+	</div>
 
 [% UNLESS c.req.param('realm') == 'openid' %]
-	<form method="post" action="[% c.uri_for_action('/users/login').hostless | html %]" autocomplete="off">
-
-    <input type="hidden" name="realm" value="default"/>
-
-	[% form.field('username').render %]
-	[% form.field('password').render %]
-	[% form.field('remember').render %]
-
-	[% form.field('submit').render %]
-
-	</form>
+	<h3><a href="#">Sign in with Stemmaweb</a></h3>
+	<div>
+		<p>If you do not have Google or another OpenID account, you may <a href="[% c.uri_for_action('/users/register') | html %]">register</a> for a user account here with its own password.  Once you are registered, you can use this form to sign in.</p>
+		<form id="login_local_form" method="post" action="[% c.uri_for_action('/users/login') | html %]" autocomplete="off">
+			<input type="hidden" name="realm" value="default"/>
+			[% userlabel = form.field('username').label('Email address') %]
+			[% form.field('username').render %]
+			[% form.field('password').render %]
+			
+			[% rememberlabel = form.field('remember').label('Remember me') %]
+			[% form.field('remember').render %]
+			
+			[% submitbutton = form.field('submit').value('Sign in with Stemmaweb') %]
+			[% form.field('submit').render %]
+		</form>
+	</div>
 [% END %]
+</div>
+[% END %]
+[% PROCESS footer.tt %]

@@ -1,3 +1,7 @@
+[% PROCESS header.tt
+	pagetitle = "Stemmaweb - Register"
+	applicationstyle = c.uri_for('/css/auth.css')
+%]
 [% IF status_msg %]
 			<p>[% status_msg | html %]</p>
 [% END %]
@@ -15,9 +19,10 @@
 			</ul>
 [% END %]
 
-	<form method="post" action="[% c.uri_for_action('/users/register').hostless | html %]" autocomplete="off">
+	<form method="post" action="[% c.uri_for_action('/users/register') | html %]" autocomplete="off">
 
-	[% form.field('username').render %] (email)
+	[% userlabel = form.field('username').label('Email address') %]
+	[% form.field('username').render %]
 	[% form.field('password').render %]
 	[% form.field('confirm_password').render %]
 
@@ -29,3 +34,4 @@
 	[% form.field('submit').render %]
 
 	</form>
+[% PROCESS footer.tt %]

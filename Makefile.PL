@@ -24,7 +24,7 @@ requires 'Catalyst::Plugin::Authentication';
 requires 'Catalyst::Plugin::Session';
 requires 'Catalyst::Plugin::Session::Store::File';
 requires 'Catalyst::Plugin::Session::State::Cookie';
-requires 'CatalystX::Controller::Auth';
+requires 'CatalystX::Controller::Auth' => '0.22';
 requires 'Catalyst::TraitFor::Controller::reCAPTCHA';
 requires 'LWP::Protocol::https';
 ##

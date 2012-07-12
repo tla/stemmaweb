@@ -1,0 +1,29 @@
+[% WRAPPER header.tt
+	pagetitle = "Stemmaweb - Logged in"
+	applicationstyle = c.uri_for('/css/auth.css')
+%]
+    <script type="text/javascript">
+$(document).ready(function() {
+    var status = '[% status_msg %]';
+    var error = '[% error_msg %]';
+    if( status && !error ) {
+    	setInterval( function ( e ) {
+    		window.opener.location.reload(true);
+    		window.close();
+    		e.preventDefault();
+    	}, 2000 );
+    }
+});
+    </script>
+[% END %]
+	<div id="topbanner">
+		<h1>Stemmaweb - Signed in</h1>
+	</div>
+
+<div id="login_status">
+[% IF status_msg %]
+			<p>[% status_msg | html %]</p>
+			<p>Please wait...</p>
+[% END %]
+</div>
+[% PROCESS footer.tt %]
