@@ -47,20 +47,20 @@ $(document).ready(function() {
 	<h3><a href="#">Sign in with Google</a></h3>
 	<div>
 		<p>If you have a Google account, you may use it to sign into Stemmaweb.</p>
-		<form method="post" action="[% c.uri_for_action('/users/login') | html %]" autocomplete="off">
+		<form class="openid_form" method="post" action="[% c.uri_for_action('/users/login') | html %]" autocomplete="off">
 			<input type="hidden" name="realm" value="openid"/>
 			<input type="hidden" name="openid_identifier" value="https://www.google.com/accounts/o8/id"/>
-			<input type="submit" class="login_button" id="#login_google" value="Sign in with Google"></input>
+			<input type="submit" class="login_button" id="login_google" value="Sign in with Google"></input>
 		</form>
 	</div>
 
 	<h3><a href="#">Sign in with OpenID</a></h3>
 	<div>
 		<p>If you have an account with an <a href="http://openid.net/get-an-openid/" target="_blank">OpenID provider</a> (e.g. WordPress, Blogger, Flickr, Yahoo), you may use it to sign into Stemmaweb.
-		<form method="post" action="[% c.uri_for_action('/users/login') | html %]" autocomplete="off">
+		<form class="openid_form" method="post" action="[% c.uri_for_action('/users/login') | html %]" autocomplete="off">
 			<input type="hidden" name="realm" value="openid"/>
-			<input type="text" name="openid_identifier"/>
-			<input type="submit" class="login_button" id="#login_openid" value="Sign in with OpenID"/>
+			<input type="text" name="openid_identifier" id="openid_input"/>
+			<input type="submit" class="login_button" id="login_openid" value="Sign in with OpenID"/>
 		</form>
 	</div>
 
