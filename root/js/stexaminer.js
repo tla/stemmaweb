@@ -69,28 +69,44 @@ function show_stats( rs ) {
 		rdgstats.find('.reading_changed').append( rdghash.not_followed );
 		rdgstats.find('.reading_unclear').append( rdghash.follow_unknown );
 		rdgstats.find('.readingroots').append( rdghash.independent_occurrence );
-		if( ! $.isEmptyObject( rdghash.reading_parents ) ) {
-			var parentstats = $('#reading_parent_template').clone();
-			$.each( rdghash.reading_parents, function( parentid, pdata ) {
-				var parentdesc = pdata.label;
-				if( pdata.relation ) {
-					parentdesc += ' - variant type ' + pdata.relation.type;
-					if( pdata.relation.annotation ) {
-						parentdesc += ' [ ' + pdata.relation.annotation + ' ]';
-					}
-				} else {
-					parentdesc += ' - no syntactic relation';
-				}
-				var parentitem = $('<li>').append( parentdesc );
-				parentstats.find('.reading_parent_list').append( parentitem );
-			});
-			rdgstats.find('.reading_statistics').append( parentstats.contents() );
+		if( rdghash.is_reverted ) {
+			rdgstats.find('.reversionroots').append( rdghash.reversions );
+		} else {
+			rdgstats.find('.readingreversions').empty();
 		}
+		rdgstats.find('.reading_statistics').append( 
+			fill_parent_template( rdghash, 'source' ) );
+		rdgstats.find('.reading_statistics').append( 
+			fill_parent_template( rdghash, 'reversion' ) );
 		rshtml.append( rdgstats.contents() );
 	});
 	$('#row_statistics').empty();
 	$('#row_statistics').append( rshtml.contents() );
+	
 };
+
+function fill_parent_template( rdghash, type ) {
+	var objname = type + '_parents';
+	var template_id = '#reading_' + type + '_template';
+	var list_class = '.reading_' + type + '_list';
+	if( ! $.isEmptyObject( rdghash[objname] ) ) {
+		var parentstats = $( template_id ).clone();
+		$.each( rdghash[objname], function( parentid, pdata ) {
+			var parentdesc = pdata.label;
+			if( pdata.relation ) {
+				parentdesc += ' - variant type ' + pdata.relation.type;
+				if( pdata.relation.annotation ) {
+					parentdesc += ' [ ' + pdata.relation.annotation + ' ]';
+				}
+			} else {
+				parentdesc += ' - no syntactic relation';
+			}
+			var parentitem = $('<li>').append( parentdesc );
+			parentstats.find( list_class ).append( parentitem );
+		});
+		return( parentstats.contents() );
+	}
+}
 
 // Save the original unextended SVG for when we need it.
 $(document).ready(function () {

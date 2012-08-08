@@ -32,6 +32,7 @@ Renders the application for the text identified by $textid.
 sub index :Path :Args(1) {
     my( $self, $c, $textid ) = @_;
     my $m = $c->model('Directory');
+    my $am = $c->model('Analysis');
 	my $tradition = $m->tradition( $textid );
 	if( $tradition->stemma_count ) {
 		my $stemma = $tradition->stemma(0);
@@ -49,7 +50,7 @@ sub index :Path :Args(1) {
 		$c->stash->{'show_type1'} = $use_type1;
 		$c->stash->{'ignore_variant'} = $ignore_sort;
 		# TODO Run the analysis as AJAX from the loaded page.
-		my %analysis_options;
+		my %analysis_options = ( calcdir => $am );
 		$analysis_options{'exclude_type1'} = !$use_type1;
 		if( $ignore_sort eq 'spelling' ) {
 			$analysis_options{'merge_types'} = [ qw/ spelling orthographic / ];
@@ -65,8 +66,8 @@ sub index :Path :Args(1) {
 			foreach my $rhash ( @{$loc->{'readings'}} ) {
 				my $gst = wit_stringify( $rhash->{'group'} );
 				$rhash->{'group'} = $gst;
-				my $roots = join( ', ', @{$rhash->{'independent_occurrence'}} );
-				$rhash->{'independent_occurrence'} = $roots;
+				_stringify_element( $rhash, 'independent_occurrence' );
+				_stringify_element( $rhash, 'reversions' );
 				unless( $rhash->{'text'} ) {
 					$rhash->{'text'} = $rhash->{'readingid'};
 				}
@@ -83,6 +84,12 @@ sub index :Path :Args(1) {
 		$c->stash->{error} = 'Tradition ' . $tradition->name 
 			. 'has no stemma for analysis.';
 	}
+}
+
+sub _stringify_element {
+	my( $hash, $key ) = @_;
+	my $str = join( ', ', @{$hash->{$key}} );
+	$hash->{$key} = $str;
 }
 
 =head2 graphsvg

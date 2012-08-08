@@ -48,14 +48,22 @@ var graphdot = '[% graphdot %]';
 		<div class="reading_statistics">
 			<span class="readinglabel"></span> - copied <span class="reading_copied"></span> time(s), changed <span class="reading_changed"></span> time(s)<br/>
 			Reading root(s) at <span class="readingroots"></span><br/>
-			<!-- reading_parent_template will be appended here if there are parents -->
+			<span class="readingreversions">Reading reversion(s) at <span class="reversionroots"></span><br/></span>
+			<!-- source_parent_template will be appended here if there are parents -->
+			<!-- reversion_parent_template will be appended here if there are reversions -->
 		</div>
     </div>
     
-	<div id="reading_parent_template" class="template">
+	<div id="reading_source_template" class="template">
 		<div class="parent_statistics">
 			Reading parent(s):
-			<ul class="reading_parent_list"></ul>
+			<ul class="reading_source_list"></ul>
+		</div>
+	</div>
+	<div id="reading_reversion_template" class="template">
+		<div class="parent_statistics">
+			Reverted reading parent(s):
+			<ul class="reading_reversion_list"></ul>
 		</div>
 	</div>
 	
@@ -77,17 +85,15 @@ var graphdot = '[% graphdot %]';
     
 
 [% BLOCK variantrow -%]
+[% SET rowclass = 'class="coincidental"' -%]
 [% SET rowclass = 'class="genealogical"' IF row.genealogical -%]
-[% SET rowclass = 'class="coincidental"' UNLESS row.genealogical -%]
         <tr [% rowclass %]>
           <th><span class="rowid" onclick="handle_row_click($(this))">[% row.id %]</span></th>
 [% FOREACH reading IN row.readings -%]
-[% SET cellclass = 'clickable conflict' IF reading.conflict -%]
-[% SET cellclass = 'clickable' IF !reading.conflict -%]
+[% SET cellclass = 'clickable' -%]
+[% SET cellclass = 'clickable reversion' IF reading.is_reverted -%]
+[% SET cellclass = 'clickable conflict' IF reading.is_conflict -%]
           <td class="[% cellclass %]"><span onclick="color_nodes($(this).parent().index(), [% reading.group %], [% row.missing %]);$(this).parents('tr').addClass('active_variant_row');$(this).parent().addClass('active_variant_cell cellb'+($(this).parent().index()-1))">[% reading.text %]</span></td>
-[% END -%]
-[% FILTER repeat( row.empty ) -%]
-          <td/>
 [% END -%]
         </tr>
 [% END -%]
