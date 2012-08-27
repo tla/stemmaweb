@@ -88,8 +88,11 @@ sub index :Path :Args(1) {
 
 sub _stringify_element {
 	my( $hash, $key ) = @_;
-	my $str = join( ', ', @{$hash->{$key}} );
-	$hash->{$key} = $str;
+	return undef unless exists $hash->{$key};
+	if( ref( $hash->{$key} ) eq 'ARRAY' ) {
+		my $str = join( ', ', @{$hash->{$key}} );
+		$hash->{$key} = $str;
+	}
 }
 
 =head2 graphsvg
