@@ -64,6 +64,11 @@ sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
         $tradition->collation->_set_tradition( $tradition );
         $c->model('Directory')->save( $tradition );
     }
+    # Check permissions. Will return 403 if denied, otherwise will
+    # put the appropriate value in the stash.
+    my $ok = _check_permission( $c, $tradition );
+    return unless $ok;
+
 	# See how big the tradition is. Edges are more important than nodes
 	# when it comes to rendering difficulty.
 	my $numnodes = scalar $tradition->collation->readings;
@@ -172,6 +177,8 @@ success or 403 on error.
 sub relationships :Chained('text') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $tradition = delete $c->stash->{'tradition'};
+	my $ok = _check_permission( $c, $tradition );
+	return unless $ok;
 	my $collation = $tradition->collation;
 	my $m = $c->model('Directory');
 	if( $c->request->method eq 'GET' ) {
@@ -187,37 +194,50 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 			push( @all_relations, $relhash );
 		}
 		$c->stash->{'result'} = \@all_relations;
-	} elsif( $c->request->method eq 'POST' ) {
-		my $node = $c->request->param('source_id');
-		my $target = $c->request->param('target_id');
-		my $relation = $c->request->param('rel_type');
-		my $note = $c->request->param('note');
-		my $scope = $c->request->param('scope');
-	
-		my $opts = { 'type' => $relation,
-					 'scope' => $scope };
-		$opts->{'annotation'} = $note if $note;
+	} else {
+		# Check write permissions first of all
+		if( $c->stash->{'permission'} ne 'full' ) {
+			$c->response->status( '403' );
+			$c->stash->{'result'} = { 
+				'error' => 'You do not have permission to view this tradition.' };
+		} elsif( $c->request->method eq 'POST' ) {
+			unless( $c->stash->{'permission'} eq 'full' ) {
+				$c->response->status( '403' );
+				$c->stash->{'result'} = { 
+					'error' => 'You do not have permission to view this tradition.' };
+				$c->detach( 'View::JSON' );
+			}	
+			my $node = $c->request->param('source_id');
+			my $target = $c->request->param('target_id');
+			my $relation = $c->request->param('rel_type');
+			my $note = $c->request->param('note');
+			my $scope = $c->request->param('scope');
 		
-		try {
-			my @vectors = $collation->add_relationship( $node, $target, $opts );
-			$c->stash->{'result'} = \@vectors;
-			$m->save( $tradition );
-		} catch( Text::Tradition::Error $e ) {
-			$c->response->status( '403' );
-			$c->stash->{'result'} = { 'error' => $e->message };
+			my $opts = { 'type' => $relation,
+						 'scope' => $scope };
+			$opts->{'annotation'} = $note if $note;
+			
+			try {
+				my @vectors = $collation->add_relationship( $node, $target, $opts );
+				$c->stash->{'result'} = \@vectors;
+				$m->save( $tradition );
+			} catch( Text::Tradition::Error $e ) {
+				$c->response->status( '403' );
+				$c->stash->{'result'} = { 'error' => $e->message };
+			}
+		} elsif( $c->request->method eq 'DELETE' ) {
+			my $node = $c->request->param('source_id');
+			my $target = $c->request->param('target_id');
+		
+			try {
+				my @vectors = $collation->del_relationship( $node, $target );
+				$m->save( $tradition );
+				$c->stash->{'result'} = \@vectors;
+			} catch( Text::Tradition::Error $e ) {
+				$c->response->status( '403' );
+				$c->stash->{'result'} = { 'error' => $e->message };
+			}	
 		}
-	} elsif( $c->request->method eq 'DELETE' ) {
-		my $node = $c->request->param('source_id');
-		my $target = $c->request->param('target_id');
-	
-		try {
-			my @vectors = $collation->del_relationship( $node, $target );
-			$m->save( $tradition );
-			$c->stash->{'result'} = \@vectors;
-		} catch( Text::Tradition::Error $e ) {
-			$c->response->status( '403' );
-			$c->stash->{'result'} = { 'error' => $e->message };
-		}	
 	}
 	$c->forward('View::JSON');
 }
@@ -263,6 +283,8 @@ sub _reading_struct {
 sub readings :Chained('text') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $tradition = delete $c->stash->{'tradition'};
+	my $ok = _check_permission( $c, $tradition );
+	return unless $ok;
 	my $collation = $tradition->collation;
 	my $m = $c->model('Directory');
 	if( $c->request->method eq 'GET' ) {
@@ -298,6 +320,12 @@ sub reading :Chained('text') :PathPart :Args(1) {
 		$c->stash->{'result'} = $rdg ? _reading_struct( $rdg )
 			: { 'error' => "No reading with ID $reading_id" };
 	} elsif ( $c->request->method eq 'POST' ) {
+		if( $c->stash->{'permission'} ne 'full' ) {
+			$c->response->status( '403' );
+			$c->stash->{'result'} = { 
+				'error' => 'You do not have permission to view this tradition.' };
+			$c->detach('View::JSON');
+		}
 		my $errmsg;
 		# Are we re-lemmatizing?
 		if( $c->request->param('relemmatize') ) {
@@ -346,6 +374,25 @@ sub reading :Chained('text') :PathPart :Args(1) {
 	}
 	$c->forward('View::JSON');
 
+}
+
+sub _check_permission {
+	my( $c, $tradition ) = @_;
+    my $user = $c->user_exists ? $c->user->get_object : undef;
+    if( $user ) {
+    	$c->stash->{'permission'} = 'full'
+    		if( $user->is_admin || $tradition->user->id eq $user->id );
+    	return 1;
+    } elsif( $tradition->public ) {
+    	$c->stash->{'permission'} = 'readonly';
+    	return 1;
+    } else {
+    	# Forbidden!
+    	$c->response->status( 403 );
+    	$c->response->body( 'You do not have permission to view this tradition.' );
+    	$c->detach( 'View::Plain' );
+    	return 0;
+    }
 }
 
 sub _clean_booleans {

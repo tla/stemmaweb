@@ -1,6 +1,6 @@
 [% WRAPPER header.tt
 	pagetitle = "Stemmaweb - Relationship mapper"
-	applicationjs = c.uri_for('/js/relationship.js')
+	applicationjs = c.uri_for("/js/relationship-" _ permission _ ".js")
 	applicationstyle = c.uri_for('/css/relationship.css')
 %]
 <script type="text/javascript">
