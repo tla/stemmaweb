@@ -67,9 +67,7 @@ sub variantgraph :Local :Args(1) {
 	my $m = $c->model('Directory');
 	my $tradition = $m->tradition( $textid );
 	my $collation = $tradition->collation;
-	my $needsave = !$collation->has_cached_svg;
 	$c->stash->{'result'} = $collation->as_svg;
-	$m->save( $tradition );  # to save generate SVG in the cache
 	$c->forward('View::SVG');
 }
 	
