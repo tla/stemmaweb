@@ -32,7 +32,6 @@ Renders the application for the text identified by $textid.
 sub index :Path :Args(1) {
     my( $self, $c, $textid ) = @_;
     my $m = $c->model('Directory');
-    my $am = $c->model('Analysis');
 	my $tradition = $m->tradition( $textid );
 	if( $tradition->stemma_count ) {
 		my $stemma = $tradition->stemma(0);
@@ -43,21 +42,19 @@ sub index :Path :Args(1) {
 		
 		# Get the analysis options
 		my( $use_type1, $ignore_sort ) = ( 0, 'none' );
-		if( $c->req->method eq 'POST' ) {
-			$use_type1 = $c->req->param( 'show_type1' ) ? 1 : 0;
-			$ignore_sort = $c->req->param( 'ignore_variant' );
-		}
+		$use_type1 = $c->req->param( 'show_type1' ) ? 1 : 0;
+		$ignore_sort = $c->req->param( 'ignore_variant' ) || '';
 		$c->stash->{'show_type1'} = $use_type1;
 		$c->stash->{'ignore_variant'} = $ignore_sort;
 		# TODO Run the analysis as AJAX from the loaded page.
-		my %analysis_options = ( calcdir => $am );
-		$analysis_options{'exclude_type1'} = !$use_type1;
+		my %analysis_options = ( exclude_type1 => !$use_type1 );
 		if( $ignore_sort eq 'spelling' ) {
 			$analysis_options{'merge_types'} = [ qw/ spelling orthographic / ];
 		} elsif( $ignore_sort eq 'orthographic' ) {
 			$analysis_options{'merge_types'} = 'orthographic';
 		}
-			
+
+		# Do the deed
 		my $t = run_analysis( $tradition, %analysis_options );
 		# Stringify the reading groups
 		foreach my $loc ( @{$t->{'variants'}} ) {
