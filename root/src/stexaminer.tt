@@ -42,6 +42,7 @@ var graphdot = '[% graphdot %]';
     <div id="stats_template" class="template">
 	    <h3>Statistics for readings at <span id="statrank"></span>:</h3>
 	    <!-- reading_template will be appended here for each reading -->
+	    <span class="solutionstatus"></span>
     </div>
     
 	<div id="reading_template" class="template">
@@ -85,9 +86,10 @@ var graphdot = '[% graphdot %]';
     
 
 [% BLOCK variantrow -%]
-[% SET rowclass = 'class="coincidental"' -%]
-[% SET rowclass = 'class="genealogical"' IF row.genealogical -%]
-        <tr [% rowclass %]>
+[% SET rowclass = 'coincidental' -%]
+[% SET rowclass = 'genealogical' IF row.genealogical -%]
+[% SET rowclass = "$rowclass unsolved" IF row.unsolved -%]
+        <tr class="[% rowclass %]">
           <th><span class="rowid" onclick="handle_row_click($(this))">[% row.id %]</span></th>
 [% FOREACH reading IN row.readings -%]
 [% SET cellclass = 'clickable' -%]

@@ -62,24 +62,33 @@ function color_nodes( column_index, arr_node_ids, arr_greynode_ids ) {
 function show_stats( rs ) {
 	var rshtml = $('#stats_template').clone();
 	rshtml.find('#statrank').append( rs.id );
-	$.each( rs.readings, function( idx, rdghash ) {
-		var rdgstats = $('#reading_template').clone();
-		rdgstats.find('.readinglabel').append( rdghash.text );
-		rdgstats.find('.reading_copied').append( rdghash.followed );
-		rdgstats.find('.reading_changed').append( rdghash.not_followed );
-		rdgstats.find('.reading_unclear').append( rdghash.follow_unknown );
-		rdgstats.find('.readingroots').append( rdghash.independent_occurrence );
-		if( rdghash.is_reverted ) {
-			rdgstats.find('.reversionroots').append( rdghash.reversions );
-		} else {
-			rdgstats.find('.readingreversions').empty();
-		}
-		rdgstats.find('.reading_statistics').append( 
-			fill_parent_template( rdghash, 'source' ) );
-		rdgstats.find('.reading_statistics').append( 
-			fill_parent_template( rdghash, 'reversion' ) );
-		rshtml.append( rdgstats.contents() );
-	});
+	if( "unsolved" in rs ) {
+		rshtml.find('.solutionstatus').append(
+			"(Not yet calculated for this location - please try later)");
+	} else {
+		$.each( rs.readings, function( idx, rdghash ) {
+			var rdgstats = $('#reading_template').clone();
+			rdgstats.find('.readinglabel').append( rdghash.text );
+			rdgstats.find('.reading_copied').append( rdghash.followed );
+			rdgstats.find('.reading_changed').append( rdghash.not_followed );
+			rdgstats.find('.reading_unclear').append( rdghash.follow_unknown );
+			rdgstats.find('.readingroots').append( rdghash.independent_occurrence );
+			if( rdghash.is_reverted ) {
+				rdgstats.find('.reversionroots').append( rdghash.reversions );
+			} else {
+				rdgstats.find('.readingreversions').empty();
+			}
+			var rdgsourcehtml = fill_parent_template( rdghash, 'source' );
+			var rdgreverthtml = fill_parent_template( rdghash, 'reversion' );
+			rdgstats.find('.reading_statistics').append( rdgsourcehtml );
+			rdgstats.find('.reading_statistics').append( rdgreverthtml );
+			// If neither, append a small spacer
+			if( !rdgsourcehtml && !rdgreverthtml ) {
+				rdgstats.find('.reading_statistics').append( '<br/>' );
+			}
+			rshtml.append( rdgstats.contents() );
+		});
+	}
 	$('#row_statistics').empty();
 	$('#row_statistics').append( rshtml.contents() );
 	

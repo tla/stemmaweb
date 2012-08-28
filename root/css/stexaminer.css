@@ -60,6 +60,9 @@
 .coincidental {
     background: #fff;
 }
+.unsolved {
+	background: lightgrey;
+}
 .conflict {
     background: #ff6666;
 }
