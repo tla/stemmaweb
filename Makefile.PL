@@ -11,6 +11,7 @@ all_from 'lib/stemmaweb.pm';
 
 requires 'Catalyst::Runtime' => '5.90002';
 requires 'Catalyst::Plugin::ConfigLoader';
+requires 'Catalyst::Plugin::StackTrace';
 requires 'Catalyst::Plugin::Static::Simple';
 requires 'Catalyst::Plugin::Unicode::Encoding';
 requires 'Catalyst::Action::RenderView';
