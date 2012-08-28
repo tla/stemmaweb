@@ -575,7 +575,8 @@ $(document).ready(function () {
 	  $(event.target).parent().find('.ui-button').button("enable");
   });
   
-
+  // Hide the unused elements
+  $('#dialog-form').hide();
   $('#update_workspace_button').hide();
   
   $('.helptag').popupWindow({ 
