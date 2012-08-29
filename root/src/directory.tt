@@ -1,10 +1,26 @@
-    <h3>Choose a text to examine</h3>
-    <div id="text_list">
+[% IF usertexts.size -%]
+	<!-- User texts -->
+    <h3>[% IF is_admin %]All[% ELSE %]My[% END %] text traditions</h3>
+    <div class="text_list">
       <ul>
 [% SET i = 0 -%]
-[% FOREACH t IN texts -%]
+[% FOREACH t IN usertexts -%]
         <li><span class="traditionname" onClick="$('.traditionname').removeClass('selected');$(this).addClass('selected');loadTradition('[% t.id %]','[% t.name %]')">[% t.name %]</span></li>
 [% i = i + 1 -%]
 [% END -%]
-     </table>
+     </ul>
     </div>
+[% END -%]
+[% IF publictexts.size -%]
+	<!-- Public texts -->
+    <h3>Public text traditions</h3>
+    <div class="text_list">
+      <ul>
+[% SET i = 0 -%]
+[% FOREACH t IN publictexts -%]
+        <li><span class="traditionname" onClick="$('.traditionname').removeClass('selected');$(this).addClass('selected');loadTradition('[% t.id %]','[% t.name %]')">[% t.name %]</span></li>
+[% i = i + 1 -%]
+[% END -%]
+     </ul>
+    </div>
+[% END -%]

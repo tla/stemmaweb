@@ -15,6 +15,7 @@ requires 'Catalyst::Plugin::StackTrace';
 requires 'Catalyst::Plugin::Static::Simple';
 requires 'Catalyst::Plugin::Unicode::Encoding';
 requires 'Catalyst::Action::RenderView';
+requires 'Catalyst::Authentication::Credential::OpenID';
 requires 'Catalyst::Model::KiokuDB';
 requires 'Catalyst::View::Download::Plain';
 requires 'Catalyst::View::JSON';

@@ -6,15 +6,21 @@
 var selectedTextID;
 $(document).ready(function() {
     // call out to load the directory div
-    $('#directory').load( "[% c.uri_for( 'directory' ) %]" );
-});
+    $('#directory').load( "[% c.uri_for( 'directory' ) %]", 
+    	function(response, status, xhr) {
+			if (status == "error") {
+				var msg = "An error occurred: ";
+				$("#directory").html(msg + xhr.status + " " + xhr.statusText);
+			}
+		});
+	});
     </script>
 
 [% END %]
 
     <div id="topbanner">
       <h1>Stemmaweb - a collection of tools for analysis of collated texts</h1>
-      <span class="mainnav">[% IF c.user_exists %]Hello! [% c.user.get_object.email %] <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% ELSE %]<a class="navlink" onclick="window.open('[% c.uri_for( '/login' ) %]', 'loginwindow', 'height=385,width=445')">Login</a> | <a class="navlink" onclick="window.open('[% c.uri_for( '/register' ) %]', 'regwindow', 'height=385,width=445')">Register</a> | [% END %]<a class="navlink" href="[% c.uri_for( 'about.html' ) %]">About<a> </span>
+      <span class="mainnav">[% IF c.user_exists %]Hello! [% c.user.get_object.email %] <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% ELSE %]<a class="navlink" onclick="window.open('[% c.uri_for( '/login' ) %]', 'loginwindow', 'height=385,width=445')">Login</a> | <a class="navlink" onclick="window.open('[% c.uri_for( '/register' ) %]', 'regwindow', 'height=385,width=445')">Register</a> | [% END %]<a class="navlink" href="[% c.uri_for( 'about.html' ) %]">About</a> </span>
     </div>
     <div id="directory_container">
       <h2>Text directory</h2>
@@ -23,21 +29,7 @@ $(document).ready(function() {
     	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" />
       </div>
     </div>
-    <div id="stemma_container">
-      <h2>Stemma for <span class="texttitle">selected text</span></h2>
-      <div id="stemma_graph"></div>
-      <form id="run_stexaminer" action="" method="GET" name="run_stexaminer">
-        <div class="button" id="stexaminer_button" onClick="$('#run_stexaminer').submit()">
-      	  <span>Examine variants against this stemma</span>
-        </div>
-      </form>
-      <form id="run_relater" action="" method="GET" name="run_relater">
-        <div class="button" id="relater_button" onClick="$('#run_relater').submit()">
-          <span>Run relationship mapper</span>
-        </div>
-      </form>
-    </div>
-    <div id="variant_container">
-    </div>
+    <div id="textinfo_container"></div>
+    <div id="variant_container"></div>
 
 [% PROCESS footer.tt %]
