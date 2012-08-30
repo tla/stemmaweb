@@ -5,6 +5,7 @@ function loadTradition( textid, textname, editable ) {
     if( basepath.lastIndexOf('/') == basepath.length - 1 ) { 
     	basepath = basepath.slice( 0, basepath.length - 1) 
     };
+    $('#stemma_graph').empty();
     $('#textinfo_waitbox').show();
     $('#textinfo_container').ajaxError( 
     	function ( e, jqxhr, settings, exception ) {
@@ -24,11 +25,11 @@ function loadTradition( textid, textname, editable ) {
     	// Add the scalar data
     	$('#textinfo_waitbox').hide();
 		$('#textinfo_container').show();
-    	$('.texttitle').append( textdata.traditionname );
-    	$('#witness_num').append( textdata.witnesses.size );
-    	$('#witness_list').append( textdata.witnesses.join( ', ' ) );
-    	$('#reading_num').append( textdata.readings );
-    	$('#relationship_num').append( textdata.relationships );
+    	$('.texttitle').empty().append( textdata.traditionname );
+    	$('#witness_num').empty().append( textdata.witnesses.size );
+    	$('#witness_list').empty().append( textdata.witnesses.join( ', ' ) );
+    	$('#reading_num').empty().append( textdata.readings );
+    	$('#relationship_num').empty().append( textdata.relationships );
     	// Add the stemma(ta) and set up the stexaminer button
     	stemmata = textdata.stemmata;
     	if( stemmata.length ) {
