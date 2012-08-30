@@ -1,23 +1,52 @@
-function loadTradition( textid, textname ) {
-    // First insert the placeholder image
+function loadTradition( textid, textname, editable ) {
+	selectedTextID = textid;
+    // First insert the placeholder image and register an error handler
     var basepath = window.location.pathname
     if( basepath.lastIndexOf('/') == basepath.length - 1 ) { 
     	basepath = basepath.slice( 0, basepath.length - 1) 
     };
-    var imghtml = '<img src="' + basepath + '/images/ajax-loader.gif" alt="Loading SVG..."/>'
-    $('#stemma_graph').empty();
-    $('#stemma_graph').append( imghtml );
+    $('#textinfo_waitbox').show();
+    $('#textinfo_container').ajaxError( 
+    	function ( e, jqxhr, settings, exception ) {
+			if ( settings.url.indexOf( 'textinfo' ) > -1 ) {
+		    	$('#textinfo_waitbox').hide();
+				var msg = "An error occurred: ";
+				var msghtml = $('<span>').attr('class', 'error').text(
+					msg + jqxhr.status + " " + jqxhr.statusText);
+				$("#textinfo_container").append( msghtml ).show();
+			} 
+    	}
+    );
     // Then get and load the actual content.
-    // TODO: scale #stemma_grpah both horizontally and vertically
+    // TODO: scale #stemma_graph both horizontally and vertically
     // TODO: load svgs from SVG.Jquery (to make scaling react in Safari)
-	$('#stemma_graph').load( basepath + "/stemma/" + textid );
-	
-	// Then populate the various elements with the right text name/ID.
-	// Stemma and variant graph titles
-	$('.texttitle').empty();
-	$('.texttitle').append( textname );
-	// Stexaminer submit action
-	$('#run_stexaminer').attr( 'action', basepath + "/stexaminer/" + textid );
-	// Relationship mapper submit action
-	$('#run_relater').attr( 'action', basepath + "/relation/" + textid );
+    $.getJSON( basepath + "/textinfo/" + textid, function (textdata) {
+    	// Add the scalar data
+    	$('#textinfo_waitbox').hide();
+		$('#textinfo_container').show();
+    	$('.texttitle').append( textdata.traditionname );
+    	$('#witness_num').append( textdata.witnesses.size );
+    	$('#witness_list').append( textdata.witnesses.join( ', ' ) );
+    	$('#reading_num').append( textdata.readings );
+    	$('#relationship_num').append( textdata.relationships );
+    	// Add the stemma(ta) and set up the stexaminer button
+    	stemmata = textdata.stemmata;
+    	if( stemmata.length ) {
+    		selectedStemmaID = 0;
+    		load_stemma( selectedStemmaID, basepath );
+    	}
+    	// Set up the relationship mapper button
+		$('#run_relater').attr( 'action', basepath + "/relation/" + textid );
+	});
+}
+
+function load_stemma( idx, basepath ) {
+	if( idx > -1 ) {
+		selectedStemmaID = idx;
+		$('#stemma_graph').empty();
+		$('#stemma_graph').append( stemmata[idx] );
+		// Stexaminer submit action
+		var stexpath = basepath + "/stexaminer/" + selectedTextID + "/" + idx;
+		$('#run_stexaminer').attr( 'action', stexpath );
+	}
 }

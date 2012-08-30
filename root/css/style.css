@@ -84,7 +84,14 @@ div.button:hover span {
 	border: 1px #c6dcf1 solid;
 }
 #directory {
+	height: 360px;
 	margin-left: 10px;
+	overflow: auto;
+}
+#new_trad_button {
+	margin-left: 10px;
+	position: relative;
+	top: 10px;
 }
 .traditionname {
 	text-decoration: underline;
@@ -103,24 +110,10 @@ div.button:hover span {
 .mainnav a {
 	color: #488dd2;
 }
-#variant_container {
-	clear: both;
-	height: 400px;
-	padding-top: 20px;
-}
-#variant_graph {
-	/* width: 900px; */
-	height: 350px;
-	clear: both;
-	overflow: auto;	
-	text-align: center;
-}
-#variant_graph img {
-	margin-top: expression(( 400 - this.height ) / 2);
-}
-#stemma_container {
+#textinfo_container {
 	float: left;
-	height: 450px;
+	height: 500px;
+	width: 700px;
 	margin-left: 40px;
 }
 #stemma_container h2 h3 {

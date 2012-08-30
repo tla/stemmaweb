@@ -49,16 +49,46 @@ sub directory :Local :Args(0) {
 	my( $self, $c ) = @_;
     my $m = $c->model('Directory');
     # Is someone logged in?
+    my %usertexts;
     if( $c->user_exists ) {
     	my $user = $c->user->get_object;
-		$c->stash->{usertexts} = [ $m->traditionlist( $user ) ];
+    	my @list = $m->traditionlist( $user );
+    	map { $usertexts{$_->{id}} = 1 } @list;
+		$c->stash->{usertexts} = \@list;
 		$c->stash->{is_admin} = 1 if $user->is_admin;
 	}
-	# Unless we have an admin user, list public texts separately from
-	# any user texts that exist.
-	$c->stash->{publictexts} = [ $m->traditionlist('public') ] 
-		unless $c->stash->{is_admin};
+	# List public (i.e. readonly) texts separately from any user (i.e.
+	# full access) texts that exist. Admin users therefore have nothing
+	# in this list.
+	my @plist = grep { !$usertexts{$_->{id}} } $m->traditionlist('public');
+	$c->stash->{publictexts} = \@plist;
 	$c->stash->{template} = 'directory.tt';
+}
+
+=head2 textinfo
+
+ GET /textinfo/$textid
+ 
+Returns the page element populated with information about a particular text.
+
+=cut
+
+sub textinfo :Local :Args(1) {
+	my( $self, $c, $textid ) = @_;
+	my $tradition = $c->model('Directory')->tradition( $textid );
+	# Need text name, witness list, scalar readings, scalar relationships, stemmata
+	my $textinfo = {
+		textid => $textid,
+		traditionname => $tradition->name,
+		witnesses => [ map { $_->sigil } $tradition->witnesses ],
+		readings => scalar $tradition->collation->readings,
+		relationships => scalar $tradition->collation->relationships
+	};
+	my @stemmasvg = map { $_->as_svg({ size => [ 500, 375 ] }) } $tradition->stemmata;
+	map { $_ =~ s/\n/ /mg } @stemmasvg;
+	$textinfo->{stemmata} = \@stemmasvg;
+	$c->stash->{'result'} = $textinfo;
+	$c->forward('View::JSON');
 }
 
 =head2 variantgraph
@@ -71,8 +101,7 @@ Returns the variant graph for the text specified at $textid, in SVG form.
 
 sub variantgraph :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
-	my $m = $c->model('Directory');
-	my $tradition = $m->tradition( $textid );
+	my $tradition = $c->model('Directory')->tradition( $textid );
 	my $collation = $tradition->collation;
 	$c->stash->{'result'} = $collation->as_svg;
 	$c->forward('View::SVG');
@@ -88,8 +117,8 @@ Returns an alignment table for the text specified at $textid.
 
 sub alignment :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
-	my $m = $c->model('Directory');
-	my $collation = $m->tradition( $textid )->collation;
+	my $tradition = $c->model('Directory')->tradition( $textid );
+	my $collation = $tradition->collation;
 	my $alignment = $collation->alignment_table;
 	
 	# Turn the table, so that witnesses are by column and the rows

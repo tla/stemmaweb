@@ -23,14 +23,15 @@ The stemma analysis tool with the pretty colored table.
 
 =head2 index
 
- GET stexaminer/$textid
+ GET stexaminer/$textid/$stemmaid
  
-Renders the application for the text identified by $textid.
+Renders the application for the text identified by $textid, using the stemma
+graph identified by $stemmaid.
 
 =cut
 
-sub index :Path :Args(1) {
-    my( $self, $c, $textid ) = @_;
+sub index :Path :Args(2) {
+    my( $self, $c, $textid, $stemid ) = @_;
     my $m = $c->model('Directory');
 	my $tradition = $m->tradition( $textid );
 	my $ok = _check_permission( $c, $tradition );
@@ -49,7 +50,9 @@ sub index :Path :Args(1) {
 		$c->stash->{'show_type1'} = $use_type1;
 		$c->stash->{'ignore_variant'} = $ignore_sort;
 		# TODO Run the analysis as AJAX from the loaded page.
-		my %analysis_options = ( exclude_type1 => !$use_type1 );
+		my %analysis_options = ( 
+			stemma_id => $stemid,
+			exclude_type1 => !$use_type1 );
 		if( $ignore_sort eq 'spelling' ) {
 			$analysis_options{'merge_types'} = [ qw/ spelling orthographic / ];
 		} elsif( $ignore_sort eq 'orthographic' ) {
