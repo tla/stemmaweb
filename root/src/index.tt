@@ -18,6 +18,13 @@ function refreshDirectory () {
 	);
 }
 
+function start_upload_dialog() {
+    if( typeof uploader != 'undefined' ){ uploader.destroy() };
+    $('#upload-collation-dialog').dialog('option', 'attach_uploader')();
+    $('#upload_button').button('disable');
+    $('#upload-collation-dialog').dialog('open');
+}
+
 $(document).ready( function() {
     // call out to load the directory div
     $('#textinfo_container').hide();
@@ -29,30 +36,29 @@ $(document).ready( function() {
 		width: 480,
 		modal: true,
 		buttons: {
-			"Upload": function( evt ) {
-				$(evt.target).button("disable");
-				$('#upload_status').empty();
-				form_values = $('#upload_collation').serialize();
-				$.post( "[% c.uri_for ( '/newtradition' ) %]", form_values, function(data) {
-					$(evt.target).button("enable");
-					$( "#dialog-form" ).dialog( "close" );
-					refreshDirectory();
-					loadTradition( data.id, data.name, 1 )
-				}, 'json' );
-			},
-			Cancel: function() {
-				$( this ).dialog( "close" );
-			}
-		},
-	  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		  if( ajaxSettings.url.indexOf( '/new' ) > -1 
-			&& ajaxSettings.type == 'POST' ) {
-			  var errobj = jQuery.parseJSON( jqXHR.responseText );
-			  $('#upload_status').append( '<p class="error">Error: ' + errobj.error + '</br>The tradition cannot be created.</p>' );
+		  pick: {
+		    text: "Pick File",
+		    id: "pick_uploadfile_button",
+		    click: function() {}       
+		  },
+		  upload: {
+		    text: 'Upload',
+		    id: 'upload_button',
+		    click: function() {
+			    $('#upload_status').empty();
+                uploader.start();
+                return false;
+            }
+		  },
+		  cancel: function() {
+		    $('#upload-collation-dialog').dialog('close');
 		  }
-		  $(event.target).parent().find('.ui-button').button("enable");
+		},
+		attach_uploader: function() {
+		    create_uploader( "[% c.uri_for ( '/newtradition' ) %]" );
+		    $('#filelist').empty().html( 'Use the \'Pick\' button to choose a source file…' );
 		}
-	  );
+	});
 });
     </script>
 
@@ -69,7 +75,7 @@ $(document).ready( function() {
     	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" />
       </div>
 [% IF c.user_exists -%]
-	  <div class="button" id="new_trad_button" onClick="$('#upload-collation-dialog').dialog('open')">
+	  <div class="button" id="new_trad_button" onClick="start_upload_dialog();">
 	    <span>Add a new text tradition</span>
 	  </div>
 [% END %]
@@ -109,12 +115,13 @@ $(document).ready( function() {
 
     <!-- File upload dialog box -->
     <div id="upload-collation-dialog" title="Upload a collation">
-      <form id="upload_collation" action="" method="POST" enctype="multipart/form-data" name="upload_collation">
-        <label for="traditionname">Name of this text / tradition: </label>
-        <input id="traditionname" type="text" name="name" size="40"/><br/>
-        <label for="inputfile">Collation file for the tradition: </label>
-      	<input id="inputfile" type="file" name="inputfile" size="40"/>
-      	<div id="upload_status"></div>
+      <div id="upload_container">
+        <form id="new_tradition">
+            <label for="traditionname">Name of this text / tradition: </label>
+            <input id="traditionname" type="text" name="name" size="40"/><br/>
+            <div id="filelist"></div>
+        <form>
+        <div id="upload_status"></div>
       	<div>
       	  <h4>Supported file types / extensions:</h4>
       	  <ul>
@@ -128,6 +135,6 @@ $(document).ready( function() {
       	  </ul>
       	  <p>All spreadsheet collations should be arranged with the witness sigla in the first row, and the words aligned by row each in its correct witness column.</p>
       	</div>
-      </form>
+      </div>
     </div>    
 [% PROCESS footer.tt %]

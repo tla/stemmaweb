@@ -136,8 +136,22 @@ div.button:hover span {
 #textinfo_container_buttons {
     float: right;
 }
-#run_stexaminer, #run_relater, #stemma_pager {
+#run_stexaminer, #run_relater, #stemma_pager, #add_edit_stemma {
     height: 30px;
     left: -10px;
     position: relative;
+}
+#upload-collation-dialog {
+    overflow: hidden;
+}
+.uploadfile {
+    font-weight: bold;
+}
+#uploadfile_label {
+    font-weight: normal;
+}
+#filelist {
+    position: relative;
+    top: 10px;
+    margin-bottom: 24px;
 }
