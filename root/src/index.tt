@@ -23,6 +23,7 @@ function refreshDirectory () {
 function start_upload_dialog() {
     if( typeof uploader != 'undefined' ){ uploader.destroy() };
     $('#upload-collation-dialog').dialog('option', 'attach_uploader')();
+    $('#upload_status').empty();
     $('#upload_button').button('disable');
     $('#upload-collation-dialog').dialog('open');
 }

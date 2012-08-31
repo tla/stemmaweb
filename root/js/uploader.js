@@ -69,6 +69,11 @@ function create_uploader(upload_url) {
 				$('<span>').attr('class', 'error').append( result.error ) );
 		}
     });
+ 
+    uploader.bind('Error', function(up, err) {
+        console.log( 'echt wel' );
+        console.log( err );
+    });
             
     uploader.init();
 
