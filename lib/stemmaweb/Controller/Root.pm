@@ -219,13 +219,12 @@ sub newtradition :Local :Args(0) {
 		my $user = $c->user->get_object;
 		# Grab the file upload, check its name/extension, and call the
 		# appropriate parser(s).
-		my $upload = $c->request->upload('inputfile');
+		my $upload = $c->request->upload('file');
 		my $name = $c->request->param('name') || 'Uploaded tradition';
 		my( $ext ) = $upload->filename =~ /\.(\w+)$/;
 		my %newopts = (
 			'name' => $name,
-			'file' => $upload->tempname,
-			'user' => $user
+			'file' => $upload->tempname
 			);
 		my $tradition;
 		my $errmsg;
@@ -268,7 +267,10 @@ sub newtradition :Local :Args(0) {
 		# Save the tradition if we have it, and return its data or else the
 		# error that occurred trying to make it.
 		if( $tradition ) {
+			my $m = $c->model('Directory');
+			$user->add_tradition( $tradition );
 			my $id = $c->model('Directory')->store( $tradition );
+			$c->model('Directory')->store( $user );
 			$c->stash->{'result'} = { 'id' => $id, 'name' => $tradition->name };
 		} else {
 			$c->stash->{'result'} = 
@@ -287,16 +289,16 @@ sub _check_permission {
 	my( $c, $tradition ) = @_;
     my $user = $c->user_exists ? $c->user->get_object : undef;
     if( $user ) {
-    	return 'full' if ( $user->is_admin || $tradition->user->id eq $user->id );
+    	return 'full' if ( $user->is_admin || 
+    		( $tradition->has_user && $tradition->user->id eq $user->id ) );
     } elsif( $tradition->public ) {
     	return 'readonly';
-    } else {
-    	# Forbidden!
-    	$c->response->status( 403 );
-    	$c->response->body( 'You do not have permission to view this tradition.' );
-    	$c->detach( 'View::Plain' );
-    	return 0;
-    }
+    } 
+	# else Forbidden!
+	$c->response->status( 403 );
+	$c->response->body( 'You do not have permission to view this tradition.' );
+	$c->detach( 'View::Plain' );
+	return 0;
 }
 
 =head2 default
