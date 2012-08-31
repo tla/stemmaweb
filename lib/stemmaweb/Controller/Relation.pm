@@ -381,7 +381,8 @@ sub _check_permission {
     my $user = $c->user_exists ? $c->user->get_object : undef;
     if( $user ) {
     	$c->stash->{'permission'} = 'full'
-    		if( $user->is_admin || $tradition->user->id eq $user->id );
+    		if( $user->is_admin || 
+    			( $tradition->has_user && $tradition->user->id eq $user->id ) );
     	return 1;
     } 
     # Is it public?
