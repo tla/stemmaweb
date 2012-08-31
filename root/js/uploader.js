@@ -12,6 +12,12 @@ function limitFiles( up, files ) {
     $('#upload_button').button('enable');
 }
 
+// Utility function to pull the JSON out of the <pre>-wrapped HTML that
+// plupload irritatingly returns.
+function parseResponse( resp ) {
+	return $.parseJSON($(resp).text() );
+}
+
 function create_uploader(upload_url) {
         uploader = new plupload.Uploader({
         runtimes : 'html4',
@@ -44,10 +50,24 @@ function create_uploader(upload_url) {
     uploader.bind('UploadProgress', function(up, file) {
         $upl(file.id).getElementsByTagName('b')[0].innerHTML = '<span>' + file.percent + "%</span>";
     });
+    
+    uploader.bind('Error', function( up, args ) {
+    	$('#upload_status').empty().append(
+    		$('<span>').attr('class', 'error').append( 'A server error occurred' ) );
+    });
+    
 
     uploader.bind('FileUploaded', function(up, file, ret) {
-                   //token = ret.response;
-                   $('#upload-collation-dialog').dialog( 'option', 'buttons').cancel();
+		var result = parseResponse( ret.response );
+		if( result.id ) {
+			$('#upload-collation-dialog').dialog( 'option', 'buttons').cancel();
+			refreshDirectory();
+			loadTradition( result.id, result.name, 1 );
+		} else if( result.error ) {
+			file.status = plupload.FAILED;
+			$('#upload_status').empty().append( 
+				$('<span>').attr('class', 'error').append( result.error ) );
+		}
     });
             
     uploader.init();

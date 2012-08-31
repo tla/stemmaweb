@@ -79,6 +79,9 @@ div.button:hover span {
 	padding-left: 10px;
 	padding-right: 10px;
 }
+#loading_message {
+	display: none;
+}
 #directory {
 	height: 360px;
 	margin-left: 10px;

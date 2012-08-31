@@ -8,6 +8,8 @@ var selectedStemmaID = -1;
 var stemmata = [];
 
 function refreshDirectory () {
+	var lmesg = $('#loading_message').clone();
+	$('#directory').empty().append( lmesg.contents() );
     $('#directory').load( "[% c.uri_for( 'directory' ) %]", 
     	function(response, status, xhr) {
 			if (status == "error") {
@@ -70,10 +72,7 @@ $(document).ready( function() {
     </div>
     <div id="directory_container">
       <h2>Text directory</h2>
-      <div id="directory">
-    	<h3>Loading texts, please wait...</h3>
-    	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" />
-      </div>
+      <div id="directory"></div>
 [% IF c.user_exists -%]
 	  <div class="button" id="new_trad_button" onClick="start_upload_dialog();">
 	    <span>Add a new text tradition</span>
@@ -84,6 +83,7 @@ $(document).ready( function() {
     	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" alt="Loading tradition info..."/>
     </div>
     <div id="textinfo_container">
+      <div id="textinfo_load_status"></div>
       <h2>Text <span class="texttitle"></span></h2>
       <ul>
 	      <li>has <span id="witness_num"></span> witnesses: <span id="witness_list"></span></li>
@@ -112,6 +112,11 @@ $(document).ready( function() {
       <div id="stemma_graph"></div>
     </div>
 
+    <!-- Interim 'loading' message for directory box -->
+    <div id="loading_message">
+    	<h3>Loading texts, please wait...</h3>
+    	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" />
+    </div>
 
     <!-- File upload dialog box -->
     <div id="upload-collation-dialog" title="Upload a collation">

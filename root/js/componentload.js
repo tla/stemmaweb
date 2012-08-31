@@ -5,6 +5,7 @@ function loadTradition( textid, textname, editable ) {
     if( basepath.lastIndexOf('/') == basepath.length - 1 ) { 
     	basepath = basepath.slice( 0, basepath.length - 1) 
     };
+    $('#textinfo_load_status').empty();
     $('#stemma_graph').empty();
     $('#textinfo_waitbox').show();
     $('#textinfo_container').ajaxError( 
@@ -14,7 +15,7 @@ function loadTradition( textid, textname, editable ) {
 				var msg = "An error occurred: ";
 				var msghtml = $('<span>').attr('class', 'error').text(
 					msg + jqxhr.status + " " + jqxhr.statusText);
-				$("#textinfo_container").append( msghtml ).show();
+				$("#textinfo_load_status").append( msghtml ).show();
 			} 
     	}
     );
