@@ -240,22 +240,26 @@ sub newtradition :Local :Args(0) {
 				}
 				last if $tradition;
 			}
-		} elsif( $ext eq 'txt' || $ext eq 'csv' ) {
-			my $sep_char = $ext eq 'txt' ? "\t" : ',';
+		} elsif( $ext eq 'txt' || $ext eq 'csv' || $ext eq 'xls' ) {
+			# If it's Excel we need to pass xls => [true value];
+			# otherwise we need to pass sep_char => [record separator].
+			# Good thing record separators are true values.
+			my $extrafield = $ext eq 'xls' ? 'xls' : 'sep_char';
+			my $extraarg = $ext eq 'txt' ? "\t" : ',';
 			try {
 				$tradition = Text::Tradition->new( 
 					%newopts,
 					'input' => 'Tabular',
-					'sep_char' => $sep_char
+					$extrafield => $extraarg
 					);
 			} catch ( Text::Tradition::Error $e ) {
 				$errmsg = $e->message;
 			} catch {
 				$errmsg = "Unexpected parsing error";
 			}
-		} elsif( $ext =~ /^xls(x)?$/ ) {
+		} elsif( $ext eq 'xlsx' ) {
 			$c->stash->{'result'} = 
-				{ 'error' => "Excel parsing not supported yet" };
+				{ 'error' => "Excel XML parsing not supported yet" };
 			$c->response->status( 500 );
 		} else {
 			# Error unless we have a recognized filename extension
