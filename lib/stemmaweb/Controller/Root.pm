@@ -291,10 +291,11 @@ sub _check_permission {
     if( $user ) {
     	return 'full' if ( $user->is_admin || 
     		( $tradition->has_user && $tradition->user->id eq $user->id ) );
-    } elsif( $tradition->public ) {
-    	return 'readonly';
-    } 
-	# else Forbidden!
+    }
+	# Text doesn't belong to us, so maybe it's public?
+	return 'readonly' if $tradition->public;
+
+	# ...nope. Forbidden!
 	$c->response->status( 403 );
 	$c->response->body( 'You do not have permission to view this tradition.' );
 	$c->detach( 'View::Plain' );

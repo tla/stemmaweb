@@ -381,18 +381,20 @@ sub _check_permission {
     my $user = $c->user_exists ? $c->user->get_object : undef;
     if( $user ) {
     	$c->stash->{'permission'} = 'full'
-    		if( $user->is_admin || $tradition->user->id eq $user->id );
+    		if( $user->is_admin || 
+    			( $tradition->has_user && $tradition->user->id eq $user->id ) );
     	return 1;
-    } elsif( $tradition->public ) {
+    } 
+    # Is it public?
+    if( $tradition->public ) {
     	$c->stash->{'permission'} = 'readonly';
     	return 1;
-    } else {
-    	# Forbidden!
-    	$c->response->status( 403 );
-    	$c->response->body( 'You do not have permission to view this tradition.' );
-    	$c->detach( 'View::Plain' );
-    	return 0;
-    }
+    } 
+	# Forbidden!
+	$c->response->status( 403 );
+	$c->response->body( 'You do not have permission to view this tradition.' );
+	$c->detach( 'View::Plain' );
+	return 0;
 }
 
 sub _clean_booleans {
