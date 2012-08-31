@@ -6,18 +6,54 @@
 var selectedTextID;
 var selectedStemmaID = -1;
 var stemmata = [];
-$(document).ready(function() {
-    // call out to load the directory div
-    $('#textinfo_container').hide();
-    $('#textinfo_waitbox').hide();
+
+function refreshDirectory () {
     $('#directory').load( "[% c.uri_for( 'directory' ) %]", 
     	function(response, status, xhr) {
 			if (status == "error") {
 				var msg = "An error occurred: ";
 				$("#directory").html(msg + xhr.status + " " + xhr.statusText);
 			}
-		});
-	});
+		}
+	);
+}
+
+$(document).ready( function() {
+    // call out to load the directory div
+    $('#textinfo_container').hide();
+    $('#textinfo_waitbox').hide();
+	refreshDirectory();
+	$('#upload-collation-dialog').dialog({
+		autoOpen: false,
+		height: 325,
+		width: 480,
+		modal: true,
+		buttons: {
+			"Upload": function( evt ) {
+				$(evt.target).button("disable");
+				$('#upload_status').empty();
+				form_values = $('#upload_collation').serialize();
+				$.post( "[% c.uri_for ( '/newtradition' ) %]", form_values, function(data) {
+					$(evt.target).button("enable");
+					$( "#dialog-form" ).dialog( "close" );
+					refreshDirectory();
+					loadTradition( data.id, data.name, 1 )
+				}, 'json' );
+			},
+			Cancel: function() {
+				$( this ).dialog( "close" );
+			}
+		},
+	  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+		  if( ajaxSettings.url.indexOf( '/new' ) > -1 
+			&& ajaxSettings.type == 'POST' ) {
+			  var errobj = jQuery.parseJSON( jqXHR.responseText );
+			  $('#upload_status').append( '<p class="error">Error: ' + errobj.error + '</br>The tradition cannot be created.</p>' );
+		  }
+		  $(event.target).parent().find('.ui-button').button("enable");
+		}
+	  );
+});
     </script>
 
 [% END %]
@@ -33,7 +69,7 @@ $(document).ready(function() {
     	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" />
       </div>
 [% IF c.user_exists -%]
-	  <div class="button" id="new_trad_button" onClick="$('#new_trad_form').open()">
+	  <div class="button" id="new_trad_button" onClick="$('#upload-collation-dialog').dialog('open')">
 	    <span>Add a new text tradition</span>
 	  </div>
 [% END %]
@@ -70,4 +106,28 @@ $(document).ready(function() {
       <div id="stemma_graph"></div>
     </div>
 
+
+    <!-- File upload dialog box -->
+    <div id="upload-collation-dialog" title="Upload a collation">
+      <form id="upload_collation" action="" method="POST" enctype="multipart/form-data" name="upload_collation">
+        <label for="traditionname">Name of this text / tradition: </label>
+        <input id="traditionname" type="text" name="name" size="40"/><br/>
+        <label for="inputfile">Collation file for the tradition: </label>
+      	<input id="inputfile" type="file" name="inputfile" size="40"/>
+      	<div id="upload_status"></div>
+      	<div>
+      	  <h4>Supported file types / extensions:</h4>
+      	  <ul>
+      	    <li>*.txt - spreadsheet collation, tab-separated values</li>
+      	    <li>*.csv - spreadsheet collation, comma-separated values</li>
+      	    <li>*.xls - spreadsheet collation, Excel 97-2004 format</li>
+      	    <li>*.xlsx - spreadsheet collation, Excel 2007 XML format</li>
+      	    <li>*.xml - TEI XML parallel segmentation format</li>
+      	    <li>*.xml - TEI XML export from Classical Text Editor</li>
+      	    <li>*.xml - GraphML export from the CollateX tool</li>
+      	  </ul>
+      	  <p>All spreadsheet collations should be arranged with the witness sigla in the first row, and the words aligned by row each in its correct witness column.</p>
+      	</div>
+      </form>
+    </div>    
 [% PROCESS footer.tt %]
