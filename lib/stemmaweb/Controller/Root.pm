@@ -240,17 +240,18 @@ sub newtradition :Local :Args(0) {
 				}
 				last if $tradition;
 			}
-		} elsif( $ext eq 'txt' || $ext eq 'csv' || $ext eq 'xls' ) {
-			# If it's Excel we need to pass xls => [true value];
+		} elsif( $ext =~ /^(txt|csv|xls(x)?)$/ ) {
+			# If it's Excel we need to pass excel => $ext;
 			# otherwise we need to pass sep_char => [record separator].
-			# Good thing record separators are true values.
-			my $extrafield = $ext eq 'xls' ? 'xls' : 'sep_char';
-			my $extraarg = $ext eq 'txt' ? "\t" : ',';
+			if( $ext =~ /xls/ ) {
+				$newopts{'excel'} = $ext;
+			} else {
+				$newopts{'sep_char'} = $ext eq 'txt' ? "\t" : ',';
+			}
 			try {
 				$tradition = Text::Tradition->new( 
 					%newopts,
 					'input' => 'Tabular',
-					$extrafield => $extraarg
 					);
 			} catch ( Text::Tradition::Error $e ) {
 				$errmsg = $e->message;
