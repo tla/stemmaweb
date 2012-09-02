@@ -37,7 +37,7 @@ sub index :Path :Args(2) {
 	my $ok = _check_permission( $c, $tradition );
 	return unless $ok;
 	if( $tradition->stemma_count ) {
-		my $stemma = $tradition->stemma(0);
+		my $stemma = $tradition->stemma( $stemid );
 		$c->stash->{svg} = $stemma->as_svg( { size => [ 600, 350 ] } );
 		$c->stash->{graphdot} = $stemma->editable({ linesep => ' ' });
 		$c->stash->{text_title} = $tradition->name;
@@ -101,20 +101,16 @@ sub _check_permission {
 	my( $c, $tradition ) = @_;
     my $user = $c->user_exists ? $c->user->get_object : undef;
     if( $user ) {
-    	$c->stash->{'permission'} = 'full'
-    		if( $user->is_admin || 
-    			( $tradition->has_user && $tradition->user->id eq $user->id ) );
-    	return 1;
-    } 
-    # Is it public?
-    if( $tradition->public ) {
-    	$c->stash->{'permission'} = 'readonly';
-    	return 1;
-    } 
-	# Forbidden!
+    	return 'full' if ( $user->is_admin || 
+    		( $tradition->has_user && $tradition->user->id eq $user->id ) );
+    }
+	# Text doesn't belong to us, so maybe it's public?
+	return 'readonly' if $tradition->public;
+
+	# ...nope. Forbidden!
 	$c->response->status( 403 );
-	$c->response->body( 'You do not have permission to view this tradition.' );
-	$c->detach( 'View::Plain' );
+	$c->response->body( 'You do not have permission to view this tradition' );
+	$c->forward('View::Plain');
 	return 0;
 }
 
