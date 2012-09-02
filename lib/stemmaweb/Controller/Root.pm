@@ -66,6 +66,187 @@ sub directory :Local :Args(0) {
 	$c->stash->{template} = 'directory.tt';
 }
 
+=head1 AJAX methods for traditions and their properties
+
+=head2 newtradition
+
+ POST /newtradition,
+ 	{ name: <name>,
+ 	  language: <language>,
+ 	  public: <is_public>,
+ 	  file: <fileupload> }
+ 
+Creates a new tradition belonging to the logged-in user, with the given name
+and the collation given in the uploaded file. The file type is indicated via
+the filename extension (.csv, .txt, .xls, .xlsx, .xml). Returns the ID and 
+name of the new tradition.
+ 
+=cut
+
+sub newtradition :Local :Args(0) {
+	my( $self, $c ) = @_;
+	return _json_error( $c, 403, 'Cannot save a tradition without being logged in' )
+		unless $c->user_exists;
+
+	my $user = $c->user->get_object;
+	# Grab the file upload, check its name/extension, and call the
+	# appropriate parser(s).
+	my $upload = $c->request->upload('file');
+	my $name = $c->request->param('name') || 'Uploaded tradition';
+	my $lang = $c->request->param( 'language' ) || 'Default';
+	my $public = $c->request->param( 'public' ) ? 1 : undef;
+	my( $ext ) = $upload->filename =~ /\.(\w+)$/;
+	my %newopts = (
+		'name' => $name,
+		'language' => $lang,
+		'public' => $public,
+		'file' => $upload->tempname
+		);
+
+	my $tradition;
+	my $errmsg;
+	if( $ext eq 'xml' ) {
+		# Try the different XML parsing options to see if one works.
+		foreach my $type ( qw/ CollateX CTE TEI / ) {
+			try {
+				$tradition = Text::Tradition->new( %newopts, 'input' => $type );
+			} catch ( Text::Tradition::Error $e ) {
+				$errmsg = $e->message;
+			} catch {
+				$errmsg = "Unexpected parsing error";
+			}
+			last if $tradition;
+		}
+	} elsif( $ext =~ /^(txt|csv|xls(x)?)$/ ) {
+		# If it's Excel we need to pass excel => $ext;
+		# otherwise we need to pass sep_char => [record separator].
+		if( $ext =~ /xls/ ) {
+			$newopts{'excel'} = $ext;
+		} else {
+			$newopts{'sep_char'} = $ext eq 'txt' ? "\t" : ',';
+		}
+		try {
+			$tradition = Text::Tradition->new( 
+				%newopts,
+				'input' => 'Tabular',
+				);
+		} catch ( Text::Tradition::Error $e ) {
+			$errmsg = $e->message;
+		} catch {
+			$errmsg = "Unexpected parsing error";
+		}
+	} else {
+		# Error unless we have a recognized filename extension
+		return _json_error( $c, 500, "Unrecognized file type extension $ext" );
+	}
+	
+	# Save the tradition if we have it, and return its data or else the
+	# error that occurred trying to make it.
+	if( $errmsg ) {
+		return _json_error( $c, 500, "Error parsing tradition .$ext file: $errmsg" );
+	} elsif( !$tradition ) {
+		return _json_error( $c, 500, "No error caught but tradition not created" );
+	}
+
+	my $m = $c->model('Directory');
+	$user->add_tradition( $tradition );
+	my $id = $c->model('Directory')->store( $tradition );
+	$c->model('Directory')->store( $user );
+	$c->stash->{'result'} = { 'id' => $id, 'name' => $tradition->name };
+	$c->forward('View::JSON');
+}
+
+=head2 textinfo
+
+ GET /textinfo/$textid
+ POST /textinfo/$textid, 
+ 	{ name: $new_name, 
+ 	  language: $new_language,
+ 	  public: $is_public, 
+ 	  owner: $new_userid } # only admin users can update the owner
+ 
+Returns information about a particular text.
+
+=cut
+
+sub textinfo :Local :Args(1) {
+	my( $self, $c, $textid ) = @_;
+	my $tradition = $c->model('Directory')->tradition( $textid );
+	unless( $tradition ) {
+		return _json_error( $c, 500, "No tradition with ID $textid" );
+	}	
+	my $ok = _check_permission( $c, $tradition );
+	return unless $ok;
+	if( $c->req->method eq 'POST' ) {
+		return _json_error( $c, 403, 
+			'You do not have permission to update this tradition' ) 
+			unless $ok eq 'full';
+		my $params = $c->request->parameters;
+		# Handle changes to owner-accessible parameters
+		my $m = $c->model('Directory');
+		my $changed;
+		# Handle scalar params
+		foreach my $param ( qw/ name language / ) {
+			if( exists $params->{$param} ) {
+				my $newval = delete $params->{$param};
+				unless( $tradition->$param eq $newval ) {
+					try {
+						$tradition->$param( $newval );
+					} catch {
+						return _json_error( $c, 500, "Error setting $param to $newval" );
+					}
+					$changed = 1;
+				}
+			}
+		}
+		# Handle our boolean
+		if( delete $params->{'public'} ) {  # if it's any true value...
+			$tradition->public( 1 );
+		}
+		# Handle ownership changes
+		my $newuser;
+		if( exists $params->{'owner'} ) {
+			# Only admins can update user / owner
+			my $newownerid = delete $params->{'owner'};
+			unless( $tradition->has_user && $tradition->user->id eq $newownerid ) {
+				unless( $c->user->get_object->is_admin ) {
+					return _json_error( $c, 403, 
+						"Only admin users can change tradition ownership" );
+				}
+				$newuser = $m->lookup_user( $params->{'owner'} );
+				unless( $newuser ) {
+					return _json_error( $c, 500, "No such user " . $params->{'owner'} );
+				}
+				$newuser->add_tradition( $tradition );
+				$changed = 1;
+			}
+		}
+		# TODO check for rogue parameters
+		if( scalar keys %$params ) {
+			my $rogueparams = join( ', ', keys %$params );
+			return _json_error( $c, 403, "Request parameters $rogueparams not recognized" );
+		}
+		# If we safely got to the end, then write to the database.
+		$m->save( $tradition ) if $changed;
+		$m->save( $newuser ) if $newuser;		
+	}
+
+	# Now return the current textinfo, whether GET or successful POST.
+	my $textinfo = {
+		textid => $textid,
+		name => $tradition->name,
+		language => $tradition->language,
+		public => $tradition->public,
+		owner => $tradition->user ? $tradition->user->id : undef,
+		witnesses => [ map { $_->sigil } $tradition->witnesses ],
+	};
+	my @stemmasvg = map { $_->as_svg({ size => [ 500, 375 ] }) } $tradition->stemmata;
+	map { $_ =~ s/\n/ /mg } @stemmasvg;
+	$textinfo->{stemmata} = \@stemmasvg;
+	$c->stash->{'result'} = $textinfo;
+	$c->forward('View::JSON');
+}
+
 =head2 variantgraph
 
  GET /variantgraph/$textid
@@ -77,6 +258,9 @@ Returns the variant graph for the text specified at $textid, in SVG form.
 sub variantgraph :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
 	my $tradition = $c->model('Directory')->tradition( $textid );
+	unless( $tradition ) {
+		return _json_error( $c, 500, "No tradition with ID $textid" );
+	}	
 	my $ok = _check_permission( $c, $tradition );
 	return unless $ok;
 
@@ -85,211 +269,99 @@ sub variantgraph :Local :Args(1) {
 	$c->forward('View::SVG');
 }
 	
-=head2 alignment
-
- GET /alignment/$textid
-
-Returns an alignment table for the text specified at $textid.
-
-=cut
-
-sub alignment :Local :Args(1) {
-	my( $self, $c, $textid ) = @_;
-	my $tradition = $c->model('Directory')->tradition( $textid );
-	my $ok = _check_permission( $c, $tradition );
-	return unless $ok;
-
-	my $collation = $tradition->collation;
-	my $alignment = $collation->alignment_table;
-	
-	# Turn the table, so that witnesses are by column and the rows
-	# are by rank.
-	my $wits = [ map { $_->{'witness'} } @{$alignment->{'alignment'}} ];
-	my $rows;
-	foreach my $i ( 0 .. $alignment->{'length'} - 1 ) {
-		my @rankrdgs = map { $_->{'tokens'}->[$i]->{'t'} } 
-			@{$alignment->{'alignment'}};
-		push( @$rows, { 'rank' => $i+1, 'readings' => \@rankrdgs } );
-	}
-	$c->stash->{'witnesses'} = $wits;
-	$c->stash->{'table'} = $rows;
-	$c->stash->{'template'} = 'alignment.tt';
-}
-
 =head2 stemma
 
- GET /stemma/$textid/$stemmaid
- POST /stemma/$textid, { 'dot' => $dot_string }
+ GET /stemma/$textid/$stemmaseq
+ POST /stemma/$textid/$stemmaseq, { 'dot' => $dot_string }
 
-Returns an SVG representation of the stemma hypothesis for the text.  If 
-the URL is called with POST and a new dot string, updates the stemma and
-returns the SVG as with GET.
+Returns an SVG representation of the given stemma hypothesis for the text.  
+If the URL is called with POST, the stemma at $stemmaseq will be altered
+to reflect the definition in $dot_string. If $stemmaseq is 'n', a new
+stemma will be added.
 
 =cut
 
-sub stemma :Local :Args {
+sub stemma :Local :Args(2) {
 	my( $self, $c, $textid, $stemmaid ) = @_;
 	my $m = $c->model('Directory');
 	my $tradition = $m->tradition( $textid );
+	unless( $tradition ) {
+		return _json_error( $c, 500, "No tradition with ID $textid" );
+	}	
 	my $ok = _check_permission( $c, $tradition );
 	return unless $ok;
 
-	$stemmaid = 0 unless defined $stemmaid;
 	$c->stash->{'result'} = '';
-	if( $tradition ) {
-		if( $c->req->method eq 'POST' ) {
-			# Update the stemma
+	my $stemma;
+	if( $c->req->method eq 'POST' ) {
+		if( $ok eq 'full' ) {
 			my $dot = $c->request->body_params->{'dot'};
-			$tradition->add_stemma( $dot );
+			try {
+				if( $stemmaid eq 'n' ) {
+					# We are adding a new stemma.
+					$stemma = $tradition->add_stemma( 'dot' => $dot );
+				} elsif( $stemmaid < $tradition->stemma_count ) {
+					# We are updating an existing stemma.
+					$stemma = $tradition->stemma( $stemmaid );
+					$stemma->alter_graph( $dot );
+				} else {
+					# Unrecognized stemma ID
+					return _json_error( $c, 500, "No stemma at index $stemmaid, cannot update" );
+				}
+			} catch ( Text::Tradition::Error $e ) {
+				return _json_error( $c, 500, $e->message );
+			}
 			$m->store( $tradition );
-			$stemmaid = scalar( $tradition->stemma_count ) - 1;
+		} else {
+			# No permissions to update the stemma
+			return _json_error( $c, 403, 
+				'You do not have permission to update stemmata for this tradition' );
 		}
-		
-		$c->stash->{'result'} = $tradition->stemma_count > $stemmaid
-			? $tradition->stemma( $stemmaid )->as_svg( { size => [ 500, 375 ] } )
-			: '';
 	}
+	
+	# For a GET or a successful POST request, return the SVG representation
+	# of the stemma in question, if any.
+	$c->log->debug( "Received Accept header: " . $c->req->header('Accept') );
+	if( !$stemma && $tradition->stemma_count > $stemmaid ) {
+		$stemma = $tradition->stemma( $stemmaid );
+	}
+	$c->stash->{'result'} = $stemma 
+		? $stemma->as_svg( { size => [ 500, 375 ] } ) : '';
 	$c->forward('View::SVG');
 }
 
 =head2 stemmadot
 
- GET /stemmadot/$textid
+ GET /stemmadot/$textid/$stemmaseq
  
 Returns the 'dot' format representation of the current stemma hypothesis.
 
 =cut
 
-sub stemmadot :Local :Args(1) {
-	my( $self, $c, $textid ) = @_;
+sub stemmadot :Local :Args(2) {
+	my( $self, $c, $textid, $stemmaid ) = @_;
 	my $m = $c->model('Directory');
 	my $tradition = $m->tradition( $textid );
+	unless( $tradition ) {
+		return _json_error( $c, 500, "No tradition with ID $textid" );
+	}	
 	my $ok = _check_permission( $c, $tradition );
 	return unless $ok;
-	
-	$c->response->body( $tradition->stemma->editable );
-	$c->forward('View::Plain');
-}
-
-=head1 AJAX methods for index page
-
-=head2 textinfo
-
- GET /textinfo/$textid
- 
-Returns information about a particular text.
-
-=cut
-
-sub textinfo :Local :Args(1) {
-	my( $self, $c, $textid ) = @_;
-	my $tradition = $c->model('Directory')->tradition( $textid );
-	my $ok = _check_permission( $c, $tradition );
-	return unless $ok;
-
-	# Need text name, witness list, scalar readings, scalar relationships, stemmata
-	my $textinfo = {
-		textid => $textid,
-		traditionname => $tradition->name,
-		witnesses => [ map { $_->sigil } $tradition->witnesses ],
-		readings => scalar $tradition->collation->readings,
-		relationships => scalar $tradition->collation->relationships
-	};
-	my @stemmasvg = map { $_->as_svg({ size => [ 500, 375 ] }) } $tradition->stemmata;
-	map { $_ =~ s/\n/ /mg } @stemmasvg;
-	$textinfo->{stemmata} = \@stemmasvg;
-	$c->stash->{'result'} = $textinfo;
-	$c->forward('View::JSON');
-}
-
-# TODO alter text parameters
-
-=head2 new
-
- POST /newtradition { name: <name>, inputfile: <fileupload> }
- 
-Creates a new tradition belonging to the logged-in user, according to the detected
-file type. Returns the ID and name of the new tradition.
- 
-=cut
-
-sub newtradition :Local :Args(0) {
-	my( $self, $c ) = @_;
-	if( $c->user_exists ) {
-		my $user = $c->user->get_object;
-		# Grab the file upload, check its name/extension, and call the
-		# appropriate parser(s).
-		my $upload = $c->request->upload('file');
-		my $name = $c->request->param('name') || 'Uploaded tradition';
-		my( $ext ) = $upload->filename =~ /\.(\w+)$/;
-		my %newopts = (
-			'name' => $name,
-			'file' => $upload->tempname
-			);
-		my $tradition;
-		my $errmsg;
-		if( $ext eq 'xml' ) {
-			# Try the different XML parsing options to see if one works.
-			foreach my $type ( qw/ CollateX CTE TEI / ) {
-				try {
-					$tradition = Text::Tradition->new( %newopts, 'input' => $type );
-				} catch ( Text::Tradition::Error $e ) {
-					$errmsg = $e->message;
-				} catch {
-					$errmsg = "Unexpected parsing error";
-				}
-				last if $tradition;
-			}
-		} elsif( $ext =~ /^(txt|csv|xls(x)?)$/ ) {
-			# If it's Excel we need to pass excel => $ext;
-			# otherwise we need to pass sep_char => [record separator].
-			if( $ext =~ /xls/ ) {
-				$newopts{'excel'} = $ext;
-			} else {
-				$newopts{'sep_char'} = $ext eq 'txt' ? "\t" : ',';
-			}
-			try {
-				$tradition = Text::Tradition->new( 
-					%newopts,
-					'input' => 'Tabular',
-					);
-			} catch ( Text::Tradition::Error $e ) {
-				$errmsg = $e->message;
-			} catch {
-				$errmsg = "Unexpected parsing error";
-			}
-		} elsif( $ext eq 'xlsx' ) {
-			$c->stash->{'result'} = 
-				{ 'error' => "Excel XML parsing not supported yet" };
-			$c->response->status( 500 );
-		} else {
-			# Error unless we have a recognized filename extension
-			$c->stash->{'result'} = 
-				{ 'error' => "Unrecognized file type extension $ext" };
-			$c->response->status( 500 );
-		}
-		
-		# Save the tradition if we have it, and return its data or else the
-		# error that occurred trying to make it.
-		if( $tradition ) {
-			my $m = $c->model('Directory');
-			$user->add_tradition( $tradition );
-			my $id = $c->model('Directory')->store( $tradition );
-			$c->model('Directory')->store( $user );
-			$c->stash->{'result'} = { 'id' => $id, 'name' => $tradition->name };
-		} else {
-			$c->stash->{'result'} = 
-				{ 'error' => "Error parsing tradition .$ext file: $errmsg" };
-			$c->response->status( 500 );
-		}
-	} else {
-		$c->stash->{'result'} = 
-			{ 'error' => 'Cannot save a tradition without being logged in' };
-		$c->response->status( 403 );
+	my $stemma = $tradition->stemma( $stemmaid );
+	unless( $stemma ) {
+		return _json_error( $c, 500, "Tradition $textid has no stemma ID $stemmaid" );
 	}
+	# Get the dot and transmute its line breaks to literal '|n'
+	$c->stash->{'result'} = { 'dot' =>  $stemma->editable( { linesep => '|n' } ) };
 	$c->forward('View::JSON');
 }
- 
+
+####################
+### Helper functions
+####################
+
+# Helper to check what permission, if any, the active user has for
+# the given tradition
 sub _check_permission {
 	my( $c, $tradition ) = @_;
     my $user = $c->user_exists ? $c->user->get_object : undef;
@@ -301,9 +373,15 @@ sub _check_permission {
 	return 'readonly' if $tradition->public;
 
 	# ...nope. Forbidden!
-	$c->response->status( 403 );
-	$c->response->body( 'You do not have permission to view this tradition.' );
-	$c->detach( 'View::Plain' );
+	return _json_error( $c, 403, 'You do not have permission to view this tradition.' );
+}
+
+# Helper to throw a JSON exception
+sub _json_error {
+	my( $c, $code, $errmsg ) = @_;
+	$c->response->status( $code );
+	$c->stash->{'result'} = { 'error' => $errmsg };
+	$c->forward('View::JSON');
 	return 0;
 }
 

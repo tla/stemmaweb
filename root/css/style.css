@@ -109,6 +109,10 @@ div.button:hover span {
 .mainnav a {
 	color: #488dd2;
 }
+#textinfo_waitbox {
+	float: left;
+	padding-left: 50px;
+}
 #textinfo_container {
     border: 1px solid #C6DCF1;
 	float: left;
@@ -117,6 +121,9 @@ div.button:hover span {
 	margin-left: 10px;
 	padding-left: 10px;
 	padding-right: 10px;
+}
+#edit_instructions {
+	float: left;
 }
 #stemma_container h2 h3 {
 	color: #666;
@@ -139,7 +146,7 @@ div.button:hover span {
 #textinfo_container_buttons {
     float: right;
 }
-#run_stexaminer, #run_relater, #stemma_pager, #add_edit_stemma {
+#run_stexaminer, #run_relater, #open_stemma_add, #open_stemma_edit, #stemma_pager, #open_textinfo_edit {
     height: 30px;
     left: -10px;
     position: relative;

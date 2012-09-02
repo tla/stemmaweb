@@ -3,7 +3,12 @@
 	applicationjs = c.uri_for( 'js/componentload.js' )
 %]
     <script type="text/javascript">
+var basepath = window.location.pathname
+if( basepath.lastIndexOf('/') == basepath.length - 1 ) { 
+	basepath = basepath.slice( 0, basepath.length - 1) 
+};
 var selectedTextID;
+var selectedTextInfo;
 var selectedStemmaID = -1;
 var stemmata = [];
 
@@ -33,6 +38,121 @@ $(document).ready( function() {
     $('#textinfo_container').hide();
     $('#textinfo_waitbox').hide();
 	refreshDirectory();
+	
+	// Set up the textinfo edit dialog
+	$('#textinfo-edit-dialog').dialog({
+		autoOpen: false,
+		height: 200,
+		width: 300,
+		modal: true,
+		buttons: {
+			Save: function (evt) {
+				$(evt.target).button("disable");
+				var requrl = "[% c.uri_for( '/textinfo' ) %]/" + selectedTextID;
+				var reqparam = $('#edit_textinfo').serialize();
+				$.post( requrl, reqparam, function (data) {
+					// Reload the selected text fields
+					selectedTextInfo = data;
+					load_textinfo();
+					// Reenable the button and close the form
+					$(evt.target).button("enable");
+					$('#textinfo-edit-dialog').dialog('close');
+				}, 'json' );
+			},
+			Cancel: function() {
+				$('#textinfo-edit-dialog').dialog('close');
+			}
+		},
+		open: function() {
+			$("#edit_textinfo_status").empty();
+			// Populate the form fields with the current values
+			// edit_(name, language, public, owner)
+			$.each([ 'name', 'language', 'owner' ], function( idx, k ) {
+				var fname = '#edit_' + k;
+				$(fname).val( selectedTextInfo[k] );
+			});
+			if( selectedTextInfo['public'] == true ) {
+				$('#edit_public').attr('checked','true');
+			} else {
+				$('#edit_public').removeAttr('checked');
+			}
+		},
+	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+		$(event.target).parent().find('.ui-button').button("enable");
+    	if( ajaxSettings.url.indexOf( 'textinfo' ) > -1 
+    		&& ajaxSettings.type == 'POST' ) {
+			display_error( jqXHR, $("#edit_textinfo_status") );
+    	}
+	});
+
+	
+	// Set up the stemma editor dialog
+	$('#stemma-edit-dialog').dialog({
+		autoOpen: false,
+		height: 700,
+		width: 600,
+		modal: true,
+		buttons: {
+			Save: function (evt) {
+				$(evt.target).button("disable");
+				var stemmaseq = $('#stemmaseq').val();
+				var requrl = "[% c.uri_for( '/stemma' ) %]/" + selectedTextID + "/" + stemmaseq;
+				var reqparam = { 'dot': $('#dot_field').val() };
+				// TODO We need to stash the literal SVG string in stemmata
+				// somehow. Implement accept header on server side to decide
+				// whether to send application/json or application/xml?
+				$.post( requrl, reqparam, function (data) {
+					// We received a stemma SVG string in return. 
+					// Update the current stemma sequence number
+					if( stemmaseq == 'n' ) {
+						selectedStemmaID = stemmata.length;
+					} else {
+						selectedStemmaID = stemmaseq;
+					}
+					// Strip the carriage returns from the answer
+					var newsvg = data.replace(/(\r\n|\n|\r)/gm," ");
+					// Stash the answer in our SVG array
+					stemmata[selectedStemmaID] = newsvg;
+					// Display the new stemma
+					load_stemma( selectedStemmaID );
+					// Reenable the button and close the form
+					$(evt.target).button("disable");
+					$('#stemma-edit-dialog').dialog('close');
+				}, 'xml' );
+			},
+			Cancel: function() {
+				$('#stemma-edit-dialog').dialog('close');
+			}
+		},
+		open: function(evt) {
+			$("#edit_stemma_status").empty();
+			var stemmaseq = $('#stemmaseq').val();
+			if( stemmaseq == 'n' ) {
+				// If we are creating a new stemma, populate the textarea with a
+				// bare digraph.
+				$(evt.target).dialog('option', 'title', 'Add a new stemma')
+				$('#dot_field').val( "digraph stemma {\n\n}" );
+			} else {
+				// If we are editing a stemma, grab its stemmadot and populate the
+				// textarea with that.
+				$(evt.target).dialog('option', 'title', 'Edit selected stemma')
+				$('#dot_field').val( 'Loading, please wait...' );
+				var doturl = "[% c.uri_for( '/stemmadot' ) %]/" + selectedTextID + "/" + stemmaseq;
+				$.getJSON( doturl, function (data) {
+					// Re-insert the line breaks
+					var dotstring = data.dot.replace(/\|n/gm, "\n");					
+					$('#dot_field').val( dotstring );
+				});
+			}
+		},
+	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+		$(event.target).parent().find('.ui-button').button("enable");
+    	if( ajaxSettings.url.indexOf( 'stemma' ) > -1 
+    		&& ajaxSettings.type == 'POST' ) {
+			display_error( jqXHR, $("#edit_stemma_status") );
+    	}
+	});
+		
 	$('#upload-collation-dialog').dialog({
 		autoOpen: false,
 		height: 325,
@@ -53,7 +173,7 @@ $(document).ready( function() {
                 return false;
             }
 		  },
-		  cancel: function() {
+		  Cancel: function() {
 		    $('#upload-collation-dialog').dialog('close');
 		  }
 		},
@@ -81,22 +201,42 @@ $(document).ready( function() {
 [% END %]
     </div>
     <div id="textinfo_waitbox">
-    	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" alt="Loading tradition info..."/>
+    	<h3>Loading tradition information, please wait...</h3>
+    	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" alt="Loading tradition info..." />
     </div>
     <div id="textinfo_container">
       <div id="textinfo_load_status"></div>
       <h2>Text <span class="texttitle"></span></h2>
       <ul>
+      	  <li>is owned by <span id="owner_id"></span></li>
+      	  <li>is <span id="not_public"></span>public</li>
+      	  <li>has <span id="marked_language"></span> as its primary language</li>
 	      <li>has <span id="witness_num"></span> witnesses: <span id="witness_list"></span></li>
-	      <li>has <span id="reading_num"></span> distinct readings</li>
-	      <li>has <span id="relationship_num"></span> distinct reading relationships</li>
       </ul>
       
       <!-- TODO buttons on either side of the graph div to flip through the stemmata -->
       <div id="textinfo_container_buttons">
+          <form id="open_textinfo_edit" action="" method="GET" name="edit_textinfo">
+            <div class="button" id="edit_textinfo_button"
+            	onClick="$('#textinfo-edit-dialog').dialog('open')">
+          	  <span>Modify information about this tradition</span>
+            </div>
+          </form>
           <form id="stemma_pager" action="" method="GET" name="stemma_pager">
             <div class="button" id="stemma_pager_button" onClick="$('#stemma_pager').submit()">
           	  <span>Left &amp; right go here</span>
+            </div>
+          </form>
+          <form id="open_stemma_add" action="" method="GET" name="add_new_stemma">
+            <div class="button" id="stemma_add_button" 
+            	onClick="$('#stemmaseq').val('n'); $('#stemma-edit-dialog').dialog('open');">
+          	  <span>Add a new stemma</span>
+            </div>
+          </form>
+          <form id="open_stemma_edit" action="" method="GET" name="edit_current_stemma">
+            <div class="button" id="stemma_edit_button" 
+            	onClick="$('#stemmaseq').val(selectedStemmaID); $('#stemma-edit-dialog').dialog('open');">
+          	  <span>Edit this stemma</span>
             </div>
           </form>
           <form id="run_stexaminer" action="" method="GET" name="run_stexaminer">
@@ -116,15 +256,71 @@ $(document).ready( function() {
     <!-- Interim 'loading' message for directory box -->
     <div id="loading_message">
     	<h3>Loading texts, please wait...</h3>
-    	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" />
+    	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" alt="Loading tradition list..."/>
+    </div>
+    
+    <!-- Textinfo editor dialog -->
+    <div id="textinfo-edit-dialog" title="Edit information about this tradition">
+      <div id="textinfo_edit_container">
+    	<form id="edit_textinfo">
+    		<label for="edit_name">Tradition name: </label>
+    		<input id="edit_name" type="text" size="30" name="name"/><br/>
+    		<label for="edit_language">Language: </label>
+    		<input id="edit_language" type="text" size="12" name="language"/>
+    		<label for="edit_public">Publicly viewable: </label>
+    		<input id="edit_public" type="checkbox" name="public"/><br/>
+[% IF c.user_exists -%]
+[% IF c.user.get_object.is_admin -%]
+    		<label for="edit_owner">Publicly viewable: </label>
+    		<input id="edit_owner" type="text" size="30" name="owner"/><br/>
+[% END -%]
+[% END -%]
+		</form>
+		<div id="edit_textinfo_status"></div>
+	  </div>
+    </div>
+    
+    <!-- Stemma dot editor dialog, simple textarea for now -->
+    <div id="stemma-edit-dialog">
+      <div id="stemma_edit_container">
+    	<form id="edit_stemma">
+    		<label for="dot_field">Dot definition for this stemma: </label><br/>
+    		<textarea id="dot_field" rows="30" cols="40"></textarea>
+    		<input id="stemmaseq" type="hidden" name="stemmaseq" val="n"/>
+			<div id="edit_instructions">
+				<p>All definitions begin with the line
+					<pre>digraph stemma {</pre>
+				and end with the line 
+					<pre>}</pre>Please do not change these lines.</p>
+				<p>First list each witness in your stemma, whether extant or lost /
+				reconstructed / hypothetical, and assign them a class of either "extant"
+				or "hypothetical". For example:</p><pre>  
+	α [ class=hypothetical ]
+	C [ class=extant ]
+				</pre>
+				<p>Next, list the direct links between witnesses, one per line. For example, if 
+				witness C descends directly from witness α, note it as follows:</p><pre>
+	α -> C
+				</pre>
+				<p>A witness may be the exemplar for any number of other witnesses, whether 
+				extant or not; likewise, a witness may inherit from any number of other 
+				witnesses. Use as may "A -> B" pairings as necessary to describe the links.</p>
+			</div>
+    	</form>
+    	<div id="edit_stemma_status"></div>
+      </div>
     </div>
 
     <!-- File upload dialog box -->
     <div id="upload-collation-dialog" title="Upload a collation">
       <div id="upload_container">
         <form id="new_tradition">
-            <label for="traditionname">Name of this text / tradition: </label>
-            <input id="traditionname" type="text" name="name" size="40"/><br/>
+            <label for="new_name">Name of this text / tradition: </label>
+            <input id="new_name" type="text" name="name" size="40"/><br/>
+            <label for="new_lang">Primary language of the text: </label>
+            <input id="new_lang" type="text" name="language" size="20"/><br/>
+            <label for="new_public">Allow public display: </label>
+            <input id="new_public" name="public" type="checkbox"/><br/>
             <div id="filelist"></div>
         <form>
         <div id="upload_status"></div>
