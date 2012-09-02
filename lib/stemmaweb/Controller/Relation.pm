@@ -379,11 +379,13 @@ sub reading :Chained('text') :PathPart :Args(1) {
 sub _check_permission {
 	my( $c, $tradition ) = @_;
     my $user = $c->user_exists ? $c->user->get_object : undef;
+    # Does this user have access?
     if( $user ) {
-    	$c->stash->{'permission'} = 'full'
-    		if( $user->is_admin || 
-    			( $tradition->has_user && $tradition->user->id eq $user->id ) );
-    	return 1;
+   		if( $user->is_admin || 
+    			( $tradition->has_user && $tradition->user->id eq $user->id ) ) {
+			$c->stash->{'permission'} = 'full';
+			return 1;
+		}
     } 
     # Is it public?
     if( $tradition->public ) {
