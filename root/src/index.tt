@@ -47,6 +47,7 @@ $(document).ready( function() {
 		modal: true,
 		buttons: {
 			Save: function (evt) {
+				$("#edit_textinfo_status").empty();
 				$(evt.target).button("disable");
 				var requrl = "[% c.uri_for( '/textinfo' ) %]/" + selectedTextID;
 				var reqparam = $('#edit_textinfo').serialize();
@@ -69,7 +70,12 @@ $(document).ready( function() {
 			// edit_(name, language, public, owner)
 			$.each([ 'name', 'language', 'owner' ], function( idx, k ) {
 				var fname = '#edit_' + k;
-				$(fname).val( selectedTextInfo[k] );
+				// Special case: language Default is basically language null
+				if( k == 'language' && selectedTextInfo[k] == 'Default' ) {
+					$(fname).val( "" );
+				} else {
+					$(fname).val( selectedTextInfo[k] );
+				}
 			});
 			if( selectedTextInfo['public'] == true ) {
 				$('#edit_public').attr('checked','true');
@@ -94,6 +100,7 @@ $(document).ready( function() {
 		modal: true,
 		buttons: {
 			Save: function (evt) {
+				$("#edit_stemma_status").empty();
 				$(evt.target).button("disable");
 				var stemmaseq = $('#stemmaseq').val();
 				var requrl = "[% c.uri_for( '/stemma' ) %]/" + selectedTextID + "/" + stemmaseq;
@@ -104,21 +111,15 @@ $(document).ready( function() {
 				$.post( requrl, reqparam, function (data) {
 					// We received a stemma SVG string in return. 
 					// Update the current stemma sequence number
-					if( stemmaseq == 'n' ) {
-						selectedStemmaID = stemmata.length;
-					} else {
-						selectedStemmaID = stemmaseq;
-					}
-					// Strip the carriage returns from the answer
-					var newsvg = data.replace(/(\r\n|\n|\r)/gm," ");
+					selectedStemmaID = data.stemmaid;
 					// Stash the answer in our SVG array
-					stemmata[selectedStemmaID] = newsvg;
+					stemmata[selectedStemmaID] = data.stemmasvg;
 					// Display the new stemma
 					load_stemma( selectedStemmaID );
 					// Reenable the button and close the form
-					$(evt.target).button("disable");
+					$(evt.target).button("enable");
 					$('#stemma-edit-dialog').dialog('close');
-				}, 'xml' );
+				}, 'json' );
 			},
 			Cancel: function() {
 				$('#stemma-edit-dialog').dialog('close');
@@ -271,7 +272,7 @@ $(document).ready( function() {
     		<input id="edit_public" type="checkbox" name="public"/><br/>
 [% IF c.user_exists -%]
 [% IF c.user.get_object.is_admin -%]
-    		<label for="edit_owner">Publicly viewable: </label>
+    		<label for="edit_owner">Tradition owner: </label>
     		<input id="edit_owner" type="text" size="30" name="owner"/><br/>
 [% END -%]
 [% END -%]

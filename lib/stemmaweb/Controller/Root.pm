@@ -185,25 +185,40 @@ sub textinfo :Local :Args(1) {
 		# Handle changes to owner-accessible parameters
 		my $m = $c->model('Directory');
 		my $changed;
-		# Handle scalar params
-		foreach my $param ( qw/ name language / ) {
-			if( exists $params->{$param} ) {
-				my $newval = delete $params->{$param};
-				unless( $tradition->$param eq $newval ) {
-					try {
-						$tradition->$param( $newval );
-					} catch {
-						return _json_error( $c, 500, "Error setting $param to $newval" );
-					}
+		# Handle name param - easy
+		if( exists $params->{name} ) {
+			my $newname = delete $params->{name};
+			unless( $tradition->name eq $newname ) {
+				try {
+					$tradition->name( $newname );
 					$changed = 1;
+				} catch {
+					return _json_error( $c, 500, "Error setting name to $newname" );
 				}
 			}
 		}
+		# Handle language param, making Default => null
+		my $langval = delete $params->{language} || 'Default';
+		unless( $tradition->language eq $langval ) {
+			try {
+				$tradition->language( $langval );
+				$changed = 1;
+			} catch {
+				return _json_error( $c, 500, "Error setting language to $langval" );
+			}
+		}
+
 		# Handle our boolean
+		my $ispublic = $tradition->public;
 		if( delete $params->{'public'} ) {  # if it's any true value...
 			$tradition->public( 1 );
+			$changed = 1 unless $ispublic;
+		} else {  # the checkbox was unchecked, ergo it should not be public
+			$tradition->public( 0 );
+			$changed = 1 if $ispublic;
 		}
-		# Handle ownership changes
+		
+		# Handle ownership change
 		my $newuser;
 		if( exists $params->{'owner'} ) {
 			# Only admins can update user / owner
@@ -213,9 +228,9 @@ sub textinfo :Local :Args(1) {
 					return _json_error( $c, 403, 
 						"Only admin users can change tradition ownership" );
 				}
-				$newuser = $m->lookup_user( $params->{'owner'} );
+				$newuser = $m->find_user({ username => $newownerid });
 				unless( $newuser ) {
-					return _json_error( $c, 500, "No such user " . $params->{'owner'} );
+					return _json_error( $c, 500, "No such user " . $newownerid );
 				}
 				$newuser->add_tradition( $tradition );
 				$changed = 1;
@@ -300,6 +315,7 @@ sub stemma :Local :Args(2) {
 				if( $stemmaid eq 'n' ) {
 					# We are adding a new stemma.
 					$stemma = $tradition->add_stemma( 'dot' => $dot );
+					$stemmaid = $tradition->stemma_count - 1;
 				} elsif( $stemmaid < $tradition->stemma_count ) {
 					# We are updating an existing stemma.
 					$stemma = $tradition->stemma( $stemmaid );
@@ -321,13 +337,32 @@ sub stemma :Local :Args(2) {
 	
 	# For a GET or a successful POST request, return the SVG representation
 	# of the stemma in question, if any.
-	$c->log->debug( "Received Accept header: " . $c->req->header('Accept') );
 	if( !$stemma && $tradition->stemma_count > $stemmaid ) {
 		$stemma = $tradition->stemma( $stemmaid );
 	}
-	$c->stash->{'result'} = $stemma 
-		? $stemma->as_svg( { size => [ 500, 375 ] } ) : '';
-	$c->forward('View::SVG');
+	my $stemma_xml = $stemma ? $stemma->as_svg( { size => [ 500, 375 ] } ) : '';
+	# What was requested, XML or JSON?
+	my $return_view = 'SVG';
+	if( my $accept_header = $c->req->header('Accept') ) {
+		$c->log->debug( "Received Accept header: $accept_header" );
+		foreach my $type ( split( /,\s*/, $accept_header ) ) {
+			# If we were first asked for XML, return SVG
+			last if $type =~ /^(application|text)\/xml$/;
+			# If we were first asked for JSON, return JSON
+			if( $type eq 'application/json' ) {
+				$return_view = 'JSON';
+				last;
+			}
+		}
+	}
+	if( $return_view eq 'SVG' ) {
+		$c->stash->{'result'} = $stemma_xml;
+		$c->forward('View::SVG');
+	} else { # JSON
+		$stemma_xml =~ s/\n/ /mg;
+		$c->stash->{'result'} = { 'stemmaid' => $stemmaid, 'stemmasvg' => $stemma_xml };
+		$c->forward('View::JSON');
+	}
 }
 
 =head2 stemmadot

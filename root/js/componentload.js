@@ -15,13 +15,13 @@ function loadTradition( textid, textname, editable ) {
     
     // Hide the functionality that is irrelevant
     if( editable ) {
-    	$('#add_new_stemma').show();
-    	$('#edit_current_stemma').show();
-    	$('#edit_textinfo').show();
+    	$('#open_stemma_add').show();
+    	$('#open_stemma_edit').show();
+    	$('#open_textinfo_edit').show();
     } else {
-    	$('#add_new_stemma').hide();
-    	$('#edit_current_stemma').hide();
-    	$('#edit_textinfo').hide();
+    	$('#open_stemma_add').hide();
+    	$('#open_stemma_edit').hide();
+    	$('#open_textinfo_edit').hide();
     }
 
     // Then get and load the actual content.
@@ -79,13 +79,18 @@ function load_stemma( idx ) {
 }
 
 function display_error( jqXHR, el ) {
-	var errobj = jQuery.parseJSON( jqXHR.responseText );
-	var msg;
-	if( errobj ) {
-		msg = "An error occurred: " + errobj.error;
+	var errmsg;
+	if( jqXHR.responseText == "" ) {
+		errmsg = "perhaps the server went down?"
 	} else {
-		msg = "An error occurred; perhaps the server went down?"
+		var errobj;
+		try {
+			errobj = jQuery.parseJSON( jqXHR.responseText );
+			errmsg = errobj.error;
+		} catch ( parse_err ) {
+			errmsg = "something went wrong on the server."
+		}
 	}
-	var msghtml = $('<span>').attr('class', 'error').text( msg );
+	var msghtml = $('<span>').attr('class', 'error').text( "An error occurred: " + errmsg );
 	$(el).empty().append( msghtml ).show();
 }
