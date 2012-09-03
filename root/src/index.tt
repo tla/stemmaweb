@@ -266,8 +266,8 @@ $(document).ready( function() {
       <div id="textinfo_container_buttons">
           <form id="stemma_pager" action="" method="GET" name="stemma_pager">
             <div id="stemma_pager_buttons">
-              <div class="pager_left_button" id="stemma_pager_left_button" onClick="$('#stemma_pager').submit()"></div>
-              <div class="pager_right_button" id="stemma_pager_right_button" onClick="$('#stemma_pager').submit()"></div>
+              <div class="pager_left_button" id="stemma_pager_left_button"></div>
+              <div class="pager_right_button" id="stemma_pager_right_button"></div>
             </div>
           </form>
           <form id="open_stemma_add" action="" method="GET" name="add_new_stemma">
