@@ -73,17 +73,17 @@ function load_textinfo() {
 }	
 
 function show_stemmapager () {
-      $('.pager_left_button').unbind('click').css( 'opacity', '0.5' );
-      $('.pager_right_button').unbind('click').css( 'opacity', '0.5' );
+      $('.pager_left_button').unbind('click').addClass( 'greyed_out' );
+      $('.pager_right_button').unbind('click').addClass( 'greyed_out' );
       if( selectedStemmaID > 0 ) {
               $('.pager_left_button').click( function () {
                       load_stemma( selectedStemmaID - 1 );
-              }).css( 'opacity' , '1.0' );
+              }).removeClass( 'greyed_out' );
       }       
       if( selectedStemmaID + 1 < stemmata.length ) {
               $('.pager_right_button').click( function () {
                       load_stemma( selectedStemmaID + 1 );
-              }).css( 'opacity' , '1.0' );
+              }).removeClass( 'greyed_out' );
       }
 }
 

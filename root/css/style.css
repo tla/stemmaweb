@@ -72,6 +72,12 @@ div.pager_right_button {
   margin-left: 10px;
   background: transparent url('../images/button_right_28.png') no-repeat;
 }
+div.pager_right_button.greyed_out, div.pager_right_button.greyed_out:hover {
+    opacity: 0.25;
+}
+div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
+    opacity: 0.25;
+}
 #topbanner {
 	width: 100%;
 }
