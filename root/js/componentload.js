@@ -75,6 +75,7 @@ function load_stemma( idx ) {
 		// Stexaminer submit action
 		var stexpath = basepath + "/stexaminer/" + selectedTextID + "/" + idx;
 		$('#run_stexaminer').attr( 'action', stexpath );
+        setTimeout( 'start_element_height = $("#stemma_graph .node")[0].getBBox().height;', 500 );
 	}
 }
 

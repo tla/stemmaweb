@@ -183,6 +183,48 @@ $(document).ready( function() {
 		    $('#filelist').empty().html( 'Use the \'Pick\' button to choose a source file…' );
 		}
 	});
+	
+	$('#stemma_graph').mousedown( function(evt) {
+        evt.stopPropagation();
+        $('#stemma_graph').data( 'mousedown_xy', [evt.clientX, evt.clientY] );
+        $('body').mousemove( function(evt) {
+            mouse_scale = 1; // for now, was:  mouse_scale = svg_root_element.getScreenCTM().a;
+            dx = (evt.clientX - $('#stemma_graph').data( 'mousedown_xy' )[0]) / mouse_scale;
+            dy = (evt.clientY - $('#stemma_graph').data( 'mousedown_xy' )[1]) / mouse_scale;
+            $('#stemma_graph').data( 'mousedown_xy', [evt.clientX, evt.clientY] );
+            var svg_root = $('#stemma_graph svg').svg().svg('get').root();
+            var g = $('g.graph', svg_root).get(0);
+            current_translate = g.getAttribute( 'transform' ).split(/translate\(/)[1].split(')',1)[0].split(' ');
+            new_transform = g.getAttribute( 'transform' ).replace( /translate\([^\)]*\)/, 'translate(' + (parseFloat(current_translate[0]) + dx) + ' ' + (parseFloat(current_translate[1]) + dy) + ')' );
+            g.setAttribute( 'transform', new_transform );
+            evt.returnValue = false;
+            evt.preventDefault();
+            return false;
+        });
+        $('body').mouseup( function(evt) {
+            $('body').unbind('mousemove');
+            $('body').unbind('mouseup');
+        });
+	});
+	 
+	$('#stemma_graph').mousewheel(function (event, delta) {
+        event.returnValue = false;
+        event.preventDefault();
+        if (!delta || delta == null || delta == 0) delta = event.originalEvent.wheelDelta;
+        if (!delta || delta == null || delta == 0) delta = -1 * event.originalEvent.detail;
+        if( delta < -9 ) { delta = -9 }; 
+        var z = 1 + delta/10;
+        z = delta > 0 ? 1 : -1;
+        var svg_root = $('#stemma_graph svg').svg().svg('get').root();
+        var g = $('g.graph', svg_root).get(0);
+        if (g && ((z<1 && (g.getScreenCTM().a * start_element_height) > 4.0) || (z>=1 && (g.getScreenCTM().a * start_element_height) < 1000))) {
+            var scaleLevel = z/10;
+            current_scale = parseFloat( g.getAttribute( 'transform' ).split(/scale\(/)[1].split(')',1)[0].split(' ')[0] );
+            new_transform = g.getAttribute( 'transform' ).replace( /scale\([^\)]*\)/, 'scale(' + (current_scale + scaleLevel) + ')' );
+            g.setAttribute( 'transform', new_transform );
+        }
+    });
+    
 });
     </script>
 
