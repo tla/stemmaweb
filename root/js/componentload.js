@@ -35,8 +35,13 @@ function loadTradition( textid, textname, editable ) {
     	stemmata = textdata.stemmata;
     	if( stemmata.length ) {
     		selectedStemmaID = 0;
-    		load_stemma( selectedStemmaID, basepath );
-    	}
+			$('#run_stexaminer').show();
+    	} else {
+    		selectedStemmaID = -1;
+			$('#open_stemma_edit').hide();
+			$('#run_stexaminer').hide();
+		}
+		load_stemma( selectedStemmaID, basepath );
     	// Set up the relationship mapper button
 		$('#run_relater').attr( 'action', basepath + "/relation/" + textid );
 	});
@@ -67,9 +72,27 @@ function load_textinfo() {
 	}
 }	
 
+function show_stemmapager () {
+      $('.pager_left_button').unbind('click').css( 'opacity', '0.5' );
+      $('.pager_right_button').unbind('click').css( 'opacity', '0.5' );
+      if( selectedStemmaID > 0 ) {
+              $('.pager_left_button').click( function () {
+                      load_stemma( selectedStemmaID - 1 );
+              }).css( 'opacity' , '1.0' );
+      }       
+      if( selectedStemmaID + 1 < stemmata.length ) {
+              $('.pager_right_button').click( function () {
+                      load_stemma( selectedStemmaID + 1 );
+              }).css( 'opacity' , '1.0' );
+      }
+}
+
+
 function load_stemma( idx ) {
+	// Load the stemma at idx
+	selectedStemmaID = idx;
+	show_stemmapager();
 	if( idx > -1 ) {
-		selectedStemmaID = idx;
 		$('#stemma_graph').empty();
 		$('#stemma_graph').append( stemmata[idx] );
 		// Stexaminer submit action

@@ -60,7 +60,7 @@ function create_uploader(upload_url) {
     uploader.bind('FileUploaded', function(up, file, ret) {
 		var result = parseResponse( ret.response );
 		if( result.id ) {
-			$('#upload-collation-dialog').dialog( 'option', 'buttons').cancel();
+			$('#upload-collation-dialog').dialog('close');
 			refreshDirectory();
 			loadTradition( result.id, result.name, 1 );
 		} else if( result.error ) {
