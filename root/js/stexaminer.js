@@ -63,8 +63,14 @@ function show_stats( rs ) {
 	var rshtml = $('#stats_template').clone();
 	rshtml.find('#statrank').append( rs.id );
 	if( "unsolved" in rs ) {
-		rshtml.find('.solutionstatus').append(
-			"(Not yet calculated for this location - please try later)");
+		var nocalcmsg;
+		if( rs.unsolved == 'IDP error' ) {
+			nocalcmsg = $('<span>').attr('class', 'error').append(
+				"(Could not reach calculation server - are you offline?)" );
+		} else {
+			nocalcmsg = "(Not yet calculated for this location - please try later)";
+		}
+		rshtml.find('.solutionstatus').append( nocalcmsg );
 	} else {
 		$.each( rs.readings, function( idx, rdghash ) {
 			var rdgstats = $('#reading_template').clone();
