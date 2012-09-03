@@ -53,7 +53,25 @@ div.button:hover {
 div.button:hover span {
   background-position: bottom left;
 }
-
+#stemma_pager_buttons {
+    height: 28px;
+}
+div.pager_left_button {
+  width: 28px;
+  height: 28px;
+  float: left;
+  background: transparent url('../images/button_left_28.png') no-repeat;    
+}
+div.pager_left_button:hover, div.pager_right_button:hover {
+  opacity: 0.8;
+}
+div.pager_right_button {
+  width: 28px;
+  height: 28px;
+  float: left;
+  margin-left: 10px;
+  background: transparent url('../images/button_right_28.png') no-repeat;
+}
 #topbanner {
 	width: 100%;
 }
@@ -137,19 +155,24 @@ div.button:hover span {
 #stemma_graph img {
 	margin-top: expression(( 450 - this.height ) / 2);
 }
-#stexaminer_button {
-	bottom: 0;
-	margin-top: 13px;
-}
-#relater_button {
-}
 #textinfo_container_buttons {
     float: right;
-}
-#run_stexaminer, #run_relater, #open_stemma_add, #open_stemma_edit, #stemma_pager, #open_textinfo_edit {
-    height: 30px;
-    left: -10px;
+    left: -18px;
     position: relative;
+    top: 15px;
+}
+#run_stexaminer, #run_relater, #open_stemma_add, #open_stemma_edit {
+    height: 18px;
+}
+#stemma_pager {
+    height: 38px;
+}
+#open_textinfo_edit {
+    float: right;
+    height: 30px;
+    position: relative;
+    top: -34px;
+    left: -8px;
 }
 #upload-collation-dialog {
     overflow: hidden;
