@@ -223,7 +223,8 @@ sub textinfo :Local :Args(1) {
 		if( exists $params->{'owner'} ) {
 			# Only admins can update user / owner
 			my $newownerid = delete $params->{'owner'};
-			unless( $tradition->has_user && $tradition->user->id eq $newownerid ) {
+			unless( !$newownerid || 
+				( $tradition->has_user && $tradition->user->id eq $newownerid ) ) {
 				unless( $c->user->get_object->is_admin ) {
 					return _json_error( $c, 403, 
 						"Only admin users can change tradition ownership" );
