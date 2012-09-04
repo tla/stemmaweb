@@ -60,23 +60,28 @@ div.pager_left_button {
   width: 28px;
   height: 28px;
   float: left;
-  background: transparent url('../images/button_left_28.png') no-repeat;    
+  background: transparent url('../images/button_left_28.png') no-repeat left bottom;    
 }
-div.pager_left_button:hover, div.pager_right_button:hover {
-  opacity: 0.8;
+div.pager_left_button:hover {
+    background: transparent url('../images/button_left_28.png') no-repeat center bottom;    
+}
+div.pager_right_button:hover {
+    background: transparent url('../images/button_right_28.png') no-repeat center bottom;    
 }
 div.pager_right_button {
   width: 28px;
   height: 28px;
   float: left;
   margin-left: 10px;
-  background: transparent url('../images/button_right_28.png') no-repeat;
+  background: transparent url('../images/button_right_28.png') no-repeat left bottom;
 }
 div.pager_right_button.greyed_out, div.pager_right_button.greyed_out:hover {
-    opacity: 0.25;
+    opacity: 0.5;
+    background: url("../images/button_right_28.png") no-repeat scroll right bottom transparent;
 }
 div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
-    opacity: 0.25;
+    opacity: 0.5;
+    background: url("../images/button_left_28.png") no-repeat scroll right bottom transparent;
 }
 #topbanner {
 	width: 100%;
