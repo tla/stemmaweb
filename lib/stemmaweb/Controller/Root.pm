@@ -33,6 +33,10 @@ components will be loaded.
 sub index :Path :Args(0) {
     my ( $self, $c ) = @_;
 
+	# Are we being asked to load a text immediately? If so 
+	if( $c->req->param('withtradition') ) {
+		$c->stash->{'withtradition'} = $c->req->param('withtradition');
+	}
     $c->stash->{template} = 'index.tt';
 }
 

@@ -7,6 +7,7 @@ var basepath = window.location.pathname
 if( basepath.lastIndexOf('/') == basepath.length - 1 ) { 
 	basepath = basepath.slice( 0, basepath.length - 1) 
 };
+var textOnLoad = "[% withtradition %]";
 var selectedTextID;
 var selectedTextInfo;
 var selectedStemmaID = -1;
@@ -20,6 +21,13 @@ function refreshDirectory () {
 			if (status == "error") {
 				var msg = "An error occurred: ";
 				$("#directory").html(msg + xhr.status + " " + xhr.statusText);
+			} else {
+				if( textOnLoad != "" ) {
+					// Call the click callback for the relevant text, if it is
+					// in the page.
+					$('#'+textOnLoad).click();
+					textOnLoad = "";
+				}
 			}
 		}
 	);
@@ -232,7 +240,7 @@ $(document).ready( function() {
 
     <div id="topbanner">
       <h1>Stemmaweb - a collection of tools for analysis of collated texts</h1>
-      <span class="mainnav">[% IF c.user_exists %]Hello! [% c.user.get_object.email %] <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% ELSE %]<a class="navlink" onclick="window.open('[% c.uri_for( '/login' ) %]', 'loginwindow', 'height=385,width=445')">Login</a> | <a class="navlink" onclick="window.open('[% c.uri_for( '/register' ) %]', 'regwindow', 'height=385,width=445')">Register</a> | [% END %]<a class="navlink" href="[% c.uri_for( 'about.html' ) %]">About</a> </span>
+      <span class="mainnav">[% IF c.user_exists %]Hello! [% c.user.get_object.email %] <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% ELSE %]<a class="navlink" onclick="window.open('[% c.uri_for( '/login' ) %]', 'loginwindow', 'height=385,width=445')">Login</a> | [% END %]<a class="navlink" href="[% c.uri_for( 'about.html' ) %]">About</a> </span>
     </div>
     <div id="directory_container">
       <h2>Text directory</h2>

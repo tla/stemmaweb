@@ -40,6 +40,7 @@ sub index :Path :Args(2) {
 		my $stemma = $tradition->stemma( $stemid );
 		$c->stash->{svg} = $stemma->as_svg( { size => [ 600, 350 ] } );
 		$c->stash->{graphdot} = $stemma->editable({ linesep => ' ' });
+		$c->stash->{text_id} = $textid;
 		$c->stash->{text_title} = $tradition->name;
 		$c->stash->{template} = 'stexaminer.tt'; 
 		

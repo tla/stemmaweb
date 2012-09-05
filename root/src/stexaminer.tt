@@ -10,7 +10,7 @@ var graphdot = '[% graphdot %]';
 [% END -%]
 	<div id="topbanner">
 		<div id="bannerinfo">
-			<a href="help" title="Stexaminer help" class="navlink" id="aboutlink">Help / About</a>
+			<a href="help" title="Stexaminer help" class="navlink" id="aboutlink">Help / About</a> | <a href="[% c.uri_for( '/' ) %]?withtradition=[% text_id %]" title="Index" class="navlink">Return to index</a>
 		</div>
 	    <h1>Stexaminer</h1>
     	<h2>[% text_title %]</h2>

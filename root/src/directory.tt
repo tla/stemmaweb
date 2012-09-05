@@ -5,7 +5,7 @@
       <ul>
 [% SET i = 0 -%]
 [% FOREACH t IN usertexts -%]
-        <li><span class="traditionname" onClick="$('.traditionname').removeClass('selected');$(this).addClass('selected');loadTradition('[% t.id %]','[% t.name %]', 1)">[% t.name %]</span></li>
+        <li><span id="[% t.id %]" class="traditionname" onClick="$('.traditionname').removeClass('selected');$(this).addClass('selected');loadTradition('[% t.id %]','[% t.name %]', 1)">[% t.name %]</span></li>
 [% i = i + 1 -%]
 [% END -%]
      </ul>
@@ -18,7 +18,7 @@
       <ul>
 [% SET i = 0 -%]
 [% FOREACH t IN publictexts -%]
-        <li><span class="traditionname" onClick="$('.traditionname').removeClass('selected');$(this).addClass('selected');loadTradition('[% t.id %]','[% t.name %]', 0)">[% t.name %]</span></li>
+        <li><span id="[% t.id %]" class="traditionname" onClick="$('.traditionname').removeClass('selected');$(this).addClass('selected');loadTradition('[% t.id %]','[% t.name %]', 0)">[% t.name %]</span></li>
 [% i = i + 1 -%]
 [% END -%]
      </ul>
