@@ -101,6 +101,7 @@ __PACKAGE__->config(
         login_db_field => 'username',
         action_after_login => '/users/success',
         action_after_register => '/users/success', 
+        enable_sending_register_email => 0,
         register_email_from  => '"Stemmaweb" <stemmaweb@byzantini.st>',
         register_email_subject => 'Registration to stemmaweb',
         register_email_template_plain => 'register-plain.tt',
