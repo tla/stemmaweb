@@ -4,6 +4,8 @@
 	applicationstyle = c.uri_for('/css/stexaminer.css')
 %]
 <script type="text/javascript">
+var baseurl = "[% c.uri_for( '/stexaminer/' ) %]";
+var textid = '[% text_id %]';
 var readingstats = [% reading_statistics %];
 var graphdot = '[% graphdot %]';
 </script>

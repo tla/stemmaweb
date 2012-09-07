@@ -5,12 +5,12 @@ var original_svg;
 function handle_row_click( row ) {
 	var ridx = row.parent().parent().index()
 	var rs = readingstats[ridx];
-    var imghtml = '<img src="../../images/ajax-loader.gif" alt="Loading SVG..."/>'
+    var imghtml = $('<img>').attr( 'src', baseurl + "../images/ajax-loader.gif" ).attr( 'alt', "Loading SVG..." );
     $('#stemma_graph').empty();
     $('#stemma_graph').append( imghtml );
 	if( rs.layerwits ) {
 		var stemma_form = { 'dot': graphdot, 'layerwits': rs.layerwits };
-		$('#stemma_graph').load( '../graphsvg', stemma_form, function() {
+		$('#stemma_graph').load( baseurl + 'graphsvg', stemma_form, function() {
 			color_row( row );
 			show_stats( rs );
 		});
