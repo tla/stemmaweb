@@ -319,8 +319,8 @@ sub stemma :Local :Args(2) {
 			try {
 				if( $stemmaid eq 'n' ) {
 					# We are adding a new stemma.
+					$stemmaid = $tradition->stemma_count;
 					$stemma = $tradition->add_stemma( 'dot' => $dot );
-					$stemmaid = $tradition->stemma_count - 1;
 				} elsif( $stemmaid < $tradition->stemma_count ) {
 					# We are updating an existing stemma.
 					$stemma = $tradition->stemma( $stemmaid );
