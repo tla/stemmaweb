@@ -5,7 +5,6 @@ use Encode qw/ decode_utf8 /;
 use File::Temp;
 use JSON;
 use Text::Tradition::Analysis qw/ run_analysis wit_stringify /;
-use Text::Tradition::Collation;
 use Text::Tradition::Stemma;
 
 BEGIN { extends 'Catalyst::Controller' }
@@ -132,9 +131,7 @@ sub graphsvg :Local {
 	my @layerwits = $c->request->param('layerwits[]');
 	open my $stemma_fh, '<', \$dot;
 	binmode( $stemma_fh, ':encoding(UTF-8)' );
-	my $emptycoll = Text::Tradition::Collation->new();
-	my $tempstemma = Text::Tradition::Stemma->new( 
-		collation => $emptycoll, 'dot' => $stemma_fh );
+	my $tempstemma = Text::Tradition::Stemma->new( 'dot' => $stemma_fh );
 	my $svgopts = { size => [ 600, 350 ] };
 	if( @layerwits ) {
 		$svgopts->{'layerwits'} = \@layerwits;
