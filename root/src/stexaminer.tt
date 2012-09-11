@@ -6,7 +6,11 @@
 <script type="text/javascript">
 var baseurl = "[% c.uri_for( '/stexaminer/' ) %]";
 var textid = '[% text_id %]';
+[% IF error -%]
+var readingstats = [];
+[% ELSE -%]
 var readingstats = [% reading_statistics %];
+[% END -%]
 var graphdot = '[% graphdot %]';
 </script>
 [% END -%]
@@ -17,6 +21,11 @@ var graphdot = '[% graphdot %]';
 	    <h1>Stexaminer</h1>
     	<h2>[% text_title %]</h2>
     	<p><span class="navlink" onClick="$('#options').dialog('open')">Analysis options</span></p>
+    </div>
+    <div id="status">
+[% IF error -%]
+	    <span class="error">[% error %]</span>
+[% END -%]
     </div>
     <div id="variants_table">
       <table>

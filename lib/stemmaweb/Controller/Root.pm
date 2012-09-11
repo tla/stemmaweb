@@ -41,6 +41,17 @@ sub index :Path :Args(0) {
     $c->stash->{template} = 'index.tt';
 }
 
+=head2 about
+
+A general overview/documentation page for the site.
+
+=cut
+
+sub about :Local :Args(0) {
+	my( $self, $c ) = @_;
+	$c->stash->{template} = 'about.tt';
+}
+
 =head1 Elements of index page
 
 =head2 directory
@@ -142,7 +153,7 @@ sub newtradition :Local :Args(0) {
 		}
 	} else {
 		# Error unless we have a recognized filename extension
-		return _json_error( $c, 500, "Unrecognized file type extension $ext" );
+		return _json_error( $c, 403, "Unrecognized file type extension $ext" );
 	}
 	
 	# Save the tradition if we have it, and return its data or else the
@@ -178,7 +189,7 @@ sub textinfo :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
 	my $tradition = $c->model('Directory')->tradition( $textid );
 	unless( $tradition ) {
-		return _json_error( $c, 500, "No tradition with ID $textid" );
+		return _json_error( $c, 404, "No tradition with ID $textid" );
 	}	
 	my $ok = _check_permission( $c, $tradition );
 	return unless $ok;
@@ -280,7 +291,7 @@ sub variantgraph :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
 	my $tradition = $c->model('Directory')->tradition( $textid );
 	unless( $tradition ) {
-		return _json_error( $c, 500, "No tradition with ID $textid" );
+		return _json_error( $c, 404, "No tradition with ID $textid" );
 	}	
 	my $ok = _check_permission( $c, $tradition );
 	return unless $ok;
@@ -307,7 +318,7 @@ sub stemma :Local :Args(2) {
 	my $m = $c->model('Directory');
 	my $tradition = $m->tradition( $textid );
 	unless( $tradition ) {
-		return _json_error( $c, 500, "No tradition with ID $textid" );
+		return _json_error( $c, 404, "No tradition with ID $textid" );
 	}	
 	my $ok = _check_permission( $c, $tradition );
 	return unless $ok;
@@ -320,15 +331,17 @@ sub stemma :Local :Args(2) {
 			try {
 				if( $stemmaid eq 'n' ) {
 					# We are adding a new stemma.
+					$stemmaid = $tradition->stemma_count;
 					$stemma = $tradition->add_stemma( 'dot' => $dot );
-					$stemmaid = $tradition->stemma_count - 1;
+				} elsif( $stemmaid !~ /^\d+$/ ) {
+					return _json_error( $c, 403, "Invalid stemma ID specification $stemmaid" );
 				} elsif( $stemmaid < $tradition->stemma_count ) {
 					# We are updating an existing stemma.
 					$stemma = $tradition->stemma( $stemmaid );
 					$stemma->alter_graph( $dot );
 				} else {
 					# Unrecognized stemma ID
-					return _json_error( $c, 500, "No stemma at index $stemmaid, cannot update" );
+					return _json_error( $c, 404, "No stemma at index $stemmaid, cannot update" );
 				}
 			} catch ( Text::Tradition::Error $e ) {
 				return _json_error( $c, 500, $e->message );
@@ -384,13 +397,13 @@ sub stemmadot :Local :Args(2) {
 	my $m = $c->model('Directory');
 	my $tradition = $m->tradition( $textid );
 	unless( $tradition ) {
-		return _json_error( $c, 500, "No tradition with ID $textid" );
+		return _json_error( $c, 404, "No tradition with ID $textid" );
 	}	
 	my $ok = _check_permission( $c, $tradition );
 	return unless $ok;
 	my $stemma = $tradition->stemma( $stemmaid );
 	unless( $stemma ) {
-		return _json_error( $c, 500, "Tradition $textid has no stemma ID $stemmaid" );
+		return _json_error( $c, 404, "Tradition $textid has no stemma ID $stemmaid" );
 	}
 	# Get the dot and transmute its line breaks to literal '|n'
 	$c->stash->{'result'} = { 'dot' =>  $stemma->editable( { linesep => '|n' } ) };

@@ -4,6 +4,9 @@
 	applicationstyle = c.uri_for('/css/relationship.css')
 %]
 <script type="text/javascript">
+// Load the text ID and the base path
+var basepath = "[% c.uri_for( '/relation/' ) %]";
+var textid = "[% textid %]";
 
 $(document).ready(function () {
   loadSVG('[% svg_string %]');

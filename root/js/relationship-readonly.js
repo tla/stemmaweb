@@ -5,36 +5,16 @@ var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
 
-function getTextPath() {
-    var currpath = window.location.pathname;
-    // Get rid of trailing slash
-    if( currpath.lastIndexOf('/') == currpath.length - 1 ) { 
-    	currpath = currpath.slice( 0, currpath.length - 1) 
-    };
-    // Get rid of query parameters
-    if( currpath.lastIndexOf('?') != -1 ) {
-    	currpath = currpath.slice( 0, currpath.lastIndexOf('?') );
-    };
-    var path_elements = currpath.split('/');
-    var textid = path_elements.pop();
-    var basepath = path_elements.join( '/' );
-    var path_parts = [ basepath, textid ];
-    return path_parts;
-}
-
 function getRelativePath() {
-	var path_parts = getTextPath();
-	return path_parts[0];
+	return basepath;
 }
 
 function getTextURL( which ) {
-	var path_parts = getTextPath();
-	return path_parts[0] + '/' + path_parts[1] + '/' + which;
+	return basepath + textid + '/' + which;
 }
 
 function getReadingURL( reading_id ) {
-	var path_parts = getTextPath();
-	return path_parts[0] + '/' + path_parts[1] + '/reading/' + reading_id;
+	return basepath + textid + '/reading/' + reading_id;
 }
 
 // Make an XML ID into a valid selector
@@ -220,7 +200,7 @@ function svgEnlargementLoaded() {
 function add_relations( callback_fn ) {
 	var basepath = getRelativePath();
 	var textrelpath = getTextURL( 'relationships' );
-    $.getJSON( basepath + '/definitions', function(data) {
+    $.getJSON( basepath + 'definitions', function(data) {
 		var rel_types = data.types.sort();
 		$.each( rel_types, function(index, value) {   
 			 $('#keymaplist').append( $('<li>').css( "border-color", relation_manager.relation_colors[index] ).text(value) ); 
