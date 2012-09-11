@@ -7,7 +7,7 @@
  <h2>Text relationship mapper</h2>
  <h3>An Interedition prototype interface</h3>
  
- <p>The relationship mapper is a tool born of the joint requirements of the <a href="http://byzantini.st/treeoftexts/">Tree of Texts</a> project at the KU Leuven, and the <a href="http://www.bibelwissenschaft.de/start/editionsprojekte/editio-critica-maior-ecm/">Editio Critica Maior</a> project at the Institute for New Testament Research (INTF), University of Münster.</p>
+ <p>The relationship mapper is a tool born of the joint requirements of the <a href="http://byzantini.st/treeoftexts/">Tree of Texts</a> project at the KU Leuven, and the <a href="http://www.bibelwissenschaft.de/start/editionsprojekte/editio-critica-maior-ecm/">Editio Critica Maior</a> project at the Institute for New Testament Research (INTF), University of Münster. Much of the interface to the tool was contributed by the <a href="http://www.huygens.knaw.nl/">Huygens Institute</a> of the Royal Dutch Academy of Sciences.</p>
  
  <p>The premise of the tool is that, once a set of texts has been collated, there will be a need to chart the relationships between the variants—are they substantially the same word? Different words meaning the same thing? Is one an orthographic variant of the other that should be excluded from any eventual apparatus?</p>
  

@@ -40,6 +40,17 @@ sub index :Path :Args(0) {
     $c->stash->{template} = 'index.tt';
 }
 
+=head2 about
+
+A general overview/documentation page for the site.
+
+=cut
+
+sub about :Local :Args(0) {
+	my( $self, $c ) = @_;
+	$c->stash->{template} = 'about.tt';
+}
+
 =head1 Elements of index page
 
 =head2 directory
