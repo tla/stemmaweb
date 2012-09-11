@@ -9,6 +9,11 @@ use Module::Install::Catalyst; # Complain loudly if you don't have
 name 'stemmaweb';
 all_from 'lib/stemmaweb.pm';
 
+# Tradition libraries
+requires 'Text::Tradition';
+requires 'Text::Tradition::Analysis';
+requires 'Text::Tradition::StemmaUtil';
+# Catalyst libraries
 requires 'Catalyst::Runtime' => '5.90002';
 requires 'Catalyst::Plugin::ConfigLoader';
 requires 'Catalyst::Plugin::StackTrace';
