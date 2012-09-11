@@ -32,16 +32,24 @@ graph identified by $stemmaid.
 sub index :Path :Args(2) {
     my( $self, $c, $textid, $stemid ) = @_;
     my $m = $c->model('Directory');
+	$c->stash->{template} = 'stexaminer.tt'; 
+	
+	# Make sure the tradition exists and is viewable
 	my $tradition = $m->tradition( $textid );
+	unless( $tradition ) {
+		$c->response->status( 404 );
+		$c->stash->{'error'} = "No tradition with ID $textid";
+		return;
+	}	
 	my $ok = _check_permission( $c, $tradition );
 	return unless $ok;
+	
 	if( $tradition->stemma_count ) {
 		my $stemma = $tradition->stemma( $stemid );
 		$c->stash->{svg} = $stemma->as_svg( { size => [ 600, 350 ] } );
 		$c->stash->{graphdot} = $stemma->editable({ linesep => ' ' });
 		$c->stash->{text_id} = $textid;
 		$c->stash->{text_title} = $tradition->name;
-		$c->stash->{template} = 'stexaminer.tt'; 
 		
 		# Get the analysis options
 		my( $use_type1, $ignore_sort ) = ( 0, 'none' );
@@ -109,8 +117,7 @@ sub _check_permission {
 
 	# ...nope. Forbidden!
 	$c->response->status( 403 );
-	$c->response->body( 'You do not have permission to view this tradition' );
-	$c->forward('View::Plain');
+	$c->stash->{'error'} = 'You do not have permission to view this tradition';
 	return 0;
 }
 
