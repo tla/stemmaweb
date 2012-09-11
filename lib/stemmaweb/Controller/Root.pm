@@ -319,8 +319,8 @@ sub stemma :Local :Args(2) {
 			try {
 				if( $stemmaid eq 'n' ) {
 					# We are adding a new stemma.
+					$stemmaid = $tradition->stemma_count;
 					$stemma = $tradition->add_stemma( 'dot' => $dot );
-					$stemmaid = $tradition->stemma_count - 1;
 				} elsif( $stemmaid !~ /^\d+$/ ) {
 					return _json_error( $c, 403, "Invalid stemma ID specification $stemmaid" );
 				} elsif( $stemmaid < $tradition->stemma_count ) {
