@@ -2,6 +2,7 @@ package stemmaweb::Controller::Root;
 use Moose;
 use namespace::autoclean;
 use Text::Tradition::Analysis qw/ run_analysis /;
+use Text::Tradition::StemmaUtil qw/ character_input phylip_pars parse_newick /;
 use TryCatch;
 
 
@@ -394,6 +395,49 @@ sub stemmadot :Local :Args(2) {
 	# Get the dot and transmute its line breaks to literal '|n'
 	$c->stash->{'result'} = { 'dot' =>  $stemma->editable( { linesep => '|n' } ) };
 	$c->forward('View::JSON');
+}
+
+=head2 phylotrees
+
+ GET /phylotrees/$textid
+ 
+ Calculates the phylogenetic tree(s) from the given text variants, and returns a 
+ set of the results. The user may then select a tree, choose a root node, and add 
+ that to the stemmata for the tradition (if s/he has edit rights to the tradition.)
+ 
+=cut
+
+sub phylotrees :Local :Args(1) {
+	my( $self, $c, $textid ) = @_;
+	my $tradition = $c->model('Directory')->tradition( $textid );
+	unless( $tradition ) {
+		return _json_error( $c, 500, "No tradition with ID $textid" );
+	}	
+	my $ok = _check_permission( $c, $tradition );
+	return unless $ok;
+	
+	## Make the character matrix and run pars
+	## TODO normalization options
+	my $charmatrix = character_input( $tradition );
+	my $newick;
+	try {
+		$newick = phylip_pars( $charmatrix );
+	} catch ( Text::Tradition::Error $e ) {
+		return _json_error( $c, 500, $e->message );
+	}
+	## If we got a result, stash it
+	$c->stash->{'stemmadot'} = [];
+	$c->stash->{'stemmasvg'} = [];
+	if( $newick ) {
+		my $stemmata = parse_newick( $newick );
+		foreach my $st ( @$stemmata ) {
+			push( @{$c->stash->{'stemmadot'}}, $st->editable({ linesep => ' ' }) );
+			my $svgstr = $st->as_svg( {size => [ 800, 600 ] });
+			$svgstr =~ s/\n//mg;
+			push( @{$c->stash->{'stemmasvg'}}, $svgstr );
+		}
+	}
+	$c->stash->{'template'} = 'phylotrees.tt';
 }
 
 ####################
