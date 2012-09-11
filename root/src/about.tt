@@ -1,0 +1,46 @@
+[% PROCESS header.tt
+	pagetitle = "About Stemmaweb"
+%]
+
+<div id="docco">
+ <h1>Stemmaweb - a collection of tools for stemmatic analysis of texts</h2>
+ 
+ <p>Stemmaweb is a set of tools that has grown out of the <a href="http://treeoftexts.arts.kuleuven.be/">Tree of Texts</a>, a CREA ("creative research") project funded by the KU Leuven. The tools were developed variously within the project, on behalf of the project by <a href="http://www.scsys.co.uk">Shadowcat Systems</a>, and in collaboration with the <a href="http://interedition.eu/">Interedition</a> project. The source code for all tools and associated libraries is available <a href="http://github.com/tla/stemmatology/">on Github</a>.</p>
+ 
+ <p>All tools are free for scholarly (nonprofit) use and adaptation. Although some data may be viewed publicly without a user account, use of the tools with your own data is possible only by registering as a user. You may log in with a Google account or another OpenID account, or you may <a class="navlink" onclick="window.open('[% c.uri_for( '/register' ) %]', 'regwindow', 'height=385,width=445')">register</a> with a local username and password for use on the site. The Tree of Texts project and KU Leuven retain rights to uploaded text traditions only insofar as it is necessary to store and back them up, display them according to the stated preferences, and analyze them with the tools provided and linked.</p>
+ 
+ <h2>Tools available</h2>
+ <p>At present the Stemmaweb tools comprise the following:</p>
+ 
+ <h3>Uploader</h3>
+ <p>Any logged-in user may upload a text collation in one of several forms:</p>
+	<ul>
+		<li>Spreadsheet collation (Excel file, CSV file, or tab-separated values). Witness sigla should appear in the first row, one per column; the text of each witness should occur in sequence in the appropriate column, with collated words/readings lined up according to row. CSV and tab-separated value files are assumed to be Unicode, in the UTF-8 encoding.</li>
+		<li>TEI XML, parallel segmentation format. See the documentation <a href="TODO">here</a> for the expected format of the TEI file.</li>
+		<li>TEI XML, as exported from the <a href="">Classical Text Editor</a> tool. The XML export option "XXXX" should be selected; the apparatus criticus (and apparatus siglorum, if applicable) should be marked as such in the apparatus options.</li>
+		<li>GraphML, as exported from the <a href="http://collatex.huygens.knaw.nl/service/">CollateX</a> tool.</li>
+	</ul>
+ <p>Once a tradition is successfully uploaded, you may change its name and its language, and choose whether others may view (but not edit) it.</p>
+ 
+ <h3>Stemma editor</h3>
+ <p>For any text tradition you own, you may associate one or more stemma hypotheses to the tradition. Currently the way to specify a stemma is in "dot" format, as documented within the interface for the "Add/edit stemma" buttons.</p>
+ 
+ <h3>Relationship mapper</h3>
+ <p>The relationship mapper tool allows you to define the relationships between variant readings within your text. This is useful for, among other things, later stemma analysis - it allows classification of the sorts of variants that may or may not yield clues as to the history of the text. Please see the "Help/about" link at the top of the relationship mapper for more information about its use.</p>
+ 
+ <h3>Stexaminer</h3>
+ <p>This tool allows visualization of the variants within a text tradition, according to the selected stemma hypothesis. The stemma graph and the variant witness groupings are sent to a calculation service, provided by the <a href="http://dtai.cs.kuleuven.be">Declarative Language and Artificial Intelligence</a> research group of the KU Leuven, that attempts to determine for each variant location within the text:</p>
+ <ul>
+  <li>Whether that location fits the stemma in a genealogical way</li>
+  <li>(If not), the minimum number of coincidental occurrences of a given reading</li>
+  <li>Whether any coincidental occurrence might be a reversion to an ancestor reading</li>
+ </ul>
+ <p>For more information on this tool and the analysis behind it, please see <a href="http://cocomile.disi.unitn.it/2012/papers/cocomile2012_manuscript.pdf">the following paper</a>.</p>
+ 
+ <h2>License</h2>
+ <p>All source code for the Stemmaweb tools and user interface is open-source. The Perl libraries are governed by the Perl license; the remaining software is governed by the GNU General Public License.</p>
+ <p>Rights to all textual data uploaded to the Stemmaweb system are retained by its original owner. By uploading the data you assert that you have the right to use it, and you grant us rights to it insofar as it is necessary for us to store, backup, and display the data.</p>
+ 
+</div>
+ 
+[% PROCESS footer.tt %]
