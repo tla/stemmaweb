@@ -5,10 +5,6 @@ var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
 
-function getRelativePath() {
-	return basepath;
-}
-
 function getTextURL( which ) {
 	return basepath + textid + '/' + which;
 }
@@ -198,7 +194,6 @@ function svgEnlargementLoaded() {
 }
 
 function add_relations( callback_fn ) {
-	var basepath = getRelativePath();
 	var textrelpath = getTextURL( 'relationships' );
     $.getJSON( basepath + 'definitions', function(data) {
 		var rel_types = data.types.sort();

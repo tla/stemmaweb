@@ -264,9 +264,9 @@ sub _reading_struct {
 	# Return a JSONable struct of the useful keys.  Keys meant to be writable
 	# have a true value; read-only keys have a false value.
 	my $struct = {};
-	map { $struct->{$_} = $reading->$_ } keys( %read_write_keys );
+	map { $struct->{$_} = $reading->$_ if $reading->can( $_ ) } keys( %read_write_keys );
 	# Special case
-	$struct->{'lexemes'} = [ $reading->lexemes ];
+	$struct->{'lexemes'} = $reading->can( 'lexemes' ) ? [ $reading->lexemes ] : [];
 	# Look up any words related via spelling or orthography
 	my $sameword = sub { 
 		my $t = $_[0]->type;

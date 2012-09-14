@@ -5,10 +5,6 @@ var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
 
-function getRelativePath() {
-	return basepath;
-}
-
 function getTextURL( which ) {
 	return basepath + textid + '/' + which;
 }
@@ -200,7 +196,6 @@ function svgEnlargementLoaded() {
 }
 
 function add_relations( callback_fn ) {
-	var basepath = getRelativePath();
 	var textrelpath = getTextURL( 'relationships' );
     $.getJSON( basepath + 'definitions', function(data) {
         var rel_types = data.types.sort();
@@ -657,8 +652,7 @@ $(document).ready(function () {
     create: function(event, ui) { 
         $(this).data( 'relation_drawn', false );
         //TODO? Err handling?
-		var basepath = getRelativePath();
-        var jqjson = $.getJSON( basepath + '/definitions', function(data) {
+        var jqjson = $.getJSON( basepath + 'definitions', function(data) {
             var types = data.types.sort();
             $.each( types, function(index, value) {   
                  $('#rel_type').append( $('<option />').attr( "value", value ).text(value) ); 
