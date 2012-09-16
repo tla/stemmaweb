@@ -124,13 +124,36 @@ function load_stemma( idx ) {
 	selectedStemmaID = idx;
 	show_stemmapager();
 	if( idx > -1 ) {
-		$('#stemma_graph').empty();
-		$('#stemma_graph').append( stemmata[idx] );
+		loadSVG( stemmata[idx] );
 		// Stexaminer submit action
 		var stexpath = _get_url([ "stexaminer", selectedTextID, idx ]);
 		$('#run_stexaminer').attr( 'action', stexpath );
         setTimeout( 'start_element_height = $("#stemma_graph .node")[0].getBBox().height;', 500 );
 	}
+}
+
+// Load the SVG we are given
+function loadSVG(svgData) {
+	var svgElement = $('#stemma_graph');
+
+	$(svgElement).svg('destroy');
+
+	$(svgElement).svg({
+		loadURL: svgData,
+		onLoad : function () {
+			var theSVG = svgElement.find('svg');
+			var svgoffset = theSVG.offset();
+			// Firefox needs a different offset, stupidly enough
+			var browseroffset = 1;
+			if( navigator.userAgent.indexOf('Firefox') > -1 ) {
+				browseroffset = 3;
+			}
+			var topoffset = theSVG.position().top - svgElement.position().top - browseroffset;
+			// If we are on Safari, we need to get rid of the 'pt' in the width/height
+			// specifications
+			theSVG.offset({ top: svgoffset.top - topoffset, left: svgoffset.left });
+		}
+	});
 }
 
 // General-purpose error-handling function.
@@ -164,6 +187,7 @@ function start_upload_dialog() {
 function _get_url( els ) {
 	return basepath + els.join('/');
 }
+
 
 $(document).ready( function() {
     // call out to load the directory div

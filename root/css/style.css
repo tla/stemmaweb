@@ -166,6 +166,9 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
 #stemma_graph img {
 	margin-top: expression(( 450 - this.height ) / 2);
 }
+#stemma_graph svg {
+	z-index: -100;
+}
 #textinfo_container_buttons {
     float: right;
     left: -18px;
