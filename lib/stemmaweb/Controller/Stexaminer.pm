@@ -46,7 +46,9 @@ sub index :Path :Args(2) {
 	
 	if( $tradition->stemma_count ) {
 		my $stemma = $tradition->stemma( $stemid );
-		$c->stash->{svg} = $stemma->as_svg( { size => [ 600, 350 ] } );
+		my $svgstr = $stemma->as_svg();
+		$svgstr =~ s/\n/ /g;
+		$c->stash->{svg} = $svgstr;
 		$c->stash->{graphdot} = $stemma->editable({ linesep => ' ' });
 		$c->stash->{text_id} = $textid;
 		$c->stash->{text_title} = $tradition->name;
@@ -139,7 +141,7 @@ sub graphsvg :Local {
 	open my $stemma_fh, '<', \$dot;
 	binmode( $stemma_fh, ':encoding(UTF-8)' );
 	my $tempstemma = Text::Tradition::Stemma->new( 'dot' => $stemma_fh );
-	my $svgopts = { size => [ 600, 350 ] };
+	my $svgopts = {};
 	if( @layerwits ) {
 		$svgopts->{'layerwits'} = \@layerwits;
 	}

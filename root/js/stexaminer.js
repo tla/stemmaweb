@@ -1,6 +1,5 @@
 var colors = ['#ffeeaa','#afc6e9','#d5fff6','#ffccaa','#ffaaaa','#e5ff80','#e5d5ff','#ffd5e5'];
 var row_triggered = false;
-var original_svg;
 
 function handle_row_click( row ) {
 	var ridx = row.parent().parent().index()
@@ -10,16 +9,47 @@ function handle_row_click( row ) {
     $('#stemma_graph').append( imghtml );
 	if( rs.layerwits ) {
 		var stemma_form = { 'dot': graphdot, 'layerwits': rs.layerwits };
-		$('#stemma_graph').load( baseurl + 'graphsvg', stemma_form, function() {
+		$.post( baseurl + 'graphsvg', stemma_form, function( data ) {
+			var oSerializer = new XMLSerializer();
+			var xmlString = oSerializer.serializeToString( data.documentElement );
+			loadSVG( xmlString, function () { 
+				color_row( row );
+				show_stats( rs );
+			});
+		});
+	} else {
+		loadSVG( original_svg, function() {
 			color_row( row );
 			show_stats( rs );
 		});
-	} else {
-		$('#stemma_graph').empty();
-		$('#stemma_graph').append( original_svg );
-		color_row( row );
-		show_stats( rs );
 	}
+}
+
+// Load the SVG we are given
+function loadSVG(svgData, cb) {
+	var svgElement = $('#stemma_graph');
+
+	$(svgElement).svg('destroy');
+
+	$(svgElement).svg({
+		loadURL: svgData,
+		onLoad : function () {
+			var theSVG = svgElement.find('svg');
+			var svgoffset = theSVG.offset();
+			// Firefox needs a different offset, stupidly enough
+			var browseroffset = 1;
+			if( navigator.userAgent.indexOf('Firefox') > -1 ) {
+				browseroffset = 3;
+			}
+			var topoffset = theSVG.position().top - svgElement.position().top - browseroffset;
+			// If we are on Safari, we need to get rid of the 'pt' in the width/height
+			// specifications
+			theSVG.offset({ top: svgoffset.top - topoffset, left: svgoffset.left });
+			if( cb ) {
+				cb.call();
+			}
+		}
+	});
 }
 
 function color_row( row ) {
@@ -125,7 +155,7 @@ function fill_parent_template( rdghash, type ) {
 
 // Save the original unextended SVG for when we need it.
 $(document).ready(function () {
-	original_svg = $('#stemma_graph > svg').clone();
+	loadSVG( original_svg );
 	
 	$('#aboutlink').popupWindow({ 
 		height:500, 

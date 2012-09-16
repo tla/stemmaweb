@@ -6,6 +6,7 @@
 <script type="text/javascript">
 var baseurl = "[% c.uri_for( '/stexaminer/' ) %]";
 var textid = '[% text_id %]';
+var original_svg = '[% svg %]';
 [% IF error -%]
 var readingstats = [];
 [% ELSE -%]
@@ -36,7 +37,6 @@ var graphdot = '[% graphdot %]';
     </div>
     <div>
 		<div id="stemma_graph">
-		  [% svg %]
 		</div>
 		<div id="row_statistics">
 		  <h3>Aggregate text statistics</h3>
