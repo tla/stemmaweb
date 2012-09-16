@@ -271,7 +271,7 @@ sub textinfo :Local :Args(1) {
 		owner => $tradition->user ? $tradition->user->id : undef,
 		witnesses => [ map { $_->sigil } $tradition->witnesses ],
 	};
-	my @stemmasvg = map { $_->as_svg({ size => [ 500, 375 ] }) } $tradition->stemmata;
+	my @stemmasvg = map { $_->as_svg() } $tradition->stemmata;
 	map { $_ =~ s/\n/ /mg } @stemmasvg;
 	$textinfo->{stemmata} = \@stemmasvg;
 	$c->stash->{'result'} = $textinfo;
@@ -358,7 +358,7 @@ sub stemma :Local :Args(2) {
 	if( !$stemma && $tradition->stemma_count > $stemmaid ) {
 		$stemma = $tradition->stemma( $stemmaid );
 	}
-	my $stemma_xml = $stemma ? $stemma->as_svg( { size => [ 500, 375 ] } ) : '';
+	my $stemma_xml = $stemma ? $stemma->as_svg() : '';
 	# What was requested, XML or JSON?
 	my $return_view = 'SVG';
 	if( my $accept_header = $c->req->header('Accept') ) {
