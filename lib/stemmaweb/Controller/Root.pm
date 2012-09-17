@@ -130,7 +130,10 @@ sub newtradition :Local :Args(0) {
 			} catch {
 				$errmsg = "Unexpected parsing error";
 			}
-			last if $tradition;
+			if( $tradition ) {
+				$errmsg = undef;
+				last;
+			}
 		}
 	} elsif( $ext =~ /^(txt|csv|xls(x)?)$/ ) {
 		# If it's Excel we need to pass excel => $ext;
