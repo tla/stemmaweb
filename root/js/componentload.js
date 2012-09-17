@@ -143,14 +143,23 @@ function loadSVG(svgData) {
 		onLoad : function () {
 			var theSVG = svgElement.find('svg');
 			var svgoffset = theSVG.offset();
-			// Firefox needs a different offset, stupidly enough
 			var browseroffset = 1;
+			// Firefox needs a different offset, stupidly enough
 			if( navigator.userAgent.indexOf('Firefox') > -1 ) {
-				browseroffset = 3;
+				browseroffset = 3; // works for tall images
+				// ...but if the SVG is wider than it is tall, Firefox treats
+				// the top as being the top of the graph, loaded into the middle
+				// of the canvas, but then the margin at the top of the canvas
+				// extends upward. So we have to find the actual top of the canvas
+				// and correct for *that* instead.
+				var vbdim = svgElement.svg().svg('get').root().viewBox.baseVal;
+				if( vbdim.height < vbdim.width ) {
+					var vbscale = svgElement.width() / vbdim.width;
+					var vbrealheight = vbdim.height * vbscale;
+					browseroffset = 3 + ( svgElement.height() - vbrealheight ) / 2;
+				}
 			}
 			var topoffset = theSVG.position().top - svgElement.position().top - browseroffset;
-			// If we are on Safari, we need to get rid of the 'pt' in the width/height
-			// specifications
 			theSVG.offset({ top: svgoffset.top - topoffset, left: svgoffset.left });
 		}
 	});
@@ -177,10 +186,10 @@ function display_error( jqXHR, el ) {
 
 function start_upload_dialog() {
     if( typeof uploader != 'undefined' ){ uploader.destroy() };
-    $('#upload-collation-dialog').dialog('option', 'attach_uploader')();
     $('#upload_status').empty();
     $('#upload_button').button('disable');
     $('#upload-collation-dialog').dialog('open');
+    $('#upload-collation-dialog').dialog('option', 'attach_uploader')();
 }
 
 // Utility function to neatly construct an application URL
@@ -319,7 +328,7 @@ $(document).ready( function() {
 		  pick: {
 		    text: "Pick File",
 		    id: "pick_uploadfile_button",
-		    click: function() {}       
+		    click: function() {}
 		  },
 		  upload: {
 		    text: 'Upload',
