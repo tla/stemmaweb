@@ -146,7 +146,7 @@ var textOnLoad = "[% withtradition %]";
             <input id="new_lang" type="text" name="language" size="20"/><br/>
             <label for="new_public">Allow public display: </label>
             <input id="new_public" name="public" type="checkbox"/><br/>
-        <form>
+        </form>
         <div id="upload_status"></div>
       	<div>
       	  <h4>Supported file types / extensions:</h4>
