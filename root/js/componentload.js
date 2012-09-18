@@ -184,12 +184,56 @@ function display_error( jqXHR, el ) {
 	$(el).empty().append( msghtml ).show();
 }
 
-function start_upload_dialog() {
-    if( typeof uploader != 'undefined' ){ uploader.destroy() };
-    $('#upload_status').empty();
-    $('#upload_button').button('disable');
-    $('#upload-collation-dialog').dialog('open');
-    $('#upload-collation-dialog').dialog('option', 'attach_uploader')();
+// Event to enable the upload button when a file has been selected
+function file_selected( e ) {
+	if( e.files.length == 1 ) {
+		$('#upload_button').button('enable');
+	} else {
+		$('#upload_button').button('disable');
+	}
+}
+
+function upload_new () {
+	// Serialize the upload form, get the file and attach it to the request,
+	// POST the lot and handle the response.
+	var newfile = $('#new_file').get(0).files[0];
+	var reader = new FileReader();
+	reader.onload = function( evt ) {
+		var formvals = $('#new_tradition').serializeArray();
+		var params = { 'file': evt.target.result, 'filename': newfile.name };
+		$.each( formvals, function( i, o ) {
+			params[o.name] = o.value;
+		});
+		var upload_url = _get_url([ 'newtradition' ]);
+		$.post( upload_url, params, function( ret ) {
+			if( ret.id ) {
+				$('#upload-collation-dialog').dialog('close');
+				refreshDirectory();
+				loadTradition( ret.id, ret.name, 1 );
+			} else if( ret.error ) {
+				$('#upload_status').empty().append( 
+					$('<span>').attr('class', 'error').append( ret.error ) );
+			}
+		});
+	};
+	reader.onerror = function( evt ) {
+		var err_resp = 'File read error';
+		if( e.name == 'NotFoundError' ) {
+			err_resp = 'File not found';
+		} else if ( e.name == 'NotReadableError' ) {
+			err_resp == 'File unreadable - is it yours?';
+		} else if ( e.name == 'EncodingError' ) {
+			err_resp == 'File cannot be encoded - is it too long?';
+		} else if ( e.name == 'SecurityError' ) {
+			err_resp == 'File read security error';
+		}
+		// Fake a jqXHR object that we can pass to our generic error handler.
+		var jqxhr = { responseText: '{error:"' + err_resp + '"}' };
+		display_error( jqxhr, $('#upload_status') );
+		$('#upload_button').button('disable');
+	}
+	
+	reader.readAsBinaryString( newfile );
 }
 
 // Utility function to neatly construct an application URL
@@ -321,33 +365,37 @@ $(document).ready( function() {
 		
 	$('#upload-collation-dialog').dialog({
 		autoOpen: false,
-		height: 325,
+		height: 360,
 		width: 480,
 		modal: true,
 		buttons: {
-		  pick: {
-		    text: "Pick File",
-		    id: "pick_uploadfile_button",
-		    click: function() {}
-		  },
 		  upload: {
 		    text: 'Upload',
 		    id: 'upload_button',
 		    click: function() {
 			    $('#upload_status').empty();
-                uploader.start();
-                return false;
+			    $('#upload_button').button("disable");
+                upload_new();
             }
 		  },
 		  Cancel: function() {
 		    $('#upload-collation-dialog').dialog('close');
 		  }
 		},
-		attach_uploader: function() {
-		    create_uploader( _get_url([ "newtradition" ]) );
-		    $('#filelist').empty().html( 'Use the \'Pick\' button to choose a source file…' );
+		open: function() {
+			// Set the upload button to its correct state based on
+			// whether a file is loaded
+			file_selected( $('#new_file').get(0) );
 		}
-	});
+	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+		// Reset button state
+		file_selected( $('#new_file').get(0) );
+		// Display error message if applicable
+    	if( ajaxSettings.url.indexOf( 'newtradition' ) > -1 
+    		&& ajaxSettings.type == 'POST' ) {
+			display_error( jqXHR, $("#upload_status") );
+    	}
+	});;
 	
 	$('#stemma_graph').mousedown( function(evt) {
         evt.stopPropagation();

@@ -18,7 +18,7 @@ var textOnLoad = "[% withtradition %]";
       <h2>Text directory</h2>
       <div id="directory"></div>
 [% IF c.user_exists -%]
-	  <div class="button" id="new_trad_button" onClick="start_upload_dialog();">
+	  <div class="button" id="new_trad_button" onClick="$('#upload-collation-dialog').dialog('open')">
 	    <span>Add a new text tradition</span>
 	  </div>
 [% END %]
@@ -137,6 +137,8 @@ var textOnLoad = "[% withtradition %]";
     <!-- File upload dialog box -->
     <div id="upload-collation-dialog" title="Upload a collation">
       <div id="upload_container">
+        <label for="new_file">Collation file: </label>
+		<input id="new_file" name="file" type="file" onchange="file_selected(this)"><br/>
         <form id="new_tradition">
             <label for="new_name">Name of this text / tradition: </label>
             <input id="new_name" type="text" name="name" size="40"/><br/>
@@ -144,7 +146,6 @@ var textOnLoad = "[% withtradition %]";
             <input id="new_lang" type="text" name="language" size="20"/><br/>
             <label for="new_public">Allow public display: </label>
             <input id="new_public" name="public" type="checkbox"/><br/>
-            <div id="filelist"></div>
         <form>
         <div id="upload_status"></div>
       	<div>
