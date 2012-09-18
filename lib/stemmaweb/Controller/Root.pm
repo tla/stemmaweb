@@ -1,5 +1,4 @@
 package stemmaweb::Controller::Root;
-use File::Temp;
 use Moose;
 use namespace::autoclean;
 use Text::Tradition::Analysis qw/ run_analysis /;
@@ -90,8 +89,7 @@ sub directory :Local :Args(0) {
  	{ name: <name>,
  	  language: <language>,
  	  public: <is_public>,
- 	  filename: <filename>,
- 	  file: <filedata> }
+ 	  file: <fileupload> }
  
 Creates a new tradition belonging to the logged-in user, with the given name
 and the collation given in the uploaded file. The file type is indicated via
@@ -100,7 +98,6 @@ name of the new tradition.
  
 =cut
 
-## TODO Figure out how to mimic old-style HTML file uploads in AJAX / HTML5
 sub newtradition :Local :Args(0) {
 	my( $self, $c ) = @_;
 	return _json_error( $c, 403, 'Cannot save a tradition without being logged in' )
@@ -109,18 +106,17 @@ sub newtradition :Local :Args(0) {
 	my $user = $c->user->get_object;
 	# Grab the file upload, check its name/extension, and call the
 	# appropriate parser(s).
-	my $upload = File::Temp->new();
-	print $upload $c->request->param('file');
-	close $upload;
+	$DB::single = 1;
+	my $upload = $c->request->upload('file');
 	my $name = $c->request->param('name') || 'Uploaded tradition';
 	my $lang = $c->request->param( 'language' ) || 'Default';
 	my $public = $c->request->param( 'public' ) ? 1 : undef;
-	my( $ext ) = $c->request->param( 'filename' ) =~ /\.(\w+)$/;
+	my( $ext ) = $upload->filename =~ /\.(\w+)$/;
 	my %newopts = (
 		'name' => $name,
 		'language' => $lang,
 		'public' => $public,
-		'file' => $upload->filename
+		'file' => $upload->tempname
 		);
 
 	my $tradition;
@@ -276,7 +272,7 @@ sub textinfo :Local :Args(1) {
 		name => $tradition->name,
 		language => $tradition->language,
 		public => $tradition->public || 0,
-		owner => $tradition->user ? $tradition->user->id : undef,
+		owner => $tradition->user ? $tradition->user->email : undef,
 		witnesses => [ map { $_->sigil } $tradition->witnesses ],
 	};
 	my @stemmasvg = map { $_->as_svg() } $tradition->stemmata;
