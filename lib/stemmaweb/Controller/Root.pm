@@ -106,7 +106,6 @@ sub newtradition :Local :Args(0) {
 	my $user = $c->user->get_object;
 	# Grab the file upload, check its name/extension, and call the
 	# appropriate parser(s).
-	$DB::single = 1;
 	my $upload = $c->request->upload('file');
 	my $name = $c->request->param('name') || 'Uploaded tradition';
 	my $lang = $c->request->param( 'language' ) || 'Default';
@@ -191,6 +190,9 @@ Returns information about a particular text.
 sub textinfo :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
 	my $tradition = $c->model('Directory')->tradition( $textid );
+	## Have to keep users in the same scope as tradition
+	my $newuser;
+	my $olduser;
 	unless( $tradition ) {
 		return _json_error( $c, 404, "No tradition with ID $textid" );
 	}	
@@ -238,19 +240,22 @@ sub textinfo :Local :Args(1) {
 		}
 		
 		# Handle ownership change
-		my $newuser;
 		if( exists $params->{'owner'} ) {
 			# Only admins can update user / owner
 			my $newownerid = delete $params->{'owner'};
 			unless( !$newownerid || 
-				( $tradition->has_user && $tradition->user->id eq $newownerid ) ) {
+				( $tradition->has_user && $tradition->user->email eq $newownerid ) ) {
 				unless( $c->user->get_object->is_admin ) {
 					return _json_error( $c, 403, 
 						"Only admin users can change tradition ownership" );
 				}
-				$newuser = $m->find_user({ username => $newownerid });
+				$newuser = $m->find_user({ email => $newownerid });
 				unless( $newuser ) {
 					return _json_error( $c, 500, "No such user " . $newownerid );
+				}
+				if( $tradition->has_user ) {
+					$olduser = $tradition->user;
+					$olduser->remove_tradition( $tradition );
 				}
 				$newuser->add_tradition( $tradition );
 				$changed = 1;
