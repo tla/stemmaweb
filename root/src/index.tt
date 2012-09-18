@@ -13,6 +13,10 @@ var textOnLoad = "[% withtradition %]";
     <div id="topbanner">
       <h1>Stemmaweb - a collection of tools for analysis of collated texts</h1>
       <span class="mainnav">[% IF c.user_exists %]Hello! [% c.user.get_object.email %] <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% ELSE %]<a class="navlink" onclick="window.open('[% c.uri_for( '/login' ) %]', 'loginwindow', 'height=385,width=445')">Login</a> | [% END %]<a class="navlink" href="[% c.uri_for( '/about' ) %]">About</a> </span>
+      <p id="compatibility_check"><span class="error">This browser does not support 
+      the functions necessary for Stemmaweb to work properly. We recommend use of 
+      <a href="http://mozilla.org/firefox">Mozilla Firefox</a> or 
+      <a href="http://www.google.com/chrome">Google Chrome</a>.</span></p>
     </div>
     <div id="directory_container">
       <h2>Text directory</h2>

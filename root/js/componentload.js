@@ -243,6 +243,12 @@ function _get_url( els ) {
 
 
 $(document).ready( function() {
+	// See if we have the browser functionality we need
+	// TODO Also think of a test for SVG readiness
+	if( typeof window.FileReader && typeof window.File ) {
+		$('#compatibility_check').empty();
+	}
+	
     // call out to load the directory div
     $('#textinfo_container').hide();
     $('#textinfo_waitbox').hide();
