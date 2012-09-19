@@ -88,7 +88,12 @@ function load_textinfo() {
 	// Who the owner is
 	$('#owner_id').empty().append('no one');
 	if( selectedTextInfo.owner ) {
-		$('#owner_id').empty().append( selectedTextInfo.owner );
+		var owneremail = selectedTextInfo.owner;
+		var chop = owneremail.indexOf( '@' );
+		if( chop > -1 ) {
+			owneremail = owneremail.substr( 0, chop + 1 ) + '...';
+		}
+		$('#owner_id').empty().append( owneremail );
 	}
 	// Whether or not it is public
 	$('#not_public').empty();
