@@ -206,3 +206,18 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
     font-weight: bold;
     color: #ff3333;
 }
+#new_file {
+    position: absolute;
+    top: -50px;
+    opacity: 0.0;
+}
+#new_file_name {
+    font-weight: bold;
+}
+#new_name, #new_lang, #new_public, #new_file_name_container {
+    margin-bottom: 6px;
+}
+#new_file_label {
+    float: left;
+    padding-right: 8px;
+}

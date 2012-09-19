@@ -188,8 +188,10 @@ function display_error( jqXHR, el ) {
 function file_selected( e ) {
 	if( e.files.length == 1 ) {
 		$('#upload_button').button('enable');
+		$('#new_file_name_container').html( '<span id="new_file_name">' + e.files[0].name + '</span>' );
 	} else {
 		$('#upload_button').button('disable');
+		$('#new_file_name_container').html( '(Use \'pick file\' to select a tradition file to upload.)' );
 	}
 }
 
@@ -436,6 +438,13 @@ $(document).ready( function() {
 			    $('#upload_status').empty();
 			    $('#upload_button').button("disable");
                 upload_new();
+            }
+		  },
+		  pick_file: {
+		    text: 'Pick File',
+		    id: 'pick_file_button',
+		    click: function() {
+                $('#new_file').click();
             }
 		  },
 		  Cancel: function() {
