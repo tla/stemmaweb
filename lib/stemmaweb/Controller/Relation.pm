@@ -56,8 +56,14 @@ sub definitions :Local :Args(0) {
 
 sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	my( $self, $c, $textid ) = @_;
-	# If the tradition has more than 500 ranks or so, split it up.
 	my $tradition = $c->model('Directory')->tradition( $textid );
+	unless( $tradition ) {
+		$c->response->status('404');
+		$c->response->body("No such tradition with ID $textid");
+		$c->detach('View::Plain');
+		return;
+	}
+	
     # Account for a bad interaction between FastCGI and KiokuDB
     unless( $tradition->collation->tradition ) {
         $c->log->warn( "Fixing broken tradition link" );
