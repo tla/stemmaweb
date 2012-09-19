@@ -7,6 +7,7 @@
 // Load the text ID and the base path
 var basepath = "[% c.uri_for( '/relation/' ) %]";
 var textid = "[% textid %]";
+var can_morphologize = "[% can_morphologize %]";
 
 $(document).ready(function () {
   loadSVG('[% svg_string %]');
@@ -81,23 +82,25 @@ $(document).ready(function () {
 	<div id="reading-form" title="Reading info...">
 		<form id="reading_data_form" action="#">
 			<input type="hidden" name="reading_id" id="reading_id"/>
-			<input type="checkbox" name="reading_is_nonsense" id="reading_is_nonsense"/>
-			<label for="reading_is_nonsense">This is a nonsense word</label>
-			<br/>
-			<input type="checkbox" name="reading_grammar_invalid" id="reading_grammar_invalid"/>
-			<label for="reading_grammar_invalid">This word's grammar cannot be right</label>
+			<div class="morph">
+				<input type="checkbox" name="reading_is_nonsense" id="reading_is_nonsense"/>
+				<label for="reading_is_nonsense">This is a nonsense word</label>
+				<br/>
+				<input type="checkbox" name="reading_grammar_invalid" id="reading_grammar_invalid"/>
+				<label for="reading_grammar_invalid">This word's grammar cannot be right</label>
+			</div>
 			<br/><br/>
 			<!-- Morphological options go here -->
-			<div id="normalization">
+			<div id="normalization" class="morph">
 				<label for="reading_normal_form">Normalized form: </label>
 				<input type="text" name="reading_normal_form" id="reading_normal_form"></input>
-				<button id="#reading_relemmatize" onclick="relemmatize(); return false;">Re-lemmatize</button>
+				<button id="reading_relemmatize" onclick="relemmatize(); return false;">Re-lemmatize</button>
 			</div>
 			<div id="relemmatize_pending">
 				<img src="[% c.uri_for('/images/ajax-loader.gif') %]"/>
 			</div>
 			<br/><br/>
-			<div id="morph_outer">
+			<div id="morph_outer" class="morph">
 				<label>Lemma / part of speech:</label><br/>
 				<div id="morphology"></div>
 			</div>

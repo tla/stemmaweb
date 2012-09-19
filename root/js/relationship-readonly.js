@@ -55,26 +55,31 @@ function toggle_checkbox( box, value ) {
 }
 
 function morphology_form ( lexlist ) {
-  	$('#morphology').empty();
-  	$.each( lexlist, function( idx, lex ) {
-  		var morphoptions = [];
-  		if( 'wordform_matchlist' in lex ) {
-			$.each( lex['wordform_matchlist'], function( tdx, tag ) {
-				var tagstr = stringify_wordform( tag );
-				morphoptions.push( tagstr );
+  	if( lexlist.length ) {
+  		$('#morph_outer').show();
+		$('#morphology').empty();
+		$.each( lexlist, function( idx, lex ) {
+			var morphoptions = [];
+			if( 'wordform_matchlist' in lex ) {
+				$.each( lex['wordform_matchlist'], function( tdx, tag ) {
+					var tagstr = stringify_wordform( tag );
+					morphoptions.push( tagstr );
+				});
+			}
+			var formtag = 'morphology_' + idx;
+			var formstr = '';
+			if( 'form' in lex ) {
+				formstr = stringify_wordform( lex['form'] );
+			} 
+			var form_morph_elements = morph_elements( 
+				formtag, lex['string'], formstr, morphoptions );
+			$.each( form_morph_elements, function( idx, el ) {
+				$('#morphology').append( el );
 			});
-		}
-  		var formtag = 'morphology_' + idx;
-  		var formstr = '';
-  		if( 'form' in lex ) {
-  			formstr = stringify_wordform( lex['form'] );
-  		} 
-  		var form_morph_elements = morph_elements( 
-  			formtag, lex['string'], formstr, morphoptions );
-		$.each( form_morph_elements, function( idx, el ) {
-			$('#morphology').append( el );
 		});
-  	});
+	} else {
+		$('#morph_outer').hide();
+	}
 }
 
 function stringify_wordform ( tag ) {
@@ -516,39 +521,44 @@ $(document).ready(function () {
     }
   });
 
-  // function for reading form dialog should go here; for now hide the element
-  $('#reading-form').dialog({
-  	autoOpen: false,
-  	height: 400,
-  	width: 600,
-  	modal: true,
-  	buttons: {
-  		OK: function() {
-  			$( this ).dialog( "close" );
-  		}
-  	},
-  	create: function() {
-  	},
-  	open: function() {
-        $(".ui-widget-overlay").css("background", "none");
-        $("#dialog_overlay").show();
-        $('#reading_status').empty();
-        $("#dialog_overlay").height( $("#enlargement_container").height() );
-        $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
-        $("#dialog_overlay").offset( $("#enlargement_container").offset() );
-        $("#reading-form").parent().find('.ui-button').button("enable");
-  	},
-	close: function() {
-		$("#dialog_overlay").hide();
-	}
-  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-      if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1
-      	&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-      	  var errobj = jQuery.parseJSON( jqXHR.responseText );
-          $('#reading_status').append( '<p class="error">Error: ' + errobj.error + '</p>' );
-      }
-	  $(event.target).parent().find('.ui-button').button("enable");
-  });
+  // function for reading form dialog should go here; 
+  // just hide the element for now if we don't have morphology
+  if( can_morphologize ) {
+	  $('#reading-form').dialog({
+		autoOpen: false,
+		width: 450,
+		modal: true,
+		buttons: {
+			OK: function() {
+				$( this ).dialog( "close" );
+			}
+		},
+		create: function() {
+			// Hide the relemmatize button since it is not allowed
+			$('#reading_relemmatize').hide();
+		},
+		open: function() {
+			$(".ui-widget-overlay").css("background", "none");
+			$("#dialog_overlay").show();
+			$('#reading_status').empty();
+			$("#dialog_overlay").height( $("#enlargement_container").height() );
+			$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
+			$("#dialog_overlay").offset( $("#enlargement_container").offset() );
+		},
+		close: function() {
+			$("#dialog_overlay").hide();
+		}
+	  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+		  if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1
+			&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
+			  var errobj = jQuery.parseJSON( jqXHR.responseText );
+			  $('#reading_status').append( '<p class="error">Error: ' + errobj.error + '</p>' );
+		  }
+		  $(event.target).parent().find('.ui-button').button("enable");
+	  });
+  } else {
+  	$('#reading-form').hide();
+  }
   
   // Hide the unused elements
   $('#dialog-form').hide();

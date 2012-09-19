@@ -127,7 +127,12 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	$c->stash->{'startseg'} = $startseg if defined $startseg;
 	$c->stash->{'svg_string'} = $svg_str;
 	$c->stash->{'text_title'} = $tradition->name;
-	$c->stash->{'text_lang'} = $tradition->language;
+	if( $tradition->can('language') ) {
+		$c->stash->{'text_lang'} = $tradition->language;
+		$c->stash->{'can_morphologize'} = 1;
+	} else {
+		$c->stash->{'text_lang'} = 'Default';
+	}
 	$c->stash->{'template'} = 'relate.tt';
 }
 
@@ -325,49 +330,54 @@ sub reading :Chained('text') :PathPart :Args(1) {
 			$c->stash->{'result'} = { 
 				'error' => 'You do not have permission to view this tradition.' };
 			$c->detach('View::JSON');
+			return;
 		}
 		my $errmsg;
-		# Are we re-lemmatizing?
-		if( $c->request->param('relemmatize') ) {
-			my $nf = $c->request->param('normal_form');
-			# TODO throw error unless $nf
-			$rdg->normal_form( $nf );
-			# TODO throw error if lemmatization fails
-			# TODO skip this if normal form hasn't changed
-			$rdg->lemmatize();
-		} else {
-			# Set all the values that we have for the reading.
-			# TODO error handling
-			foreach my $p ( keys %{$c->request->params} ) {
-				if( $p =~ /^morphology_(\d+)$/ ) {
-					# Set the form on the correct lexeme
-					my $morphval = $c->request->param( $p );
-					next unless $morphval;
-					my $midx = $1;
-					my $lx = $rdg->lexeme( $midx );
-					my $strrep = $rdg->language . ' // ' . $morphval;
-					my $idx = $lx->has_form( $strrep );
-					unless( defined $idx ) {
-						# Make the word form and add it to the lexeme.
-						try {
-							$idx = $lx->add_matching_form( $strrep ) - 1;
-						} catch( Text::Tradition::Error $e ) {
-							$c->response->status( '403' );
-							$errmsg = $e->message;
-						} catch {
-							# Something else went wrong, probably a Moose error
-							$c->response->status( '403' );
-							$errmsg = 'Something went wrong with the request';	
+		if( $rdg && $rdg->does('Text::Tradition::Morphology') ) {
+			# Are we re-lemmatizing?
+			if( $c->request->param('relemmatize') ) {
+				my $nf = $c->request->param('normal_form');
+				# TODO throw error unless $nf
+				$rdg->normal_form( $nf );
+				# TODO throw error if lemmatization fails
+				# TODO skip this if normal form hasn't changed
+				$rdg->lemmatize();
+			} else {
+				# Set all the values that we have for the reading.
+				# TODO error handling
+				foreach my $p ( keys %{$c->request->params} ) {
+					if( $p =~ /^morphology_(\d+)$/ ) {
+						# Set the form on the correct lexeme
+						my $morphval = $c->request->param( $p );
+						next unless $morphval;
+						my $midx = $1;
+						my $lx = $rdg->lexeme( $midx );
+						my $strrep = $rdg->language . ' // ' . $morphval;
+						my $idx = $lx->has_form( $strrep );
+						unless( defined $idx ) {
+							# Make the word form and add it to the lexeme.
+							try {
+								$idx = $lx->add_matching_form( $strrep ) - 1;
+							} catch( Text::Tradition::Error $e ) {
+								$c->response->status( '403' );
+								$errmsg = $e->message;
+							} catch {
+								# Something else went wrong, probably a Moose error
+								$c->response->status( '403' );
+								$errmsg = 'Something went wrong with the request';	
+							}
 						}
+						$lx->disambiguate( $idx ) if defined $idx;
+					} elsif( $read_write_keys{$p} ) {
+						my $val = _clean_booleans( $rdg, $p, $c->request->param( $p ) );
+						$rdg->$p( $val );
 					}
-					$lx->disambiguate( $idx ) if defined $idx;
-				} elsif( $read_write_keys{$p} ) {
-					my $val = _clean_booleans( $rdg, $p, $c->request->param( $p ) );
-					$rdg->$p( $val );
-				}
-			}		
+				}		
+			}
+			$m->save( $rdg );
+		} else {
+			$errmsg = "Reading does not exist or cannot be morphologized";
 		}
-		$m->save( $rdg );
 		$c->stash->{'result'} = $errmsg ? { 'error' => $errmsg }
 			: _reading_struct( $rdg );
 

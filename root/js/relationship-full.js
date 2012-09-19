@@ -55,26 +55,31 @@ function toggle_checkbox( box, value ) {
 }
 
 function morphology_form ( lexlist ) {
-  	$('#morphology').empty();
-  	$.each( lexlist, function( idx, lex ) {
-  		var morphoptions = [];
-  		if( 'wordform_matchlist' in lex ) {
-			$.each( lex['wordform_matchlist'], function( tdx, tag ) {
-				var tagstr = stringify_wordform( tag );
-				morphoptions.push( tagstr );
+  	if( lexlist.length ) {
+  		$('#morph_outer').show();
+		$('#morphology').empty();
+		$.each( lexlist, function( idx, lex ) {
+			var morphoptions = [];
+			if( 'wordform_matchlist' in lex ) {
+				$.each( lex['wordform_matchlist'], function( tdx, tag ) {
+					var tagstr = stringify_wordform( tag );
+					morphoptions.push( tagstr );
+				});
+			}
+			var formtag = 'morphology_' + idx;
+			var formstr = '';
+			if( 'form' in lex ) {
+				formstr = stringify_wordform( lex['form'] );
+			} 
+			var form_morph_elements = morph_elements( 
+				formtag, lex['string'], formstr, morphoptions );
+			$.each( form_morph_elements, function( idx, el ) {
+				$('#morphology').append( el );
 			});
-		}
-  		var formtag = 'morphology_' + idx;
-  		var formstr = '';
-  		if( 'form' in lex ) {
-  			formstr = stringify_wordform( lex['form'] );
-  		} 
-  		var form_morph_elements = morph_elements( 
-  			formtag, lex['string'], formstr, morphoptions );
-		$.each( form_morph_elements, function( idx, el ) {
-			$('#morphology').append( el );
 		});
-  	});
+	} else {
+		$('#morph_outer').hide();
+	}
 }
 
 function stringify_wordform ( tag ) {
@@ -724,74 +729,79 @@ $(document).ready(function () {
     }
   });
 
-  // function for reading form dialog should go here; for now hide the element
-  $('#reading-form').dialog({
-  	autoOpen: false,
-  	height: 400,
-  	width: 600,
-  	modal: true,
-  	buttons: {
-  		Cancel: function() {
-  			$( this ).dialog( "close" );
-  		},
-  		Update: function( evt ) {
-  			// Disable the button
-  			$(evt.target).button("disable");
-  			$('#reading_status').empty();
-			var reading_id = $('#reading_id').val()
-  			form_values = {
-  				'id' : reading_id,
-  				'is_nonsense': $('#reading_is_nonsense').is(':checked'),
-  				'grammar_invalid': $('#reading_grammar_invalid').is(':checked'),
-  				'normal_form': $('#reading_normal_form').val() };
-  			// Add the morphology values
-  			$('.reading_morphology').each( function() {
-   				if( $(this).val() != '(Click to select)' ) {
-					var rmid = $(this).attr('id');
-					rmid = rmid.substring(8);
-	  				form_values[rmid] = $(this).val();
-	  			}
-  			});
-  			// Make the JSON call
-			ncpath = getReadingURL( reading_id );
-			var reading_element = readingdata[reading_id];
-			// $(':button :contains("Update")').attr("disabled", true);
-			var jqjson = $.post( ncpath, form_values, function(data) {
-				$.each( data, function(key, value) { 
-					reading_element[key] = value;
+  // function for reading form dialog should go here; 
+  // just hide the element for now if we don't have morphology
+  if( can_morphologize ) {
+	  $('#reading-form').dialog({
+		autoOpen: false,
+		// height: 400,
+		width: 450,
+		modal: true,
+		buttons: {
+			Cancel: function() {
+				$( this ).dialog( "close" );
+			},
+			Update: function( evt ) {
+				// Disable the button
+				$(evt.target).button("disable");
+				$('#reading_status').empty();
+				var reading_id = $('#reading_id').val()
+				form_values = {
+					'id' : reading_id,
+					'is_nonsense': $('#reading_is_nonsense').is(':checked'),
+					'grammar_invalid': $('#reading_grammar_invalid').is(':checked'),
+					'normal_form': $('#reading_normal_form').val() };
+				// Add the morphology values
+				$('.reading_morphology').each( function() {
+					if( $(this).val() != '(Click to select)' ) {
+						var rmid = $(this).attr('id');
+						rmid = rmid.substring(8);
+						form_values[rmid] = $(this).val();
+					}
 				});
-				if( $('#update_workspace_button').data('locked') == false ) {
-					color_inactive( get_ellipse( reading_id ) );
-				}
-  				$(evt.target).button("enable");
-				$( "#reading-form" ).dialog( "close" );
-			});
-			// Re-color the node if necessary
-			return false;
-  		}
-  	},
-  	create: function() {
-  	},
-  	open: function() {
-        $(".ui-widget-overlay").css("background", "none");
-        $("#dialog_overlay").show();
-        $('#reading_status').empty();
-        $("#dialog_overlay").height( $("#enlargement_container").height() );
-        $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
-        $("#dialog_overlay").offset( $("#enlargement_container").offset() );
-        $("#reading-form").parent().find('.ui-button').button("enable");
-  	},
-	close: function() {
-		$("#dialog_overlay").hide();
+				// Make the JSON call
+				ncpath = getReadingURL( reading_id );
+				var reading_element = readingdata[reading_id];
+				// $(':button :contains("Update")').attr("disabled", true);
+				var jqjson = $.post( ncpath, form_values, function(data) {
+					$.each( data, function(key, value) { 
+						reading_element[key] = value;
+					});
+					if( $('#update_workspace_button').data('locked') == false ) {
+						color_inactive( get_ellipse( reading_id ) );
+					}
+					$(evt.target).button("enable");
+					$( "#reading-form" ).dialog( "close" );
+				});
+				// Re-color the node if necessary
+				return false;
+			}
+		},
+		create: function() {
+		},
+		open: function() {
+			$(".ui-widget-overlay").css("background", "none");
+			$("#dialog_overlay").show();
+			$('#reading_status').empty();
+			$("#dialog_overlay").height( $("#enlargement_container").height() );
+			$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
+			$("#dialog_overlay").offset( $("#enlargement_container").offset() );
+			$("#reading-form").parent().find('.ui-button').button("enable");
+		},
+		close: function() {
+			$("#dialog_overlay").hide();
+		}
+	  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+		  if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1
+			&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
+			  var errobj = jQuery.parseJSON( jqXHR.responseText );
+			  $('#reading_status').append( '<p class="error">Error: ' + errobj.error + '</p>' );
+		  }
+		  $(event.target).parent().find('.ui-button').button("enable");
+	  });
+	} else {
+		$('#reading-form').hide();
 	}
-  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-      if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1
-      	&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-      	  var errobj = jQuery.parseJSON( jqXHR.responseText );
-          $('#reading_status').append( '<p class="error">Error: ' + errobj.error + '</p>' );
-      }
-	  $(event.target).parent().find('.ui-button').button("enable");
-  });
   
 
   $('#update_workspace_button').click( function() {
