@@ -113,3 +113,13 @@ html[xmlns] .clearfix {
 * html .clearfix {
 	height: 1%;
 }
+
+#options_button_container {
+    height: 24px;
+}
+#options_button {
+    float: left;
+}
+#aggregates {
+    clear: left;
+}
