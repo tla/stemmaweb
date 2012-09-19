@@ -170,13 +170,14 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
 	z-index: -100;
 }
 #textinfo_container_buttons {
+    width: 224px;
     float: right;
     left: -18px;
     position: relative;
     top: 15px;
 }
 #run_stexaminer, #run_relater, #open_stemma_add, #open_stemma_edit {
-    height: 18px;
+    height: 32px;
 }
 #stemma_pager {
     height: 38px;
