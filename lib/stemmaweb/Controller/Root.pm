@@ -220,7 +220,8 @@ sub textinfo :Local :Args(1) {
 		}
 		# Handle language param, making Default => null
 		my $langval = delete $params->{language} || 'Default';
-		unless( $tradition->language eq $langval ) {
+		
+		unless( $tradition->language eq $langval || !$tradition->can('language') ) {
 			try {
 				$tradition->language( $langval );
 				$changed = 1;
@@ -275,11 +276,14 @@ sub textinfo :Local :Args(1) {
 	my $textinfo = {
 		textid => $textid,
 		name => $tradition->name,
-		language => $tradition->language,
+		#language => $tradition->language,
 		public => $tradition->public || 0,
 		owner => $tradition->user ? $tradition->user->email : undef,
 		witnesses => [ map { $_->sigil } $tradition->witnesses ],
 	};
+	if( $tradition->can('language') ) {
+		$textinfo->{'language'} = $tradition->language;
+	}
 	my @stemmasvg = map { $_->as_svg() } $tradition->stemmata;
 	map { $_ =~ s/\n/ /mg } @stemmasvg;
 	$textinfo->{stemmata} = \@stemmasvg;
