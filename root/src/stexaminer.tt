@@ -38,24 +38,25 @@ var graphdot = '[% graphdot %]';
         <div id="stemma_graph">
         </div>
         <div id="row_statistics">
-          <h3>Aggregate text statistics</h3>
+          <h3 id="stats_title">Aggregate text statistics</h3>
           <div id="options_button_container">
             <div id="options_button" class="button" onClick="$('#options').dialog('open')">
                   <span>Analysis options</span>
             </div>
           </div>
-          <ul id="aggregates">
-            <li>Total number of variant locations analyzed: [% total %]</li>
-            <li>Number of fully genealogical locations: [% genealogical %]</li>
-            <li>Number of readings that conflict with the stemma: [% conflict %]</li>
-            <li>Genealogical reading transitions by relationship type: [% todo %]</li>
-          </ul>
-          <p>(Choose a row in the table to display statistics about individual readings.)</p>
+          <div id="stats_container">
+			  <ul id="aggregates">
+				<li>Total number of variant locations analyzed: [% total %]</li>
+				<li>Number of fully genealogical locations: [% genealogical %]</li>
+				<li>Number of readings that conflict with the stemma: [% conflict %]</li>
+				<li>Genealogical reading transitions by relationship type: [% todo %]</li>
+			  </ul>
+			  <p>(Choose a row in the table to display statistics about individual readings.)</p>
+		  </div>
         </div>
     </div>
     
     <div id="stats_template" class="template">
-        <h3>Statistics for readings at <span id="statrank"></span>:</h3>
         <!-- reading_template will be appended here for each reading -->
         <span class="solutionstatus"></span>
     </div>
@@ -86,7 +87,7 @@ var graphdot = '[% graphdot %]';
     <div id="options" title="Analysis options...">
         <form id="use_variants_form" name="use_variants_form">
             <fieldset>
-                <input type="radio" name="ignore_variant" value="none" [% 'checked="true"' IF ignore_variant == 'none' %]>Analyze all variation</input><br/>
+                <input type="radio" name="ignore_variant" value="none" [% 'checked="true"' IF !ignore_variant %]>Analyze all variation</input><br/>
                 <input type="radio" name="ignore_variant" value="orthographic" [% 'checked="true"' IF ignore_variant == 'orthographic' %]>Ignore orthographic variation</input><br/>
                 <input type="radio" name="ignore_variant" value="spelling" [% 'checked="true"' IF ignore_variant == 'spelling' %]>Ignore orthographic and spelling variation</input>
             </fieldset>

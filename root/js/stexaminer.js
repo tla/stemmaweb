@@ -90,8 +90,9 @@ function color_nodes( column_index, arr_node_ids, arr_greynode_ids ) {
 }
 
 function show_stats( rs ) {
+	// Update the title
+	$('#stats_title').empty().text('Statistics for reading at ' + rs.id + ':' );
 	var rshtml = $('#stats_template').clone();
-	rshtml.find('#statrank').append( rs.id );
 	if( "unsolved" in rs ) {
 		var nocalcmsg;
 		if( rs.unsolved == 'IDP error' ) {
@@ -125,8 +126,7 @@ function show_stats( rs ) {
 			rshtml.append( rdgstats.contents() );
 		});
 	}
-	$('#row_statistics').empty();
-	$('#row_statistics').append( rshtml.contents() );
+	$('#stats_container').empty().append( rshtml.contents() );
 	
 };
 
@@ -166,7 +166,7 @@ $(document).ready(function () {
 	}); 
 	$('#options').dialog({
 		autoOpen: false,
-		height: 200,
+		// height: 'auto',
 		width: 300,
 		modal: true,
 		buttons: {
