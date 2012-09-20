@@ -48,7 +48,7 @@ function loadSVG(svgData, cb) {
 			if( cb ) {
 				cb.call();
 			}
-			theSVG.width( "100%" );
+			theSVG.attr( 'width', '100%' );
 		}
 	});
 }
