@@ -204,6 +204,9 @@ function add_relations( callback_fn ) {
 	var textrelpath = getTextURL( 'relationships' );
     $.getJSON( basepath + 'definitions', function(data) {
         var rel_types = data.types.sort();
+        // Add the relationship types to our document data so that we don't have
+        // to call again
+        $('#keymap').data( 'relations', rel_types );
         $.getJSON( textrelpath,
         function(data) {
             $.each(data, function( index, rel_info ) {
@@ -638,10 +641,10 @@ $(document).ready(function () {
             $.each( data, function(item, source_target) { 
             	var source_found = get_ellipse( source_target[0] );
             	var target_found = get_ellipse( source_target[1] );
-            	var relation_found = $.inArray( source_target[2], rel_types );
+            	var relation_found = $.inArray( source_target[2], $('#keymap').data('relations') );
             	if( source_found.size() && target_found.size() && relation_found > -1 ) {
-                    var relation = relation_manager.create( source_target[0], source_target[1], $('#rel_type')[0].selectedIndex-1 );
-					relation.data( 'type', $('#rel_type :selected').text()  );
+                    var relation = relation_manager.create( source_target[0], source_target[1], relation_found );
+					relation.data( 'type', source_target[2]  );
 					relation.data( 'scope', $('#scope :selected').text()  );
 					relation.data( 'note', $('#note').val()  );
 					relation_manager.toggle_active( relation.attr('id') );
