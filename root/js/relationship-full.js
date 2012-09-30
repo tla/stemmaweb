@@ -638,7 +638,8 @@ $(document).ready(function () {
             $.each( data, function(item, source_target) { 
             	var source_found = get_ellipse( source_target[0] );
             	var target_found = get_ellipse( source_target[1] );
-            	if( source_found.size() && target_found.size() ) {
+            	var relation_found = $.inArray( source_target[2], rel_types );
+            	if( source_found.size() && target_found.size() && relation_found > -1 ) {
                     var relation = relation_manager.create( source_target[0], source_target[1], $('#rel_type')[0].selectedIndex-1 );
 					relation.data( 'type', $('#rel_type :selected').text()  );
 					relation.data( 'scope', $('#scope :selected').text()  );

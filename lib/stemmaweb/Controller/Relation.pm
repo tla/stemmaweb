@@ -224,8 +224,8 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 			my $note = $c->request->param('note');
 			my $scope = $c->request->param('scope');
 		
-			my $opts = { 'type' => $relation,
-						 'scope' => $scope };
+			my $opts = { 'type' => $relation, 'propagate' => 1 };
+			$opts->{'scope'} = $scope if $scope;
 			$opts->{'annotation'} = $note if $note;
 			
 			try {
