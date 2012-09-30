@@ -47,10 +47,12 @@ function loadTradition( textid, textname, editable ) {
     	$('#open_stemma_add').show();
     	$('#open_stemma_edit').show();
     	$('#open_textinfo_edit').show();
+    	$('#relatebutton_label').text('View collation and edit relationships');
     } else {
     	$('#open_stemma_add').hide();
     	$('#open_stemma_edit').hide();
     	$('#open_textinfo_edit').hide();
+    	$('#relatebutton_label').text('View collation and relationships');
     }
 
     // Then get and load the actual content.

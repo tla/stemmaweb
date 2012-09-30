@@ -73,7 +73,7 @@ var textOnLoad = "[% withtradition %]";
           </form>
           <form id="run_relater" action="" method="GET" name="run_relater">
             <div class="button" id="relater_button" onClick="$('#run_relater').submit()">
-              <span>Run relationship mapper</span>
+              <span id='relatebutton_label'>View collation and relationships</span>
             </div>
           </form>
       </div>
