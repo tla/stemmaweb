@@ -200,7 +200,8 @@ function svgEnlargementLoaded() {
 
 function add_relations( callback_fn ) {
 	var textrelpath = getTextURL( 'relationships' );
-    $.getJSON( basepath + 'definitions', function(data) {
+	var typedefpath = getTextURL( 'definitions' );
+    $.getJSON( typedefpath, function(data) {
 		var rel_types = data.types.sort();
 		$.each( rel_types, function(index, value) {   
 			 $('#keymaplist').append( $('<li>').css( "border-color", relation_manager.relation_colors[index] ).text(value) ); 

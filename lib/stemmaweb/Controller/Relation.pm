@@ -30,22 +30,6 @@ sub index :Path :Args(0) {
 	$c->stash->{'template'} = 'relate.tt';
 }
 
-=head2 definitions
-
- GET relation/definitions
- 
-Returns a data structure giving the valid types and scopes for a relationship.
-
-=cut
-
-sub definitions :Local :Args(0) {
-	my( $self, $c ) = @_;
-	my $valid_relationships = [ qw/ spelling orthographic grammatical lexical transposition / ];
-	my $valid_scopes = [ qw/ local global / ];
-	$c->stash->{'result'} = { 'types' => $valid_relationships, 'scopes' => $valid_scopes };
-	$c->forward('View::JSON');
-}
-
 =head2 text
 
  GET relation/$textid/
@@ -75,11 +59,20 @@ sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
     my $ok = _check_permission( $c, $tradition );
     return unless $ok;
 
+	$c->stash->{'textid'} = $textid;
+	$c->stash->{'tradition'} = $tradition;
+}
+
+sub main :Chained('text') :PathPart('') :Args(0) {
+	my( $self, $c ) = @_;
+	my $tradition = delete $c->stash->{'tradition'};
+	my $collation = $tradition->collation;
+	
 	# See how big the tradition is. Edges are more important than nodes
 	# when it comes to rendering difficulty.
-	my $numnodes = scalar $tradition->collation->readings;
-	my $numedges = scalar $tradition->collation->paths;
-	my $length = $tradition->collation->end->rank;
+	my $numnodes = scalar $collation->readings;
+	my $numedges = scalar $collation->paths;
+	my $length = $collation->end->rank;
 	# We should display no more than roughly 500 nodes, or roughly 700
 	# edges, at a time.
 	my $segments = $numnodes / 500;
@@ -97,37 +90,28 @@ sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 			$r += $segsize;
 		}
 		$c->stash->{'textsegments'} = [];
-		$c->stash->{'segsize'} = $segsize;
-		$c->stash->{'margin'} = $margin;
 		foreach my $i ( 0..$#divs ) {
 			my $seg = { 'start' => $divs[$i] };
 			$seg->{'display'} = "Segment " . ($i+1);
 			push( @{$c->stash->{'textsegments'}}, $seg );
 		}
 	}
-	$c->stash->{'textid'} = $textid;
-	$c->stash->{'tradition'} = $tradition;
-}
-
-sub main :Chained('text') :PathPart('') :Args(0) {
-	my( $self, $c ) = @_;
 	my $startseg = $c->req->param('start');
-	my $tradition = delete $c->stash->{'tradition'};
-	my $collation = $tradition->collation;
 	my $svgopts;
 	if( $startseg ) {
 		# Only render the subgraph from startseg to endseg or to END,
 		# whichever is less.
-		my $endseg = $startseg + $c->stash->{'segsize'} + $c->stash->{'margin'};
+		my $endseg = $startseg + $segsize + $margin;
 		$svgopts = { 'from' => $startseg };
 		$svgopts->{'to'} = $endseg if $endseg < $collation->end->rank;
 	} elsif( exists $c->stash->{'textsegments'} ) {
 		# This is the unqualified load of a long tradition. We implicitly start 
-		# at zero, but go only as far as 550.
-		my $endseg = $c->stash->{'segsize'} + $c->stash->{'margin'};
+		# at zero, but go only as far as our segment size.
+		my $endseg = $segsize + $margin;
 		$startseg = 0;
 		$svgopts = { 'to' => $endseg };
 	}
+	# Spit out the SVG
 	my $svg_str = $collation->as_svg( $svgopts );
 	$svg_str =~ s/\n//gs;
 	$c->stash->{'startseg'} = $startseg if defined $startseg;
@@ -140,6 +124,28 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 		$c->stash->{'text_lang'} = 'Default';
 	}
 	$c->stash->{'template'} = 'relate.tt';
+}
+
+=head2 definitions
+
+ GET relation/$textid/definitions
+ 
+Returns a data structure giving the valid types and scopes for a relationship in
+this tradition.
+
+=cut
+
+sub definitions :Chained('text') :PathPart :Args(0) {
+	my( $self, $c ) = @_;
+	my $tradition = delete $c->stash->{'tradition'};
+	my @valid_relationships = map { $_->name } grep { !$_->is_weak }
+		$tradition->collation->relations->types;
+	my $valid_scopes = [ qw/ local global / ];
+	$c->stash->{'result'} = { 
+		'types' => \@valid_relationships, 
+		'scopes' => $valid_scopes 
+	};
+	$c->forward('View::JSON');
 }
 
 =head2 help

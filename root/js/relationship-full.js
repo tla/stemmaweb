@@ -202,7 +202,8 @@ function svgEnlargementLoaded() {
 
 function add_relations( callback_fn ) {
 	var textrelpath = getTextURL( 'relationships' );
-    $.getJSON( basepath + 'definitions', function(data) {
+	var typedefpath = getTextURL( 'definitions' );
+    $.getJSON( typedefpath, function(data) {
         var rel_types = data.types.sort();
         // Add the relationship types to our document data so that we don't have
         // to call again
@@ -660,8 +661,9 @@ $(document).ready(function () {
     },
     create: function(event, ui) { 
         $(this).data( 'relation_drawn', false );
-        //TODO? Err handling?
-        var jqjson = $.getJSON( basepath + 'definitions', function(data) {
+        //TODO Check whether we have already retrieved the definitions
+		var typedefpath = getTextURL( 'definitions' );
+        var jqjson = $.getJSON( typedefpath, function(data) {
             var types = data.types.sort();
             $.each( types, function(index, value) {   
                  $('#rel_type').append( $('<option />').attr( "value", value ).text(value) ); 
