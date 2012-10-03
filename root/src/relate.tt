@@ -8,6 +8,13 @@
 var basepath = "[% c.uri_for( '/relation/' ) %]";
 var textid = "[% textid %]";
 var can_morphologize = "[% can_morphologize %]";
+[% IF error -%]
+var relationship_types = [];
+var relationship_scopes = [];
+[% ELSE -%]
+var relationship_types = [% relationship_types %];
+var relationship_scopes = [% relationship_scopes %];
+[% END -%]
 
 $(document).ready(function () {
   loadSVG('[% svg_string %]');

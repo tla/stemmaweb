@@ -201,35 +201,38 @@ function svgEnlargementLoaded() {
 }
 
 function add_relations( callback_fn ) {
+	// Add the relationship types to the keymap list
+	// TODO Make the descriptions (in typedef.description) available somewhere
+	$.each( relationship_types, function(index, typedef) {   
+		 var elid = 'list_rel_' + typedef.name;
+		 $('#keymaplist').append( $('<li>').attr( 'id', elid ).css( "border-color", relation_manager.relation_colors[index] ).text(typedef.name) ); 
+	});
+	// Now fetch the relationships themselves and add them to the graph
+	var rel_types = $.map( relationship_types, function(t) { return t.name });
+	// Save this list of names to the outer element data so that the relationship
+	// factory can access it
+	$('#keymap').data('relations', rel_types);
 	var textrelpath = getTextURL( 'relationships' );
-	var typedefpath = getTextURL( 'definitions' );
-    $.getJSON( typedefpath, function(data) {
-        var rel_types = data.types.sort();
-        // Add the relationship types to our document data so that we don't have
-        // to call again
-        $('#keymap').data( 'relations', rel_types );
-        $.getJSON( textrelpath,
-        function(data) {
-            $.each(data, function( index, rel_info ) {
-                var type_index = $.inArray(rel_info.type, rel_types);
-                var source_found = get_ellipse( rel_info.source );
-                var target_found = get_ellipse( rel_info.target );
-                if( type_index != -1 && source_found.size() && target_found.size() ) {
-                    var relation = relation_manager.create( rel_info.source, rel_info.target, type_index );
-                    relation.data( 'type', rel_info.type );
-                    relation.data( 'scope', rel_info.scope );
-                    relation.data( 'note', rel_info.note );
-                    var node_obj = get_node_obj(rel_info.source);
-                    node_obj.set_draggable( false );
-                    node_obj.ellipse.data( 'node_obj', null );
-                    node_obj = get_node_obj(rel_info.target);
-                    node_obj.set_draggable( false );
-                    node_obj.ellipse.data( 'node_obj', null );
-                }
-            });
-            callback_fn.call();
-        });
-    });
+	$.getJSON( textrelpath, function(data) {
+		$.each(data, function( index, rel_info ) {
+			var type_index = $.inArray(rel_info.type, rel_types);
+			var source_found = get_ellipse( rel_info.source );
+			var target_found = get_ellipse( rel_info.target );
+			if( type_index != -1 && source_found.size() && target_found.size() ) {
+				var relation = relation_manager.create( rel_info.source, rel_info.target, type_index );
+				relation.data( 'type', rel_info.type );
+				relation.data( 'scope', rel_info.scope );
+				relation.data( 'note', rel_info.note );
+				var node_obj = get_node_obj(rel_info.source);
+				node_obj.set_draggable( false );
+				node_obj.ellipse.data( 'node_obj', null );
+				node_obj = get_node_obj(rel_info.target);
+				node_obj.set_draggable( false );
+				node_obj.ellipse.data( 'node_obj', null );
+			}
+		});
+		callback_fn.call();
+	});
 }
 
 function get_ellipse( node_id ) {
@@ -661,18 +664,11 @@ $(document).ready(function () {
     },
     create: function(event, ui) { 
         $(this).data( 'relation_drawn', false );
-        //TODO Check whether we have already retrieved the definitions
-		var typedefpath = getTextURL( 'definitions' );
-        var jqjson = $.getJSON( typedefpath, function(data) {
-            var types = data.types.sort();
-            $.each( types, function(index, value) {   
-                 $('#rel_type').append( $('<option />').attr( "value", value ).text(value) ); 
-                 $('#keymaplist').append( $('<li>').css( "border-color", relation_manager.relation_colors[index] ).text(value) ); 
-            });
-            var scopes = data.scopes;
-            $.each( scopes, function(index, value) {   
-                 $('#scope').append( $('<option />').attr( "value", value ).text(value) ); 
-            });
+		$.each( relationship_types, function(index, typedef) {   
+			 $('#rel_type').append( $('<option />').attr( "value", typedef.name ).text(typedef.name) ); 
+		});
+		$.each( relationship_scopes, function(index, value) {   
+			 $('#scope').append( $('<option />').attr( "value", value ).text(value) ); 
         });        
     },
     open: function() {

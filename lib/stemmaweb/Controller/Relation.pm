@@ -1,4 +1,5 @@
 package stemmaweb::Controller::Relation;
+use JSON qw/ to_json /;
 use Moose;
 use Module::Load;
 use namespace::autoclean;
@@ -68,6 +69,16 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	my $tradition = delete $c->stash->{'tradition'};
 	my $collation = $tradition->collation;
 	
+	# Stash the relationship definitions
+	$c->stash->{'relationship_scopes'} = to_json( [ qw/ local global / ] );
+	my @reltypeinfo;
+	foreach my $type ( sort { _typesort( $a, $b ) } $collation->relations->types ) {
+		next if $type->is_weak;
+		my $struct = { name => $type->name, description => $type->description };
+		push( @reltypeinfo, $struct );
+	}
+	$c->stash->{'relationship_types'} = to_json( \@reltypeinfo );
+	
 	# See how big the tradition is. Edges are more important than nodes
 	# when it comes to rendering difficulty.
 	my $numnodes = scalar $collation->readings;
@@ -126,26 +137,11 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	$c->stash->{'template'} = 'relate.tt';
 }
 
-=head2 definitions
-
- GET relation/$textid/definitions
- 
-Returns a data structure giving the valid types and scopes for a relationship in
-this tradition.
-
-=cut
-
-sub definitions :Chained('text') :PathPart :Args(0) {
-	my( $self, $c ) = @_;
-	my $tradition = delete $c->stash->{'tradition'};
-	my @valid_relationships = map { $_->name } grep { !$_->is_weak }
-		$tradition->collation->relations->types;
-	my $valid_scopes = [ qw/ local global / ];
-	$c->stash->{'result'} = { 
-		'types' => \@valid_relationships, 
-		'scopes' => $valid_scopes 
-	};
-	$c->forward('View::JSON');
+sub _typesort {
+	my( $a, $b ) = @_;
+	my $blsort = $a->bindlevel <=> $b->bindlevel;
+	return $blsort if $blsort;
+	return $a->name cmp $b->name;
 }
 
 =head2 help
@@ -216,14 +212,9 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		if( $c->stash->{'permission'} ne 'full' ) {
 			$c->response->status( '403' );
 			$c->stash->{'result'} = { 
-				'error' => 'You do not have permission to view this tradition.' };
+				'error' => 'You do not have permission to modify this tradition.' };
+			$c->detach( 'View::JSON' );
 		} elsif( $c->request->method eq 'POST' ) {
-			unless( $c->stash->{'permission'} eq 'full' ) {
-				$c->response->status( '403' );
-				$c->stash->{'result'} = { 
-					'error' => 'You do not have permission to view this tradition.' };
-				$c->detach( 'View::JSON' );
-			}	
 			my $node = $c->request->param('source_id');
 			my $target = $c->request->param('target_id');
 			my $relation = $c->request->param('rel_type');

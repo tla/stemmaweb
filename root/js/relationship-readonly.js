@@ -199,32 +199,34 @@ function svgEnlargementLoaded() {
 }
 
 function add_relations( callback_fn ) {
+	// Add the relationship types to the keymap list
+	$.each( relationship_types, function(index, typedef) {   
+		 var elid = 'list_rel_' + typedef.name;
+		 $('#keymaplist').append( $('<li>').attr( 'id', elid ).css( "border-color", relation_manager.relation_colors[index] ).text(typedef.name) ); 
+	});
+	// Now fetch the relationships themselves and add them to the graph
+	var rel_types = $.map( relationship_types, function(t) { return t.name });
 	var textrelpath = getTextURL( 'relationships' );
-	var typedefpath = getTextURL( 'definitions' );
-    $.getJSON( typedefpath, function(data) {
-		var rel_types = data.types.sort();
-		$.each( rel_types, function(index, value) {   
-			 $('#keymaplist').append( $('<li>').css( "border-color", relation_manager.relation_colors[index] ).text(value) ); 
+	$.getJSON( textrelpath, function(data) {
+		$.each(data, function( index, rel_info ) {
+			var type_index = $.inArray(rel_info.type, rel_types);
+			var source_found = get_ellipse( rel_info.source );
+			var target_found = get_ellipse( rel_info.target );
+			if( type_index != -1 && source_found.size() && target_found.size() ) {
+				var relation = relation_manager.create( rel_info.source, rel_info.target, type_index );
+				relation.data( 'type', rel_info.type );
+				relation.data( 'scope', rel_info.scope );
+				relation.data( 'note', rel_info.note );
+				var node_obj = get_node_obj(rel_info.source);
+				node_obj.set_draggable( false );
+				node_obj.ellipse.data( 'node_obj', null );
+				node_obj = get_node_obj(rel_info.target);
+				node_obj.set_draggable( false );
+				node_obj.ellipse.data( 'node_obj', null );
+			}
 		});
-        $.getJSON( textrelpath, function(data) {
-            $.each(data, function( index, rel_info ) {
-                var type_index = $.inArray(rel_info.type, rel_types);
-                var source_found = get_ellipse( rel_info.source );
-                var target_found = get_ellipse( rel_info.target );
-                if( type_index != -1 && source_found.size() && target_found.size() ) {
-                    var relation = relation_manager.create( rel_info.source, rel_info.target, type_index );
-                    relation.data( 'type', rel_info.type );
-                    relation.data( 'scope', rel_info.scope );
-                    relation.data( 'note', rel_info.note );
-                    var node_obj = get_node_obj(rel_info.source);
-                    node_obj.ellipse.data( 'node_obj', null );
-                    node_obj = get_node_obj(rel_info.target);
-                    node_obj.ellipse.data( 'node_obj', null );
-                }
-            });
-            callback_fn.call();
-        });
-    });
+		callback_fn.call();
+	});
 }
 
 function get_ellipse( node_id ) {

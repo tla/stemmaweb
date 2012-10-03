@@ -49,5 +49,9 @@ $t2->add_stemma( dotfile => 't/data/florilegium.dot' );
 die "Failed to create test tradition #2" unless $t2;
 $t2->public( 1 );
 $dir->store( $t2 );
-say "Created test public tradition";
+my $t3 = Text::Tradition->new( input => 'Self', file => 't/data/john.xml' );
+$t3->public( 1 );
+$t3->name( 'John verse' );
+$dir->store( $t3 );
+say "Created test public traditions";
 
