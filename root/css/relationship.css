@@ -218,3 +218,19 @@ user-select: none;
 	text-align: right;
 	margin: 10px;
 }
+.key .key_tip_container {
+    visibility: hidden;
+    position:absolute; 
+    left:-150px; 
+    width:140px;
+}
+.key:hover .key_tip {
+    padding: 4px;
+    font-size: 60%;
+    position: relative;
+    top: -18px;
+    visibility: visible;
+    border: 1px solid #B2B26B;
+    background-color: #FFFFCC;
+    z-index: 51; /* Cf. #update_workspace_button */
+}
