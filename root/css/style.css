@@ -5,6 +5,8 @@ body {
     font: 1em Arial, Helvetica, sans-serif; 
     font-size: 85%; 
     color: #666;
+    background: transparent url('../images/logo_001.png') no-repeat scroll -200px -100px;
+    background-size: 600px;
 }
 h1 {
     border-bottom: 1px solid #488dd2;
@@ -101,6 +103,7 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
 /* Index page components */
 
 #directory_container {
+    background: none repeat scroll 0 0 rgba(255, 255, 255, 0.75);
 	float: left;
 	width: 300px;
 	height: 450px;
@@ -143,6 +146,7 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
 	padding-left: 50px;
 }
 #textinfo_container {
+    background: none repeat scroll 0 0 rgba(255, 255, 255, 0.75);
     border: 1px solid #C6DCF1;
 	float: left;
 	height: 510px;
@@ -167,9 +171,9 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
 	margin-top: expression(( 450 - this.height ) / 2);
 }
 #stemma_graph svg {
-	z-index: -100;
 }
 #textinfo_container_buttons {
+    z-index: 100;
     width: 224px;
     float: right;
     left: -18px;
