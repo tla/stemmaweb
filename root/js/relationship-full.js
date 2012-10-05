@@ -202,11 +202,11 @@ function svgEnlargementLoaded() {
 
 function add_relations( callback_fn ) {
 	// Add the relationship types to the keymap list
-	// TODO Make the descriptions (in typedef.description) available somewhere
 	$.each( relationship_types, function(index, typedef) {   
-		 var elid = 'list_rel_' + typedef.name;
-		 li_elm = $('<li class="key">').attr( 'id', elid ).css( "border-color", relation_manager.relation_colors[index] ).text(typedef.name);
-		 li_elm.append( $('<div class="key_tip_container"><div class="key_tip">Some obligatory help txt would be going here.</div></div>') );
+		 li_elm = $('<li class="key">').css( "border-color", 
+		 	relation_manager.relation_colors[index] ).text(typedef.name);
+		 li_elm.append( $('<div>').attr('class', 'key_tip_container').append(
+		 	$('<div>').attr('class', 'key_tip').text(typedef.description) ) );
 		 $('#keymaplist').append( li_elm ); 
 	});
 	// Now fetch the relationships themselves and add them to the graph

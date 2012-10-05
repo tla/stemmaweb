@@ -201,8 +201,11 @@ function svgEnlargementLoaded() {
 function add_relations( callback_fn ) {
 	// Add the relationship types to the keymap list
 	$.each( relationship_types, function(index, typedef) {   
-		 var elid = 'list_rel_' + typedef.name;
-		 $('#keymaplist').append( $('<li>').attr( 'id', elid ).css( "border-color", relation_manager.relation_colors[index] ).text(typedef.name) ); 
+		 li_elm = $('<li class="key">').css( "border-color", 
+		 	relation_manager.relation_colors[index] ).text(typedef.name);
+		 li_elm.append( $('<div>').attr('class', 'key_tip_container').append(
+		 	$('<div>').attr('class', 'key_tip').text(typedef.description) ) );
+		 $('#keymaplist').append( li_elm ); 
 	});
 	// Now fetch the relationships themselves and add them to the graph
 	var rel_types = $.map( relationship_types, function(t) { return t.name });
