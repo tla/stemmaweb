@@ -16,13 +16,8 @@
  <p>Any logged-in user may upload a text collation in one of several forms:</p>
 	<ul>
 		<li>Spreadsheet collation (Excel file, CSV file, or tab-separated values). Witness sigla should appear in the first row, one per column; the text of each witness should occur in sequence in the appropriate column, with collated words/readings lined up according to row. CSV and tab-separated value files are assumed to be Unicode, in the UTF-8 encoding.</li>
-		<li>TEI XML, parallel segmentation format. See the documentation <a href="TODO">here</a> for the expected format of the TEI file.</li>
-		<li>TEI XML, as exported from the <a href="http://www.oeaw.ac.at/kvk/cte/">Classical Text Editor</a> tool via the following steps:
-			<ol>
-				<li>In the menu Options -&gt; Preferences, under the 'XML' tab, the Apparatus export mode should be set to "&lt;app&gt; tags".</li>
-				<li>In the menu Format -&gt; Notes/Apparatus settings, the apparatus criticus (and apparatus siglorum, if applicable) should be marked as such.</li>
-				<li>Run the menu option File -&gt; Export -&gt; XML/TEI to perform the export.</li>
-			</ol>
+		<li>TEI XML, parallel segmentation format. Please see the documentation <a href="[% c.uri_for( 'help/input' ) %]">here</a> for the expected format of the TEI file.</li>
+		<li>TEI XML, as exported from the <a href="http://www.oeaw.ac.at/kvk/cte/">Classical Text Editor</a> tool. Please see the documentation <a href="[% c.uri_for( 'help/input#cte' ) %]">here</a> for some guidelines on how to prepare your CTE file for upload.</li>
 		</li>
 		<li>GraphML, as exported from the <a href="http://collatex.huygens.knaw.nl/service/">CollateX</a> tool.</li>
 	</ul>

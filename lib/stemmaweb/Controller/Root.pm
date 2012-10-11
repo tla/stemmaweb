@@ -51,6 +51,17 @@ sub about :Local :Args(0) {
 	$c->stash->{template} = 'about.tt';
 }
 
+=head2 help/*
+
+A dispatcher for documentation of various aspects of the application.
+
+=cut
+
+sub help :Local :Args(1) {
+	my( $self, $c, $topic ) = @_;
+	$c->stash->{template} = "$topic.tt";
+}
+
 =head1 Elements of index page
 
 =head2 directory
