@@ -1,6 +1,6 @@
 [% WRAPPER header.tt
 	pagetitle = "Stemmaweb - Relationship mapper"
-	applicationjs = c.uri_for("/js/relationship-" _ permission _ ".js")
+	applicationjs = c.uri_for("/js/relationship.js")
 	applicationstyle = c.uri_for('/css/relationship.css')
 %]
 <script type="text/javascript">
@@ -8,6 +8,7 @@
 var basepath = "[% c.uri_for( '/relation/' ) %]";
 var textid = "[% textid %]";
 var can_morphologize = "[% can_morphologize %]";
+var editable = "[% permission %]" === "full";
 [% IF error -%]
 var relationship_types = [];
 var relationship_scopes = [];

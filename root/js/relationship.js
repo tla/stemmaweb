@@ -160,10 +160,11 @@ function svgEnlargementLoaded() {
 	$("#loading_message").offset(
 		{ 'top': lo_height / 2 - $("#loading_message").height() / 2,
 		  'left': lo_width / 2 - $("#loading_message").width() / 2 });
-    //Set viewbox widht and height to widht and height of $('#svgenlargement svg').
-    $('#update_workspace_button').data('locked', false);
-    $('#update_workspace_button').css('background-position', '0px 44px');
-    //This is essential to make sure zooming and panning works properly.
+    if( editable ) {
+    	// Show the update toggle button.
+	    $('#update_workspace_button').data('locked', false);
+    	$('#update_workspace_button').css('background-position', '0px 44px');
+    }
 	var rdgpath = getTextURL( 'readings' );
 		$.getJSON( rdgpath, function( data ) {
   		readingdata = data;
@@ -183,6 +184,8 @@ function svgEnlargementLoaded() {
 	   }
     }
 
+    //Set viewbox width and height to width and height of $('#svgenlargement svg').
+    //This is essential to make sure zooming and panning works properly.
     svg_root.viewBox.baseVal.width = graph_svg.attr( 'width' );
     svg_root.viewBox.baseVal.height = graph_svg.attr( 'height' );
     //Now set scale and translate so svg height is about 150px and vertically centered in viewbox.
@@ -225,12 +228,14 @@ function add_relations( callback_fn ) {
 				relation.data( 'type', rel_info.type );
 				relation.data( 'scope', rel_info.scope );
 				relation.data( 'note', rel_info.note );
-				var node_obj = get_node_obj(rel_info.source);
-				node_obj.set_draggable( false );
-				node_obj.ellipse.data( 'node_obj', null );
-				node_obj = get_node_obj(rel_info.target);
-				node_obj.set_draggable( false );
-				node_obj.ellipse.data( 'node_obj', null );
+				if( editable ) {
+					var node_obj = get_node_obj(rel_info.source);
+					node_obj.set_draggable( false );
+					node_obj.ellipse.data( 'node_obj', null );
+					node_obj = get_node_obj(rel_info.target);
+					node_obj.set_draggable( false );
+					node_obj.ellipse.data( 'node_obj', null );
+				}
 			}
 		});
 		callback_fn.call();
@@ -264,7 +269,7 @@ function node_obj(ellipse) {
   }
   
   this.set_draggable = function( draggable ) {
-    if( draggable ) {
+    if( draggable && editable ) {
       $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
       $(self.ellipse).parent().mousedown( this.mousedown_listener );
       $(self.ellipse).parent().hover( this.enter_node, this.leave_node ); 
@@ -529,6 +534,9 @@ function relation_factory() {
         dialog_aria.offset({ left: nx, top: ny });
     }
     this.remove = function( relation_id ) {
+    	if( !editable ) {
+    		return;
+    	}
         var relation = $( jq( relation_id ) );
         relation.remove();
     }
@@ -631,69 +639,70 @@ $(document).ready(function () {
     'cursor' : '-moz-grab'
   });
   
-
-  $( "#dialog-form" ).dialog({
-    autoOpen: false,
-    height: 270,
-    width: 290,
-    modal: true,
-    buttons: {
-      "Ok": function( evt ) {
-      	$(evt.target).button("disable");
-        $('#status').empty();
-        form_values = $('#collapse_node_form').serialize();
-        ncpath = getTextURL( 'relationships' );
-        var jqjson = $.post( ncpath, form_values, function(data) {
-            $.each( data, function(item, source_target) { 
-            	var source_found = get_ellipse( source_target[0] );
-            	var target_found = get_ellipse( source_target[1] );
-            	var relation_found = $.inArray( source_target[2], $('#keymap').data('relations') );
-            	if( source_found.size() && target_found.size() && relation_found > -1 ) {
-                    var relation = relation_manager.create( source_target[0], source_target[1], relation_found );
+  if( editable ) {
+	$( "#dialog-form" ).dialog({
+	autoOpen: false,
+	height: 270,
+	width: 290,
+	modal: true,
+	buttons: {
+	  "Ok": function( evt ) {
+		$(evt.target).button("disable");
+		$('#status').empty();
+		form_values = $('#collapse_node_form').serialize();
+		ncpath = getTextURL( 'relationships' );
+		var jqjson = $.post( ncpath, form_values, function(data) {
+			$.each( data, function(item, source_target) { 
+				var source_found = get_ellipse( source_target[0] );
+				var target_found = get_ellipse( source_target[1] );
+				var relation_found = $.inArray( source_target[2], $('#keymap').data('relations') );
+				if( source_found.size() && target_found.size() && relation_found > -1 ) {
+					var relation = relation_manager.create( source_target[0], source_target[1], relation_found );
 					relation.data( 'type', source_target[2]  );
 					relation.data( 'scope', $('#scope :selected').text()  );
 					relation.data( 'note', $('#note').val()  );
 					relation_manager.toggle_active( relation.attr('id') );
 				}
-   				$(evt.target).button("enable");
-           });
-            $( "#dialog-form" ).dialog( "close" );
-        }, 'json' );
-      },
-      Cancel: function() {
-          $( this ).dialog( "close" );
-      }
-    },
-    create: function(event, ui) { 
-        $(this).data( 'relation_drawn', false );
+				$(evt.target).button("enable");
+		   });
+			$( "#dialog-form" ).dialog( "close" );
+		}, 'json' );
+	  },
+	  Cancel: function() {
+		  $( this ).dialog( "close" );
+	  }
+	},
+	create: function(event, ui) { 
+		$(this).data( 'relation_drawn', false );
 		$.each( relationship_types, function(index, typedef) {   
 			 $('#rel_type').append( $('<option />').attr( "value", typedef.name ).text(typedef.name) ); 
 		});
 		$.each( relationship_scopes, function(index, value) {   
 			 $('#scope').append( $('<option />').attr( "value", value ).text(value) ); 
-        });        
-    },
-    open: function() {
-        relation_manager.create_temporary( $('#source_node_id').val(), $('#target_node_id').val() );
-        $(".ui-widget-overlay").css("background", "none");
-        $("#dialog_overlay").show();
-        $("#dialog_overlay").height( $("#enlargement_container").height() );
-        $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
-        $("#dialog_overlay").offset( $("#enlargement_container").offset() );
-    },
-    close: function() {
-        relation_manager.remove_temporary();
-        $( '#status' ).empty();
-        $("#dialog_overlay").hide();
-    }
-  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-      if( ajaxSettings.url == getTextURL('relationships') 
-      	&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-      	  var errobj = jQuery.parseJSON( jqXHR.responseText );
-          $('#status').append( '<p class="error">Error: ' + errobj.error + '</br>The relationship cannot be made.</p>' );
-      }
+		});        
+	},
+	open: function() {
+		relation_manager.create_temporary( $('#source_node_id').val(), $('#target_node_id').val() );
+		$(".ui-widget-overlay").css("background", "none");
+		$("#dialog_overlay").show();
+		$("#dialog_overlay").height( $("#enlargement_container").height() );
+		$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
+		$("#dialog_overlay").offset( $("#enlargement_container").offset() );
+	},
+	close: function() {
+		relation_manager.remove_temporary();
+		$( '#status' ).empty();
+		$("#dialog_overlay").hide();
+	}
+	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+	  if( ajaxSettings.url == getTextURL('relationships') 
+		&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
+		  var errobj = jQuery.parseJSON( jqXHR.responseText );
+		  $('#status').append( '<p class="error">Error: ' + errobj.error + '</br>The relationship cannot be made.</p>' );
+	  }
 	  $(event.target).parent().find('.ui-button').button("enable");
-  } );
+	} );
+  }
 
   $( "#delete-form" ).dialog({
     autoOpen: false,
@@ -716,6 +725,13 @@ $(document).ready(function () {
         }
     },
     create: function(event, ui) {
+    	// Swap out the buttons if we are in readonly mode
+    	if( !editable ) {
+    		$( this ).dialog( "option", "buttons", 
+    			[{ text: "OK", click: function() { $( this ).dialog( "close" ); }}] );
+    	}
+    	
+    	// TODO What is this logic doing?
         var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
         buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
         var dialog_aria = $("div[aria-labelledby='ui-dialog-title-delete-form']");  
@@ -782,6 +798,12 @@ $(document).ready(function () {
 			}
 		},
 		create: function() {
+			if( !editable ) {
+				// Get rid of the disallowed editing UI bits
+				$( this ).dialog( "option", "buttons", 
+					[{ text: "OK", click: function() { $( this ).dialog( "close" ); }}] );
+				$('#reading_relemmatize').hide();
+			}
 		},
 		open: function() {
 			$(".ui-widget-overlay").css("background", "none");
@@ -809,6 +831,9 @@ $(document).ready(function () {
   
 
   $('#update_workspace_button').click( function() {
+  	 if( !editable ) {
+  	 	return;
+  	 }
      var svg_enlargement = $('#svgenlargement').svg().svg('get').root();
      mouse_scale = svg_root_element.getScreenCTM().a;
      if( $(this).data('locked') == true ) {
@@ -850,6 +875,13 @@ $(document).ready(function () {
          $(this).data('locked', true );
      }
   });
+
+  if( !editable ) {  
+    // Hide the unused elements
+    $('#dialog-form').hide();
+    $('#update_workspace_button').hide();
+  }
+
   
   $('.helptag').popupWindow({ 
 	  height:500, 
