@@ -220,12 +220,6 @@ function add_relations( callback_fn ) {
 				relation.data( 'type', rel_info.type );
 				relation.data( 'scope', rel_info.scope );
 				relation.data( 'note', rel_info.note );
-				var node_obj = get_node_obj(rel_info.source);
-				node_obj.set_draggable( false );
-				node_obj.ellipse.data( 'node_obj', null );
-				node_obj = get_node_obj(rel_info.target);
-				node_obj.set_draggable( false );
-				node_obj.ellipse.data( 'node_obj', null );
 			}
 		});
 		callback_fn.call();
