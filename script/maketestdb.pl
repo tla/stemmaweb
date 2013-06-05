@@ -53,5 +53,11 @@ my $t3 = Text::Tradition->new( input => 'Self', file => 't/data/john.xml' );
 $t3->public( 1 );
 $t3->name( 'John verse' );
 $dir->store( $t3 );
+my $t4 = Text::Tradition->new( input => 'Self', file => 't/data/collatecorr.xml' );
+$t4->public( 1 );
+$user->add_tradition( $t4 );
+$dir->store( $t4 );
+$dir->store( $user );
+
 say "Created test public traditions";
 
