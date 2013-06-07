@@ -41,6 +41,14 @@ function node_dblclick_listener( evt ) {
   	}
   	$('#reading_normal_form').attr( 'size', nfboxsize )
   	$('#reading_normal_form').val( normal_form );
+  	if( editable ) {
+	  	// Fill in the witnesses for the de-collation box.
+	  	$('#reading_decollate_witnesses').empty();
+	  	$.each( reading_info['witnesses'], function( idx, wit ) {
+	  		$('#reading_decollate_witnesses').append( $('<option/>').attr(
+	  			'value', wit ).text( wit ) );
+	  	});
+	}
   	// Now do the morphological properties.
   	morphology_form( reading_info['lexemes'] );
   	// and then open the dialog.
@@ -752,6 +760,11 @@ $(document).ready(function () {
   // function for reading form dialog should go here; 
   // just hide the element for now if we don't have morphology
   if( can_morphologize ) {
+  	  if( editable ) {
+	  	  $('#reading_decollate_witnesses').multiselect();
+	  } else {
+	  	  $('#decollation').hide();
+	  }
 	  $('#reading-form').dialog({
 		autoOpen: false,
 		// height: 400,
@@ -807,6 +820,8 @@ $(document).ready(function () {
 		},
 		open: function() {
 			$(".ui-widget-overlay").css("background", "none");
+			$('#reading_decollate_witnesses').multiselect("refresh");
+			$('#reading_decollate_witnesses').multiselect("uncheckAll");
 			$("#dialog_overlay").show();
 			$('#reading_status').empty();
 			$("#dialog_overlay").height( $("#enlargement_container").height() );
