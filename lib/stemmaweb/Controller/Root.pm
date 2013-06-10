@@ -433,6 +433,30 @@ sub stemmadot :Local :Args(2) {
 	$c->forward('View::JSON');
 }
 
+=head2 download
+
+ GET /download/$textid
+ 
+Returns the full XML definition of the tradition and its stemmata, if any.
+ 
+=cut
+
+sub download :Local :Args(1) {
+	my( $self, $c, $textid ) = @_;
+	my $tradition = $c->model('Directory')->tradition( $textid );
+	unless( $tradition ) {
+		return _json_error( $c, 404, "No tradition with ID $textid" );
+	}
+	my $ok = _check_permission( $c, $tradition );
+	return unless $ok;
+	try {
+		$c->stash->{'result'} = $tradition->collation->as_graphml();
+	} catch( Text::Tradition::Error $e ) {
+		return _json_error( $c, 500, $e->message );
+	}
+	$c->forward('View::GraphML');
+}
+
 ####################
 ### Helper functions
 ####################

@@ -75,6 +75,9 @@ function loadTradition( textid, textname, editable ) {
 		load_stemma( selectedStemmaID );
     	// Set up the relationship mapper button
 		$('#run_relater').attr( 'action', _get_url([ "relation", textid ]) );
+		// Set up the download button
+		$('#dl_tradition').attr( 'href', _get_url([ "download", textid ]) );
+		$('#dl_tradition').attr( 'download', selectedTextInfo.name + '.xml' );
 	});
 }
 
