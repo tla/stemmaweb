@@ -703,12 +703,22 @@ $(document).ready(function () {
 		$("#dialog_overlay").hide();
 	}
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-	  if( ajaxSettings.url == getTextURL('relationships') 
-		&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-		  var errobj = jQuery.parseJSON( jqXHR.responseText );
-		  $('#status').append( '<p class="error">Error: ' + errobj.error + '</br>The relationship cannot be made.</p>' );
-	  }
-	  $(event.target).parent().find('.ui-button').button("enable");
+		if( ajaxSettings.url == getTextURL('relationships') 
+			&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
+			var error;
+			if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
+				error = 'You are not authorized to modify this tradition. (Try logging in again?)';
+			} else {
+				try {
+					var errobj = jQuery.parseJSON( jqXHR.responseText );
+					error = errobj.error + '</br>The relationship cannot be made.</p>';
+				} catch(e) {
+					error = jqXHR.responseText;
+				}
+			}
+			$('#status').append( '<p class="error">Error: ' + error );
+		}
+		$(event.target).parent().find('.ui-button').button("enable");
 	} );
   }
 
@@ -833,12 +843,22 @@ $(document).ready(function () {
 			$("#dialog_overlay").hide();
 		}
 	  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		  if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1
+		if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1
 			&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-			  var errobj = jQuery.parseJSON( jqXHR.responseText );
-			  $('#reading_status').append( '<p class="error">Error: ' + errobj.error + '</p>' );
-		  }
-		  $(event.target).parent().find('.ui-button').button("enable");
+			var error;
+			if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
+				error = 'You are not authorized to modify this tradition. (Try logging in again?)';
+			} else {
+				try {
+					var errobj = jQuery.parseJSON( jqXHR.responseText );
+					error = errobj.error + '</br>The relationship cannot be made.</p>';
+				} catch(e) {
+					error = jqXHR.responseText;
+				}
+			}
+			$('#status').append( '<p class="error">Error: ' + error );
+		}
+		$(event.target).parent().find('.ui-button').button("enable");
 	  });
 	} else {
 		$('#reading-form').hide();
