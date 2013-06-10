@@ -682,12 +682,21 @@ $(document).ready(function () {
 	},
 	create: function(event, ui) { 
 		$(this).data( 'relation_drawn', false );
+		$('#rel_type').data( 'changed_after_open', false );
 		$.each( relationship_types, function(index, typedef) {   
 			 $('#rel_type').append( $('<option />').attr( "value", typedef.name ).text(typedef.name) ); 
 		});
 		$.each( relationship_scopes, function(index, value) {   
 			 $('#scope').append( $('<option />').attr( "value", value ).text(value) ); 
-		});        
+		});
+		// Handler to clear the annotation field, the first time the relationship is
+		// changed after opening the form.
+		$('#rel_type').change( function () {
+			if( !$(this).data( 'changed_after_open' ) ) {
+				$('#note').val('');
+			}
+			$(this).data( 'changed_after_open', true );
+		});
 	},
 	open: function() {
 		relation_manager.create_temporary( $('#source_node_id').val(), $('#target_node_id').val() );
@@ -696,6 +705,7 @@ $(document).ready(function () {
 		$("#dialog_overlay").height( $("#enlargement_container").height() );
 		$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
 		$("#dialog_overlay").offset( $("#enlargement_container").offset() );
+		$('#rel_type').data( 'changed_after_open', false );
 	},
 	close: function() {
 		relation_manager.remove_temporary();
