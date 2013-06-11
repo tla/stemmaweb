@@ -84,7 +84,9 @@ $(document).ready(function () {
 			<input type="hidden" name="source_id" id="delete_source_node_id"/>
 			<input type="hidden" name="target_id" id="delete_target_node_id"/>
 		</form>
-		<div id="delete-form-text"></div>
+		<div id="delete-form-text">Type: <span id="delete_relation_type"></span><br/>
+		    Scope: <span id="delete_relation_scope"></span><br/>
+		    <span id="delete_relation_note"></span></div>
 	</div>
 	
 	<div id="reading-form" title="Reading info...">

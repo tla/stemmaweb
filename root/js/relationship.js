@@ -521,11 +521,11 @@ function relation_factory() {
         }
     }
     this.showinfo = function(relation) {
-    	var htmlstr = 'type: ' + relation.data( 'type' ) + '<br/>scope: ' + relation.data( 'scope' );
+    	$('#delete_relation_type').text( relation.data('type') );
+    	$('#delete_relation_scope').text( relation.data('scope') );
     	if( relation.data( 'note' ) ) {
-    		htmlstr = htmlstr + '<br/>note: ' + relation.data( 'note' );
+    		$('#delete_relation_note').text('note: ' + relation.data( 'note' ) );
     	}
-        $('#delete-form-text').html( htmlstr );
         var points = relation.children('path').attr('d').slice(1).replace('C',' ').split(' ');
         var xs = parseFloat( points[0].split(',')[0] );
         var xe = parseFloat( points[1].split(',')[0] );
@@ -732,33 +732,17 @@ $(document).ready(function () {
 	} );
   }
 
+  var deletion_buttonset = {
+        cancel: function() { $( this ).dialog( "close" ); },
+        global: function () { delete_relation( true ); },
+        delete: function() { delete_relation( false ); }
+  };  	
   $( "#delete-form" ).dialog({
     autoOpen: false,
     height: 135,
-    width: 160,
+    width: 250,
     modal: false,
-    buttons: {
-        Cancel: function() {
-            $( this ).dialog( "close" );
-        },
-        Delete: function() {
-          form_values = $('#delete_relation_form').serialize();
-          ncpath = getTextURL( 'relationships' );
-          var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
-              $.each( data, function(item, source_target) { 
-                  relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
-              });
-              $( "#delete-form" ).dialog( "close" );
-          }, dataType: 'json', type: 'DELETE' });
-        }
-    },
     create: function(event, ui) {
-    	// Swap out the buttons if we are in readonly mode
-    	if( !editable ) {
-    		$( this ).dialog( "option", "buttons", 
-    			[{ text: "OK", click: function() { $( this ).dialog( "close" ); }}] );
-    	}
-    	
     	// TODO What is this logic doing?
         var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
         buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
@@ -771,11 +755,52 @@ $(document).ready(function () {
         })
     },
     open: function() {
+    	if( !editable ) {
+    		$( this ).dialog( "option", "buttons", 
+    			[{ text: "OK", click: deletion_buttonset['cancel'] }] );
+    	} else if( $('#delete_relation_scope').text() === 'local' ) {
+    		$( this ).dialog( "option", "width", 160 );
+    		$( this ).dialog( "option", "buttons",
+    			[{ text: "Delete", click: deletion_buttonset['delete'] },
+    			 { text: "Cancel", click: deletion_buttonset['cancel'] }] );
+    	} else {
+    		$( this ).dialog( "option", "width", 200 );
+    		$( this ).dialog( "option", "buttons",
+    			[{ text: "Delete", click: deletion_buttonset['delete'] },
+    			 { text: "Delete all", click: deletion_buttonset['global'] },
+    			 { text: "Cancel", click: deletion_buttonset['cancel'] }] );
+		}    	
+    			
         mouseWait = setTimeout( function() { $("#delete-form").dialog( "close" ) }, 2000 );
     },
-    close: function() {
-    }
+    close: function() {}
   });
+
+  // Helpers for relationship deletion
+  
+  function delete_relation( scopewide ) {
+	  form_values = $('#delete_relation_form').serialize();
+	  if( scopewide ) {
+	  	form_values += "&scopewide=true";
+	  }
+	  ncpath = getTextURL( 'relationships' );
+	  var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
+		  $.each( data, function(item, source_target) { 
+			  relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
+		  });
+		  $( "#delete-form" ).dialog( "close" );
+	  }, dataType: 'json', type: 'DELETE' });
+  }
+  
+  function toggle_relation_active( node_id ) {
+      $('#svgenlargement .relation').find( "title:contains('" + node_id +  "')" ).each( function(index) {
+          matchid = new RegExp( "^" + node_id );
+          if( $(this).text().match( matchid ) != null ) {
+          	  var relation_id = $(this).parent().attr('id');
+              relation_manager.toggle_active( relation_id );
+          };
+      });
+  }
 
   // function for reading form dialog should go here; 
   // just hide the element for now if we don't have morphology
@@ -935,17 +960,6 @@ $(document).ready(function () {
 	  left:50,
 	  scrollbars:1 
   }); 
-
-  
-  function toggle_relation_active( node_id ) {
-      $('#svgenlargement .relation').find( "title:contains('" + node_id +  "')" ).each( function(index) {
-          matchid = new RegExp( "^" + node_id );
-          if( $(this).text().match( matchid ) != null ) {
-          	  var relation_id = $(this).parent().attr('id');
-              relation_manager.toggle_active( relation_id );
-          };
-      });
-  }
 
   expandFillPageClients();
   $(window).resize(function() {

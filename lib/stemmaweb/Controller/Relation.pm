@@ -236,9 +236,10 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		} elsif( $c->request->method eq 'DELETE' ) {
 			my $node = $c->request->param('source_id');
 			my $target = $c->request->param('target_id');
-		
+			my $scopewide = $c->request->param('scopewide') 
+				&& $c->request->param('scopewide') eq 'true';
 			try {
-				my @vectors = $collation->del_relationship( $node, $target );
+				my @vectors = $collation->del_relationship( $node, $target, $scopewide );
 				$m->save( $tradition );
 				$c->stash->{'result'} = \@vectors;
 			} catch( Text::Tradition::Error $e ) {
