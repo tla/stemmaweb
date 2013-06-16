@@ -1,5 +1,5 @@
 package stemmaweb::Controller::Relation;
-use JSON qw/ to_json /;
+use JSON qw/ to_json from_json /;
 use Moose;
 use Module::Load;
 use namespace::autoclean;
@@ -236,9 +236,10 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		} elsif( $c->request->method eq 'DELETE' ) {
 			my $node = $c->request->param('source_id');
 			my $target = $c->request->param('target_id');
-		
+			my $scopewide = $c->request->param('scopewide') 
+				&& $c->request->param('scopewide') eq 'true';
 			try {
-				my @vectors = $collation->del_relationship( $node, $target );
+				my @vectors = $collation->del_relationship( $node, $target, $scopewide );
 				$m->save( $tradition );
 				$c->stash->{'result'} = \@vectors;
 			} catch( Text::Tradition::Error $e ) {
@@ -280,11 +281,9 @@ sub _reading_struct {
 		my $t = $_[0]->type;
 		return $t eq 'spelling' || $t eq 'orthographic';
 	};
-	my @variants;
-	foreach my $sr ( $reading->related_readings( $sameword ) ) {
-		push( @variants, $sr->text );
-	}
-	$struct->{'variants'} = \@variants;
+	# Now add the list data
+	$struct->{'variants'} = [ map { $_->text } $reading->related_readings( $sameword ) ];
+	$struct->{'witnesses'} = [ $reading->witnesses ];
 	return $struct;
 }
 
@@ -331,7 +330,7 @@ sub reading :Chained('text') :PathPart :Args(1) {
 		if( $c->stash->{'permission'} ne 'full' ) {
 			$c->response->status( '403' );
 			$c->stash->{'result'} = { 
-				'error' => 'You do not have permission to view this tradition.' };
+				'error' => 'You do not have permission to modify this tradition.' };
 			$c->detach('View::JSON');
 			return;
 		}
@@ -388,6 +387,58 @@ sub reading :Chained('text') :PathPart :Args(1) {
 	$c->forward('View::JSON');
 
 }
+
+=head2 duplicate
+
+ POST relation/$textid/duplicate/$id/ { witnesses }
+ 
+Duplicates the given reading, detaching the witnesses specified in the list to use
+the new reading instead of the old. The 'witnesses' param should be a JSON array.
+
+=cut
+
+sub duplicate :Chained('text') :PathPart :Args(1) {
+	my( $self, $c, $reading_id ) = @_;
+	my $tradition = delete $c->stash->{'tradition'};
+	my $collation = $tradition->collation;
+	my $rdg = $collation->reading( $reading_id );
+	my $m = $c->model('Directory');
+	if( $c->request->method eq 'POST' ) {
+		if( $c->stash->{'permission'} ne 'full' ) {
+			$c->response->status( '403' );
+			$c->stash->{'result'} = { 
+				'error' => 'You do not have permission to modify this tradition.' };
+			$c->detach('View::JSON');
+			return;
+		}
+		my $errmsg;
+		my $response = {};
+		if( $c->request->param('witnesses') ) {
+			my $witlist = from_json( $c->request->param('witnesses') );
+			my $newrdg;
+			try {
+				$newrdg = $collation->duplicate_reading( $reading_id, @$witlist );
+			} catch( Text::Tradition::Error $e ) {
+				$c->response->status( '403' );
+				$errmsg = $e->message;
+			} catch {
+				# Something else went wrong, probably a Moose error
+				$c->response->status( '403' );
+				$errmsg = 'Something went wrong with the request';	
+			}
+			if( $newrdg ) {
+				$response = { reading => $newrdg->id, witnesses => $witlist };
+			}
+		} else {
+			$c->response->status( '403' );
+			$errmsg = "At least one witness must be specified for a duplication";
+		}
+		$c->stash->{'result'} = $errmsg ? { 'error' => $errmsg } : $response;
+	}
+	$c->forward('View::JSON');
+}
+
+
 
 sub _check_permission {
 	my( $c, $tradition ) = @_;

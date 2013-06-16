@@ -76,6 +76,11 @@ var textOnLoad = "[% withtradition %]";
               <span id='relatebutton_label'>View collation and relationships</span>
             </div>
           </form>
+          <a id="dl_tradition" href="" download="file.xml">
+            <div class="button" id="download_button">
+              <span id='dlbutton_label'>Download tradition as XML</span>
+            </div>
+          </a>
       </div>
       <div id="stemma_graph"></div>
     </div>

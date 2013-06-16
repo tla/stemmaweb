@@ -41,6 +41,14 @@ function node_dblclick_listener( evt ) {
   	}
   	$('#reading_normal_form').attr( 'size', nfboxsize )
   	$('#reading_normal_form').val( normal_form );
+  	if( editable ) {
+	  	// Fill in the witnesses for the de-collation box.
+	  	$('#reading_decollate_witnesses').empty();
+	  	$.each( reading_info['witnesses'], function( idx, wit ) {
+	  		$('#reading_decollate_witnesses').append( $('<option/>').attr(
+	  			'value', wit ).text( wit ) );
+	  	});
+	}
   	// Now do the morphological properties.
   	morphology_form( reading_info['lexemes'] );
   	// and then open the dialog.
@@ -517,11 +525,11 @@ function relation_factory() {
         }
     }
     this.showinfo = function(relation) {
-    	var htmlstr = 'type: ' + relation.data( 'type' ) + '<br/>scope: ' + relation.data( 'scope' );
+    	$('#delete_relation_type').text( relation.data('type') );
+    	$('#delete_relation_scope').text( relation.data('scope') );
     	if( relation.data( 'note' ) ) {
-    		htmlstr = htmlstr + '<br/>note: ' + relation.data( 'note' );
+    		$('#delete_relation_note').text('note: ' + relation.data( 'note' ) );
     	}
-        $('#delete-form-text').html( htmlstr );
         var points = relation.children('path').attr('d').slice(1).replace('C',' ').split(' ');
         var xs = parseFloat( points[0].split(',')[0] );
         var xe = parseFloat( points[1].split(',')[0] );
@@ -750,12 +758,21 @@ $(document).ready(function () {
 	},
 	create: function(event, ui) { 
 		$(this).data( 'relation_drawn', false );
+		$('#rel_type').data( 'changed_after_open', false );
 		$.each( relationship_types, function(index, typedef) {   
 			 $('#rel_type').append( $('<option />').attr( "value", typedef.name ).text(typedef.name) ); 
 		});
 		$.each( relationship_scopes, function(index, value) {   
 			 $('#scope').append( $('<option />').attr( "value", value ).text(value) ); 
-		});        
+		});
+		// Handler to clear the annotation field, the first time the relationship is
+		// changed after opening the form.
+		$('#rel_type').change( function () {
+			if( !$(this).data( 'changed_after_open' ) ) {
+				$('#note').val('');
+			}
+			$(this).data( 'changed_after_open', true );
+		});
 	},
 	open: function() {
 		relation_manager.create_temporary( $('#source_node_id').val(), $('#target_node_id').val() );
@@ -764,6 +781,7 @@ $(document).ready(function () {
 		$("#dialog_overlay").height( $("#enlargement_container").height() );
 		$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
 		$("#dialog_overlay").offset( $("#enlargement_container").offset() );
+		$('#rel_type').data( 'changed_after_open', false );
 	},
 	close: function() {
 		relation_manager.remove_temporary();
@@ -771,42 +789,36 @@ $(document).ready(function () {
 		$("#dialog_overlay").hide();
 	}
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-	  if( ajaxSettings.url == getTextURL('relationships') 
-		&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-		  var errobj = jQuery.parseJSON( jqXHR.responseText );
-		  $('#status').append( '<p class="error">Error: ' + errobj.error + '</br>The relationship cannot be made.</p>' );
-	  }
-	  $(event.target).parent().find('.ui-button').button("enable");
+		if( ajaxSettings.url == getTextURL('relationships') 
+			&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
+			var error;
+			if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
+				error = 'You are not authorized to modify this tradition. (Try logging in again?)';
+			} else {
+				try {
+					var errobj = jQuery.parseJSON( jqXHR.responseText );
+					error = errobj.error + '</br>The relationship cannot be made.</p>';
+				} catch(e) {
+					error = jqXHR.responseText;
+				}
+			}
+			$('#status').append( '<p class="error">Error: ' + error );
+		}
+		$(event.target).parent().find('.ui-button').button("enable");
 	} );
   }
 
+  var deletion_buttonset = {
+        cancel: function() { $( this ).dialog( "close" ); },
+        global: function () { delete_relation( true ); },
+        delete: function() { delete_relation( false ); }
+  };  	
   $( "#delete-form" ).dialog({
     autoOpen: false,
     height: 135,
-    width: 160,
+    width: 250,
     modal: false,
-    buttons: {
-        Cancel: function() {
-            $( this ).dialog( "close" );
-        },
-        Delete: function() {
-          form_values = $('#delete_relation_form').serialize();
-          ncpath = getTextURL( 'relationships' );
-          var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
-              $.each( data, function(item, source_target) { 
-                  relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
-              });
-              $( "#delete-form" ).dialog( "close" );
-          }, dataType: 'json', type: 'DELETE' });
-        }
-    },
     create: function(event, ui) {
-    	// Swap out the buttons if we are in readonly mode
-    	if( !editable ) {
-    		$( this ).dialog( "option", "buttons", 
-    			[{ text: "OK", click: function() { $( this ).dialog( "close" ); }}] );
-    	}
-    	
     	// TODO What is this logic doing?
         var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
         buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
@@ -819,15 +831,61 @@ $(document).ready(function () {
         })
     },
     open: function() {
+    	if( !editable ) {
+    		$( this ).dialog( "option", "buttons", 
+    			[{ text: "OK", click: deletion_buttonset['cancel'] }] );
+    	} else if( $('#delete_relation_scope').text() === 'local' ) {
+    		$( this ).dialog( "option", "width", 160 );
+    		$( this ).dialog( "option", "buttons",
+    			[{ text: "Delete", click: deletion_buttonset['delete'] },
+    			 { text: "Cancel", click: deletion_buttonset['cancel'] }] );
+    	} else {
+    		$( this ).dialog( "option", "width", 200 );
+    		$( this ).dialog( "option", "buttons",
+    			[{ text: "Delete", click: deletion_buttonset['delete'] },
+    			 { text: "Delete all", click: deletion_buttonset['global'] },
+    			 { text: "Cancel", click: deletion_buttonset['cancel'] }] );
+		}    	
+    			
         mouseWait = setTimeout( function() { $("#delete-form").dialog( "close" ) }, 2000 );
     },
-    close: function() {
-    }
+    close: function() {}
   });
+
+  // Helpers for relationship deletion
+  
+  function delete_relation( scopewide ) {
+	  form_values = $('#delete_relation_form').serialize();
+	  if( scopewide ) {
+	  	form_values += "&scopewide=true";
+	  }
+	  ncpath = getTextURL( 'relationships' );
+	  var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
+		  $.each( data, function(item, source_target) { 
+			  relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
+		  });
+		  $( "#delete-form" ).dialog( "close" );
+	  }, dataType: 'json', type: 'DELETE' });
+  }
+  
+  function toggle_relation_active( node_id ) {
+      $('#svgenlargement .relation').find( "title:contains('" + node_id +  "')" ).each( function(index) {
+          matchid = new RegExp( "^" + node_id );
+          if( $(this).text().match( matchid ) != null ) {
+          	  var relation_id = $(this).parent().attr('id');
+              relation_manager.toggle_active( relation_id );
+          };
+      });
+  }
 
   // function for reading form dialog should go here; 
   // just hide the element for now if we don't have morphology
   if( can_morphologize ) {
+  	  if( editable ) {
+	  	  $('#reading_decollate_witnesses').multiselect();
+	  } else {
+	  	  $('#decollation').hide();
+	  }
 	  $('#reading-form').dialog({
 		autoOpen: false,
 		// height: 400,
@@ -883,6 +941,8 @@ $(document).ready(function () {
 		},
 		open: function() {
 			$(".ui-widget-overlay").css("background", "none");
+			$('#reading_decollate_witnesses').multiselect("refresh");
+			$('#reading_decollate_witnesses').multiselect("uncheckAll");
 			$("#dialog_overlay").show();
 			$('#reading_status').empty();
 			$("#dialog_overlay").height( $("#enlargement_container").height() );
@@ -894,12 +954,22 @@ $(document).ready(function () {
 			$("#dialog_overlay").hide();
 		}
 	  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		  if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1
+		if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1
 			&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-			  var errobj = jQuery.parseJSON( jqXHR.responseText );
-			  $('#reading_status').append( '<p class="error">Error: ' + errobj.error + '</p>' );
-		  }
-		  $(event.target).parent().find('.ui-button').button("enable");
+			var error;
+			if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
+				error = 'You are not authorized to modify this tradition. (Try logging in again?)';
+			} else {
+				try {
+					var errobj = jQuery.parseJSON( jqXHR.responseText );
+					error = errobj.error + '</br>The relationship cannot be made.</p>';
+				} catch(e) {
+					error = jqXHR.responseText;
+				}
+			}
+			$('#status').append( '<p class="error">Error: ' + error );
+		}
+		$(event.target).parent().find('.ui-button').button("enable");
 	  });
 	} else {
 		$('#reading-form').hide();
@@ -966,17 +1036,6 @@ $(document).ready(function () {
 	  left:50,
 	  scrollbars:1 
   }); 
-
-  
-  function toggle_relation_active( node_id ) {
-      $('#svgenlargement .relation').find( "title:contains('" + node_id +  "')" ).each( function(index) {
-          matchid = new RegExp( "^" + node_id );
-          if( $(this).text().match( matchid ) != null ) {
-          	  var relation_id = $(this).parent().attr('id');
-              relation_manager.toggle_active( relation_id );
-          };
-      });
-  }
 
   expandFillPageClients();
   $(window).resize(function() {

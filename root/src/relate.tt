@@ -84,7 +84,9 @@ $(document).ready(function () {
 			<input type="hidden" name="source_id" id="delete_source_node_id"/>
 			<input type="hidden" name="target_id" id="delete_target_node_id"/>
 		</form>
-		<div id="delete-form-text"></div>
+		<div id="delete-form-text">Type: <span id="delete_relation_type"></span><br/>
+		    Scope: <span id="delete_relation_scope"></span><br/>
+		    <span id="delete_relation_note"></span></div>
 	</div>
 	
 	<div id="reading-form" title="Reading info...">
@@ -98,6 +100,15 @@ $(document).ready(function () {
 				<label for="reading_grammar_invalid">This word's grammar cannot be right</label>
 			</div>
 			<br/><br/>
+			<!-- Collation correction option goes here -->
+			<div id="decollation">
+				<label for="reading_decollate">Detach this reading with the selected witnesses:</label>
+				<select id="reading_decollate_witnesses" name="reading_decollate_witnesses"
+					multiple="multiple">
+				<!-- Fill in relevant reading witnesses here -->
+				</select>
+				<button id="reading_decollate" onclick="decollate(); return false;">Uncollate</button>
+			</div>
 			<!-- Morphological options go here -->
 			<div id="normalization" class="morph">
 				<label for="reading_normal_form">Normalized form: </label>
