@@ -201,6 +201,10 @@ function svgEnlargementLoaded() {
     //used to calculate min and max zoom level:
     start_element_height = $('#__START__').children('ellipse')[0].getBBox().height;
     add_relations( function() { $('#loading_overlay').hide(); });
+    
+    //initialize marquee
+    marquee = new Marquee();
+    
 }
 
 function add_relations( callback_fn ) {
@@ -575,29 +579,99 @@ function draw_relation( source_id, target_id, relation_color ) {
     return relation_element;
 }
 
+function Marquee() {
+    
+    var self = this;
+    
+    this.enlargementOffset = $('#svgenlargement').offset();
+    this.svg_rect = $('#svgenlargement svg').svg('get');
+
+    this.show = function( event ) {
+        // TODO: uncolor possible selected
+        // TODO: unless SHIFT?
+        p = svg_root.createSVGPoint();
+        p.x = event.clientX - self.enlargementOffset.left;
+        p.y = event.clientY - self.enlargementOffset.top;
+        // NB: I think next line is officially needed, it's only 
+        // coincidentally that viewport and svg scale 1 to 1 initially
+        // and therefor we don't need a transform? 
+        // p.matrixTransform( svg_root_element.getCTM().inverse() );
+        self.svg_rect.rect( p.x, p.y, 0, 0, { fill: 'black', 'fill-opacity': '0.1', stroke: 'black', 'stroke-dasharray': '4,2', strokeWidth: '0.02em', id: 'marquee' } );
+    };
+
+    this.expand = function( event ) {
+        var rect = $('#marquee');
+        if( rect.length != 0 ) {
+            var pX = (event.clientX - self.enlargementOffset.left) - rect.attr("x");;
+            var pY = (event.clientY - self.enlargementOffset.top) - rect.attr("y");;
+            rect.attr("width", pX);
+            rect.attr("height", pY);
+        }
+    };
+    
+    this.hide = function() {
+        var rect = $('#marquee');
+        if( rect.length != 0 ) {
+            var left = $('#marquee').offset().left;
+            var top = $('#marquee').offset().top;
+            var right = left + parseInt( $('#marquee').attr( 'width' ) );
+            var bottom = top + parseInt( $('#marquee').attr( 'height' ) );
+            var tf = svg_root_element.getScreenCTM().inverse(); 
+            var p = svg_root.createSVGPoint();
+            p.x=left;
+            p.y=top;
+            var cx_min = p.matrixTransform(tf).x;
+            var cy_min = p.matrixTransform(tf).y;
+            p.x=right;
+            p.y=bottom;
+            var cx_max = p.matrixTransform(tf).x;
+            var cy_max = p.matrixTransform(tf).y;
+            $('#svgenlargement ellipse').each( function( index ) {
+                var cx = parseInt( $(this).attr('cx') );
+                var cy = parseInt( $(this).attr('cy') );
+                if( cx > cx_min && cx < cx_max) {
+                    if( cy > cy_min && cy < cy_max) {
+                        // we actually heve no real 'selected' state for nodes, except coloring
+                        $(this).attr( 'fill', '#ffccff' );
+                    }
+                }
+            });
+            // select here
+            self.svg_rect.remove( $('#marquee') );
+        }
+    };
+    
+}
+
 
 $(document).ready(function () {
     
   timer = null;
   relation_manager = new relation_factory();
-  $('#update_workspace_button').data('locked', false);
   
+  $('#update_workspace_button').data('locked', false);
+                
   $('#enlargement').mousedown(function (event) {
     $(this)
         .data('down', true)
         .data('x', event.clientX)
         .data('y', event.clientY)
         .data('scrollLeft', this.scrollLeft)
-        stateTf = svg_root_element.getCTM().inverse();
-        var p = svg_root.createSVGPoint();
-        p.x = event.clientX;
-        p.y = event.clientY;
-        stateOrigin = p.matrixTransform(stateTf);
-        event.returnValue = false;
-        event.preventDefault();
-        return false;
+    stateTf = svg_root_element.getCTM().inverse();
+    var p = svg_root.createSVGPoint();
+    p.x = event.clientX;
+    p.y = event.clientY;
+    stateOrigin = p.matrixTransform(stateTf);
+
+    // Activate marquee if in interaction mode
+    if( $('#update_workspace_button').data('locked') == true ) { marquee.show( event ) };
+        
+    event.returnValue = false;
+    event.preventDefault();
+    return false;
   }).mouseup(function (event) {
-        $(this).data('down', false);
+    marquee.hide(); 
+    $(this).data('down', false);
   }).mousemove(function (event) {
     if( timer != null ) { clearTimeout(timer); } 
     if ( ($(this).data('down') == true) && ($('#update_workspace_button').data('locked') == false) ) {
@@ -609,6 +683,7 @@ $(document).ready(function () {
         var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
         svg_root_element.setAttribute("transform", s);
     }
+    marquee.expand( event ); 
     event.returnValue = false;
     event.preventDefault();
   }).mousewheel(function (event, delta) {
@@ -638,6 +713,7 @@ $(document).ready(function () {
     'overflow' : 'hidden',
     'cursor' : '-moz-grab'
   });
+  
   
   if( editable ) {
 	$( "#dialog-form" ).dialog({
@@ -926,6 +1002,7 @@ function loadSVG(svgData) {
 		onLoad : svgEnlargementLoaded
 	});
 }
+
 
 
 /*	OS Gadget stuff
