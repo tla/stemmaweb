@@ -88,6 +88,14 @@ $(document).ready(function () {
 		    Scope: <span id="delete_relation_scope"></span><br/>
 		    <span id="delete_relation_note"></span></div>
 	</div>
+
+	<div id="multipleselect-form" title="Multiple nodes selected...">
+		<form id="multipleselect_form" action="#">
+			<input type="hidden" name="source_id" id="delete_source_node_id"/>
+			<input type="hidden" name="target_id" id="delete_target_node_id"/>
+		</form>
+		<div id="multipleselect-form-text">This should turn into a proper form.</div>
+	</div>
 	
 	<div id="reading-form" title="Reading info...">
 		<form id="reading_data_form" action="#">

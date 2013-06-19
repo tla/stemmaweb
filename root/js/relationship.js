@@ -5,6 +5,17 @@ var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
 
+function arrayUnique(array) {
+    var a = array.concat();
+    for(var i=0; i<a.length; ++i) {
+        for(var j=i+1; j<a.length; ++j) {
+            if(a[i] === a[j])
+                a.splice(j--, 1);
+        }
+    }
+    return a;
+};
+
 function getTextURL( which ) {
 	return basepath + textid + '/' + which;
 }
@@ -377,6 +388,10 @@ function node_obj(ellipse) {
       self.node_elements = node_elements_for(self.ellipse);
   }
 
+  this.get_witnesses = function() {
+      return readingdata[self.get_id()].witnesses
+  }
+  
   self.set_draggable( true );
 }
 
@@ -617,7 +632,7 @@ function Marquee() {
         }
     };
     
-    this.hide = function() {
+    this.select = function() {
         var rect = $('#marquee');
         if( rect.length != 0 ) {
             var left = $('#marquee').offset().left;
@@ -634,6 +649,7 @@ function Marquee() {
             p.y=bottom;
             var cx_max = p.matrixTransform(tf).x;
             var cy_max = p.matrixTransform(tf).y;
+            var witnesses = [];
             $('#svgenlargement ellipse').each( function( index ) {
                 var cx = parseInt( $(this).attr('cx') );
                 var cy = parseInt( $(this).attr('cy') );
@@ -641,10 +657,17 @@ function Marquee() {
                     if( cy > cy_min && cy < cy_max) {
                         // we actually heve no real 'selected' state for nodes, except coloring
                         $(this).attr( 'fill', '#ffccff' );
+                        var this_witnesses = $(this).data( 'node_obj' ).get_witnesses();
+                        witnesses = arrayUnique( witnesses.concat( this_witnesses ) );
                     }
                 }
             });
-            // select here
+            if( $('ellipse[fill="#ffccff"]').size() > 0 ) {
+                $.each( witnesses, function( index, value ) {
+                    $('#multipleselect-form').append( '<input type="checkbox" name="witnesses" value="' + value + '">' + value + '<br>' );
+                });
+                $('#multipleselect-form').dialog( 'open' );
+            }
             self.svg_rect.remove( $('#marquee') );
         }
     };
@@ -678,7 +701,7 @@ $(document).ready(function () {
     event.preventDefault();
     return false;
   }).mouseup(function (event) {
-    marquee.hide(); 
+    marquee.select(); 
     $(this).data('down', false);
   }).mousemove(function (event) {
     if( timer != null ) { clearTimeout(timer); } 
@@ -813,6 +836,7 @@ $(document).ready(function () {
         global: function () { delete_relation( true ); },
         delete: function() { delete_relation( false ); }
   };  	
+  
   $( "#delete-form" ).dialog({
     autoOpen: false,
     height: 135,
@@ -820,8 +844,12 @@ $(document).ready(function () {
     modal: false,
     create: function(event, ui) {
     	// TODO What is this logic doing?
+    	// This scales the buttons in the dialog and makes it look proper
+    	// Not sure how essential it is, does anything break if it's not here?
         var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
         buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
+    	// A: This makes sure that the pop up delete relation dialogue for a hovered over
+    	// relation auto closes if the user doesn't engage (mouseover) with it.
         var dialog_aria = $("div[aria-labelledby='ui-dialog-title-delete-form']");  
         dialog_aria.mouseenter( function() {
             if( mouseWait != null ) { clearTimeout(mouseWait) };
@@ -848,6 +876,31 @@ $(document).ready(function () {
 		}    	
     			
         mouseWait = setTimeout( function() { $("#delete-form").dialog( "close" ) }, 2000 );
+    },
+    close: function() {}
+  });
+
+  var multipleselect_buttonset = {
+        cancel: function() { $( this ).dialog( "close" ); },
+        button1: function () {  },
+        button2: function() {  }
+  };  	
+
+  $( "#multipleselect-form" ).dialog({
+    autoOpen: false,
+    height: 150,
+    width: 250,
+    modal: true,
+    create: function(event, ui) {
+        var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
+        buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
+    },
+    open: function() {
+        $( this ).dialog( "option", "width", 200 );
+        $( this ).dialog( "option", "buttons",
+            [{ text: "Button_1", click: multipleselect_buttonset['button1'] },
+             { text: "Button_2", click: multipleselect_buttonset['button2'] },
+             { text: "Cancel", click: multipleselect_buttonset['cancel'] }] );
     },
     close: function() {}
   });
