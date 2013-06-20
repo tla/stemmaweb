@@ -606,29 +606,36 @@ function Marquee() {
     
     var self = this;
     
+    this.x = 0;
+    this.y = 0;
+    this.dx = 0;
+    this.dy = 0;
     this.enlargementOffset = $('#svgenlargement').offset();
     this.svg_rect = $('#svgenlargement svg').svg('get');
 
     this.show = function( event ) {
         // TODO: uncolor possible selected
         // TODO: unless SHIFT?
+        self.x = event.clientX;
+        self.y = event.clientY;
         p = svg_root.createSVGPoint();
         p.x = event.clientX - self.enlargementOffset.left;
         p.y = event.clientY - self.enlargementOffset.top;
-        // NB: I think next line is officially needed, it's only 
-        // coincidentally that viewport and svg scale 1 to 1 initially
-        // and therefor we don't need a transform? 
-        // p.matrixTransform( svg_root_element.getCTM().inverse() );
         self.svg_rect.rect( p.x, p.y, 0, 0, { fill: 'black', 'fill-opacity': '0.1', stroke: 'black', 'stroke-dasharray': '4,2', strokeWidth: '0.02em', id: 'marquee' } );
     };
 
     this.expand = function( event ) {
+        self.dx = (event.clientX - self.x);
+        self.dy = (event.clientY - self.y);
         var rect = $('#marquee');
-        if( rect.length != 0 ) {
-            var pX = (event.clientX - self.enlargementOffset.left) - rect.attr("x");;
-            var pY = (event.clientY - self.enlargementOffset.top) - rect.attr("y");;
-            rect.attr("width", pX);
-            rect.attr("height", pY);
+        if( rect.length != 0 ) {            
+            var rect_w =  Math.abs( self.dx );
+            var rect_h =  Math.abs( self.dy );
+            var rect_x = self.x - self.enlargementOffset.left;
+            var rect_y = self.y - self.enlargementOffset.top;
+            if( self.dx < 0 ) { rect_x = rect_x - rect_w }
+            if( self.dy < 0 ) { rect_y = rect_y - rect_h }
+            rect.attr("x", rect_x).attr("y", rect_y).attr("width", rect_w).attr("height", rect_h);
         }
     };
     
@@ -672,6 +679,10 @@ function Marquee() {
         }
     };
     
+    this.unselect = function() {
+        $('ellipse[fill="#ffccff"]').attr( 'fill', '#fff' );
+    }
+     
 }
 
 
@@ -902,7 +913,7 @@ $(document).ready(function () {
              { text: "Button_2", click: multipleselect_buttonset['button2'] },
              { text: "Cancel", click: multipleselect_buttonset['cancel'] }] );
     },
-    close: function() {}
+    close: function() { marquee.unselect(); }
   });
 
   // Helpers for relationship deletion
