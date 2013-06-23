@@ -184,11 +184,6 @@ function svgEnlargementLoaded() {
 	    $('#update_workspace_button').data('locked', false);
     	$('#update_workspace_button').css('background-position', '0px 44px');
     }
-	var rdgpath = getTextURL( 'readings' );
-		$.getJSON( rdgpath, function( data ) {
-  		readingdata = data;
-	    $('#svgenlargement ellipse').each( function( i, el ) { color_inactive( el ) });
-  	});
     $('#svgenlargement ellipse').parent().dblclick( node_dblclick_listener );
     var graph_svg = $('#svgenlargement svg');
     var svg_g = $('#svgenlargement svg g')[0];
@@ -219,7 +214,15 @@ function svgEnlargementLoaded() {
     svg_g.setAttribute('transform', transform);
     //used to calculate min and max zoom level:
     start_element_height = $('#__START__').children('ellipse')[0].getBBox().height;
-    add_relations( function() { $('#loading_overlay').hide(); });
+    //some use of call backs to ensure succesive execution
+    add_relations( function() { 
+        var rdgpath = getTextURL( 'readings' );
+        $.getJSON( rdgpath, function( data ) {
+            readingdata = data;
+            $('#svgenlargement ellipse').each( function( i, el ) { color_inactive( el ) });
+        });
+        $('#loading_overlay').hide(); 
+    });
     
     //initialize marquee
     marquee = new Marquee();
@@ -253,10 +256,10 @@ function add_relations( callback_fn ) {
 				relation.data( 'note', rel_info.note );
 				if( editable ) {
 					var node_obj = get_node_obj(rel_info.source);
-					node_obj.set_draggable( false );
+					node_obj.set_selectable( false );
 					node_obj.ellipse.data( 'node_obj', null );
 					node_obj = get_node_obj(rel_info.target);
-					node_obj.set_draggable( false );
+					node_obj.set_selectable( false );
 					node_obj.ellipse.data( 'node_obj', null );
 				}
 			}
@@ -291,16 +294,41 @@ function node_obj(ellipse) {
     return $(self.ellipse).parent().attr('id')
   }
   
+  this.set_selectable = function( clickable ) {
+      if( clickable && editable ) {
+          $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
+          $(self.ellipse).parent().hover( this.enter_node, this.leave_node );
+          $(self.ellipse).parent().mousedown( function(evt) { evt.stopPropagation() } ); 
+          $(self.ellipse).parent().click( function(evt) { 
+              evt.stopPropagation();              
+              if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
+                $('ellipse[fill="#9999ff"]').each( function() { 
+                    $(this).data( 'node_obj' ).set_draggable( false );
+                } );
+              }
+              self.set_draggable( true ) 
+          });
+      } else {
+          $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
+          self.ellipse.siblings('text').attr('class', '');
+          $(self.ellipse).parent().unbind(); 
+          $('body').unbind('mousemove');
+          $('body').unbind('mouseup');
+      }
+  }
+  
   this.set_draggable = function( draggable ) {
     if( draggable && editable ) {
-      $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
+      $(self.ellipse).attr( {stroke:'black', fill:'#9999ff'} );
       $(self.ellipse).parent().mousedown( this.mousedown_listener );
-      $(self.ellipse).parent().hover( this.enter_node, this.leave_node ); 
+      $(self.ellipse).parent().unbind( 'mouseenter' ).unbind( 'mouseleave' );
       self.ellipse.siblings('text').attr('class', 'noselect draggable');
     } else {
+      $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
       self.ellipse.siblings('text').attr('class', '');
-	  $(self.ellipse).parent().unbind( 'mouseenter' ).unbind( 'mouseleave' ).unbind( 'mousedown' );     
-      color_inactive( self.ellipse );
+      $(self.ellipse).parent().unbind( 'mousedown ');
+      $(self.ellipse).parent().mousedown( function(evt) { evt.stopPropagation() } ); 
+      $(self.ellipse).parent().hover( this.enter_node, this.leave_node );
     }
   }
 
@@ -311,7 +339,7 @@ function node_obj(ellipse) {
     $('body').mousemove( self.mousemove_listener );
     $('body').mouseup( self.mouseup_listener );
     $(self.ellipse).parent().unbind('mouseenter').unbind('mouseleave')
-    self.ellipse.attr( 'fill', '#ff66ff' );
+    self.ellipse.attr( 'fill', '#6b6bb2' );
     first_node_g_element = $("#svgenlargement g .node" ).filter( ":first" );
     if( first_node_g_element.attr('id') !== self.get_g().attr('id') ) { self.get_g().insertBefore( first_node_g_element ) };
   }
@@ -339,8 +367,7 @@ function node_obj(ellipse) {
     };
     $('body').unbind('mousemove');
     $('body').unbind('mouseup');
-    self.ellipse.attr( 'fill', '#fff' );
-    $(self.ellipse).parent().hover( self.enter_node, self.leave_node );
+    self.ellipse.attr( 'fill', '#9999ff' );
     self.reset_elements();
   }
   
@@ -392,7 +419,7 @@ function node_obj(ellipse) {
       return readingdata[self.get_id()].witnesses
   }
   
-  self.set_draggable( true );
+  self.set_selectable( true );
 }
 
 function svgshape( shape_element ) {
@@ -642,6 +669,13 @@ function Marquee() {
     this.select = function() {
         var rect = $('#marquee');
         if( rect.length != 0 ) {
+            //unselect any possible selected first
+            if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
+              $('ellipse[fill="#9999ff"]').each( function() { 
+                  $(this).data( 'node_obj' ).set_draggable( false );
+              } );
+            }
+            //compute dimension of marquee
             var left = $('#marquee').offset().left;
             var top = $('#marquee').offset().top;
             var right = left + parseInt( $('#marquee').attr( 'width' ) );
@@ -656,6 +690,8 @@ function Marquee() {
             p.y=bottom;
             var cx_max = p.matrixTransform(tf).x;
             var cy_max = p.matrixTransform(tf).y;
+            //select any node with its center inside the marquee
+            //also merge witness sets from nodes
             var witnesses = [];
             $('#svgenlargement ellipse').each( function( index ) {
                 var cx = parseInt( $(this).attr('cx') );
@@ -663,13 +699,14 @@ function Marquee() {
                 if( cx > cx_min && cx < cx_max) {
                     if( cy > cy_min && cy < cy_max) {
                         // we actually heve no real 'selected' state for nodes, except coloring
-                        $(this).attr( 'fill', '#ffccff' );
+                        $(this).attr( 'fill', '#9999ff' );
                         var this_witnesses = $(this).data( 'node_obj' ).get_witnesses();
                         witnesses = arrayUnique( witnesses.concat( this_witnesses ) );
                     }
                 }
             });
-            if( $('ellipse[fill="#ffccff"]').size() > 0 ) {
+            if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
+                //add interesectio of witnesses sets to the multi select form and open it
                 $.each( witnesses, function( index, value ) {
                     $('#multipleselect-form').append( '<input type="checkbox" name="witnesses" value="' + value + '">' + value + '<br>' );
                 });
@@ -680,7 +717,7 @@ function Marquee() {
     };
     
     this.unselect = function() {
-        $('ellipse[fill="#ffccff"]').attr( 'fill', '#fff' );
+        $('ellipse[fill="#9999ff"]').attr( 'fill', '#fff' );
     }
      
 }
@@ -912,8 +949,16 @@ $(document).ready(function () {
             [{ text: "Button_1", click: multipleselect_buttonset['button1'] },
              { text: "Button_2", click: multipleselect_buttonset['button2'] },
              { text: "Cancel", click: multipleselect_buttonset['cancel'] }] );
+        $(".ui-widget-overlay").css("background", "none");
+        $("#dialog_overlay").show();
+        $("#dialog_overlay").height( $("#enlargement_container").height() );
+        $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
+        $("#dialog_overlay").offset( $("#enlargement_container").offset() );
     },
-    close: function() { marquee.unselect(); }
+    close: function() { 
+        marquee.unselect();
+        $("#dialog_overlay").hide();
+    }
   });
 
   // Helpers for relationship deletion
@@ -1050,7 +1095,8 @@ $(document).ready(function () {
          $('#svgenlargement ellipse' ).each( function( index ) {
              if( $(this).data( 'node_obj' ) != null ) {
                  $(this).data( 'node_obj' ).ungreyout_edges();
-                 $(this).data( 'node_obj' ).set_draggable( false );
+                 $(this).data( 'node_obj' ).set_selectable( false );
+                 color_inactive( $(this) );
                  var node_id = $(this).data( 'node_obj' ).get_id();
                  toggle_relation_active( node_id );
                  $(this).data( 'node_obj', null );
@@ -1074,7 +1120,7 @@ $(document).ready(function () {
                  if( $(this).data( 'node_obj' ) == null ) {
                      $(this).data( 'node_obj', new node_obj( $(this) ) );
                  } else {
-                     $(this).data( 'node_obj' ).set_draggable( true );
+                     $(this).data( 'node_obj' ).set_selectable( true );
                  }
                  $(this).data( 'node_obj' ).greyout_edges();
                  var node_id = $(this).data( 'node_obj' ).get_id();
