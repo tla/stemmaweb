@@ -390,18 +390,21 @@ sub reading :Chained('text') :PathPart :Args(1) {
 
 =head2 duplicate
 
- POST relation/$textid/duplicate/$id/ { witnesses }
+ POST relation/$textid/duplicate { data }
  
-Duplicates the given reading, detaching the witnesses specified in the list to use
-the new reading instead of the old. The 'witnesses' param should be a JSON array.
+Duplicates the requested readings, detaching the witnesses specified in
+the list to use the new reading(s) instead of the old. The data to be
+passed should be a JSON structure:
+
+ { readings: rid1,rid2,rid3,...
+   witnesses: [ wit1, ... ] }
 
 =cut
 
-sub duplicate :Chained('text') :PathPart :Args(1) {
-	my( $self, $c, $reading_id ) = @_;
+sub duplicate :Chained('text') :PathPart :Args(0) {
+	my( $self, $c ) = @_;
 	my $tradition = delete $c->stash->{'tradition'};
 	my $collation = $tradition->collation;
-	my $rdg = $collation->reading( $reading_id );
 	my $m = $c->model('Directory');
 	if( $c->request->method eq 'POST' ) {
 		if( $c->stash->{'permission'} ne 'full' ) {
@@ -413,11 +416,62 @@ sub duplicate :Chained('text') :PathPart :Args(1) {
 		}
 		my $errmsg;
 		my $response = {};
-		if( $c->request->param('witnesses') ) {
-			my $witlist = from_json( $c->request->param('witnesses') );
+		# Sort out which readings need to be duplicated from the set given, and
+		# ensure that all the given wits bear each relevant reading.
+		
+		my %wits = ();
+		map { $wits{$_} = 1 } $c->request->param('witnesses[]');
+		my %rdgranks = ();
+		foreach my $rid ( $c->request->param('readings[]') ) {
+			my $numwits = 0;
+			my $rdg = $collation->reading( $rid );
+			foreach my $rwit ( $rdg->witnesses( $rid ) ) {
+				$numwits++ if exists $wits{$rwit};
+			}
+			if( $numwits > 0 && $numwits < keys( %wits ) ) {
+				$errmsg = "Reading $rid contains some but not all of the specified witnesses.";
+				last;
+			} elsif( exists $rdgranks{ $rdg->rank } ) {
+				$errmsg = "More than one reading would be detached along with $rid at rank " . $rdg->rank;
+				last;
+			} else {
+				$rdgranks{ $rdg->rank } = $rid;
+			}
+		}
+		
+		# Now check that the readings make a single sequence.
+		unless( $errmsg ) {
+			my $prior;
+			foreach my $rank ( sort { $a <=> $b } keys %rdgranks ) {
+				my $rid = $rdgranks{$rank};
+				if( $prior ) {
+					# Check that there is only one path between $prior and $rdg.
+					foreach my $wit ( keys %wits ) {
+						unless( $collation->prior_reading( $rid, $wit ) eq $prior ) {
+							$errmsg = "Diverging witness paths from $prior to $rid at $wit";
+							last;
+						}
+					}
+				}
+				$prior = $rid;
+			}
+		}
+		
+		# Abort if we've run into a problem.
+		if( $errmsg ) {
+			$c->stash->{'result'} = { 'error' => $errmsg };
+			$c->response->status( '403' );
+			$c->forward('View::JSON');
+			return;
+		}
+		
+		# Otherwise, do the dirty work.
+		my @witlist = keys %wits;
+		foreach my $rank ( sort { $a <=> $b } keys %rdgranks ) {
 			my $newrdg;
+			my $reading_id = $rdgranks{$rank};
 			try {
-				$newrdg = $collation->duplicate_reading( $reading_id, @$witlist );
+				$newrdg = $collation->duplicate_reading( $reading_id, @witlist );
 			} catch( Text::Tradition::Error $e ) {
 				$c->response->status( '403' );
 				$errmsg = $e->message;
@@ -427,13 +481,15 @@ sub duplicate :Chained('text') :PathPart :Args(1) {
 				$errmsg = 'Something went wrong with the request';	
 			}
 			if( $newrdg ) {
-				$response = { reading => $newrdg->id, witnesses => $witlist };
+				$response->{$reading_id} = _reading_struct( $newrdg );
 			}
+		} 
+		if( $errmsg ) {
+			$c->stash->{'result'} = { 'error' => $errmsg };
 		} else {
-			$c->response->status( '403' );
-			$errmsg = "At least one witness must be specified for a duplication";
+			$m->save( $collation );
+			$c->stash->{'result'} = $response;
 		}
-		$c->stash->{'result'} = $errmsg ? { 'error' => $errmsg } : $response;
 	}
 	$c->forward('View::JSON');
 }
