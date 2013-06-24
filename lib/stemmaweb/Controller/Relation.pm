@@ -481,7 +481,9 @@ sub duplicate :Chained('text') :PathPart :Args(0) {
 				$errmsg = 'Something went wrong with the request';	
 			}
 			if( $newrdg ) {
-				$response->{$reading_id} = _reading_struct( $newrdg );
+				my $data = _reading_struct( $newrdg );
+				$data->{'orig_rdg'} = $reading_id;
+				$response->{"$newrdg"} = $data;
 			}
 		} 
 		if( $errmsg ) {
