@@ -90,11 +90,10 @@ $(document).ready(function () {
 	</div>
 
 	<div id="multipleselect-form" title="Multiple nodes selected...">
-		<form id="multipleselect_form" action="#">
-			<input type="hidden" name="source_id" id="delete_source_node_id"/>
-			<input type="hidden" name="target_id" id="delete_target_node_id"/>
+		<div id="multipleselect-form-status"></div>
+		<div id="multipleselect-form-text">Select witness(es) to detach:</div>
+		<form id="detach_collated_form" action="#">
 		</form>
-		<div id="multipleselect-form-text">This should turn into a proper form.</div>
 	</div>
 	
 	<div id="reading-form" title="Reading info...">
