@@ -637,6 +637,15 @@ function draw_relation( source_id, target_id, relation_color ) {
 }
 
 function detach_node( readingsgohere ) {
+    
+    // This method is work in progress
+    // Todos:
+    // 1) Unproven/untested: readings.each will get us in trouble most likely for
+    //    duplicating edges in a strand that both are incoming and outgoing
+    //    like b and c in -i-> a -ii-> b -iii-> c -iv->
+    // 2) Added edges and nodes look rough and unsmoothed, what the f.?
+    //
+    
     var readings = { "n127_0": 
         { 
             "grammar_invalid": null,
@@ -661,9 +670,6 @@ function detach_node( readingsgohere ) {
         } );
     } );    
     
-    // Todo: .each is getting us in trouble most likely for
-    // duplicating edges in a strand that both are incoming and outgoing
-    // like b and c in -i-> a -ii-> b -iii-> c -iv->
     detached_edges = [];
     
     // here we detach witnesses from the existing edges accoring to what's being relayed by readings
@@ -689,7 +695,7 @@ function detach_node( readingsgohere ) {
             }
         } );
         
-        // After detachng we still need to check if for *all* readings
+        // After detaching we still need to check if for *all* readings
         // an edge was detached. It may be that a witness was not
         // explicitly named on an edge but was part of a 'majority' edge
         // in which case we need to duplicate and name that edge after those
@@ -708,14 +714,34 @@ function detach_node( readingsgohere ) {
                 }
             } );
         }
+        
+        // Lots of unabstracted knowledge down here :/
+        // Clone original node/reading, rename/id it..
+        duplicate_node = get_ellipse( reading.orig_rdg ).parent().clone();
+        duplicate_node.attr( 'id', node_id );
+        duplicate_node.children( 'title' ).text( node_id );
+        
+        // Add the node and all new edges into the graph
+        var graph_root = $('#svgenlargement svg g');
+        graph_root.append( duplicate_node );
+        $.each( detached_edges, function( index, edge ) {
+            edge.g_elem.attr( 'id', ( edge.g_elem.attr( 'id' ) + "_0" ) );
+            edge_title = edge.g_elem.children( 'title' ).text();
+            edge_title = edge_title.replace( reading.orig_rdg, node_id );
+            edge.g_elem.children( 'title' ).text( edge_title );
+            // Reg unabstracted knowledge: isn't it more elegant to make 
+            // it edge.append_to( graph_root )?
+            graph_root.append( edge.g_elem );
+        } );
+        
+        // Move the node somewhat up for 'dramatic effect' :-p
+        var node_elements = node_elements_for( get_ellipse( node_id ) ); 
+        $.each( node_elements, function( index, element ) {
+            element.move( 0, -150 );
+        } );
+        
     } );
-            
-    console.log( detached_edges );
-    //if not all witnesses of reading are detached in and out clone
-      // clone remaining from 'majority in'
-    //clone node with node_id
-    // in all clones replace reading.orig_rdg with node_id
-    // move cloned node up 20px
+    
 
 }
 
