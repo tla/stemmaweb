@@ -19,6 +19,7 @@
 [% IF applicationjs -%]
     <script type="text/javascript" src="[% applicationjs %]?v=[% vstr %]"></script>
 [% END -%]
+    <script type="text/javascript" src="[% c.uri_for('/js/detach_helpers.js') %]"></script>
     [% content %]
     <title>[% pagetitle %]</title>
   </head>

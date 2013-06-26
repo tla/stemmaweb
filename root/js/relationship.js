@@ -5,6 +5,12 @@ var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
 
+jQuery.removeFromArray = function(value, arr) {
+    return jQuery.grep(arr, function(elem, index) {
+        return elem !== value;
+    });
+};
+
 function arrayUnique(array) {
     var a = array.concat();
     for(var i=0; i<a.length; ++i) {
@@ -220,6 +226,7 @@ function svgEnlargementLoaded() {
         $.getJSON( rdgpath, function( data ) {
             readingdata = data;
             $('#svgenlargement ellipse').each( function( i, el ) { color_inactive( el ) });
+            detach_node(null);
         });
         $('#loading_overlay').hide(); 
     });
@@ -627,6 +634,84 @@ function draw_relation( source_id, target_id, relation_color ) {
     var relation_element = $('#svgenlargement .relation').filter( ':last' );
     relation_element.insertBefore( $('#svgenlargement g g').filter(':first') );
     return relation_element;
+}
+
+function detach_node( readingsgohere ) {
+    var readings = { "n127_0": 
+        { 
+            "grammar_invalid": null,
+            "witnesses": ["Sg524"],
+            "normal_form": "Secundo ",
+            "is_nonsense": null,
+            "lexemes": [],
+            "variants": [],
+            "text": "Secundo",
+            "is_meta": null,
+            "orig_rdg": "n127"
+        }
+    }
+
+    // add new node(s)
+    $.extend( readingdata, readings );
+    // remove from existing readings the witnesses for the new nodes/readings
+    $.each( readings, function( node_id, reading ) {
+        $.each( reading.witnesses, function( index, witness ) {
+            var witnesses = readingdata[ reading.orig_rdg ].witnesses;
+            readingdata[ reading.orig_rdg ].witnesses = $.removeFromArray( witness, witnesses );
+        } );
+    } );    
+    
+    // Todo: .each is getting us in trouble most likely
+    // assuming one element in object readings for now
+    detached_edges = [];
+    $.each( readings, function( node_id, reading ) {
+        var edges = edges_of( get_ellipse( reading.orig_rdg ) );
+        incoming_remaining = [];
+        outgoing_remaining = [];
+        $.each( reading.witnesses, function( index, witness ) {
+            incoming_remaining.push( witness );
+            outgoing_remaining.push( witness );
+        } );
+        $.each( edges, function( index, edge ) {
+            detached_edge = edge.detach_witnesses( reading.witnesses );
+            if( detached_edge != null ) {
+                detached_edges.push( detached_edge );
+                $.each( detached_edge.witnesses, function( index, witness ) {
+                    if( detached_edge.is_incoming == true ) {
+                        incoming_remaining = $.removeFromArray( witness, incoming_remaining );
+                    } else {
+                        outgoing_remaining = $.removeFromArray( witness, outgoing_remaining );
+                    }
+                } );
+            }
+        } );
+        if( outgoing_remaining.length > 0 ) {
+            console.log( 'jo' );
+            $.each( edges, function( index, edge ) {
+                console.log( edge.get_label() );
+                if( edge.get_label() == 'majority' && !edge.is_incoming ) {
+                    detached_edges.push( edge.clone_for( outgoing_remaining ) );
+                }
+            } );
+        }
+        if( incoming_remaining.length > 0 ) {
+            console.log( 'je' );
+            $.each( edges, function( index, edge ) {
+                if( edge.get_label() == 'majority' && edge.is_incoming ) {
+                    detached_edges.push( edge.clone_for( outgoing_remaining ) );
+                }
+            } );
+        }
+        console.log( detached_edges );
+    } );
+            
+    //if not all witnesses of reading are detached in and out clone
+      // clone remaining from 'majority in'
+    //clone node with node_id
+    // in all clones replace reading.orig_rdg with node_id
+    // move cloned node up 20px
+    
+
 }
 
 function Marquee() {
