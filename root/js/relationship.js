@@ -722,7 +722,7 @@ function detach_node( readingsgohere ) {
         duplicate_node.children( 'title' ).text( node_id );
         
         // Add the node and all new edges into the graph
-        var graph_root = $('#svgenlargement svg g');
+        var graph_root = $('#svgenlargement svg g.graph');
         graph_root.append( duplicate_node );
         $.each( detached_edges, function( index, edge ) {
             edge.g_elem.attr( 'id', ( edge.g_elem.attr( 'id' ) + "_0" ) );
