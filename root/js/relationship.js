@@ -1053,22 +1053,20 @@ $(document).ready(function () {
       Detach: function ( evt ) { 
         $(evt.target).button("disable");
         var form_values = $('#detach_collated_form').serialize();
-      ncpath = getTextURL( 'duplicate' );
-      var jqjson = $.post( ncpath, form_values, function(data) {
+        ncpath = getTextURL( 'duplicate' );
+        var jqjson = $.post( ncpath, form_values, function(data) {
         detach_node( data );
         $(evt.target).button("enable");
+        $( this ).dialog( "close" );
       });
      }
-    },     create: function(event, ui) {
+    },
+    create: function(event, ui) {
         var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
         buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
     },
     open: function() {
         $( this ).dialog( "option", "width", 200 );
-        $( this ).dialog( "option", "buttons",
-            [{ text: "Button_1", click: multipleselect_buttonset['button1'] },
-             { text: "Button_2", click: multipleselect_buttonset['button2'] },
-             { text: "Cancel", click: multipleselect_buttonset['cancel'] }] );
         $(".ui-widget-overlay").css("background", "none");
         $('#multipleselect-form-status').empty();
         $("#dialog_overlay").show();
