@@ -425,10 +425,12 @@ sub duplicate :Chained('text') :PathPart :Args(0) {
 		foreach my $rid ( $c->request->param('readings[]') ) {
 			my $numwits = 0;
 			my $rdg = $collation->reading( $rid );
+			$DB::single = 1;
 			foreach my $rwit ( $rdg->witnesses( $rid ) ) {
 				$numwits++ if exists $wits{$rwit};
 			}
-			if( $numwits > 0 && $numwits < keys( %wits ) ) {
+			next unless $numwits; # Disregard readings with none of our witnesses
+			if( $numwits < keys( %wits ) ) {
 				$errmsg = "Reading $rid contains some but not all of the specified witnesses.";
 				last;
 			} elsif( exists $rdgranks{ $rdg->rank } ) {
