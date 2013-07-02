@@ -226,7 +226,7 @@ function svgEnlargementLoaded() {
         $.getJSON( rdgpath, function( data ) {
             readingdata = data;
             $('#svgenlargement ellipse').each( function( i, el ) { color_inactive( el ) });
-            detach_node(null);
+            // detach_node(null);
         });
         $('#loading_overlay').hide(); 
     });
@@ -636,7 +636,7 @@ function draw_relation( source_id, target_id, relation_color ) {
     return relation_element;
 }
 
-function detach_node( readingsgohere ) {
+function detach_node( readings ) {
     
     // This method is work in progress
     // Todos:
@@ -646,20 +646,6 @@ function detach_node( readingsgohere ) {
     // 2) Added edges and nodes look rough and unsmoothed, what the f.?
     //
     
-    var readings = { "n127_0": 
-        { 
-            "grammar_invalid": null,
-            "witnesses": ["Sg524"],
-            "normal_form": "Secundo ",
-            "is_nonsense": null,
-            "lexemes": [],
-            "variants": [],
-            "text": "Secundo",
-            "is_meta": null,
-            "orig_rdg": "n127"
-        }
-    }
-
     // add new node(s)
     $.extend( readingdata, readings );
     // remove from existing readings the witnesses for the new nodes/readings
@@ -807,6 +793,7 @@ function Marquee() {
             var cx_max = p.matrixTransform(tf).x;
             var cy_max = p.matrixTransform(tf).y;
             //select any node with its center inside the marquee
+            var readings = [];
             //also merge witness sets from nodes
             var witnesses = [];
             $('#svgenlargement ellipse').each( function( index ) {
@@ -816,16 +803,28 @@ function Marquee() {
                     if( cy > cy_min && cy < cy_max) {
                         // we actually heve no real 'selected' state for nodes, except coloring
                         $(this).attr( 'fill', '#9999ff' );
+                        // Take note of the selected reading(s) and applicable witness(es)
+                        // so we can populate the multipleselect-form 
+                        readings.push( $(this).parent().attr('id') ); 
                         var this_witnesses = $(this).data( 'node_obj' ).get_witnesses();
                         witnesses = arrayUnique( witnesses.concat( this_witnesses ) );
                     }
                 }
             });
             if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
-                //add interesectio of witnesses sets to the multi select form and open it
-                $.each( witnesses, function( index, value ) {
-                    $('#multipleselect-form').append( '<input type="checkbox" name="witnesses" value="' + value + '">' + value + '<br>' );
+                //add intersection of witnesses sets to the multi select form and open it
+                $('#detach_collated_form').empty();
+                $.each( readings, function( index, value ) {
+                  $('#detach_collated_form').append( $('<input>').attr(
+                    "type", "hidden").attr("name", "readings[]").attr(
+                    "value", value ) );
+              	});
+				$.each( witnesses, function( index, value ) {
+                    $('#detach_collated_form').append( 
+                      '<input type="checkbox" name="witnesses[]" value="' + value 
+                      + '">' + value + '<br>' ); 
                 });
+                $('#multiple_selected_readings').attr('value', readings.join(',') ); 
                 $('#multipleselect-form').dialog( 'open' );
             }
             self.svg_rect.remove( $('#marquee') );
@@ -1044,18 +1043,23 @@ $(document).ready(function () {
     close: function() {}
   });
 
-  var multipleselect_buttonset = {
-        cancel: function() { $( this ).dialog( "close" ); },
-        button1: function () {  },
-        button2: function() {  }
-  };  	
-
   $( "#multipleselect-form" ).dialog({
     autoOpen: false,
     height: 150,
     width: 250,
     modal: true,
-    create: function(event, ui) {
+    buttons: {
+      Cancel: function() { $( this ).dialog( "close" ); },
+      Detach: function ( evt ) { 
+        $(evt.target).button("disable");
+        var form_values = $('#detach_collated_form').serialize();
+      ncpath = getTextURL( 'duplicate' );
+      var jqjson = $.post( ncpath, form_values, function(data) {
+        detach_node( data );
+        $(evt.target).button("enable");
+      });
+     }
+    },     create: function(event, ui) {
         var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
         buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
     },
@@ -1066,6 +1070,7 @@ $(document).ready(function () {
              { text: "Button_2", click: multipleselect_buttonset['button2'] },
              { text: "Cancel", click: multipleselect_buttonset['cancel'] }] );
         $(".ui-widget-overlay").css("background", "none");
+        $('#multipleselect-form-status').empty();
         $("#dialog_overlay").show();
         $("#dialog_overlay").height( $("#enlargement_container").height() );
         $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
@@ -1075,7 +1080,25 @@ $(document).ready(function () {
         marquee.unselect();
         $("#dialog_overlay").hide();
     }
-  });
+  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+    if( ajaxSettings.url == getTextURL('duplicate') 
+      && ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
+      var error;
+      if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
+        error = 'You are not authorized to modify this tradition. (Try logging in again?)';
+      } else {
+        try {
+          var errobj = jQuery.parseJSON( jqXHR.responseText );
+          error = errobj.error + '</br>The relationship cannot be made.</p>';
+        } catch(e) {
+          error = jqXHR.responseText;
+        }
+      }
+      $('#multipleselect-form-status').append( '<p class="error">Error: ' + error );
+    }
+    $(event.target).parent().find('.ui-button').button("enable");
+  }); 
+
 
   // Helpers for relationship deletion
   
