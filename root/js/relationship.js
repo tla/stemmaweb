@@ -291,12 +291,20 @@ function node_obj(ellipse) {
   this.ellipse = ellipse;
   var self = this;
   
+  this.ox = 0;
+  this.oy = 0;
   this.x = 0;
   this.y = 0;
   this.dx = 0;
   this.dy = 0;
   this.node_elements = node_elements_for(self.ellipse);
 
+  if( $(self.ellipse).data( 'org_translate' ) != null ) {
+      var org_translate = $(self.ellipse).data( 'org_translate' );
+      this.ox = org_translate[0];
+      this.oy = org_translate[1]; 
+  }
+  
   this.get_id = function() {
     return $(self.ellipse).parent().attr('id')
   }
@@ -408,14 +416,14 @@ function node_obj(ellipse) {
 
   this.move_elements = function() {
     $.each( self.node_elements, function(index, value) {
-      value.move(self.dx,self.dy);
-    });
+      value.move( ( self.ox + self.dx ) , ( self.oy + self.dy ) );
+    } );
   }
 
   this.reset_elements = function() {
     $.each( self.node_elements, function(index, value) {
-      value.reset();
-    });
+      value.move( self.ox, self.oy );
+    } );
   }
 
   this.update_elements = function() {
@@ -426,13 +434,20 @@ function node_obj(ellipse) {
       return readingdata[self.get_id()].witnesses
   }
   
+  this.relocate = function( dx, dy ) {
+      self.ox = self.ox + dx;
+      self.oy = self.oy + dy;
+      $(self.ellipse).data( 'org_translate', [self.ox, self.oy] );
+      self.move_elements();
+  }
+  
   self.set_selectable( true );
 }
 
 function svgshape( shape_element ) {
   this.shape = shape_element;
   this.move = function(dx,dy) {
-    this.shape.attr( "transform", "translate(" + dx + " " + dy + ")" );
+      this.shape.attr( "transform", "translate(" + dx + " " + dy + ")" );
   }
   this.reset = function() {
     this.shape.attr( "transform", "translate( 0, 0 )" );
@@ -489,7 +504,7 @@ function get_edge_elements_for( ellipse ) {
   edge_elements = new Array();
   node_id = ellipse.parent().attr('id');
   edge_in_pattern = new RegExp( node_id + '$' );
-  edge_out_pattern = new RegExp( '^' + node_id );
+  edge_out_pattern = new RegExp( '^' + node_id + '-' );
   $.each( $('#svgenlargement .edge,#svgenlargement .relation').children('title'), function(index) {
     title = $(this).text();
     if( edge_in_pattern.test(title) ) {
@@ -701,11 +716,28 @@ function detach_node( readings ) {
             } );
         }
         
+        // Finally multiple selected nodes may share edges
+        var copy_array = [];
+        $.each( detached_edges, function( index, edge ) {
+            var do_copy = true;
+            $.each( copy_array, function( index, copy_edge ) {
+                if( copy_edge.g_elem.attr( 'id' ) == edge.g_elem.attr( 'id' ) ) { do_copy = false }
+            } );
+            if( do_copy == true ) {
+                copy_array.push( edge );
+            }
+        } );
+        detached_edges = copy_array;
+        
         // Lots of unabstracted knowledge down here :/
         // Clone original node/reading, rename/id it..
         duplicate_node = get_ellipse( reading.orig_rdg ).parent().clone();
         duplicate_node.attr( 'id', node_id );
         duplicate_node.children( 'title' ).text( node_id );
+        duplicate_node_data = get_ellipse( reading.orig_rdg ).data( 'org_translate' );
+        if( duplicate_node_data != null ) {
+            duplicate_node.children( 'ellipse' ).data( 'org_translate', duplicate_node_data );
+        }
         
         // Add the node and all new edges into the graph
         var graph_root = $('#svgenlargement svg g.graph');
@@ -713,18 +745,22 @@ function detach_node( readings ) {
         $.each( detached_edges, function( index, edge ) {
             edge.g_elem.attr( 'id', ( edge.g_elem.attr( 'id' ) + "_0" ) );
             edge_title = edge.g_elem.children( 'title' ).text();
+            edge_weight = 0.8 + ( 0.2 * edge.witnesses.length );
             edge_title = edge_title.replace( reading.orig_rdg, node_id );
             edge.g_elem.children( 'title' ).text( edge_title );
+            edge.g_elem.children( 'path').attr( 'stroke-width', edge_weight );
             // Reg unabstracted knowledge: isn't it more elegant to make 
             // it edge.append_to( graph_root )?
             graph_root.append( edge.g_elem );
         } );
-        
+                
+        // Make the detached node a real node_obj
+        var ellipse_elem = get_ellipse( node_id );
+        var new_node = new node_obj( ellipse_elem );
+        ellipse_elem.data( 'node_obj', new_node );
+
         // Move the node somewhat up for 'dramatic effect' :-p
-        var node_elements = node_elements_for( get_ellipse( node_id ) ); 
-        $.each( node_elements, function( index, element ) {
-            element.move( 0, -150 );
-        } );
+        new_node.relocate( 0, -150 );        
         
     } );
     
@@ -743,8 +779,6 @@ function Marquee() {
     this.svg_rect = $('#svgenlargement svg').svg('get');
 
     this.show = function( event ) {
-        // TODO: uncolor possible selected
-        // TODO: unless SHIFT?
         self.x = event.clientX;
         self.y = event.clientY;
         p = svg_root.createSVGPoint();
@@ -772,6 +806,7 @@ function Marquee() {
         var rect = $('#marquee');
         if( rect.length != 0 ) {
             //unselect any possible selected first
+            //TODO: unless SHIFT?
             if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
               $('ellipse[fill="#9999ff"]').each( function() { 
                   $(this).data( 'node_obj' ).set_draggable( false );
@@ -799,6 +834,11 @@ function Marquee() {
             $('#svgenlargement ellipse').each( function( index ) {
                 var cx = parseInt( $(this).attr('cx') );
                 var cy = parseInt( $(this).attr('cy') );
+                var org_translate = $(this).data( 'org_translate' );
+                if( org_translate != null ) {
+                    cx = cx + org_translate[0];
+                    cy = cy + org_translate[1];
+                }
                 if( cx > cx_min && cx < cx_max) {
                     if( cy > cy_min && cy < cy_max) {
                         // we actually heve no real 'selected' state for nodes, except coloring
@@ -1049,17 +1089,18 @@ $(document).ready(function () {
     width: 250,
     modal: true,
     buttons: {
-      Cancel: function() { $( this ).dialog( "close" ); },
-      Detach: function ( evt ) { 
-        $(evt.target).button("disable");
-        var form_values = $('#detach_collated_form').serialize();
-        ncpath = getTextURL( 'duplicate' );
-        var jqjson = $.post( ncpath, form_values, function(data) {
-        detach_node( data );
-        $(evt.target).button("enable");
-        $( this ).dialog( "close" );
-      });
-     }
+        Cancel: function() { $( this ).dialog( "close" ); },
+        Detach: function ( evt ) { 
+            var self = $(this);
+            $( evt.target ).button( "disable" );
+            var form_values = $('#detach_collated_form').serialize();
+            ncpath = getTextURL( 'duplicate' );
+            var jqjson = $.post( ncpath, form_values, function(data) {
+                detach_node( data );
+                $(evt.target).button("enable");
+                self.dialog( "close" );
+            } );
+        }
     },
     create: function(event, ui) {
         var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
