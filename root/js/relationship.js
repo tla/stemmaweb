@@ -291,19 +291,11 @@ function node_obj(ellipse) {
   this.ellipse = ellipse;
   var self = this;
   
-  this.ox = 0;
-  this.oy = 0;
   this.x = 0;
   this.y = 0;
   this.dx = 0;
   this.dy = 0;
   this.node_elements = node_elements_for(self.ellipse);
-
-  if( $(self.ellipse).data( 'org_translate' ) != null ) {
-      var org_translate = $(self.ellipse).data( 'org_translate' );
-      this.ox = org_translate[0];
-      this.oy = org_translate[1]; 
-  }
   
   this.get_id = function() {
     return $(self.ellipse).parent().attr('id')
@@ -414,15 +406,21 @@ function node_obj(ellipse) {
       });
   }
 
+  this.reposition = function( dx, dy ) {
+    $.each( self.node_elements, function(index, value) {
+      value.reposition( dx, dy );
+    } );    
+  }
+
   this.move_elements = function() {
     $.each( self.node_elements, function(index, value) {
-      value.move( ( self.ox + self.dx ) , ( self.oy + self.dy ) );
+      value.move( self.dx, self.dy );
     } );
   }
 
   this.reset_elements = function() {
     $.each( self.node_elements, function(index, value) {
-      value.move( self.ox, self.oy );
+      value.reset();
     } );
   }
 
@@ -433,24 +431,30 @@ function node_obj(ellipse) {
   this.get_witnesses = function() {
       return readingdata[self.get_id()].witnesses
   }
-  
-  this.relocate = function( dx, dy ) {
-      self.ox = self.ox + dx;
-      self.oy = self.oy + dy;
-      $(self.ellipse).data( 'org_translate', [self.ox, self.oy] );
-      self.move_elements();
-  }
-  
+
   self.set_selectable( true );
 }
 
 function svgshape( shape_element ) {
   this.shape = shape_element;
+  this.reposx = 0;
+  this.reposy = 0; 
+  this.repositioned = this.shape.parent().data( 'repositioned' );
+  if( this.repositioned != null ) {
+      this.reposx = this.repositioned[0];
+      this.reposy = this.repositioned[1]; 
+  }
+  this.reposition = function (dx, dy) {
+      this.move( dx, dy );
+      this.reposx = this.reposx + dx;
+      this.reposy = this.reposy + dy;
+      this.shape.parent().data( 'repositioned', [this.reposx,this.reposy] );
+  }
   this.move = function(dx,dy) {
-      this.shape.attr( "transform", "translate(" + dx + " " + dy + ")" );
+      this.shape.attr( "transform", "translate( " + (this.reposx + dx) + " " + (this.reposy + dy) + " )" );
   }
   this.reset = function() {
-    this.shape.attr( "transform", "translate( 0, 0 )" );
+    this.shape.attr( "transform", "translate( " + this.reposx + " " + this.reposy + " )" );
   }
   this.grey_out = function(filter) {
       if( this.shape.parent(filter).size() != 0 ) {
@@ -469,14 +473,24 @@ function svgpath( path_element, svg_element ) {
   this.path = path_element;
   this.x = this.path.x;
   this.y = this.path.y;
+
+  this.reposition = function (dx, dy) {
+      this.x = this.x + dx;
+      this.y = this.y + dy;      
+      this.path.x = this.x;
+      this.path.y = this.y;
+  }
+
   this.move = function(dx,dy) {
     this.path.x = this.x + dx;
     this.path.y = this.y + dy;
   }
+  
   this.reset = function() {
     this.path.x = this.x;
     this.path.y = this.y;
   }
+  
   this.grey_out = function(filter) {
       if( this.svg_element.parent(filter).size() != 0 ) {
           this.svg_element.attr('stroke', '#e5e5e5');
@@ -734,9 +748,11 @@ function detach_node( readings ) {
         duplicate_node = get_ellipse( reading.orig_rdg ).parent().clone();
         duplicate_node.attr( 'id', node_id );
         duplicate_node.children( 'title' ).text( node_id );
-        duplicate_node_data = get_ellipse( reading.orig_rdg ).data( 'org_translate' );
+        
+        // This needs somehow to move to node or even to shapes! #repositioned
+        duplicate_node_data = get_ellipse( reading.orig_rdg ).parent().data( 'repositioned' );
         if( duplicate_node_data != null ) {
-            duplicate_node.children( 'ellipse' ).data( 'org_translate', duplicate_node_data );
+            duplicate_node.children( 'ellipse' ).parent().data( 'repositioned', duplicate_node_data );
         }
         
         // Add the node and all new edges into the graph
@@ -760,7 +776,7 @@ function detach_node( readings ) {
         ellipse_elem.data( 'node_obj', new_node );
 
         // Move the node somewhat up for 'dramatic effect' :-p
-        new_node.relocate( 0, -150 );        
+        new_node.reposition( 0, -54 );        
         
     } );
     
@@ -834,11 +850,15 @@ function Marquee() {
             $('#svgenlargement ellipse').each( function( index ) {
                 var cx = parseInt( $(this).attr('cx') );
                 var cy = parseInt( $(this).attr('cy') );
-                var org_translate = $(this).data( 'org_translate' );
+                
+                // This needs somehow to move to node or even to shapes! #repositioned
+                // We should ask something more aling the lines of: nodes.each { |item| node.selected? }
+                var org_translate = $(this).parent().data( 'repositioned' );
                 if( org_translate != null ) {
                     cx = cx + org_translate[0];
                     cy = cy + org_translate[1];
                 }
+                
                 if( cx > cx_min && cx < cx_max) {
                     if( cy > cy_min && cy < cy_max) {
                         // we actually heve no real 'selected' state for nodes, except coloring

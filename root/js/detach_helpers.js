@@ -64,7 +64,11 @@ function Edge( g_elem ) {
         var label = self.create_label( witnesses );
         var clone = g_elem.clone();
         clone.children('text').text( label );
-        clone = new Edge( clone );
+        var duplicate_data = g_elem.data( 'repositioned' );
+        if( duplicate_data != null ) {
+            clone.data( 'repositioned', duplicate_data );
+        }
+        clone = new Edge( clone );        
         clone.is_incoming = self.is_incoming;
         return clone;
     }
