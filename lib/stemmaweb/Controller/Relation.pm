@@ -388,6 +388,72 @@ sub reading :Chained('text') :PathPart :Args(1) {
 
 }
 
+=head2 merge
+
+ POST relation/$textid/merge { data }
+ 
+Merges the requested readings, combining the witnesses of both readings into
+the target reading. All non-conflicting source relationships are inherited by
+the target relationship.
+
+=cut
+
+sub merge :Chained('text') :PathPart :Args(0) {
+	my( $self, $c ) = @_;
+	my $tradition = delete $c->stash->{'tradition'};
+	my $collation = $tradition->collation;
+	my $m = $c->model('Directory');
+	if( $c->request->method eq 'POST' ) {
+		if( $c->stash->{'permission'} ne 'full' ) {
+			$c->response->status( '403' );
+			$c->stash->{'result'} = { 
+				'error' => 'You do not have permission to modify this tradition.' };
+			$c->detach('View::JSON');
+			return;
+		}
+		my $errmsg;
+		my $response;
+		
+		my $main = $c->request->param('target_id');
+		my $second = $c->request->param('source_id');
+		# Find the common successor of these, so that we can detect other
+		# potentially identical readings.
+		my $csucc = $collation->common_successor( $main, $second );
+
+		# Try the merge if these are parallel readings.
+		if( $csucc->id eq $main || $csucc->id eq $second ) {
+			$errmsg = "Cannot merge readings in the same path";
+		} else {
+			try {
+				$collation->merge_readings( $main, $second );
+			} catch( Text::Tradition::Error $e ) {
+				$c->response->status( '403' );
+				$errmsg = $e->message;
+			} catch {
+				# Something else went wrong, probably a Moose error
+				$c->response->status( '403' );
+				$errmsg = 'Something went wrong with the request';	
+			}
+		}
+		
+		# Look for readings that are now identical.
+		if( $errmsg ) {
+			$response = { status => 'error', error => $errmsg };
+		} else {
+			$response = { status => 'ok' };
+			my @identical = $collation->identical_readings(
+				start => $main, end => $csucc->id );
+			if( @identical ) {
+				$response->{'checkalign'} = [ 
+					map { [ $_->[0]->id, $_->[1]->id ] } @identical ];
+			}
+			$m->save( $collation );
+		}
+		$c->stash->{'result'} = $response;
+		$c->forward('View::JSON');			
+	}
+}
+
 =head2 duplicate
 
  POST relation/$textid/duplicate { data }
@@ -425,7 +491,6 @@ sub duplicate :Chained('text') :PathPart :Args(0) {
 		foreach my $rid ( $c->request->param('readings[]') ) {
 			my $numwits = 0;
 			my $rdg = $collation->reading( $rid );
-			$DB::single = 1;
 			foreach my $rwit ( $rdg->witnesses( $rid ) ) {
 				$numwits++ if exists $wits{$rwit};
 			}

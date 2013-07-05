@@ -877,6 +877,21 @@ function Marquee() {
      
 }
 
+function readings_equivalent( source, target ) {
+	var sourcetext = readingdata[source].text;
+	var targettext = readingdata[target].text;
+	if( sourcetext === targettext ) {
+		return true;
+	}
+	// Lowercase and strip punctuation from both and compare again
+	var stlc = sourcetext.toLowerCase().replace(/[^\w\s]|_/g, "");
+	var ttlc = targettext.toLowerCase().replace(/[^\w\s]|_/g, "");
+	if( stlc === ttlc ) {
+		return true;
+	}	
+	return false;
+}
+
 
 $(document).ready(function () {
     
@@ -884,7 +899,8 @@ $(document).ready(function () {
   relation_manager = new relation_factory();
   
   $('#update_workspace_button').data('locked', false);
-                
+   
+  // Set up the mouse events on the SVG enlargement             
   $('#enlargement').mousedown(function (event) {
     $(this)
         .data('down', true)
@@ -949,6 +965,9 @@ $(document).ready(function () {
   });
   
   
+  // Set up the relationship creation dialog. This also functions as the reading
+  // merge dialog where appropriate.
+			  
   if( editable ) {
 	$( "#dialog-form" ).dialog({
 	autoOpen: false,
@@ -956,7 +975,16 @@ $(document).ready(function () {
 	width: 290,
 	modal: true,
 	buttons: {
-	  "Ok": function( evt ) {
+	  "Merge readings": function( evt ) {
+		  $(evt.target).button("disable");
+		  $('#status').empty();
+		  form_values = $('#collapse_node_form').serialize();
+		  ncpath = getTextURL( 'merge' );
+		  var jqjson = $.post( ncpath, form_values, function(data) {
+			  alert( "Did a node merge" );
+		  });
+	  },
+	  OK: function( evt ) {
 		$(evt.target).button("disable");
 		$('#status').empty();
 		form_values = $('#collapse_node_form').serialize();
@@ -1001,7 +1029,15 @@ $(document).ready(function () {
 		});
 	},
 	open: function() {
-		relation_manager.create_temporary( $('#source_node_id').val(), $('#target_node_id').val() );
+		relation_manager.create_temporary( 
+			$('#source_node_id').val(), $('#target_node_id').val() );
+		var buttonset = $(this).parent().find( '.ui-dialog-buttonset' )
+		if( readings_equivalent( $('#source_node_id').val(), 
+				$('#target_node_id').val() ) ) {
+			buttonset.find( "button:contains('Merge readings')" ).show();
+		} else {
+			buttonset.find( "button:contains('Merge readings')" ).hide();
+		}
 		$(".ui-widget-overlay").css("background", "none");
 		$("#dialog_overlay").show();
 		$("#dialog_overlay").height( $("#enlargement_container").height() );
@@ -1034,23 +1070,23 @@ $(document).ready(function () {
 	} );
   }
 
-  var deletion_buttonset = {
-        cancel: function() { $( this ).dialog( "close" ); },
-        global: function () { delete_relation( true ); },
-        delete: function() { delete_relation( false ); }
-  };  	
-  
+  // Set up the relationship info display and deletion dialog.  
   $( "#delete-form" ).dialog({
     autoOpen: false,
     height: 135,
     width: 250,
     modal: false,
+    buttons: {
+        OK: function() { $( this ).dialog( "close" ); },
+        "Delete all": function () { delete_relation( true ); },
+        Delete: function() { delete_relation( false ); }
+    },
     create: function(event, ui) {
     	// TODO What is this logic doing?
     	// This scales the buttons in the dialog and makes it look proper
     	// Not sure how essential it is, does anything break if it's not here?
         var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
-        buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
+        buttonset.find( "button:contains('OK')" ).css( 'float', 'right' );
     	// A: This makes sure that the pop up delete relation dialogue for a hovered over
     	// relation auto closes if the user doesn't engage (mouseover) with it.
         var dialog_aria = $("div[aria-labelledby='ui-dialog-title-delete-form']");  
@@ -1062,22 +1098,21 @@ $(document).ready(function () {
         })
     },
     open: function() {
+    	// Show the appropriate buttons...
+		var buttonset = $(this).parent().find( '.ui-dialog-buttonset' )
+		// If the user can't edit, show only the OK button
     	if( !editable ) {
-    		$( this ).dialog( "option", "buttons", 
-    			[{ text: "OK", click: deletion_buttonset['cancel'] }] );
+    		buttonset.find( "button:contains('Delete')" ).hide();
+    	// If the relationship scope is local, show only OK and Delete
     	} else if( $('#delete_relation_scope').text() === 'local' ) {
     		$( this ).dialog( "option", "width", 160 );
-    		$( this ).dialog( "option", "buttons",
-    			[{ text: "Delete", click: deletion_buttonset['delete'] },
-    			 { text: "Cancel", click: deletion_buttonset['cancel'] }] );
+    		buttonset.find( "button:contains('Delete')" ).show();
+    		buttonset.find( "button:contains('Delete all')" ).hide();
+    	// Otherwise, show all three
     	} else {
     		$( this ).dialog( "option", "width", 200 );
-    		$( this ).dialog( "option", "buttons",
-    			[{ text: "Delete", click: deletion_buttonset['delete'] },
-    			 { text: "Delete all", click: deletion_buttonset['global'] },
-    			 { text: "Cancel", click: deletion_buttonset['cancel'] }] );
+    		buttonset.find( "button:contains('Delete')" ).show();
 		}    	
-    			
         mouseWait = setTimeout( function() { $("#delete-form").dialog( "close" ) }, 2000 );
     },
     close: function() {}
