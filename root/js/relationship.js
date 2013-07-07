@@ -667,14 +667,6 @@ function draw_relation( source_id, target_id, relation_color ) {
 
 function detach_node( readings ) {
     
-    // This method is work in progress
-    // Todos:
-    // 1) Unproven/untested: readings.each will get us in trouble most likely for
-    //    duplicating edges in a strand that both are incoming and outgoing
-    //    like b and c in -i-> a -ii-> b -iii-> c -iv->
-    // 2) Added edges and nodes look rough and unsmoothed, what the f.?
-    //
-    
     // add new node(s)
     $.extend( readingdata, readings );
     // remove from existing readings the witnesses for the new nodes/readings
@@ -725,7 +717,7 @@ function detach_node( readings ) {
         if( incoming_remaining.length > 0 ) {
             $.each( edges, function( index, edge ) {
                 if( edge.get_label() == 'majority' && edge.is_incoming ) {
-                    detached_edges.push( edge.clone_for( outgoing_remaining ) );
+                    detached_edges.push( edge.clone_for( incoming_remaining ) );
                 }
             } );
         }
@@ -759,7 +751,8 @@ function detach_node( readings ) {
         var graph_root = $('#svgenlargement svg g.graph');
         graph_root.append( duplicate_node );
         $.each( detached_edges, function( index, edge ) {
-            edge.g_elem.attr( 'id', ( edge.g_elem.attr( 'id' ) + "_0" ) );
+            id_suffix = node_id.slice( node_id.indexOf( '_' ) );
+            edge.g_elem.attr( 'id', ( edge.g_elem.attr( 'id' ) + id_suffix ) );
             edge_title = edge.g_elem.children( 'title' ).text();
             edge_weight = 0.8 + ( 0.2 * edge.witnesses.length );
             edge_title = edge_title.replace( reading.orig_rdg, node_id );
