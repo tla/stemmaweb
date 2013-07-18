@@ -664,7 +664,8 @@ function draw_relation( source_id, target_id, relation_color ) {
 }
 
 function detach_node( readings ) {
-    
+    // separate out the deleted relationships, discard for now
+    delete readings['DELETED'];
     // add new node(s)
     $.extend( readingdata, readings );
     // remove from existing readings the witnesses for the new nodes/readings

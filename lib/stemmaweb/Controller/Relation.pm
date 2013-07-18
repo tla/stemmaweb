@@ -536,11 +536,14 @@ sub duplicate :Chained('text') :PathPart :Args(0) {
 		
 		# Otherwise, do the dirty work.
 		my @witlist = keys %wits;
+		my @deleted_relations;
 		foreach my $rank ( sort { $a <=> $b } keys %rdgranks ) {
 			my $newrdg;
 			my $reading_id = $rdgranks{$rank};
+			my @delrels;
 			try {
-				$newrdg = $collation->duplicate_reading( $reading_id, @witlist );
+				( $newrdg, @delrels ) = 
+					$collation->duplicate_reading( $reading_id, @witlist );
 			} catch( Text::Tradition::Error $e ) {
 				$c->response->status( '403' );
 				$errmsg = $e->message;
@@ -553,12 +556,14 @@ sub duplicate :Chained('text') :PathPart :Args(0) {
 				my $data = _reading_struct( $newrdg );
 				$data->{'orig_rdg'} = $reading_id;
 				$response->{"$newrdg"} = $data;
+				push( @deleted_relations, @delrels );
 			}
 		} 
 		if( $errmsg ) {
 			$c->stash->{'result'} = { 'error' => $errmsg };
 		} else {
 			$m->save( $collation );
+			$response->{'DELETED'} = \@deleted_relations;
 			$c->stash->{'result'} = $response;
 		}
 	}
