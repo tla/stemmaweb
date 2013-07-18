@@ -779,7 +779,7 @@ function merge_nodes( source_node_id, target_node_id, consequences ) {
         merge_node( source_node_id, target_node_id );
         if( consequences.checkalign != null ) {
             $.each( consequences.checkalign, function( index, node_ids ) {
-                temp_relation = draw_relation( node_ids[0], node_ids[1], "#89a02c" );
+                var temp_relation = draw_relation( node_ids[0], node_ids[1], "#89a02c" );
                 var sy = parseInt( temp_relation.children('path').attr('d').split('C')[0].split(',')[1] );
                 var ey = parseInt( temp_relation.children('path').attr('d').split(' ')[2].split(',')[1] );
                 var yC = ey + (( sy - ey )/2); 
