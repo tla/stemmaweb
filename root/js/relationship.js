@@ -226,9 +226,8 @@ function svgEnlargementLoaded() {
         $.getJSON( rdgpath, function( data ) {
             readingdata = data;
             $('#svgenlargement ellipse').each( function( i, el ) { color_inactive( el ) });
-            // detach_node(null);
+            $('#loading_overlay').hide(); 
         });
-        $('#loading_overlay').hide(); 
     });
     
     //initialize marquee
@@ -656,8 +655,7 @@ function draw_relation( source_id, target_id, relation_color ) {
     var sy = parseInt( source_ellipse.attr('cy') );
     var ex = parseInt( target_ellipse.attr('cx') );
     var ey = parseInt( target_ellipse.attr('cy') );
-    var relation = svg.group( $("#svgenlargement svg g"), 
-    	{ 'class':'relation', 'id':relation_id } );
+    var relation = svg.group( $("#svgenlargement svg g"), { 'class':'relation', 'id':relation_id } );
     svg.title( relation, source_id + '->' + target_id );
     svg.path( relation, path.move( sx, sy ).curveC( sx + (2*rx), sy, ex + (2*rx), ey, ex, ey ), {fill: 'none', stroke: relation_color, strokeWidth: 4});
     var relation_element = $('#svgenlargement .relation').filter( ':last' );
@@ -769,11 +767,54 @@ function detach_node( readings ) {
         ellipse_elem.data( 'node_obj', new_node );
 
         // Move the node somewhat up for 'dramatic effect' :-p
-        new_node.reposition( 0, -54 );        
+        new_node.reposition( 0, -70 );        
         
     } );
     
+}
 
+function merge_nodes( source_node_id, target_node_id, consequences ) {
+    if( consequences.status != null && consequences.status == 'ok' ) {
+        merge_node( source_node_id, target_node_id );
+        if( consequences.checkalign != null ) {
+            $.each( consequences.checkalign, function( index, node_ids ) {
+                temp_relation = draw_relation( node_ids[0], node_ids[1], "#89a02c" );
+                var sy = parseInt( temp_relation.children('path').attr('d').split('C')[0].split(',')[1] );
+                var ey = parseInt( temp_relation.children('path').attr('d').split(' ')[2].split(',')[1] );
+                var yC = ey + (( sy - ey )/2); 
+                // TODO: compute xC to be always the same distance to the amplitude of the curve
+                var xC = parseInt( temp_relation.children('path').attr('d').split(' ')[1].split(',')[0] );
+                var svg = $('#svgenlargement').children('svg').svg('get');
+                parent_g = svg.group( $('#svgenlargement svg g') );
+                var ids_text = node_ids[0] + '-' + node_ids[1]; 
+                var merge_id = 'merge-' + ids_text;
+                svg.image( parent_g, xC, (yC-8), 16, 16, '/images/tick_circle_frame.png', { id: merge_id } );
+                svg.image( parent_g, (xC+20), (yC-8), 16, 16, '/images/no_entry.png', { id: 'no' + merge_id } );
+                $( '#' + merge_id ).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
+                $( '#no' + merge_id ).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
+                $( '#' + merge_id ).click( function( evt ){ 
+                    merge_node( node_ids[0], node_ids[1] );
+                    temp_relation.remove();
+                    $( '#' + merge_id ).parent().remove();
+                } );
+                $( '#no' + merge_id ).click( function( evt ) {
+                    temp_relation.remove();
+                    $( '#' + merge_id ).parent().remove();
+                } );
+            } );
+        }
+    }
+}
+
+function merge_node( source_node_id, target_node_id ) {
+    $.each( edges_of( get_ellipse( source_node_id ) ), function( index, edge ) {
+        if( edge.is_incoming == true ) {
+            edge.attach_endpoint( target_node_id );
+        } else {
+            edge.attach_startpoint( target_node_id );
+        }
+    } );
+    $( jq( source_node_id ) ).remove();    
 }
 
 function Marquee() {
@@ -982,31 +1023,32 @@ $(document).ready(function () {
   // merge dialog where appropriate.
 			  
   if( editable ) {
-	$( "#dialog-form" ).dialog({
+	$( '#dialog-form' ).dialog( {
 	autoOpen: false,
 	height: 270,
 	width: 290,
 	modal: true,
 	buttons: {
-	  "Merge readings": function( evt ) {
-		  $(evt.target).button("disable");
-		  $('#status').empty();
-		  form_values = $('#collapse_node_form').serialize();
+	  'Merge readings': function( evt ) {
+		  $( evt.target ).button( 'disable' );
+		  $( '#status' ).empty();
+		  form_values = $( '#collapse_node_form' ).serialize();
 		  ncpath = getTextURL( 'merge' );
-		  var jqjson = $.post( ncpath, form_values, function(data) {
-			  alert( "Did a node merge" );
-		  });
+		  var jqjson = $.post( ncpath, form_values, function( data ) {
+			  merge_nodes( $( '#source_node_id' ).val(), $( '#target_node_id' ).val(), data );
+              $( '#dialog-form' ).dialog( 'close' );
+		  } );
 	  },
 	  OK: function( evt ) {
-		$(evt.target).button("disable");
-		$('#status').empty();
-		form_values = $('#collapse_node_form').serialize();
+		$( evt.target ).button( 'disable' );
+		$( '#status' ).empty();
+		form_values = $( '#collapse_node_form' ).serialize();
 		ncpath = getTextURL( 'relationships' );
-		var jqjson = $.post( ncpath, form_values, function(data) {
-			$.each( data, function(item, source_target) { 
+		var jqjson = $.post( ncpath, form_values, function( data ) {
+			$.each( data, function( item, source_target ) { 
 				var source_found = get_ellipse( source_target[0] );
 				var target_found = get_ellipse( source_target[1] );
-				var relation_found = $.inArray( source_target[2], $('#keymap').data('relations') );
+				var relation_found = $.inArray( source_target[2], $( '#keymap' ).data( 'relations' ) );
 				if( source_found.size() && target_found.size() && relation_found > -1 ) {
 					var relation = relation_manager.create( source_target[0], source_target[1], relation_found );
 					relation.data( 'type', source_target[2]  );
@@ -1014,13 +1056,13 @@ $(document).ready(function () {
 					relation.data( 'note', $('#note').val()  );
 					relation_manager.toggle_active( relation.attr('id') );
 				}
-				$(evt.target).button("enable");
+				$(evt.target).button( 'enable' );
 		   });
-			$( "#dialog-form" ).dialog( "close" );
+			$( '#dialog-form' ).dialog( 'close' );
 		}, 'json' );
 	  },
 	  Cancel: function() {
-		  $( this ).dialog( "close" );
+		  $( this ).dialog( 'close' );
 	  }
 	},
 	create: function(event, ui) { 
