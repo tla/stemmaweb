@@ -1,13 +1,14 @@
 function edges_of( ellipse ) {
   var edges = new Array();
   var node_id = ellipse.parent().attr('id');
-  var edge_in_pattern = new RegExp( node_id + '$' );
+  var edge_outgoing_pattern = new RegExp( '^' + node_id + '-' );
+  var edge_incoming_pattern = new RegExp( node_id + '$' );
   $.each( $('#svgenlargement .edge'), function(index) {
       title = $(this).children('title').text();
-      if( title.search( node_id ) > -1 ) {
+      if( edge_outgoing_pattern.test(title) || edge_incoming_pattern.test(title) ) {
           var edge = new Edge( $(this) );
           edge.node_id = node_id;
-          if( edge_in_pattern.test(title) ) {
+          if( edge_incoming_pattern.test(title) ) {
               edge.is_incoming  = true;
           }
           edges.push( edge );
@@ -76,11 +77,10 @@ function Edge( g_elem ) {
     }
     
     this.attach_witnesses = function( witnesses ) {
-        self.witnesses.concat( witnesses );
+        self.witnesses = self.witnesses.concat( witnesses );
         self.g_elem.children( 'text' ).text( self.create_label( self.witnesses ) );
         var edge_weight = 0.8 + ( 0.2 * self.witnesses.length );
         self.g_elem.children( 'path' ).attr( 'stroke-width', edge_weight );
-        
     }
     
     this.attach_endpoint = function( target_node_id ) {
@@ -88,10 +88,12 @@ function Edge( g_elem ) {
         // in that case we need to remove this edge and transfer the witnesses to the 
         // appropriate edge of the target_node
         $.each( edges_of( get_ellipse( target_node_id ) ), function( index, target_edge ) {
-            if( (self != null) && (self.start_node_id == target_edge.start_node_id) ) {
-                target_edge.attach_witnesses( self.witnesses );
-                self.g_elem.remove();
-                self = null;
+            if( (self != null) && (target_edge.is_incoming == true) ) {
+                if( self.start_node_id == target_edge.start_node_id) {
+                    target_edge.attach_witnesses( self.witnesses );
+                    self.g_elem.remove();
+                    self = null;
+                }
             }
         } );
         // if not let's really move the end pointer towards the target node
@@ -102,13 +104,13 @@ function Edge( g_elem ) {
                 var path_segments = self.g_elem.children('path')[0].pathSegList;
                 var edge_path = new svgpath( path_segments.getItem(path_segments.numberOfItems - 1), self.g_elem.children('path') );
                 var target_ellipse = get_ellipse( target_node_id );
-                var target_cx = target_ellipse.attr( 'cx' );
-                var target_cy = target_ellipse.attr( 'cy' );
-                var target_rx = target_ellipse.attr( 'rx' );
+                var target_cx = parseFloat( target_ellipse.attr( 'cx' ) );
+                var target_cy = parseFloat( target_ellipse.attr( 'cy' ) );
+                var target_rx = parseFloat( target_ellipse.attr( 'rx' ) );
                 var source_ellipse = get_ellipse( self.end_node_id );
-                var source_cx = source_ellipse.attr( 'cx' );
-                var source_cy = source_ellipse.attr( 'cy' );
-                var source_rx = source_ellipse.attr( 'rx' );
+                var source_cx = parseFloat( source_ellipse.attr( 'cx' ) );
+                var source_cy = parseFloat( source_ellipse.attr( 'cy' ) );
+                var source_rx = parseFloat( source_ellipse.attr( 'rx' ) );
                 var dx = (target_cx - target_rx) - (source_cx - source_rx);
                 var dy = (target_cy - source_cy);
                 end_point_arrowhead.reposition( dx, dy );
@@ -122,24 +124,26 @@ function Edge( g_elem ) {
         // in that case we need to remove this edge and transfer the witnesses to the 
         // appropriate edge of the target_node
         $.each( edges_of( get_ellipse( target_node_id ) ), function( index, target_edge ) {
-            if( (self != null) && (self.end_node_id == target_edge.end_node_id) ) {
-                target_edge.attach_witnesses( self.witnesses );
-                self.g_elem.remove();
-                self = null;
+            if( (self != null) && (target_edge.is_incoming != true ) ) {
+                if( self.end_node_id == target_edge.end_node_id) {
+                    target_edge.attach_witnesses( self.witnesses );
+                    self.g_elem.remove();
+                    self = null;
+                }
             }
         } );
-        // if not let's really move the end pointer towards the target node
+        // if not let's really move the start point towards the target node
         if( self != null ) {
             var path_segments = self.g_elem.children('path')[0].pathSegList;                
             var edge_path = new svgpath( path_segments.getItem(0), self.g_elem.children('path') );
             var target_ellipse = get_ellipse( target_node_id );
-            var target_cx = target_ellipse.attr( 'cx' );
-            var target_cy = target_ellipse.attr( 'cy' );
-            var target_rx = target_ellipse.attr( 'rx' );
+            var target_cx = parseFloat( target_ellipse.attr( 'cx' ) );
+            var target_cy = parseFloat( target_ellipse.attr( 'cy' ) );
+            var target_rx = parseFloat( target_ellipse.attr( 'rx' ) );
             var source_ellipse = get_ellipse( self.start_node_id );
-            var source_cx = source_ellipse.attr( 'cx' );
-            var source_cy = source_ellipse.attr( 'cy' );
-            var source_rx = source_ellipse.attr( 'rx' );
+            var source_cx = parseFloat( source_ellipse.attr( 'cx' ) );
+            var source_cy = parseFloat( source_ellipse.attr( 'cy' ) );
+            var source_rx = parseFloat( source_ellipse.attr( 'rx' ) );
             var dx = (target_cx + target_rx) - (source_cx + source_rx);
             var dy = (target_cy - source_cy);
             edge_path.reposition( dx, dy );
