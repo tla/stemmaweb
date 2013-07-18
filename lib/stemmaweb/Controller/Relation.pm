@@ -441,11 +441,13 @@ sub merge :Chained('text') :PathPart :Args(0) {
 			$response = { status => 'error', error => $errmsg };
 		} else {
 			$response = { status => 'ok' };
-			my @identical = $collation->identical_readings(
-				start => $main, end => $csucc->id );
-			if( @identical ) {
-				$response->{'checkalign'} = [ 
-					map { [ $_->[0]->id, $_->[1]->id ] } @identical ];
+			unless( $c->request->param('single') ) {
+				my @identical = $collation->identical_readings(
+					start => $main, end => $csucc->id );
+				if( @identical ) {
+					$response->{'checkalign'} = [ 
+						map { [ $_->[0]->id, $_->[1]->id ] } @identical ];
+				}
 			}
 			$m->save( $collation );
 		}
