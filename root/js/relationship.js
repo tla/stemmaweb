@@ -1041,6 +1041,7 @@ $(document).ready(function () {
 		  ncpath = getTextURL( 'merge' );
 		  var jqjson = $.post( ncpath, form_values, function( data ) {
 			  merge_nodes( $( '#source_node_id' ).val(), $( '#target_node_id' ).val(), data );
+			  $(evt.target).button( 'enable' );
               $( '#dialog-form' ).dialog( 'close' );
 		  } );
 	  },
