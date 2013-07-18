@@ -115,6 +115,8 @@ function Edge( g_elem ) {
                 var dy = (target_cy - source_cy);
                 end_point_arrowhead.reposition( dx, dy );
                 edge_path.reposition( dx, dy );
+                // var new_title = g_elem.children('title').text().replace( self.end_node_id, target_node_id );
+                // console.log( new_title );
             }
         }
     }
