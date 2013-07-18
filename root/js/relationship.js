@@ -665,7 +665,18 @@ function draw_relation( source_id, target_id, relation_color ) {
 
 function detach_node( readings ) {
     // separate out the deleted relationships, discard for now
-    delete readings['DELETED'];
+    if( 'DELETED' in readings ) {
+    	// Remove each of the deleted relationship links.
+    	$.each( readings['DELETED'], function( idx, pair ) {
+    		var relation_id = get_relation_id( pair[0], pair[1] );
+			var relation = $( jq( relation_id ) );
+			if( relation.size() == 0 ) { 
+    			relation_id = get_relation_id( pair[1], pair[0] );
+    		}
+    		relation_manager.remove( relation_id );
+    	});
+    	delete readings['DELETED'];
+    }
     // add new node(s)
     $.extend( readingdata, readings );
     // remove from existing readings the witnesses for the new nodes/readings
