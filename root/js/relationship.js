@@ -796,6 +796,10 @@ function merge_nodes( source_node_id, target_node_id, consequences ) {
                     merge_node( node_ids[0], node_ids[1] );
                     temp_relation.remove();
                     $( '#' + merge_id ).parent().remove();
+                    //notify backend
+                    var ncpath = getTextURL( 'merge' );
+                    var form_values = "source_id=" + source_node_id + "&target_id=" + target_node_id + "&single=true";
+                    $.post( ncpath, form_values );
                 } );
                 $( '#no' + merge_id ).click( function( evt ) {
                     temp_relation.remove();
