@@ -397,6 +397,8 @@ $(document).ready( function() {
 					stemmata[selectedStemmaID] = data.stemmasvg;
 					// Display the new stemma
 					load_stemma( selectedStemmaID );
+					// Show the edit button, in case this was the first new stemma
+					$('#open_stemma_edit').show();
 					// Reenable the button and close the form
 					$(evt.target).button("enable");
 					$('#stemma-edit-dialog').dialog('close');
