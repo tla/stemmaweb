@@ -351,6 +351,11 @@ sub stemma :Local :Args(2) {
 	if( $c->req->method eq 'POST' ) {
 		if( $ok eq 'full' ) {
 			my $dot = $c->request->body_params->{'dot'};
+			# Graph::Reader::Dot does not handle bare unicode. We get around this
+			# by wrapping all words in double quotes, but then we have to undo it
+			# for the initial 'digraph stemma' statement. Horrible hack.
+			$dot =~ s/\b(\w+)\b/"$1"/g;
+			$dot =~ s/"(digraph|stemma)"/$1/g;
 			try {
 				if( $stemmaid eq 'n' ) {
 					# We are adding a new stemma.
