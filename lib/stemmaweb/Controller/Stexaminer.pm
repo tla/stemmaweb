@@ -44,7 +44,11 @@ sub index :Path :Args(2) {
 	my $ok = _check_permission( $c, $tradition );
 	return unless $ok;
 	
-	if( $tradition->stemma_count ) {
+	if( $stemid eq 'help' ) {
+		# Just show the 'Help/About' popup.
+		$c->stash->{template} = 'stexaminer_help.tt';
+		$c->stash->{text_id} = $textid;
+	elsif( $tradition->stemma_count ) {
 		my $stemma = $tradition->stemma( $stemid );
 		my $svgstr = $stemma->as_svg();
 		$svgstr =~ s/\n/ /g;
