@@ -3,6 +3,8 @@ use Moose;
 use namespace::autoclean;
 use Text::Tradition::Analysis qw/ run_analysis /;
 use TryCatch;
+use XML::LibXML;
+use XML::LibXML::XPathContext;
 
 
 BEGIN { extends 'Catalyst::Controller' }
@@ -132,18 +134,40 @@ sub newtradition :Local :Args(0) {
 	my $tradition;
 	my $errmsg;
 	if( $ext eq 'xml' ) {
-		# Try the different XML parsing options to see if one works.
-		foreach my $type ( qw/ CollateX CTE TEI / ) {
+		my $type;
+		# Parse the XML to see which flavor it is.
+		my $parser = XML::LibXML->new();
+		my $doc;
+		try {
+			$doc = $parser->parse_file( $newopts{'file'} );
+		} catch( $err ) {
+			$errmsg = "XML file parsing error: $err";
+		}
+		if( $doc ) {
+			if( $doc->documentElement->nodeName eq 'GraphML' ) {
+				$type = 'CollateX';
+			} elsif( $doc->documentElement->nodeName ne 'TEI' ) {
+				$errmsg = 'Unrecognized XML type ' . $doc->documentElement->nodeName;
+			} else {
+				my $xpc = XML::LibXML::XPathContext->new( $doc->documentElement );
+				my $venc = $xpc->findvalue( '/TEI/teiHeader/encodingDesc/variantEncoding/attribute::method' );
+				if( $venc && $venc eq 'double-end-point' ) {
+					$type = 'CTE';
+				} else {
+					$type = 'TEI';
+				}
+			}
+		}
+		# Try the relevant XML parsing option.
+		if( $type ) {
+			delete $newopts{'file'};
+			$newopts{'xmlobj'} = $doc;
 			try {
 				$tradition = Text::Tradition->new( %newopts, 'input' => $type );
 			} catch ( Text::Tradition::Error $e ) {
 				$errmsg = $e->message;
-			} catch {
-				$errmsg = "Unexpected parsing error";
-			}
-			if( $tradition ) {
-				$errmsg = undef;
-				last;
+			} catch ( $e ) {
+				$errmsg = "Unexpected parsing error: $e";
 			}
 		}
 	} elsif( $ext =~ /^(txt|csv|xls(x)?)$/ ) {
@@ -161,8 +185,8 @@ sub newtradition :Local :Args(0) {
 				);
 		} catch ( Text::Tradition::Error $e ) {
 			$errmsg = $e->message;
-		} catch {
-			$errmsg = "Unexpected parsing error";
+		} catch ( $e ) {
+			$errmsg = "Unexpected parsing error: $e";
 		}
 	} else {
 		# Error unless we have a recognized filename extension
