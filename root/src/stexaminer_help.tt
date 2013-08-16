@@ -25,5 +25,4 @@
 
  <p>To the right of the stemma graph is more detailed information about the variants at the selected location. It will show which reading was presumably the archetypal one in its calculated scenario, and it will list the source(s) of variation for each of the other readings. The non-archetypal readings can carry a variant type as well - this information is taken from any relationships that are defined for the text in the <a href="[% c.uri_for("/relation/$textid") %]">collation viewer and relationship mapper tool</a>.</p>
  
-[% END -%]
 [% PROCESS footer.tt %]
