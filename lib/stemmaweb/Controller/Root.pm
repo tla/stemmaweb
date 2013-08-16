@@ -279,6 +279,9 @@ sub textinfo :Local :Args(1) {
 		if( exists $params->{'owner'} ) {
 			# Only admins can update user / owner
 			my $newownerid = delete $params->{'owner'};
+			if( $tradition->has_user && !$tradition->user ) {
+				$tradition->clear_user;
+			}
 			unless( !$newownerid || 
 				( $tradition->has_user && $tradition->user->email eq $newownerid ) ) {
 				unless( $c->user->get_object->is_admin ) {
