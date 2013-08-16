@@ -17,7 +17,7 @@
  
  <p>In 'select' mode, when the nodes are green, you can navigate through the graph. Scrolling up or down will zoom in and out, respectively; dragging the graph will pan it in that direction.  Use this navigation to hone in on the part of the graph to be worked with.</p>
  
- <p> When you are ready to draw relationships, click the 'pencil' icon to enter edit mode.  Here, dragging a reading node onto another reading will establish a relationship link between them. Fill in the details of the relationship as follows:</p>
+ <p> When you are ready to draw relationships, click the 'pencil' icon to enter edit mode.  When you select a node (by clicking on it) you can drag it onto another node to indicate that a relationship exists between them. Fill in the details of the relationship as follows:</p>
 <p><em>Type</em> can be one of:</p>
 <ul>
 	<li>Orthographic - these are interchangeable representations of the same reading</li>
@@ -33,7 +33,15 @@
 	<li>Global - the relationship applies throughout the text</li>
 </ul>
  
- <p>The relationships are displayed as colored paths between readings; while in 'edit' mode, clicking on a relationship path will display the information associated with it, and give the user an option to delete it.  Deletion of a 'global' relationship will remove that relationship throughout the graph.  When you are ready to move elsewhere in the graph, click the 'hand' icon to return to select mode.<p>
+ <p>The relationships are displayed as colored paths between readings. While in 'edit' mode, clicking on a relationship path will display the information associated with it, and give the user an option to delete it.  Deletion of a 'global' relationship will remove that relationship throughout the graph.  When you are ready to move elsewhere in the graph, click the 'hand' icon to return to select mode.<p>
+ 
+ <h3>Correcting the collation</h3>
+ 
+ <p>Occasionally, the collation as uploaded will contain errors, or need for some other reason to be modified. Within the relationship mapper, you can detach a sequence of readings and re-attach it elsewhere as a form of manual collation.</p>
+ 
+ <p>To detach one or more readings, drag with the mouse to select an area of the graph that includes all the affected readings. A dialog will pop up to ask which witnesses should be detached from the collation at that point. To attach a reading elsewhere, select it and drag it to the corresponding reading elsewhere in the graph, just as though you were making a relationship. There should be an option to specify that the readings are identical; select it.</p>
+ 
+ <p>At the moment, editing the graph in this manner can quickly lead to a rather untidy and confusing-looking graph. If at any point it becomes too difficult to follow, please re-load the relationship mapper.</p>
  
 [% IF language != 'NONE' %]
  <h3>Adding [% language %] morphological information to readings</h3>
