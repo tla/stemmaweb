@@ -172,6 +172,14 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
 }
 #stemma_graph svg {
 }
+#stemma_graph_title {
+	bottom: 0px;
+}
+#stemma_identifier {
+	color: #488dd2;
+	font-size: 12px;
+	font-weight: bold;
+}	
 #textinfo_container_buttons {
     z-index: 100;
     width: 224px;
@@ -210,6 +218,10 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
 .error {
     font-weight: bold;
     color: #ff3333;
+}
+.notification {
+	font-weight: bold;
+	color: #33ff33;
 }
 #new_file {
     position: absolute;

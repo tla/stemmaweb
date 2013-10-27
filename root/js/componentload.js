@@ -134,7 +134,10 @@ function load_stemma( idx ) {
 	selectedStemmaID = idx;
 	show_stemmapager();
 	if( idx > -1 ) {
-		loadSVG( stemmata[idx] );
+		// Load the SVG and identifier of the stemma
+		var stemmadata = stemmata[idx];
+		loadSVG( stemmadata['svg'] );
+		$('#stemma_identifier').empty().text( stemmadata['name'] );
 		// Stexaminer submit action
 		var stexpath = _get_url([ "stexaminer", selectedTextID, idx ]);
 		$('#run_stexaminer').attr( 'action', stexpath );

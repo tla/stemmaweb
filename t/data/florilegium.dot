@@ -1,4 +1,4 @@
-digraph Stemma {
+digraph "stemma of Tomas" {
     "α" [ class=hypothetical ];
     "γ" [ class=hypothetical ];
     "δ" [ class=hypothetical ];

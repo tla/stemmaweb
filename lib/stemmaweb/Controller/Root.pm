@@ -322,7 +322,8 @@ sub textinfo :Local :Args(1) {
 	if( $tradition->can('language') ) {
 		$textinfo->{'language'} = $tradition->language;
 	}
-	my @stemmasvg = map { $_->as_svg() } $tradition->stemmata;
+	my @stemmasvg = map { { name => $_->identifier, svg => $_->as_svg() } } 
+		$tradition->stemmata;
 	map { $_ =~ s/\n/ /mg } @stemmasvg;
 	$textinfo->{stemmata} = \@stemmasvg;
 	$c->stash->{'result'} = $textinfo;

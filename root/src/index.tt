@@ -83,6 +83,7 @@ var textOnLoad = "[% withtradition %]";
           </a>
       </div>
       <div id="stemma_graph"></div>
+      <div id="stemma_graph_title"><span id="stemma_identifier"></span></div>
     </div>
 
     <!-- Interim 'loading' message for directory box -->
