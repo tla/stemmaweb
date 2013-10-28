@@ -322,7 +322,10 @@ sub textinfo :Local :Args(1) {
 	if( $tradition->can('language') ) {
 		$textinfo->{'language'} = $tradition->language;
 	}
-	my @stemmasvg = map { { name => $_->identifier, svg => $_->as_svg() } } 
+	my @stemmasvg = map { { 
+			name => $_->identifier, 
+			directed => _json_bool( !$_->is_undirected ),
+			svg => $_->as_svg() } } 
 		$tradition->stemmata;
 	map { $_ =~ s/\n/ /mg } @stemmasvg;
 	$textinfo->{stemmata} = \@stemmasvg;
@@ -448,6 +451,7 @@ sub stemma :Local :Args(2) {
 		$c->stash->{'result'} = { 
 			'stemmaid' => $stemmaid, 
 			'name' => $stemma->identifier,
+			'directed' => _json_bool( !$stemma->is_undirected ),
 			'svg' => $stemma_xml };
 		$c->forward('View::JSON');
 	}
@@ -530,6 +534,10 @@ sub _json_error {
 	$c->stash->{'result'} = { 'error' => $errmsg };
 	$c->forward('View::JSON');
 	return 0;
+}
+
+sub _json_bool {
+	return $_[0] ? JSON::true : JSON::false;
 }
 
 =head2 default
