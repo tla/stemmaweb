@@ -190,7 +190,7 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
     position: relative;
     top: 15px;
 }
-#run_stexaminer, #run_relater, #open_stemma_add, #open_stemma_edit {
+#run_stexaminer, #run_relater, #open_stemma_add, #open_stemma_edit, #open_stemweb_ui {
     height: 32px;
 }
 #stemma_pager {

@@ -45,10 +45,12 @@ function loadTradition( textid, textname, editable ) {
     // Hide the functionality that is irrelevant
     if( editable ) {
     	$('#open_stemma_add').show();
+    	$('#open_stemweb_ui').show();
     	$('#open_textinfo_edit').show();
     	$('#relatebutton_label').text('View collation and edit relationships');
     } else {
     	$('#open_stemma_add').hide();
+    	$('#open_stemweb_ui').hide();
     	$('#open_textinfo_edit').hide();
     	$('#relatebutton_label').text('View collation and relationships');
     }
@@ -421,7 +423,7 @@ $(document).ready( function() {
 				// If we are creating a new stemma, populate the textarea with a
 				// bare digraph.
 				$(evt.target).dialog('option', 'title', 'Add a new stemma')
-				$('#dot_field').val( "digraph stemma {\n\n}" );
+				$('#dot_field').val( "digraph \"NAME STEMMA HERE\" {\n\n}" );
 			} else {
 				// If we are editing a stemma, grab its stemmadot and populate the
 				// textarea with that.
@@ -440,6 +442,70 @@ $(document).ready( function() {
     	if( ajaxSettings.url.indexOf( 'stemma' ) > -1 
     		&& ajaxSettings.type == 'POST' ) {
 			display_error( jqXHR, $("#edit_stemma_status") );
+    	}
+	});
+
+	$('#stemweb-ui-dialog').dialog({
+		autoOpen: false,
+		height: 200,
+		width: 300,
+		modal: true,
+		buttons: {
+			Run: function (evt) {
+				$("#stemweb_run_status").empty();
+				$(evt.target).button("disable");
+				var stemmaseq = $('#stemmaseq').val();
+				var requrl = _get_url([ "stemma", selectedTextID, stemmaseq ]);
+				var reqparam = { 'dot': $('#dot_field').val() };
+				// TODO We need to stash the literal SVG string in stemmata
+				// somehow. Implement accept header on server side to decide
+				// whether to send application/json or application/xml?
+				$.post( requrl, reqparam, function (data) {
+					// We received a stemma SVG string in return. 
+					// Update the current stemma sequence number
+					selectedStemmaID = data.stemmaid;
+					delete data.stemmaid;
+					// Stash the answer in the appropriate spot in our stemma array
+					stemmata[selectedStemmaID] = data;
+					// Display the new stemma
+					load_stemma( selectedStemmaID, true );
+					// Reenable the button and close the form
+					$(evt.target).button("enable");
+					$('#stemma-edit-dialog').dialog('close');
+				}, 'json' );
+			},
+			Cancel: function() {
+				$('#stemweb-ui-dialog').dialog('close');
+			}
+		},
+		create: function(evt) {
+			// Call out to Stemweb to get the algorithm options, with which we
+			// populate the form.
+			var algorithmTypes = {};
+			var algorithmArgs = {};
+			$.each( stemwebAlgorithms, function( i, o ) {
+				// If it's an algorithmarg, skip it for now
+				if( o.model === 'algorithms.algorithm' ) {
+					algorithmTypes[ o.pk ] = o.fields;
+				} else {
+					// it's an arg
+					algorithmArgs[ o.pk ] = o.fields;
+				}
+			});
+			$.each( algorithmTypes, function( pk, fields ) {
+				var algopt = $('<option>').attr( 'value', pk ).append( fields.name );
+				$('#stemweb_algorithm').append( algopt );
+			});
+			// TODO add the algorithm args
+		},
+		open: function(evt) {
+			$("#stemweb_run_status").empty();
+		},
+	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+		$(event.target).parent().find('.ui-button').button("enable");
+    	if( ajaxSettings.url.indexOf( 'algorithms' ) > -1 
+    		&& ajaxSettings.type == 'POST' ) {
+			display_error( jqXHR, $("#stemweb_run_status") );
     	}
 	});
 		

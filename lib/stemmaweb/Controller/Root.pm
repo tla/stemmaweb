@@ -1,7 +1,7 @@
 package stemmaweb::Controller::Root;
 use Moose;
 use namespace::autoclean;
-use Text::Tradition::Analysis qw/ run_analysis /;
+use LWP::UserAgent;
 use TryCatch;
 use XML::LibXML;
 use XML::LibXML::XPathContext;
@@ -14,6 +14,8 @@ BEGIN { extends 'Catalyst::Controller' }
 # so they function identically to actions created in MyApp.pm
 #
 __PACKAGE__->config(namespace => '');
+
+my $STEMWEB_BASE_URL = 'http://slinkola.users.cs.helsinki.fi';
 
 =head1 NAME
 
@@ -38,6 +40,14 @@ sub index :Path :Args(0) {
 	# Are we being asked to load a text immediately? If so 
 	if( $c->req->param('withtradition') ) {
 		$c->stash->{'withtradition'} = $c->req->param('withtradition');
+	}
+	# Get the current list of Stemweb algorithms
+	my $ua = LWP::UserAgent->new();
+	my $resp = $ua->get( $STEMWEB_BASE_URL . '/algorithms/available' );
+	if( $resp->is_success ) {
+		$c->stash->{'stemweb_algorithms'} = $resp->content;
+	} else {
+		$c->stash->{'stemweb_algorithms'} = '{}';
 	}
     $c->stash->{template} = 'index.tt';
 }

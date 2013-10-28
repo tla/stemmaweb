@@ -6,6 +6,7 @@
 // Set global variables that must be passed by the server
 var basepath = "[% c.uri_for( '/' ) %]";
 var textOnLoad = "[% withtradition %]";
+var stemwebAlgorithms = [% stemweb_algorithms %];
     </script>
 
 [% END %]
@@ -66,6 +67,12 @@ var textOnLoad = "[% withtradition %]";
           	  <span>Edit this stemma</span>
             </div>
           </form>
+          <form id="open_stemweb_ui" action="" method="GET" name="run_stemweb">
+            <div class="button" id="run_stemweb_button"
+            	onClick="$('#stemweb-ui-dialog').dialog('open');">
+              <span>Run a Stemweb algorithm</span>
+            </div>
+          </form>
           <form id="run_stexaminer" action="" method="GET" name="run_stexaminer">
             <div class="button" id="stexaminer_button" onClick="$('#run_stexaminer').submit()">
           	  <span>Examine variants against this stemma</span>
@@ -122,9 +129,10 @@ var textOnLoad = "[% withtradition %]";
     		<input id="stemmaseq" type="hidden" name="stemmaseq" val="n"/>
 			<div id="edit_instructions">
 				<p>All definitions begin with the line
-					<pre>digraph stemma {</pre>
+					<pre>digraph "Stemma Name" {</pre>
 				and end with the line 
-					<pre>}</pre>Please do not change these lines.</p>
+					<pre>}</pre>
+				Please do not change these lines except to edit the stemma name.</p>
 				<p>First list each witness in your stemma, whether extant or lost /
 				reconstructed / hypothetical, and assign them a class of either "extant"
 				or "hypothetical". For example:</p><pre>  
@@ -144,6 +152,19 @@ var textOnLoad = "[% withtradition %]";
       </div>
     </div>
 
+	<!-- Stemweb UI dialog box -->
+    <div id="stemweb-ui-dialog">
+      <div id="stemweb_ui_container">
+    	<form id="call_stemweb">
+    		<label for="algorithm">Run algorithm:</label><br/>
+    		<select id="stemweb_algorithm" name="algorithm"></select>
+    		<!-- Algorithm-specific options, if any, will be added within this div -->
+    		<div id="stemweb_runtime_options"></div>
+    	</form>
+    	<div id="stemweb_run_status"></div>
+      </div>
+    </div>
+    
     <!-- File upload dialog box -->
     <div id="upload-collation-dialog" title="Upload a collation">
       <div id="upload_container">
