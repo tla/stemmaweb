@@ -23,7 +23,6 @@ use Search::GIN::Extract::Multiplex;
 use Catalyst qw/
     ConfigLoader
     Static::Simple
-    Unicode::Encoding
     Authentication
     Session
     Session::Store::File
@@ -49,6 +48,8 @@ __PACKAGE__->config(
     name => 'stemmaweb',
     # Disable deprecated behavior needed by old applications
     disable_component_resolution_regex_fallback => 1,
+    # Set Unicode as the default
+    encoding => 'UTF-8',
     default_view => 'TT',
 	'View::JSON' => {
 		expose_stash => 'result',

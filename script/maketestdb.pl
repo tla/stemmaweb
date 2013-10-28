@@ -39,6 +39,7 @@ say "Created users";
 
 my $t1 = Text::Tradition->new( input => 'Self', file => 't/data/besoin.xml' );
 die "Failed to create test tradition #1" unless $t1;
+$t1->add_stemma( dotfile => 't/data/besoin_stemweb.dot' );
 $user->add_tradition( $t1 );
 $dir->store( $user );
 say "Created test user tradition";
