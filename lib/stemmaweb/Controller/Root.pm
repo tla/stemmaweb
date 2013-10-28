@@ -381,9 +381,19 @@ sub stemma :Local :Args(2) {
 			my $dot = $c->request->body_params->{'dot'};
 			# Graph::Reader::Dot does not handle bare unicode. We get around this
 			# by wrapping all words in double quotes, as long as they aren't already
-			# wrapped, and as long as they aren't the initial 'digraph stemma'.
+			# wrapped, and as long as they aren't the initial '(di)?graph .*'.
 			# Horrible HACK.
-			$dot =~ s/(?<!")\b(?!(?:digraph|stemma)\b)(\w+)\b(?!")/"$1"/g;
+			my @dlines = split( "\n", $dot );
+			my $wdot = '';
+			foreach( @dlines ) {
+				unless( /^(di)?graph/ ) { # Skip the first line
+					s/(?<!")\b(\w+)\b(?!")/"$1"/g;
+				}
+				$wdot .= "$_\n";
+			}
+			# $dot =~ s/(?<!")\b(?!(?:digraph|stemma)\b)(\w+)\b(?!")/"$1"/g;
+			$dot = $wdot;
+			print STDERR "$dot\n";
 			try {
 				if( $stemmaid eq 'n' ) {
 					# We are adding a new stemma.
@@ -435,7 +445,10 @@ sub stemma :Local :Args(2) {
 		$c->forward('View::SVG');
 	} else { # JSON
 		$stemma_xml =~ s/\n/ /mg;
-		$c->stash->{'result'} = { 'stemmaid' => $stemmaid, 'stemmasvg' => $stemma_xml };
+		$c->stash->{'result'} = { 
+			'stemmaid' => $stemmaid, 
+			'name' => $stemma->identifier,
+			'svg' => $stemma_xml };
 		$c->forward('View::JSON');
 	}
 }

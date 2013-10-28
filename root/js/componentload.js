@@ -396,8 +396,9 @@ $(document).ready( function() {
 					// We received a stemma SVG string in return. 
 					// Update the current stemma sequence number
 					selectedStemmaID = data.stemmaid;
-					// Stash the answer in our SVG array
-					stemmata[selectedStemmaID] = data.stemmasvg;
+					delete data.stemmaid;
+					// Stash the answer in the appropriate spot in our stemma array
+					stemmata[selectedStemmaID] = data;
 					// Display the new stemma
 					load_stemma( selectedStemmaID );
 					// Show the edit button, in case this was the first new stemma
