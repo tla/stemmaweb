@@ -153,11 +153,12 @@ var stemwebAlgorithms = [% stemweb_algorithms %];
     </div>
 
 	<!-- Stemweb UI dialog box -->
-    <div id="stemweb-ui-dialog">
+    <div id="stemweb-ui-dialog" title="Generate a Stemweb tree">
       <div id="stemweb_ui_container">
     	<form id="call_stemweb">
-    		<label for="algorithm">Run algorithm:</label><br/>
-    		<select id="stemweb_algorithm" name="algorithm"></select>
+    		<input id="stemweb_tradition" type="hidden" name="tradition"/>
+    		<label for="algorithm">Run algorithm: </label>
+    		<select id="stemweb_algorithm" name="algorithm"></select><br/>
     		<!-- Algorithm-specific options, if any, will be added within this div -->
     		<div id="stemweb_runtime_options"></div>
     	</form>

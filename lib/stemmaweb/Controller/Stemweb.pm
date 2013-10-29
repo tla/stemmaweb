@@ -2,10 +2,15 @@ package stemmaweb::Controller::Stemweb;
 use Moose;
 use namespace::autoclean;
 use JSON qw/ from_json /;
+use LWP::UserAgent;
 use Safe::Isa;
 use TryCatch;
+use URI;
 
 BEGIN { extends 'Catalyst::Controller' }
+
+## TODO Move the /algorithms/available function to the Stemweb module
+my $STEMWEB_BASE_URL = 'http://slinkola.users.cs.helsinki.fi';
 
 =head1 NAME
 
@@ -91,6 +96,82 @@ sub result :Local :Args(0) {
 	} else {
 		return _json_error( $c, 403, 'Please use POST!' );
 	}
+}
+
+=head2 request
+
+ GET stemweb/request/?
+	tradition=<tradition ID> &
+	algorithm=<algorithm ID> &
+	[<algorithm parameters>]
+   
+Send a request for the given tradition with the given parameters to Stemweb.
+Processes and returns the JSON response given by the Stemweb server.
+
+=cut
+
+sub request :Local :Args(0) {
+	my( $self, $c ) = @_;
+	# Look up the relevant tradition and check permissions.
+	my $reqparams = $c->req->params;
+	my $tid = delete $reqparams->{tradition};
+	my $t = $c->model('Directory')->tradition( $tid );
+	my $ok = _check_permission( $c, $t );
+	return unless $ok;
+	return( _json_error( $c, 403, 
+			'You do not have permission to update stemmata for this tradition' ) )
+		unless $ok eq 'full';
+	
+	# Form the request for Stemweb.
+	my $algorithm = delete $reqparams->{algorithm};
+	my $return_uri = URI->new( $c->uri_for( '/stemweb/result' ) );
+	my $stemweb_request = {
+		return_path => $return_uri->path,
+		return_host => $return_uri->host_port,
+		data => $t->collation->as_tsv,
+		userid => $c->user->email,
+		parameters => $reqparams };
+		
+	# Call to the appropriate URL with the request parameters.
+	my $ua = LWP::UserAgent->new();
+	my $resp = $ua->post( $STEMWEB_BASE_URL . "/algorithms/process/$algorithm/",
+		'Content-Type' => 'application/json; charset=utf-8', 
+		'Content' => encode_json( $stemweb_request ) ); 
+	if( $resp->is_success ) {
+		# Process it
+		my $stemweb_response = decode_json( $resp->content );
+		try {
+			$t->set_stemweb_jobid( $stemweb_response->{jobid} );
+		} catch( Text::Tradition::Error $e ) {
+			return _json_error( $c, 429, $e->message );
+		}
+		$c->model('Directory')->save( $t );
+		$c->stash->{'result'} = $stemweb_response;
+		$c->forward('View::JSON');
+	} elsif( $resp->code == 500 && $resp->header('Client-Warning')
+		&& $resp->header('Client-Warning') eq 'Internal response' ) {
+		# The server was unavailable.
+		return _json_error( $c, 503, "The Stemweb server is currently unreachable." );
+	} else {
+		return _json_error( $c, 500, "Stemweb error: " . $resp->status . " / "
+			. $resp->content );
+	}
+}
+
+# Helper to check what permission, if any, the active user has for
+# the given tradition
+sub _check_permission {
+	my( $c, $tradition ) = @_;
+    my $user = $c->user_exists ? $c->user->get_object : undef;
+    if( $user ) {
+    	return 'full' if ( $user->is_admin || 
+    		( $tradition->has_user && $tradition->user->id eq $user->id ) );
+    }
+	# Text doesn't belong to us, so maybe it's public?
+	return 'readonly' if $tradition->public;
+
+	# ...nope. Forbidden!
+	return _json_error( $c, 403, 'You do not have permission to view this tradition.' );
 }
 
 # Helper to throw a JSON exception

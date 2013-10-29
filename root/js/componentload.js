@@ -447,29 +447,20 @@ $(document).ready( function() {
 
 	$('#stemweb-ui-dialog').dialog({
 		autoOpen: false,
-		height: 200,
-		width: 300,
+		height: 160,
+		width: 225,
 		modal: true,
 		buttons: {
 			Run: function (evt) {
 				$("#stemweb_run_status").empty();
 				$(evt.target).button("disable");
-				var stemmaseq = $('#stemmaseq').val();
-				var requrl = _get_url([ "stemma", selectedTextID, stemmaseq ]);
-				var reqparam = { 'dot': $('#dot_field').val() };
+				var requrl = _get_url([ "stemweb", "request" ]);
+				var reqparam = $('#call_stemweb').serialize();
 				// TODO We need to stash the literal SVG string in stemmata
 				// somehow. Implement accept header on server side to decide
 				// whether to send application/json or application/xml?
-				$.post( requrl, reqparam, function (data) {
-					// We received a stemma SVG string in return. 
-					// Update the current stemma sequence number
-					selectedStemmaID = data.stemmaid;
-					delete data.stemmaid;
-					// Stash the answer in the appropriate spot in our stemma array
-					stemmata[selectedStemmaID] = data;
-					// Display the new stemma
-					load_stemma( selectedStemmaID, true );
-					// Reenable the button and close the form
+				$.getJSON( requrl, reqparam, function (data) {
+					// Job ID is in data.jobid. TODO do something with it.
 					$(evt.target).button("enable");
 					$('#stemma-edit-dialog').dialog('close');
 				}, 'json' );
@@ -484,11 +475,11 @@ $(document).ready( function() {
 			var algorithmTypes = {};
 			var algorithmArgs = {};
 			$.each( stemwebAlgorithms, function( i, o ) {
-				// If it's an algorithmarg, skip it for now
 				if( o.model === 'algorithms.algorithm' ) {
+					// it's an algorithm.
 					algorithmTypes[ o.pk ] = o.fields;
-				} else {
-					// it's an arg
+				} else if( o.model == 'algorithms.algorithmarg'	&& o.fields.external ) {
+					// it's an option for an algorithm that we should display.
 					algorithmArgs[ o.pk ] = o.fields;
 				}
 			});
@@ -496,10 +487,43 @@ $(document).ready( function() {
 				var algopt = $('<option>').attr( 'value', pk ).append( fields.name );
 				$('#stemweb_algorithm').append( algopt );
 			});
-			// TODO add the algorithm args
+			// Set up the relevant options for whichever algorithm is chosen.
+			// "key" -> form name, option ID "stemweb_$key_opt"
+			// "name" -> form label
+			$('#stemweb_algorithm').change( function() {
+				var pk = $(this).val();
+				$('#stemweb_runtime_options').empty();
+				$.each( algorithmTypes[pk].args, function( i, apk ) {
+					var argInfo = algorithmArgs[apk];
+					if( argInfo ) {
+						// Make the element ID
+						var optId = 'stemweb_' + argInfo.key + '_opt';
+						// Make the label
+						var optLabel = $('<label>').attr( 'for', optId )
+							.append( argInfo.name + ": " );
+						var optCtrl;
+						var argType = argInfo.value;
+						if( argType === 'positive_integer' ) {
+							// Make it an input field of smallish size.
+							optCtrl = $('<input>').attr( 'size', 4 );
+						} else if ( argType === 'boolean' ) {
+							// Make it a checkbox.
+							optCtrl = $('<checkbox>');
+						}
+						// Add the name and element ID
+						optCtrl.attr( 'name', argInfo.name ).attr( 'id', optId );
+						// Append the label and the option itself to the form.
+						$('#stemweb_runtime_options').append( optLabel )
+							.append( optCtrl ).append( $('<br>') );
+					}
+				});
+			});
+			// Prime the initial options
+			$('#stemweb_algorithm').change();
 		},
 		open: function(evt) {
-			$("#stemweb_run_status").empty();
+			$('#stemweb_run_status').empty();
+			$('#stemweb_tradition').attr('val', selectedTextID );
 		},
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$(event.target).parent().find('.ui-button').button("enable");
