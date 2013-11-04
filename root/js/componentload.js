@@ -523,7 +523,7 @@ $(document).ready( function() {
 		},
 		open: function(evt) {
 			$('#stemweb_run_status').empty();
-			$('#stemweb_tradition').attr('val', selectedTextID );
+			$('#stemweb_tradition').attr('value', selectedTextID );
 		},
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$(event.target).parent().find('.ui-button').button("enable");
