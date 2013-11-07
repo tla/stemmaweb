@@ -56,6 +56,7 @@ $t3->name( 'John verse' );
 $dir->store( $t3 );
 my $t4 = Text::Tradition->new( input => 'Self', file => 't/data/collatecorr.xml' );
 $t4->public( 1 );
+$t4->set_stemweb_jobid( '16' );
 $user->add_tradition( $t4 );
 $dir->store( $t4 );
 $dir->store( $user );

@@ -84,7 +84,7 @@ indicate that the job is still running.
 sub query :Local :Args(1) {
 	my( $self, $c, $jobid ) = @_;
 	my $ua = LWP::UserAgent->new();
-	my $resp = $ua->get( $STEMWEB_BASE_URL . "/jobstatus/$jobid" );
+	my $resp = $ua->get( $STEMWEB_BASE_URL . "/algorithms/jobstatus/$jobid" );
 	if( $resp->is_success ) {
 		# Process it
 		my $response = decode_utf8( $resp->content );
@@ -115,10 +115,15 @@ sub _process_stemweb_result {
 	# TODO: Maybe get Stemweb to pass back the tradition ID...
 	my $m = $c->model('Directory');
 	my @traditions;
+	## STUPID HACK: unless we load the possible tradition owners
+	## within scope of the scan, they will not exist when the affected
+	## tradition is saved.
+	my @users;
 	$m->scan( sub{ push( @traditions, $_[0] )
 					if $_[0]->$_isa('Text::Tradition')
 					&& $_[0]->has_stemweb_jobid 
 					&& $_[0]->stemweb_jobid eq $answer->{job_id}; 
+			push( @users, $_[0] ) if $_[0]->$_isa('Text::Tradition::User');
 				} );
 	if( @traditions == 1 ) {
 		my $tradition = shift @traditions;
@@ -137,7 +142,7 @@ sub _process_stemweb_result {
 					name => $_->identifier, 
 					directed => _json_bool( !$_->is_undirected ),
 					svg => $_->as_svg() } } 
-				$stemmata;
+				@$stemmata;
 			$c->stash->{'result'} = { 
 				'status' => 'success',
 				'stemmata' => \@steminfo };

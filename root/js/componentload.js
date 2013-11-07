@@ -137,8 +137,10 @@ function load_stemma( idx, editable ) {
 	if( editable ) {
 		if( selectedTextInfo.stemweb_jobid == 0 ) {
 			$('#open_stemweb_ui').show();
+			$('#query_stemweb_ui').hide();
 		} else {
 			$('#query_stemweb_ui').show();
+			$('#open_stemweb_ui').hide();
 		}
 	}
 	if( idx > -1 ) {
@@ -165,11 +167,12 @@ function query_stemweb_progress() {
 		// Look for a status message, either success, running, or notfound.
 		if( data.status === 'success' ) {
 			// Add the new stemmata to the textinfo and tell the user.
+			selectedTextInfo.stemweb_jobid = 0;
 			if( data.stemmata.length > 0 ) {
 				stemmata = stemmata.concat( data.stemmata );
 				if( selectedStemmaID == -1 ) {
 					// We have a stemma for the first time; load the first one.
-					load_stemma( 0 );
+					load_stemma( 0, true );
 				}
 				alert( 'You have one or more new stemmata!' );
 			} else {
@@ -497,6 +500,8 @@ $(document).ready( function() {
 					// Job ID is in data.jobid. TODO do something with it.
 					$(evt.target).button("enable");
 					$('#stemma-edit-dialog').dialog('close');
+					// Reload the current stemma to rejigger the buttons
+					load_stemma( selectedStemmaID, true );
 				}, 'json' );
 			},
 			Cancel: function() {
