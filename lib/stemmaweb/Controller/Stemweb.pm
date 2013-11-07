@@ -1,7 +1,8 @@
 package stemmaweb::Controller::Stemweb;
 use Moose;
 use namespace::autoclean;
-use JSON qw/ from_json /;
+use Encode qw/ decode_utf8 /;
+use JSON qw/ decode_json encode_json from_json /;
 use LWP::UserAgent;
 use Safe::Isa;
 use TryCatch;
@@ -129,16 +130,19 @@ sub request :Local :Args(0) {
 		return_path => $return_uri->path,
 		return_host => $return_uri->host_port,
 		data => $t->collation->as_tsv,
-		userid => $c->user->email,
+		userid => $t->user->email,
 		parameters => $reqparams };
 		
 	# Call to the appropriate URL with the request parameters.
+    $DB::single = 1;
 	my $ua = LWP::UserAgent->new();
 	my $resp = $ua->post( $STEMWEB_BASE_URL . "/algorithms/process/$algorithm/",
 		'Content-Type' => 'application/json; charset=utf-8', 
 		'Content' => encode_json( $stemweb_request ) ); 
 	if( $resp->is_success ) {
 		# Process it
+		$c->log->debug( 'Got a response from the server: '
+			. decode_utf8( $stemweb_response ) );
 		my $stemweb_response = decode_json( $resp->content );
 		try {
 			$t->set_stemweb_jobid( $stemweb_response->{jobid} );
@@ -153,7 +157,7 @@ sub request :Local :Args(0) {
 		# The server was unavailable.
 		return _json_error( $c, 503, "The Stemweb server is currently unreachable." );
 	} else {
-		return _json_error( $c, 500, "Stemweb error: " . $resp->status . " / "
+		return _json_error( $c, 500, "Stemweb error: " . $resp->code . " / "
 			. $resp->content );
 	}
 }

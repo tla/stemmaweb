@@ -511,7 +511,7 @@ $(document).ready( function() {
 							optCtrl = $('<checkbox>');
 						}
 						// Add the name and element ID
-						optCtrl.attr( 'name', argInfo.name ).attr( 'id', optId );
+						optCtrl.attr( 'name', argInfo.key ).attr( 'id', optId );
 						// Append the label and the option itself to the form.
 						$('#stemweb_runtime_options').append( optLabel )
 							.append( optCtrl ).append( $('<br>') );
@@ -527,8 +527,7 @@ $(document).ready( function() {
 		},
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$(event.target).parent().find('.ui-button').button("enable");
-    	if( ajaxSettings.url.indexOf( 'algorithms' ) > -1 
-    		&& ajaxSettings.type == 'POST' ) {
+    	if( ajaxSettings.url.indexOf( 'stemweb/request' ) > -1 ) {
 			display_error( jqXHR, $("#stemweb_run_status") );
     	}
 	});
