@@ -45,12 +45,12 @@ function loadTradition( textid, textname, editable ) {
     // Hide the functionality that is irrelevant
     if( editable ) {
     	$('#open_stemma_add').show();
-    	$('#open_stemweb_ui').show();
     	$('#open_textinfo_edit').show();
     	$('#relatebutton_label').text('View collation and edit relationships');
     } else {
     	$('#open_stemma_add').hide();
     	$('#open_stemweb_ui').hide();
+    	$('#query_stemweb_ui').hide();
     	$('#open_textinfo_edit').hide();
     	$('#relatebutton_label').text('View collation and relationships');
     }
@@ -133,6 +133,14 @@ function load_stemma( idx, editable ) {
 	$('#open_stemma_edit').hide();
 	$('#run_stexaminer').hide();
 	$('#stemma_identifier').empty();
+	// Add the relevant Stemweb functionality
+	if( editable ) {
+		if( selectedTextInfo.stemweb_jobid == 0 ) {
+			$('#open_stemweb_ui').show();
+		} else {
+			$('#query_stemweb_ui').show();
+		}
+	}
 	if( idx > -1 ) {
 		// Load the stemma and its properties
 		var stemmadata = stemmata[idx];
@@ -149,6 +157,32 @@ function load_stemma( idx, editable ) {
 		$('#stemma_identifier').text( stemmadata.name );
         setTimeout( 'start_element_height = $("#stemma_graph .node")[0].getBBox().height;', 500 );
 	}
+}
+
+function query_stemweb_progress() {
+	var requrl = _get_url([ "stemweb", "query", selectedTextInfo.stemweb_jobid ]);
+	$.getJSON( requrl, function (data) {
+		// Look for a status message, either success, running, or notfound.
+		if( data.status === 'success' ) {
+			// Add the new stemmata to the textinfo and tell the user.
+			if( data.stemmata.length > 0 ) {
+				stemmata = stemmata.concat( data.stemmata );
+				if( selectedStemmaID == -1 ) {
+					// We have a stemma for the first time; load the first one.
+					load_stemma( 0 );
+				}
+				alert( 'You have one or more new stemmata!' );
+			} else {
+				alert( 'Stemweb run finished with no stemmata...huh?!' );
+			}
+		} else if( data.status === 'running' ) {
+			// Just tell the user.
+			alert( 'Your Stemweb query is still running!' );
+		} else if( data.status === 'notfound' ) {
+			// Ask the user to refresh, for now.
+			alert( 'Your Stemweb query probably finished and reported back. Please reload to check.' );
+		}
+	});
 }
 
 // Load the SVG we are given

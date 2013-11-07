@@ -1,6 +1,7 @@
 package stemmaweb::Controller::Root;
 use Moose;
 use namespace::autoclean;
+use JSON qw ();
 use LWP::UserAgent;
 use TryCatch;
 use XML::LibXML;
@@ -324,13 +325,15 @@ sub textinfo :Local :Args(1) {
 	my $textinfo = {
 		textid => $textid,
 		name => $tradition->name,
-		#language => $tradition->language,
 		public => $tradition->public || 0,
 		owner => $tradition->user ? $tradition->user->email : undef,
 		witnesses => [ map { $_->sigil } $tradition->witnesses ],
 	};
 	if( $tradition->can('language') ) {
 		$textinfo->{'language'} = $tradition->language;
+	}
+	if( $tradition->can('stemweb_jobid') ) {
+		$textinfo->{'stemweb_jobid'} = $tradition->stemweb_jobid || 0;
 	}
 	my @stemmasvg = map { { 
 			name => $_->identifier, 

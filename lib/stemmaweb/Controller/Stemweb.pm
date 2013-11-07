@@ -2,7 +2,7 @@ package stemmaweb::Controller::Stemweb;
 use Moose;
 use namespace::autoclean;
 use Encode qw/ decode_utf8 /;
-use JSON qw/ decode_json encode_json from_json /;
+use JSON;
 use LWP::UserAgent;
 use Safe::Isa;
 use TryCatch;
@@ -56,47 +56,110 @@ sub result :Local :Args(0) {
 			my $pdata = <POSTDATA>;
 			chomp $pdata;
 			close POSTDATA;
-			$answer = from_json( $pdata );
+			try {
+				$answer = from_json( $pdata );
+			} catch {
+				return _json_error( $c, 400, 
+					"Could not parse POST request '' $pdata '' as JSON: $@" );
+			}
 		} else {
 			$answer = from_json( $c->request->body );
 		}
-		# Find a tradition with the defined Stemweb job ID.
-		# TODO: Maybe get Stemweb to pass back the tradition ID...
-		my $m = $c->model('Directory');
-		my @traditions;
-		$m->scan( sub{ push( @traditions, $_[0] )
-						if $_[0]->$_isa('Text::Tradition')
-						&& $_[0]->has_stemweb_jobid 
-						&& $_[0]->stemweb_jobid eq $answer->{job_id}; 
-					} );
-		if( @traditions == 1 ) {
-			my $tradition = shift @traditions;
-			if( $answer->{status} == 0 ) {
-				try {
-					$tradition->record_stemweb_result( $answer );
-					$m->save( $tradition );
-				} catch( Text::Tradition::Error $e ) {
-					return _json_error( $c, 500, $e->message );
-				} catch {
-					return _json_error( $c, 500, $@ );
-				}
-				# If we got here, success!
-				$c->stash->{'result'} = { 'status' => 'success' };
-				$c->forward('View::JSON');
-			} else {
-				return _json_error( $c, 500,
-					"Stemweb failure not handled: " . $answer->{result} );
-			}
-		} elsif( @traditions ) {
+		return _process_stemweb_result( $c, $answer );
+	} else {
+		return _json_error( $c, 403, 'Please use POST!' );
+	}
+}
+
+=head2 query
+
+ GET stemweb/query/<jobid>
+
+A backup method to query the stemweb server to check a particular job status.
+Returns a result as in /stemweb/result above, but status can also be -1 to 
+indicate that the job is still running.
+
+=cut
+
+sub query :Local :Args(1) {
+	my( $self, $c, $jobid ) = @_;
+	my $ua = LWP::UserAgent->new();
+	my $resp = $ua->get( $STEMWEB_BASE_URL . "/jobstatus/$jobid" );
+	if( $resp->is_success ) {
+		# Process it
+		my $response = decode_utf8( $resp->content );
+		$c->log->debug( "Got a response from the server: $response" );
+		my $answer;
+		try {
+			$answer = from_json( $response );
+		} catch {
 			return _json_error( $c, 500, 
-				"Multiple traditions with Stemweb job ID " . $answer->{job_id} . "!" );
+				"Could not parse stemweb response '' $response '' as JSON: $@" );
+		}
+		return _process_stemweb_result( $c, $answer );
+	} elsif( $resp->code == 500 && $resp->header('Client-Warning')
+		&& $resp->header('Client-Warning') eq 'Internal response' ) {
+		# The server was unavailable.
+		return _json_error( $c, 503, "The Stemweb server is currently unreachable." );
+	} else {
+		return _json_error( $c, 500, "Stemweb error: " . $resp->code . " / "
+			. $resp->content );
+	}
+}
+
+
+## Helper function for parsing Stemweb result data either by push or by pull
+sub _process_stemweb_result {
+	my( $c, $answer ) = @_;
+	# Find a tradition with the defined Stemweb job ID.
+	# TODO: Maybe get Stemweb to pass back the tradition ID...
+	my $m = $c->model('Directory');
+	my @traditions;
+	$m->scan( sub{ push( @traditions, $_[0] )
+					if $_[0]->$_isa('Text::Tradition')
+					&& $_[0]->has_stemweb_jobid 
+					&& $_[0]->stemweb_jobid eq $answer->{job_id}; 
+				} );
+	if( @traditions == 1 ) {
+		my $tradition = shift @traditions;
+		if( $answer->{status} == 0 ) {
+			my $stemmata;
+			try {
+				$stemmata = $tradition->record_stemweb_result( $answer );
+				$m->save( $tradition );
+			} catch( Text::Tradition::Error $e ) {
+				return _json_error( $c, 500, $e->message );
+			} catch {
+				return _json_error( $c, 500, $@ );
+			}
+			# If we got here, success!
+			my @steminfo = map { { 
+					name => $_->identifier, 
+					directed => _json_bool( !$_->is_undirected ),
+					svg => $_->as_svg() } } 
+				$stemmata;
+			$c->stash->{'result'} = { 
+				'status' => 'success',
+				'stemmata' => \@steminfo };
+		} elsif( $answer->{status} < 1 ) {
+			$c->stash->{'result'} = { 'status' => 'running' };
+		} else {
+			return _json_error( $c, 500,
+				"Stemweb failure not handled: " . $answer->{result} );
+		}
+	} elsif( @traditions ) {
+		return _json_error( $c, 500, 
+			"Multiple traditions with Stemweb job ID " . $answer->{job_id} . "!" );
+	} else {
+		# Possible that the tradition got updated in the meantime...
+		if( $answer->{status} == 0 ) {
+			$c->stash->{'result'} = { 'status' => 'notfound' };
 		} else {
 			return _json_error( $c, 400, 
 				"No tradition found with Stemweb job ID " . $answer->{job_id} );
 		}
-	} else {
-		return _json_error( $c, 403, 'Please use POST!' );
 	}
+	$c->forward('View::JSON');
 }
 
 =head2 request
@@ -130,19 +193,19 @@ sub request :Local :Args(0) {
 		return_path => $return_uri->path,
 		return_host => $return_uri->host_port,
 		data => $t->collation->as_tsv,
-		userid => $t->user->email,
+		userid => $c->user->get_object->email,
 		parameters => $reqparams };
 		
 	# Call to the appropriate URL with the request parameters.
-    $DB::single = 1;
 	my $ua = LWP::UserAgent->new();
+	$c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) ); 
 	my $resp = $ua->post( $STEMWEB_BASE_URL . "/algorithms/process/$algorithm/",
 		'Content-Type' => 'application/json; charset=utf-8', 
 		'Content' => encode_json( $stemweb_request ) ); 
 	if( $resp->is_success ) {
 		# Process it
 		$c->log->debug( 'Got a response from the server: '
-			. decode_utf8( $stemweb_response ) );
+			. decode_utf8( $resp->content ) );
 		my $stemweb_response = decode_json( $resp->content );
 		try {
 			$t->set_stemweb_jobid( $stemweb_response->{jobid} );
@@ -186,5 +249,10 @@ sub _json_error {
 	$c->forward('View::JSON');
 	return 0;
 }
+
+sub _json_bool {
+	return $_[0] ? JSON::true : JSON::false;
+}
+
 
 1;
