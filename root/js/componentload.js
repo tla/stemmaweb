@@ -173,6 +173,10 @@ function query_stemweb_progress() {
 				if( selectedStemmaID == -1 ) {
 					// We have a stemma for the first time; load the first one.
 					load_stemma( 0, true );
+				} else {
+					// Move to the index of the first added stemma.
+					var newIdx = stemmata.length - data.stemmata.length;
+					load_stemma( newIdx, true );
 				}
 				alert( 'You have one or more new stemmata!' );
 			} else {
@@ -498,8 +502,9 @@ $(document).ready( function() {
 				// whether to send application/json or application/xml?
 				$.getJSON( requrl, reqparam, function (data) {
 					// Job ID is in data.jobid. TODO do something with it.
+					selectedTextInfo.stemweb_jobid = data.jobid;
 					$(evt.target).button("enable");
-					$('#stemma-edit-dialog').dialog('close');
+					$('#stemweb-ui-dialog').dialog('close');
 					// Reload the current stemma to rejigger the buttons
 					load_stemma( selectedStemmaID, true );
 				}, 'json' );
