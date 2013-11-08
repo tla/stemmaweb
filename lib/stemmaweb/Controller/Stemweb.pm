@@ -29,7 +29,7 @@ L<https://docs.google.com/document/d/1aNYGAo1v1WPDZi6LXZ30FJSMJwF8RQPYbOkKqHdCZE
  POST stemweb/result
  Content-Type: application/json
  (On success):
- { job_id: <ID number>
+ { jobid: <ID number>
    status: 0
    format: <format>
    result: <data> }
@@ -50,7 +50,9 @@ sub result :Local :Args(0) {
 		my $answer;
 		if( ref( $c->request->body ) eq 'File::Temp' ) {
 			# Read in the file and parse that.
-			open( POSTDATA, $c->request->body ) or die "Failed to open post data file";
+			$c->log->debug( "Request body is in a temp file" );
+			open( POSTDATA, $c->request->body ) 
+				or return _json_error( 500, "Failed to open post data file" );
 			binmode( POSTDATA, ':utf8' );
 			# JSON should be all one line
 			my $pdata = <POSTDATA>;
@@ -65,6 +67,8 @@ sub result :Local :Args(0) {
 		} else {
 			$answer = from_json( $c->request->body );
 		}
+		$c->log->debug( "Received push notification from Stemweb: "
+			. to_json( $answer ) );
 		return _process_stemweb_result( $c, $answer );
 	} else {
 		return _json_error( $c, 403, 'Please use POST!' );
@@ -122,7 +126,7 @@ sub _process_stemweb_result {
 	$m->scan( sub{ push( @traditions, $_[0] )
 					if $_[0]->$_isa('Text::Tradition')
 					&& $_[0]->has_stemweb_jobid 
-					&& $_[0]->stemweb_jobid eq $answer->{job_id}; 
+					&& $_[0]->stemweb_jobid eq $answer->{jobid}; 
 			push( @users, $_[0] ) if $_[0]->$_isa('Text::Tradition::User');
 				} );
 	if( @traditions == 1 ) {
@@ -154,14 +158,14 @@ sub _process_stemweb_result {
 		}
 	} elsif( @traditions ) {
 		return _json_error( $c, 500, 
-			"Multiple traditions with Stemweb job ID " . $answer->{job_id} . "!" );
+			"Multiple traditions with Stemweb job ID " . $answer->{jobid} . "!" );
 	} else {
 		# Possible that the tradition got updated in the meantime...
 		if( $answer->{status} == 0 ) {
 			$c->stash->{'result'} = { 'status' => 'notfound' };
 		} else {
 			return _json_error( $c, 400, 
-				"No tradition found with Stemweb job ID " . $answer->{job_id} );
+				"No tradition found with Stemweb job ID " . $answer->{jobid} );
 		}
 	}
 	$c->forward('View::JSON');
@@ -197,8 +201,9 @@ sub request :Local :Args(0) {
 	my $stemweb_request = {
 		return_path => $return_uri->path,
 		return_host => $return_uri->host_port,
-		data => $t->collation->as_tsv,
+		data => $t->collation->as_tsv({noac => 1}),
 		userid => $c->user->get_object->email,
+		textid => $tid,
 		parameters => $reqparams };
 		
 	# Call to the appropriate URL with the request parameters.
