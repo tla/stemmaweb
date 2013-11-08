@@ -52,7 +52,7 @@ sub result :Local :Args(0) {
 			# Read in the file and parse that.
 			$c->log->debug( "Request body is in a temp file" );
 			open( POSTDATA, $c->request->body ) 
-				or return _json_error( 500, "Failed to open post data file" );
+				or return _json_error( $c, 500, "Failed to open post data file" );
 			binmode( POSTDATA, ':utf8' );
 			# JSON should be all one line
 			my $pdata = <POSTDATA>;
@@ -115,24 +115,17 @@ sub query :Local :Args(1) {
 ## Helper function for parsing Stemweb result data either by push or by pull
 sub _process_stemweb_result {
 	my( $c, $answer ) = @_;
-	# Find a tradition with the defined Stemweb job ID.
-	# TODO: Maybe get Stemweb to pass back the tradition ID...
+	# Find the specified tradition and check its job ID.
 	my $m = $c->model('Directory');
-	my @traditions;
-	## STUPID HACK: unless we load the possible tradition owners
-	## within scope of the scan, they will not exist when the affected
-	## tradition is saved.
-	my @users;
-	$m->scan( sub{ push( @traditions, $_[0] )
-					if $_[0]->$_isa('Text::Tradition')
-					&& $_[0]->has_stemweb_jobid 
-					&& $_[0]->stemweb_jobid eq $answer->{jobid}; 
-			push( @users, $_[0] ) if $_[0]->$_isa('Text::Tradition::User');
-				} );
-	if( @traditions == 1 ) {
-		my $tradition = shift @traditions;
-		if( $answer->{status} == 0 ) {
-			my $stemmata;
+	my $tradition = $m->tradition( $answer->{textid} );
+	unless( $tradition ) {
+		return _json_error( $c, 400, "No tradition found with ID "
+			. $answer->{textid} );
+	}
+	if( $answer->{status} == 0 ) {
+		my $stemmata;
+		if( $tradition->has_stemweb_jobid 
+			&& $tradition->stemweb_jobid eq $answer->{jobid} ) {
 			try {
 				$stemmata = $tradition->record_stemweb_result( $answer );
 				$m->save( $tradition );
@@ -141,6 +134,13 @@ sub _process_stemweb_result {
 			} catch {
 				return _json_error( $c, 500, $@ );
 			}
+		} else {
+			# It may be that we already received a callback meanwhile.
+			# Check all stemmata for the given jobid and return them.
+			@$stemmata = grep { $_->came_from_jobid && $_->from_jobid eq $answer->{jobid} } $tradition->stemmata;
+		}
+	$DB::single = 1;
+		if( @$stemmata ) {
 			# If we got here, success!
 			my @steminfo = map { { 
 					name => $_->identifier, 
@@ -150,23 +150,20 @@ sub _process_stemweb_result {
 			$c->stash->{'result'} = { 
 				'status' => 'success',
 				'stemmata' => \@steminfo };
-		} elsif( $answer->{status} < 1 ) {
-			$c->stash->{'result'} = { 'status' => 'running' };
 		} else {
-			return _json_error( $c, 500,
-				"Stemweb failure not handled: " . $answer->{result} );
+			# Hm, no stemmata found on this tradition with this jobid.
+			# Clear the tradition jobid so that the user can try again.
+			if( $tradition->has_stemweb_jobid ) {
+				$tradition->_clear_stemweb_jobid;
+				$m->save( $tradition );
+			}
+			$c->stash->{'result'} = { status => 'notfound' };
 		}
-	} elsif( @traditions ) {
-		return _json_error( $c, 500, 
-			"Multiple traditions with Stemweb job ID " . $answer->{jobid} . "!" );
+	} elsif( $answer->{status} < 1 ) {
+		$c->stash->{'result'} = { 'status' => 'running' };
 	} else {
-		# Possible that the tradition got updated in the meantime...
-		if( $answer->{status} == 0 ) {
-			$c->stash->{'result'} = { 'status' => 'notfound' };
-		} else {
-			return _json_error( $c, 400, 
-				"No tradition found with Stemweb job ID " . $answer->{jobid} );
-		}
+		return _json_error( $c, 500,
+			"Stemweb failure not handled: " . $answer->{result} );
 	}
 	$c->forward('View::JSON');
 }
