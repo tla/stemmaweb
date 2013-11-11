@@ -231,16 +231,30 @@ function set_stemma_interactive( svg_element ) {
         // AJAX call goes here
         } );
     $.each( $( 'ellipse', svg_element ), function(index) {
-        $(this).click( function(evt) {
+        var ellipse = $(this);
+        var g = ellipse.parent( 'g' );
+        g.click( function(evt) {
+            if( typeof root_tree_dialog_timeout !== 'undefined' ) { clearTimeout( root_tree_dialog_timeout ) };
+            g.unbind( 'mouseleave' );
             var dialog = $( '#root_tree_dialog' );
-            dialog.css( 'top', evt.pageY );
-            dialog.css( 'left', evt.pageX );
+            dialog.hide();
+            dialog.css( 'top', evt.pageY + 3 );
+            dialog.css( 'left', evt.pageX + 3 );
             dialog.show();
-            root_tree_dialog_timeout = setTimeout( function() { $( '#root_tree_dialog' ).hide() }, 3000 );
+            root_tree_dialog_timeout = setTimeout( function() {
+                $( '#root_tree_dialog' ).hide();
+                ellipse.removeClass( 'stemma_node_highlight' );
+                g.mouseleave( function() { ellipse.removeClass( 'stemma_node_highlight' ) } );
+            }, 3000 );
         } );
-        $(this).hover( function() { $(this).addClass( 'stemma_node_highlight' ) }, function() { $(this).removeClass( 'stemma_node_highlight' ) } );
-    } );   
+        g.mouseenter( function() { 
+            $( 'ellipse.stemma_node_highlight' ).removeClass( 'stemma_node_highlight' );
+            ellipse.addClass( 'stemma_node_highlight' ) 
+        } );
+        g.mouseleave( function() { ellipse.removeClass( 'stemma_node_highlight' ) } );
+    } );
 }
+
 // General-purpose error-handling function.
 // TODO make sure this gets used throughout, where appropriate.
 function display_error( jqXHR, el ) {
