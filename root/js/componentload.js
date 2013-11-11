@@ -221,10 +221,26 @@ function loadSVG(svgData) {
 			}
 			var topoffset = theSVG.position().top - svgElement.position().top - browseroffset;
 			theSVG.offset({ top: svgoffset.top - topoffset, left: svgoffset.left });
+			set_stemma_interactive( theSVG );
 		}
 	});
 }
 
+function set_stemma_interactive( svg_element ) {
+    $( "#root_tree_dialog_button_ok" ).click( function() {
+        // AJAX call goes here
+        } );
+    $.each( $( 'ellipse', svg_element ), function(index) {
+        $(this).click( function(evt) {
+            var dialog = $( '#root_tree_dialog' );
+            dialog.css( 'top', evt.pageY );
+            dialog.css( 'left', evt.pageX );
+            dialog.show();
+            root_tree_dialog_timeout = setTimeout( function() { $( '#root_tree_dialog' ).hide() }, 3000 );
+        } );
+        $(this).hover( function() { $(this).addClass( 'stemma_node_highlight' ) }, function() { $(this).removeClass( 'stemma_node_highlight' ) } );
+    } );   
+}
 // General-purpose error-handling function.
 // TODO make sure this gets used throughout, where appropriate.
 function display_error( jqXHR, el ) {
@@ -364,6 +380,9 @@ $(document).ready( function() {
 	if( !!window.FileReader && !!window.File ) {
 		$('#compatibility_check').empty();
 	}
+
+    // hide dialog not yet in use
+    $('#root_tree_dialog').hide();
 	
     // call out to load the directory div
     $('#textinfo_container').hide();

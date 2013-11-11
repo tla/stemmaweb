@@ -201,5 +201,10 @@ var stemwebAlgorithms = [% stemweb_algorithms %];
       	  <p>All spreadsheet collations should be arranged with the witness sigla in the first row, and the words aligned by row each in its correct witness column.</p>
       	</div>
       </div>
-    </div>    
+    </div>
+    
+    <div id="root_tree_dialog">
+        Use this node to root the stemma? <img id="root_tree_dialog_button_ok" src="/images/tick_circle_frame_24.png"/>
+    </div>
+    
 [% PROCESS footer.tt %]
