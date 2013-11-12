@@ -551,52 +551,58 @@ $(document).ready( function() {
 			// populate the form.
 			var algorithmTypes = {};
 			var algorithmArgs = {};
-			$.each( stemwebAlgorithms, function( i, o ) {
-				if( o.model === 'algorithms.algorithm' ) {
-					// it's an algorithm.
-					algorithmTypes[ o.pk ] = o.fields;
-				} else if( o.model == 'algorithms.algorithmarg'	&& o.fields.external ) {
-					// it's an option for an algorithm that we should display.
-					algorithmArgs[ o.pk ] = o.fields;
-				}
-			});
-			$.each( algorithmTypes, function( pk, fields ) {
-				var algopt = $('<option>').attr( 'value', pk ).append( fields.name );
-				$('#stemweb_algorithm').append( algopt );
-			});
-			// Set up the relevant options for whichever algorithm is chosen.
-			// "key" -> form name, option ID "stemweb_$key_opt"
-			// "name" -> form label
-			$('#stemweb_algorithm').change( function() {
-				var pk = $(this).val();
-				$('#stemweb_runtime_options').empty();
-				$.each( algorithmTypes[pk].args, function( i, apk ) {
-					var argInfo = algorithmArgs[apk];
-					if( argInfo ) {
-						// Make the element ID
-						var optId = 'stemweb_' + argInfo.key + '_opt';
-						// Make the label
-						var optLabel = $('<label>').attr( 'for', optId )
-							.append( argInfo.name + ": " );
-						var optCtrl;
-						var argType = argInfo.value;
-						if( argType === 'positive_integer' ) {
-							// Make it an input field of smallish size.
-							optCtrl = $('<input>').attr( 'size', 4 );
-						} else if ( argType === 'boolean' ) {
-							// Make it a checkbox.
-							optCtrl = $('<checkbox>');
-						}
-						// Add the name and element ID
-						optCtrl.attr( 'name', argInfo.key ).attr( 'id', optId );
-						// Append the label and the option itself to the form.
-						$('#stemweb_runtime_options').append( optLabel )
-							.append( optCtrl ).append( $('<br>') );
+			var requrl = _get_url([ "stemweb", "available" ]);
+			$.getJSON( requrl, function( data ) {
+				$.each( data, function( i, o ) {
+					if( o.model === 'algorithms.algorithm' ) {
+						// it's an algorithm.
+						algorithmTypes[ o.pk ] = o.fields;
+					} else if( o.model == 'algorithms.algorithmarg'	&& o.fields.external ) {
+						// it's an option for an algorithm that we should display.
+						algorithmArgs[ o.pk ] = o.fields;
 					}
 				});
+				// TODO if it is an empty object, disable Stemweb entirely.
+				if( !jQuery.isEmptyObject( algorithmTypes ) ) {
+					$.each( algorithmTypes, function( pk, fields ) {
+						var algopt = $('<option>').attr( 'value', pk ).append( fields.name );
+						$('#stemweb_algorithm').append( algopt );
+					});
+					// Set up the relevant options for whichever algorithm is chosen.
+					// "key" -> form name, option ID "stemweb_$key_opt"
+					// "name" -> form label
+					$('#stemweb_algorithm').change( function() {
+						var pk = $(this).val();
+						$('#stemweb_runtime_options').empty();
+						$.each( algorithmTypes[pk].args, function( i, apk ) {
+							var argInfo = algorithmArgs[apk];
+							if( argInfo ) {
+								// Make the element ID
+								var optId = 'stemweb_' + argInfo.key + '_opt';
+								// Make the label
+								var optLabel = $('<label>').attr( 'for', optId )
+									.append( argInfo.name + ": " );
+								var optCtrl;
+								var argType = argInfo.value;
+								if( argType === 'positive_integer' ) {
+									// Make it an input field of smallish size.
+									optCtrl = $('<input>').attr( 'size', 4 );
+								} else if ( argType === 'boolean' ) {
+									// Make it a checkbox.
+									optCtrl = $('<checkbox>');
+								}
+								// Add the name and element ID
+								optCtrl.attr( 'name', argInfo.key ).attr( 'id', optId );
+								// Append the label and the option itself to the form.
+								$('#stemweb_runtime_options').append( optLabel )
+									.append( optCtrl ).append( $('<br>') );
+							}
+						});
+					});
+					$('#stemweb_algorithm').change();
+				}
 			});
 			// Prime the initial options
-			$('#stemweb_algorithm').change();
 		},
 		open: function(evt) {
 			$('#stemweb_run_status').empty();

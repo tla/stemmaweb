@@ -6,7 +6,6 @@
 // Set global variables that must be passed by the server
 var basepath = "[% c.uri_for( '/' ) %]";
 var textOnLoad = "[% withtradition %]";
-var stemwebAlgorithms = [% stemweb_algorithms %];
     </script>
 
 [% END %]

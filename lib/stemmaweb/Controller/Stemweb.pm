@@ -75,6 +75,27 @@ sub result :Local :Args(0) {
 	}
 }
 
+=head2 available
+
+ GET algorithms/available
+ 
+Queries the Stemweb server for available stemma generation algorithms and their 
+parameters. Returns the JSON answer as obtained from Stemweb.
+
+=cut
+
+sub available :Local :Args(0) {
+	my( $self, $c ) = @_;
+	my $ua = LWP::UserAgent->new();
+	my $resp = $ua->get( $STEMWEB_BASE_URL . '/algorithms/available' );
+	if( $resp->is_success ) {
+		$c->stash->{'result'} = $resp->content;
+	} else {
+		$c->stash->{'result'} = '{}';
+	}
+	$c->forward('View::JSON');
+}
+
 =head2 query
 
  GET stemweb/query/<jobid>
