@@ -232,13 +232,13 @@ function set_stemma_interactive( svg_element ) {
 	if( selectedTextEditable ) {
 		$( "#root_tree_dialog_button_ok" ).click( function() {
 			var requrl = _get_url([ "stemmaroot", selectedTextID, selectedStemmaID ]);
-			var targetnode = $('ellipse.stemma_node_highlight').parent().attr('id');
+			var targetnode = $('#root_tree_dialog').data( 'selectedNode' );
 			$.post( requrl, { root: targetnode }, function (data) {
 				// Reload the new stemma
 				stemmata[selectedStemmaID] = data;
 				load_stemma( selectedStemmaID );
 				// Put away the dialog
-				$('#root_tree_dialog').hide();
+				$('#root_tree_dialog').data( 'selectedNode', null ).hide();
 			} );
 		} ).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			if( ajaxSettings.url.indexOf( 'stemmaroot' ) > -1 
@@ -254,12 +254,15 @@ function set_stemma_interactive( svg_element ) {
 				if( typeof root_tree_dialog_timeout !== 'undefined' ) { clearTimeout( root_tree_dialog_timeout ) };
 				g.unbind( 'mouseleave' );
 				var dialog = $( '#root_tree_dialog' );
+				// Note which node triggered the dialog
+				dialog.data( 'selectedNode', g.attr('id') );
+				// Position the dialog
 				dialog.hide();
 				dialog.css( 'top', evt.pageY + 3 );
 				dialog.css( 'left', evt.pageX + 3 );
 				dialog.show();
 				root_tree_dialog_timeout = setTimeout( function() {
-					$( '#root_tree_dialog' ).hide();
+					$( '#root_tree_dialog' ).data( 'selectedNode', null ).hide();
 					ellipse.removeClass( 'stemma_node_highlight' );
 					g.mouseleave( function() { ellipse.removeClass( 'stemma_node_highlight' ) } );
 				}, 3000 );
