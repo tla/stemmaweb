@@ -249,7 +249,7 @@ sub textinfo :Local :Args(1) {
 					$tradition->name( $newname );
 					$changed = 1;
 				} catch {
-					return _json_error( $c, 500, "Error setting name to $newname" );
+					return _json_error( $c, 500, "Error setting name to $newname: $@" );
 				}
 			}
 		}
@@ -261,7 +261,7 @@ sub textinfo :Local :Args(1) {
 				$tradition->language( $langval );
 				$changed = 1;
 			} catch {
-				return _json_error( $c, 500, "Error setting language to $langval" );
+				return _json_error( $c, 500, "Error setting language to $langval: $@" );
 			}
 		}
 
@@ -318,18 +318,14 @@ sub textinfo :Local :Args(1) {
 		owner => $tradition->user ? $tradition->user->email : undef,
 		witnesses => [ map { $_->sigil } $tradition->witnesses ],
 	};
+	## TODO Make these into callbacks in the other controllers maybe?
 	if( $tradition->can('language') ) {
 		$textinfo->{'language'} = $tradition->language;
 	}
 	if( $tradition->can('stemweb_jobid') ) {
 		$textinfo->{'stemweb_jobid'} = $tradition->stemweb_jobid || 0;
 	}
-	my @stemmasvg = map { { 
-			name => $_->identifier, 
-			directed => _json_bool( !$_->is_undirected ),
-			svg => $_->as_svg() } } 
-		$tradition->stemmata;
-	map { $_ =~ s/\n/ /mg } @stemmasvg;
+	my @stemmasvg = map { _stemma_info( $_ ) } $tradition->stemmata;
 	$textinfo->{stemmata} = \@stemmasvg;
 	$c->stash->{'result'} = $textinfo;
 	$c->forward('View::JSON');
@@ -356,6 +352,22 @@ sub variantgraph :Local :Args(1) {
 	$c->stash->{'result'} = $collation->as_svg;
 	$c->forward('View::SVG');
 }
+
+sub _stemma_info {
+	my( $stemma, $sid ) = @_;
+	my $ssvg = $stemma->as_svg();
+	$ssvg =~ s/\n/ /mg;
+	my $sinfo = {
+		name => $stemma->identifier, 
+		directed => _json_bool( !$stemma->is_undirected ),
+		svg => $ssvg }; 
+	if( $sid ) {
+		$sinfo->{stemmaid} = $sid;
+	}
+	return $sinfo;
+}
+
+## TODO Separate stemma manipulation functionality into its own controller.
 	
 =head2 stemma
 
@@ -430,7 +442,6 @@ sub stemma :Local :Args(2) {
 	if( !$stemma && $tradition->stemma_count > $stemmaid ) {
 		$stemma = $tradition->stemma( $stemmaid );
 	}
-	my $stemma_xml = $stemma ? $stemma->as_svg() : '';
 	# What was requested, XML or JSON?
 	my $return_view = 'SVG';
 	if( my $accept_header = $c->req->header('Accept') ) {
@@ -446,15 +457,10 @@ sub stemma :Local :Args(2) {
 		}
 	}
 	if( $return_view eq 'SVG' ) {
-		$c->stash->{'result'} = $stemma_xml;
+		$c->stash->{'result'} = $stemma->as_svg();
 		$c->forward('View::SVG');
 	} else { # JSON
-		$stemma_xml =~ s/\n/ /mg;
-		$c->stash->{'result'} = { 
-			'stemmaid' => $stemmaid, 
-			'name' => $stemma->identifier,
-			'directed' => _json_bool( !$stemma->is_undirected ),
-			'svg' => $stemma_xml };
+		$c->stash->{'result'} = { _stemma_info( $stemma, $stemmaid ) };
 		$c->forward('View::JSON');
 	}
 }
@@ -483,6 +489,41 @@ sub stemmadot :Local :Args(2) {
 	# Get the dot and transmute its line breaks to literal '|n'
 	$c->stash->{'result'} = { 'dot' =>  $stemma->editable( { linesep => '|n' } ) };
 	$c->forward('View::JSON');
+}
+
+=head2 stemmaroot
+
+ POST /stemmaroot/$textid/$stemmaseq, { root: <root node ID> }
+
+Orients the given stemma so that the given node is the root (archetype). Returns the 
+information structure for the new stemma.
+
+=cut 
+
+sub stemmaroot :Local :Args(2) {
+	my( $self, $c, $textid, $stemmaid ) = @_;
+	my $m = $c->model('Directory');
+	my $tradition = $m->tradition( $textid );
+	unless( $tradition ) {
+		return _json_error( $c, 404, "No tradition with ID $textid" );
+	}	
+	my $ok = _check_permission( $c, $tradition );
+	if( $ok eq 'full' ) {
+		my $stemma = $tradition->stemma( $stemmaid );
+		try {
+			$stemma->root_graph( $c->req->param('root') );
+			$m->save( $tradition );
+		} catch( Text::Tradition::Error $e ) {
+			return _json_error( $c, 400, $e->message );
+		} catch {
+			return _json_error( $c, 500, "Error re-rooting stemma: $@" );
+		}
+		$c->stash->{'result'} = _stemma_info( $stemma );
+		$c->forward('View::JSON');
+	} else {
+		return _json_error( $c, 403,  
+				'You do not have permission to update stemmata for this tradition' );
+	}
 }
 
 =head2 download

@@ -1,6 +1,7 @@
 // Global state variables
 var selectedTextID;
 var selectedTextInfo;
+var selectedTextEditable;
 var selectedStemmaID = -1;
 var stemmata = [];
 
@@ -29,6 +30,7 @@ function refreshDirectory () {
 // view pane. Calls load_textinfo.
 function loadTradition( textid, textname, editable ) {
 	selectedTextID = textid;
+	selectedTextEditable = editable;
     // First insert the placeholder image and register an error handler
     $('#textinfo_load_status').empty();
     $('#stemma_graph').empty();
@@ -69,7 +71,7 @@ function loadTradition( textid, textname, editable ) {
     	} else {
     		selectedStemmaID = -1;
 		}
-		load_stemma( selectedStemmaID, editable );
+		load_stemma( selectedStemmaID );
     	// Set up the relationship mapper button
 		$('#run_relater').attr( 'action', _get_url([ "relation", textid ]) );
 		// Set up the download button
@@ -110,31 +112,31 @@ function load_textinfo() {
 }	
 
 // Enable / disable the appropriate buttons for paging through the stemma.
-function show_stemmapager ( editable ) {
+function show_stemmapager () {
       $('.pager_left_button').unbind('click').addClass( 'greyed_out' );
       $('.pager_right_button').unbind('click').addClass( 'greyed_out' );
       if( selectedStemmaID > 0 ) {
               $('.pager_left_button').click( function () {
-                      load_stemma( selectedStemmaID - 1, editable );
+                      load_stemma( selectedStemmaID - 1, selectedTextEditable );
               }).removeClass( 'greyed_out' );
       }       
       if( selectedStemmaID + 1 < stemmata.length ) {
               $('.pager_right_button').click( function () {
-                      load_stemma( selectedStemmaID + 1, editable );
+                      load_stemma( selectedStemmaID + 1, selectedTextEditable );
               }).removeClass( 'greyed_out' );
       }
 }
 
 // Load a given stemma SVG into the stemmagraph box.
-function load_stemma( idx, editable ) {
+function load_stemma( idx ) {
 	// Load the stemma at idx
 	selectedStemmaID = idx;
-	show_stemmapager( editable );
+	show_stemmapager( selectedTextEditable );
 	$('#open_stemma_edit').hide();
 	$('#run_stexaminer').hide();
 	$('#stemma_identifier').empty();
 	// Add the relevant Stemweb functionality
-	if( editable ) {
+	if( selectedTextEditable ) {
 		if( selectedTextInfo.stemweb_jobid == 0 ) {
 			$('#open_stemweb_ui').show();
 			$('#query_stemweb_ui').hide();
@@ -146,7 +148,7 @@ function load_stemma( idx, editable ) {
 	if( idx > -1 ) {
 		// Load the stemma and its properties
 		var stemmadata = stemmata[idx];
-		if( editable ) {
+		if( selectedTextEditable ) {
 			$('#open_stemma_edit').show();
 		}
 		if( stemmadata.directed ) {
@@ -227,32 +229,48 @@ function loadSVG(svgData) {
 }
 
 function set_stemma_interactive( svg_element ) {
-    $( "#root_tree_dialog_button_ok" ).click( function() {
-        // AJAX call goes here
-        } );
-    $.each( $( 'ellipse', svg_element ), function(index) {
-        var ellipse = $(this);
-        var g = ellipse.parent( 'g' );
-        g.click( function(evt) {
-            if( typeof root_tree_dialog_timeout !== 'undefined' ) { clearTimeout( root_tree_dialog_timeout ) };
-            g.unbind( 'mouseleave' );
-            var dialog = $( '#root_tree_dialog' );
-            dialog.hide();
-            dialog.css( 'top', evt.pageY + 3 );
-            dialog.css( 'left', evt.pageX + 3 );
-            dialog.show();
-            root_tree_dialog_timeout = setTimeout( function() {
-                $( '#root_tree_dialog' ).hide();
-                ellipse.removeClass( 'stemma_node_highlight' );
-                g.mouseleave( function() { ellipse.removeClass( 'stemma_node_highlight' ) } );
-            }, 3000 );
-        } );
-        g.mouseenter( function() { 
-            $( 'ellipse.stemma_node_highlight' ).removeClass( 'stemma_node_highlight' );
-            ellipse.addClass( 'stemma_node_highlight' ) 
-        } );
-        g.mouseleave( function() { ellipse.removeClass( 'stemma_node_highlight' ) } );
-    } );
+	if( selectedTextEditable ) {
+		$( "#root_tree_dialog_button_ok" ).click( function() {
+			var requrl = _get_url([ "stemmaroot", selectedTextID, selectedStemmaID ]);
+			var targetnode = $('ellipse.stemma_node_highlight').parent().attr('id');
+			$.post( requrl, { root: targetnode }, function (data) {
+				// Reload the new stemma
+				stemmata[selectedStemmaID] = data;
+				load_stemma( selectedStemmaID );
+				// Put away the dialog
+				$('#root_tree_dialog').hide();
+			} );
+		} ).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+			if( ajaxSettings.url.indexOf( 'stemmaroot' ) > -1 
+				&& ajaxSettings.type == 'POST' ) {
+				display_error( jqXHR, $("#stemma_load_status") );
+			}
+		} );
+		// TODO Clear error at some appropriate point
+		$.each( $( 'ellipse', svg_element ), function(index) {
+			var ellipse = $(this);
+			var g = ellipse.parent( 'g' );
+			g.click( function(evt) {
+				if( typeof root_tree_dialog_timeout !== 'undefined' ) { clearTimeout( root_tree_dialog_timeout ) };
+				g.unbind( 'mouseleave' );
+				var dialog = $( '#root_tree_dialog' );
+				dialog.hide();
+				dialog.css( 'top', evt.pageY + 3 );
+				dialog.css( 'left', evt.pageX + 3 );
+				dialog.show();
+				root_tree_dialog_timeout = setTimeout( function() {
+					$( '#root_tree_dialog' ).hide();
+					ellipse.removeClass( 'stemma_node_highlight' );
+					g.mouseleave( function() { ellipse.removeClass( 'stemma_node_highlight' ) } );
+				}, 3000 );
+			} );
+			g.mouseenter( function() { 
+				$( 'ellipse.stemma_node_highlight' ).removeClass( 'stemma_node_highlight' );
+				ellipse.addClass( 'stemma_node_highlight' ) 
+			} );
+			g.mouseleave( function() { ellipse.removeClass( 'stemma_node_highlight' ) } );
+		} );
+	}
 }
 
 // General-purpose error-handling function.
@@ -387,7 +405,7 @@ function _get_url( els ) {
 	return basepath + els.join('/');
 }
 
-
+// TODO Attach unified ajaxError handler to document
 $(document).ready( function() {
 	// See if we have the browser functionality we need
 	// TODO Also think of a test for SVG readiness

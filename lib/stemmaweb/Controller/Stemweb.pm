@@ -89,9 +89,9 @@ sub available :Local :Args(0) {
 	my $ua = LWP::UserAgent->new();
 	my $resp = $ua->get( $STEMWEB_BASE_URL . '/algorithms/available' );
 	if( $resp->is_success ) {
-		$c->stash->{'result'} = $resp->content;
+		$c->stash->{'result'} = decode_json( $resp->content );
 	} else {
-		$c->stash->{'result'} = '{}';
+		$c->stash->{'result'} = {};
 	}
 	$c->forward('View::JSON');
 }
@@ -160,7 +160,6 @@ sub _process_stemweb_result {
 			# Check all stemmata for the given jobid and return them.
 			@$stemmata = grep { $_->came_from_jobid && $_->from_jobid eq $answer->{jobid} } $tradition->stemmata;
 		}
-	$DB::single = 1;
 		if( @$stemmata ) {
 			# If we got here, success!
 			my @steminfo = map { { 
