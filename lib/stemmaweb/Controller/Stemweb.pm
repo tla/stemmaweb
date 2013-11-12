@@ -5,6 +5,7 @@ use Encode qw/ decode_utf8 /;
 use JSON;
 use LWP::UserAgent;
 use Safe::Isa;
+use Scalar::Util qw/ looks_like_number /;
 use TryCatch;
 use URI;
 
@@ -162,6 +163,7 @@ sub _process_stemweb_result {
 		}
 		if( @$stemmata ) {
 			# If we got here, success!
+			# TODO Use helper in Root.pm to do this
 			my @steminfo = map { { 
 					name => $_->identifier, 
 					directed => _json_bool( !$_->is_undirected ),
@@ -221,7 +223,7 @@ sub request :Local :Args(0) {
 		data => $t->collation->as_tsv({noac => 1}),
 		userid => $c->user->get_object->email,
 		textid => $tid,
-		parameters => $reqparams };
+		parameters => _cast_nonstrings( $reqparams ) };
 		
 	# Call to the appropriate URL with the request parameters.
 	my $ua = LWP::UserAgent->new();
@@ -268,6 +270,20 @@ sub _check_permission {
 	return _json_error( $c, 403, 'You do not have permission to view this tradition.' );
 }
 
+# QUICK HACK to deal with strict Stemweb validation.
+sub _cast_nonstrings {
+	my $params = shift;
+	foreach my $k ( keys %$params ) {
+		my $v = $params->{$k};
+		if( looks_like_number( $v ) ) {
+			$params->{$k} = $v * 1;
+		} elsif ( !defined $v || $v eq 'true' ) {
+			$params->{$k} = _json_bool( $v );
+		}
+	}
+	return $params;
+}
+
 # Helper to throw a JSON exception
 sub _json_error {
 	my( $c, $code, $errmsg ) = @_;
@@ -275,7 +291,7 @@ sub _json_error {
 	$c->stash->{'result'} = { 'error' => $errmsg };
 	$c->forward('View::JSON');
 	return 0;
-}
+}		
 
 sub _json_bool {
 	return $_[0] ? JSON::true : JSON::false;
