@@ -9,7 +9,13 @@ use Text::Tradition::Directory;
 my $DBDIR = 'db';
 my $DBNAME = 'traditions.db';
 my $DBEXT = 'test';
-# Delete the old directory if it exists
+# Make the directory on the filesystem if necessary
+unless( -d $DBDIR ) {
+	mkdir $DBDIR
+		or die "Could not make database director $DBDIR";
+	say "Created directory for test database";
+}
+# Delete the old db if it exists
 if( -f "$DBDIR/$DBNAME.$DBEXT" ) {
 	unlink( "$DBDIR/$DBNAME.$DBEXT" );
 }
@@ -28,7 +34,7 @@ my $dir = Text::Tradition::Directory->new(
 	extra_args => { create => 1 } 
 	);
 my $scope = $dir->new_scope();
-say "Created test directory";
+say "Created test database";
 
 # Create users
 my $user = $dir->add_user({ username => 'user@example.org', password => 'UserPass' });
