@@ -2,7 +2,7 @@
 Stemmaweb - a Catalyst webservice for text tradition analysis
 =============================================================
 
-Stemmaweb is a web application, developed in Perl (using the Catalyst framework) and Javascript (using JQuery), 
+Stemmaweb is a web application, developed in Perl (using the Catalyst framework) and Javascript (using JQuery), for analysis of the copying relationships (stemmatology) between different manuscript versions of the same text.
 
 
 Installation 

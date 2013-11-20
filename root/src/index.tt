@@ -204,7 +204,7 @@ var textOnLoad = "[% withtradition %]";
     </div>
     
     <div id="root_tree_dialog">
-        Use this node to root the stemma? <img id="root_tree_dialog_button_ok" src="/images/tick_circle_frame_24.png"/>
+        Use this node to root the stemma? <img id="root_tree_dialog_button_ok" src="[% c.uri_for( 'images', 'tick_circle_frame_24.png' ) %]"/>
     </div>
     
 [% PROCESS footer.tt %]
