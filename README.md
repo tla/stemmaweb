@@ -32,10 +32,10 @@ set up to run the standalone service:
 
 		script/maketestdb.pl
 		script/stemmaweb_server.pl
-* Replace the database settings in stemmaweb.conf with the settings for your database. If you are using MySQL, for example, the settings might look like this:
+* Replace the database settings in stemmaweb.conf with the settings for your database. If you are using MySQL, for example, the contents of the <Model Directory> stanza might look like this:
 
 		<model_args>
-		dsn dbi:mysql:dbname=stemmaweb
+		dsn dbi:mysql:dbname=stemmaweb;host=DB_HOSTNAME
 		<extra_args>
 			user STEMMAWEB_USER
 			password STEMMAWEB_PASS
