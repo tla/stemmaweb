@@ -144,7 +144,7 @@ sub newtradition :Local :Args(0) {
 			$errmsg = "XML file parsing error: $err";
 		}
 		if( $doc ) {
-			if( $doc->documentElement->nodeName eq 'GraphML' ) {
+			if( $doc->documentElement->nodeName eq 'graphml' ) {
 				$type = 'CollateX';
 			} elsif( $doc->documentElement->nodeName ne 'TEI' ) {
 				$errmsg = 'Unrecognized XML type ' . $doc->documentElement->nodeName;
