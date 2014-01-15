@@ -9,6 +9,17 @@ use Text::Tradition::Stemma;
 
 BEGIN { extends 'Catalyst::Controller' }
 
+has idp_solver_url => (
+	is => 'ro',
+	isa => 'Str',
+	predicate => 'has_idp_solver_url',
+	);
+
+has idp_calcdsn => (
+	is => 'ro',
+	isa => 'Str',
+	predicate => 'has_idp_calcdsn',
+	);
 
 =head1 NAME
 
@@ -72,8 +83,12 @@ sub index :Path :Args(2) {
 		} elsif( $ignore_sort eq 'orthographic' ) {
 			$analysis_options{'merge_types'} = 'orthographic';
 		}
+		if( $self->has_idp_solver_url ) {
+			$analysis_options{'solver_url'} = $self->idp_solver_url;
+		} elsif( $self->has_idp_calcdsn ) {
+			$analysis_options{'calcdsn'} = $self->idp_calcdsn;
+		}
 
-		# Do the deed
 		my $t = run_analysis( $tradition, %analysis_options );
 		# Stringify the reading groups
 		foreach my $loc ( @{$t->{'variants'}} ) {
