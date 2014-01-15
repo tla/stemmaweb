@@ -9,6 +9,9 @@ var basepath = "[% c.uri_for( '/relation/' ) %]";
 var textid = "[% textid %]";
 var can_morphologize = "[% can_morphologize %]";
 var editable = "[% permission %]" === "full";
+// URLs for images referenced in Javascript
+var merge_button_yes = "[% c.uri_for( '/images/tick_circle_frame.png' ) %]";
+var merge_button_no = "[% c.uri_for( '/images/no_entry.png' ) %]";
 [% IF error -%]
 var relationship_types = [];
 var relationship_scopes = [];
