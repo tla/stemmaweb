@@ -800,8 +800,8 @@ function merge_nodes( source_node_id, target_node_id, consequences ) {
                 parent_g = svg.group( $('#svgenlargement svg g') );
                 var ids_text = node_ids[0] + '-' + node_ids[1]; 
                 var merge_id = 'merge-' + ids_text;
-                svg.image( parent_g, xC, (yC-8), 16, 16, '/images/tick_circle_frame.png', { id: merge_id } );
-                svg.image( parent_g, (xC+20), (yC-8), 16, 16, '/images/no_entry.png', { id: 'no' + merge_id } );
+                svg.image( parent_g, xC, (yC-8), 16, 16, merge_button_yes, { id: merge_id } );
+                svg.image( parent_g, (xC+20), (yC-8), 16, 16, merge_button_no, { id: 'no' + merge_id } );
                 $( '#' + merge_id ).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
                 $( '#no' + merge_id ).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
                 $( '#' + merge_id ).click( function( evt ){ 
