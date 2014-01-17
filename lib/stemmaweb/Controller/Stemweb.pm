@@ -11,8 +11,11 @@ use URI;
 
 BEGIN { extends 'Catalyst::Controller' }
 
-## TODO Move the /algorithms/available function to the Stemweb module
-my $STEMWEB_BASE_URL = 'http://slinkola.users.cs.helsinki.fi';
+has stemweb_url => (
+	is => 'ro',
+	isa => 'Str',
+	default => 'http://slinkola.users.cs.helsinki.fi',
+	);
 
 =head1 NAME
 
@@ -88,7 +91,7 @@ parameters. Returns the JSON answer as obtained from Stemweb.
 sub available :Local :Args(0) {
 	my( $self, $c ) = @_;
 	my $ua = LWP::UserAgent->new();
-	my $resp = $ua->get( $STEMWEB_BASE_URL . '/algorithms/available' );
+	my $resp = $ua->get( $self->stemweb_url . '/algorithms/available' );
 	if( $resp->is_success ) {
 		$c->stash->{'result'} = decode_json( $resp->content );
 	} else {
@@ -110,7 +113,7 @@ indicate that the job is still running.
 sub query :Local :Args(1) {
 	my( $self, $c, $jobid ) = @_;
 	my $ua = LWP::UserAgent->new();
-	my $resp = $ua->get( $STEMWEB_BASE_URL . "/algorithms/jobstatus/$jobid" );
+	my $resp = $ua->get( $self->stemweb_url . "/algorithms/jobstatus/$jobid" );
 	if( $resp->is_success ) {
 		# Process it
 		my $response = decode_utf8( $resp->content );
@@ -228,7 +231,7 @@ sub request :Local :Args(0) {
 	# Call to the appropriate URL with the request parameters.
 	my $ua = LWP::UserAgent->new();
 	$c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) ); 
-	my $resp = $ua->post( $STEMWEB_BASE_URL . "/algorithms/process/$algorithm/",
+	my $resp = $ua->post( $self->stemweb_url . "/algorithms/process/$algorithm/",
 		'Content-Type' => 'application/json; charset=utf-8', 
 		'Content' => encode_json( $stemweb_request ) ); 
 	if( $resp->is_success ) {
