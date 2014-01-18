@@ -1162,7 +1162,7 @@ $(document).ready(function () {
   $( "#delete-form" ).dialog({
     autoOpen: false,
     height: 135,
-    width: 250,
+    width: 300,
     modal: false,
     buttons: {
         OK: function() { $( this ).dialog( "close" ); },
