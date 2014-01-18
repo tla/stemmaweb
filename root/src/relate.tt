@@ -64,18 +64,27 @@ $(document).ready(function () {
 			<input type="hidden" name="source_text" id="source_node_text"/>
 			<input type="hidden" name="target_id" id="target_node_id"/>
 			<input type="hidden" name="target_text" id="target_node_text"/>
-			<label for="rel_type">Relation type..&nbsp;</label>
-			<select name="rel_type" id="rel_type" class=".ui-widget select">
+			<label for="rel_type">Relation type&nbsp;</label>
+			<select name="type" id="rel_type" class=".ui-widget select">
 				<option></option>
 			</select>
 			<br/><br/>
-			<label for="scope">Scope of relation..&nbsp;</label>
+			<label for="scope">Scope of relation&nbsp;</label>
 			<select name="scope" id="scope" class=".ui-widget select">
 				<option></option>
 			</select>
 			<br/><br/>
-			<label for="note">Annotation or note..&nbsp;</label>
-			<textarea rows="3" style="width:100%;" name="note" id="note" class=".ui-widget input"></textarea>
+			<input type="checkbox" name="b_derivable_from_a" id="b_derivable_from_a"/>
+			<label for="b_derivable_from_a"><span class="rel_rdg_a"></span> would be corrected to <span class="rel_rdg_b"></span>&nbsp;</label>
+			<br/>
+			<input type="checkbox" name="a_derivable_from_b" id="a_derivable_from_b"/>
+			<label for="a_derivable_from_b"><span class="rel_rdg_b"></span> would be corrected to <span class="rel_rdg_a"></span>&nbsp;</label>
+			<br/>
+			<input type="checkbox" name="non_independent" id="non_independent"/>
+			<label for="non_independent">Variants unlikely to arise coincidentally&nbsp;</label>
+			<br/><br/>
+			<label for="note">Annotation or note&nbsp;</label>
+			<textarea rows="3" style="width:100%;" name="annotation" id="note" class=".ui-widget input"></textarea>
 		</fieldset>
     	<div id="status"></div>		
 		</form>
@@ -89,6 +98,7 @@ $(document).ready(function () {
 		</form>
 		<div id="delete-form-text">Type: <span id="delete_relation_type"></span><br/>
 		    Scope: <span id="delete_relation_scope"></span><br/>
+		    <span id="delete_relation_attributes"></span>
 		    <span id="delete_relation_note"></span></div>
 	</div>
 
