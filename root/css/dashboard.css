@@ -54,6 +54,7 @@
     width: 500px;
     text-align: center;
     border: 1px #c6dcf1 solid;
+    background: #ffffff;
 }
 #stemma_graph img {
 	margin-top: expression(( 450 - this.height ) / 2);

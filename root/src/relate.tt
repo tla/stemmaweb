@@ -27,7 +27,7 @@ $(document).ready(function () {
 [% END %]
 
   <div class="mainnav">
-	<span>[% IF c.user_exists %]Hello! [% c.user.get_object.email %]! &nbsp; <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% END %]<a href="help/[% text_lang %]" title="Relationship mapper help" class="helptag navlink">Help / About</a> | <a href="[% c.uri_for( '/' ) %]?withtradition=[% textid %]" class="navlink">Return to index</a> </span>
+	<span>[% IF c.user_exists %]Hello [% c.user.get_object.email %]! &nbsp; <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% END %]<a href="help/[% text_lang %]" title="Relationship mapper help" class="helptag navlink">Help / About</a> | <a href="[% c.uri_for( '/' ) %]?withtradition=[% textid %]" class="navlink">Return to index</a> </span>
    </div>
     <div id="topbanner">
 		<h1>Relationship mapper</h1>

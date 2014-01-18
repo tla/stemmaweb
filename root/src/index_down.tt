@@ -1,0 +1,17 @@
+[% PROCESS header.tt
+	pagetitle = "Stemmaweb - Text tradition tools"
+%]
+
+   <div id="main_page" class="clearfix">
+    <div id="topbanner">
+      <h1>Stemmaweb - a collection of tools for analysis of collated texts</h1>
+      <span class="mainnav"><a class="navlink" href="[% c.uri_for( '/about' ) %]">About</a> </span>
+      <p id="maintenance_mode"><span class="error">This site is currently down for maintenance.
+      Please check back shortly.<span></p>
+    </div>
+    <div id="directory_container">
+      <h2>Text directory</h2>
+      <div id="directory"></div>
+    </div>
+   </div>
+[% PROCESS footer.tt %]
