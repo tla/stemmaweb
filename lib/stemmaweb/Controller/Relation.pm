@@ -201,8 +201,14 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 			my $relobj = $collation->relations->get_relationship( @$p );
 			next if $relobj->type eq 'collated'; # Don't show these
 			next if $p->[0] eq $p->[1]; # HACK until bugfix
-			my $relhash = { source => $p->[0], target => $p->[1], 
-				  type => $relobj->type, scope => $relobj->scope };
+			my $relhash = { source_id => $p->[0], target_id => $p->[1], 
+				  source_text => $collation->reading( $p->[0] )->text,
+				  target_text => $collation->reading( $p->[1] )->text,
+				  type => $relobj->type, scope => $relobj->scope,
+				  a_derivable_from_b => $relobj->a_derivable_from_b,
+				  b_derivable_from_a => $relobj->b_derivable_from_a,
+				  non_independent => $relobj->non_independent,
+				  };
 			$relhash->{'note'} = $relobj->annotation if $relobj->has_annotation;
 			push( @all_relations, $relhash );
 		}
@@ -215,15 +221,33 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 				'error' => 'You do not have permission to modify this tradition.' };
 			$c->detach( 'View::JSON' );
 		} elsif( $c->request->method eq 'POST' ) {
-			my $node = $c->request->param('source_id');
-			my $target = $c->request->param('target_id');
-			my $relation = $c->request->param('rel_type');
-			my $note = $c->request->param('note');
-			my $scope = $c->request->param('scope');
+			my $opts = $c->request->params; 
+			
+			# Retrieve the source / target from the options
+			my $node = delete $opts->{source_id};
+			my $target = delete $opts->{target_id};
+			
+			# Make sure we didn't send a blank or invalid relationship type
+			my $relation = $opts->{type};
+			unless( $collation->get_relationship_type( $relation ) ) {
+				my $errmsg = $relation ? "No such relationship type $relation" :
+					"You must specify a relationship type";
+				$c->stash->{'result'} = { error => $errmsg };
+				$c->response->status( '400' );
+				$c->detach( 'View::JSON' );
+			}
+			
+			# Keep the data clean
+			my @booleans = qw/ a_derivable_from_b b_derivable_from_a non_independent /;
+			foreach my $k ( keys %$opts ) {
+				if( $opts->{$k} && grep { $_ eq $k } @booleans ) {
+					$opts->{$k} = 1;
+				}
+			}
 		
-			my $opts = { 'type' => $relation, 'propagate' => 1 };
-			$opts->{'scope'} = $scope if $scope;
-			$opts->{'annotation'} = $note if $note;
+			delete $opts->{scope} unless $opts->{scope};
+			delete $opts->{annotation} unless $opts->{annotation};
+			$opts->{propagate} = 1;
 			
 			try {
 				my @vectors = $collation->add_relationship( $node, $target, $opts );
@@ -596,8 +620,8 @@ sub _check_permission {
 }
 
 sub _clean_booleans {
-	my( $rdg, $param, $val ) = @_;
-	if( $rdg->meta->get_attribute( $param )->type_constraint->name eq 'Bool' ) {
+	my( $obj, $param, $val ) = @_;
+	if( $obj->meta->get_attribute( $param )->type_constraint->name eq 'Bool' ) {
 		$val = 1 if $val eq 'true';
 		$val = undef if $val eq 'false';
 	} 
