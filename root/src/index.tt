@@ -1,6 +1,7 @@
 [% WRAPPER header.tt
 	pagetitle = "Stemmaweb - Text tradition tools"
 	applicationjs = c.uri_for( 'js/componentload.js' )
+	applicationstyle = c.uri_for( 'css/dashboard.css' )
 %]
     <script type="text/javascript">
 // Set global variables that must be passed by the server

@@ -1,0 +1,176 @@
+[% WRAPPER header.tt
+	pagetitle = "Stemmaweb - Phylogeny calculation tool"
+	applicationjs = c.uri_for( 'js/phylotools.js' )
+%]
+    <script type="text/javascript">
+var basepath = "[% c.uri_for( '/' ) %]";
+var textid = "[% textid %]";
+var editable = "[% editable %]"
+var currSelected;
+var stemmadot = [];
+var stemmasvg = [];
+var stemmata_added = {};
+
+function getPhylogeny () {
+	stemmadot = [];
+	stemmasvg = [];
+	var phylourl = basepath + textid;
+    $('#textinfo_waitbox').show();
+    $.getJSON( basepath + "phylocalc/" + textid, function (textdata) {
+    	stemmadot = textdata.stemmadot;
+    	stemmasvg = textdata.stemmasvg;
+	    $('#textinfo_waitbox').hide();
+	    load_stemma( 0 );
+    }); // TODO error handling
+}
+
+function load_stemma( idx ) {
+	// Load the stemma at idx
+	currSelected = idx;
+	show_stemmapager();
+	if( idx > -1 ) {
+		$('#stemma_graph').empty();
+		$('#stemma_graph').append( stemmasvg[idx] );
+		if( stemmadot[idx].substr('digraph') > -1 && stemmata_added[idx] != true ) {
+			// It has a root, so we may add it to the tradition stemmata.
+			$('#add_stemma_button').show();
+		}
+        setTimeout( 'start_element_height = $("#stemma_graph .node")[0].getBBox().height;', 500 );
+	}
+}
+
+function show_stemmapager () {
+      $('.pager_left_button').unbind('click').addClass( 'greyed_out' );
+      $('.pager_right_button').unbind('click').addClass( 'greyed_out' );
+      if( currSelected > 0 ) {
+              $('.pager_left_button').click( function () {
+                      load_stemma( currSelected - 1 );
+              }).removeClass( 'greyed_out' );
+      }       
+      if( selectedStemmaID + 1 < stemmata.length ) {
+              $('.pager_right_button').click( function () {
+                      load_stemma( currSelected + 1 );
+              }).removeClass( 'greyed_out' );
+      }
+}
+
+function add_selected_stemma () {
+	var requrl = basepath + "stemma/" + textid + "/n";
+	var reqparam = { 'dot': stemmadot[currSelected] };
+	$.post( requrl, reqparam, function (data) {
+		// Disable add for any stemma already added
+		stemmata_added[currSelected] = true;
+		$('#add_stemma_button').hide();
+		// TODO maybe check on the server if the stemma exists?
+	}, 'json' );
+}
+
+function rootStemma ( stemidx, root ) {
+	// Send the stemmadot at stemidx to the server, along with the name of the
+	// selected root node. Receive back a dot spec and an SVG, and enable the
+	var rooturl = basepath + 'microservices/rootedstemma';
+	var params = { 'dot': stemmadot[stemidx], 'root': root };
+	$.post( rooturl, params, function (data) {
+		stemmadot[stemidx] = data.stemmadot;
+		stemmasvg[stemidx] = data.stemmasvg;
+		load_stemma( stemidx );
+	}); // TODO error handling
+}
+
+$(document).ready( function() {
+	$('#stemma_graph').mousedown( function(evt) {
+        evt.stopPropagation();
+        $('#stemma_graph').data( 'mousedown_xy', [evt.clientX, evt.clientY] );
+        $('body').mousemove( function(evt) {
+            mouse_scale = 1; // for now, was:  mouse_scale = svg_root_element.getScreenCTM().a;
+            dx = (evt.clientX - $('#stemma_graph').data( 'mousedown_xy' )[0]) / mouse_scale;
+            dy = (evt.clientY - $('#stemma_graph').data( 'mousedown_xy' )[1]) / mouse_scale;
+            $('#stemma_graph').data( 'mousedown_xy', [evt.clientX, evt.clientY] );
+            var svg_root = $('#stemma_graph svg').svg().svg('get').root();
+            var g = $('g.graph', svg_root).get(0);
+            current_translate = g.getAttribute( 'transform' ).split(/translate\(/)[1].split(')',1)[0].split(' ');
+            new_transform = g.getAttribute( 'transform' ).replace( /translate\([^\)]*\)/, 'translate(' + (parseFloat(current_translate[0]) + dx) + ' ' + (parseFloat(current_translate[1]) + dy) + ')' );
+            g.setAttribute( 'transform', new_transform );
+            evt.returnValue = false;
+            evt.preventDefault();
+            return false;
+        });
+        $('body').mouseup( function(evt) {
+            $('body').unbind('mousemove');
+            $('body').unbind('mouseup');
+        });
+	});
+	 
+	$('#stemma_graph').mousewheel(function (event, delta) {
+        event.returnValue = false;
+        event.preventDefault();
+        if (!delta || delta == null || delta == 0) delta = event.originalEvent.wheelDelta;
+        if (!delta || delta == null || delta == 0) delta = -1 * event.originalEvent.detail;
+        if( delta < -9 ) { delta = -9 }; 
+        var z = 1 + delta/10;
+        z = delta > 0 ? 1 : -1;
+        var svg_root = $('#stemma_graph svg').svg().svg('get').root();
+        var g = $('g.graph', svg_root).get(0);
+        if (g && ((z<1 && (g.getScreenCTM().a * start_element_height) > 4.0) || (z>=1 && (g.getScreenCTM().a * start_element_height) < 1000))) {
+            var scaleLevel = z/10;
+            current_scale = parseFloat( g.getAttribute( 'transform' ).split(/scale\(/)[1].split(')',1)[0].split(' ')[0] );
+            new_transform = g.getAttribute( 'transform' ).replace( /scale\([^\)]*\)/, 'scale(' + (current_scale + scaleLevel) + ')' );
+            g.setAttribute( 'transform', new_transform );
+        }
+    });
+    
+    $('#stemma_root_cancel').hide();
+    if( !editable ) {
+    	$('#stemma_add_form').hide();
+    }
+    // call out to run the phylogeny calculation
+	getPhylogeny();
+	    
+});
+    </script>
+
+[% END %]
+
+    <div id="topbanner">
+      <h1>Stemmaweb - [% algorithm_name %] calculation for [% text_name %]</h1>
+      <span class="mainnav">[% IF c.user_exists %]Hello! [% c.user.get_object.email %] <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% ELSE %]<a class="navlink" onclick="window.open('[% c.uri_for( '/login' ) %]', 'loginwindow', 'height=385,width=445')">Login</a> | [% END %]<a class="navlink" href="[% c.uri_for( 'about.html' ) %]">About</a> </span>
+    </div>
+    <div id="textinfo_container">
+      <div id="textinfo_load_status"></div>
+      <h2>Text <span class="texttitle">[% text_name %]</span></h2>
+      <div id="textinfo_container_buttons">
+          <form id="stemma_pager" action="" method="GET" name="stemma_pager">
+            <div id="stemma_pager_buttons">
+              <div class="pager_left_button" id="stemma_pager_left_button"></div>
+              <div class="pager_right_button" id="stemma_pager_right_button"></div>
+            </div>
+          </form>
+          <form id="stemma_root_form" action="" method="GET" name="start_root_stemma">
+            <div class="button" id="stemma_root_button" 
+            	onClick="TODO">
+          	  <span>Choose a root for this stemma</span>
+            </div>
+          </form>
+          <form id="stemma_root_cancel" action="" method="GET" name="stemma_root_cancel">
+            <div class="button" id="stemma_root_cancel_button" 
+            	onClick="TODO">
+          	  <span>Cancel root selection</span>
+            </div>
+          </form>
+          <form id="stemma_add_form" action="" method="GET" name="stemma_add_form">
+            <div class="button" id="add_stemma_button" 
+            	onClick="add_selected_stemma()">
+          	  <span>Add this stemma to the tradition</span>
+            </div>
+          </form>
+      </div>
+      <div id="stemma_graph"></div>
+    </div>
+
+    <!-- Interim 'loading' message for directory box -->
+    <div id="loading_message">
+    	<h3>Calculating text phylogeny, please wait...</h3>
+    	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" alt="Loading tradition list..."/>
+    </div>
+        
+[% PROCESS footer.tt %]

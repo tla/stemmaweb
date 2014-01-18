@@ -1,3 +1,11 @@
+#main_page {
+	padding-left: 20px;
+	padding-right: 20px;
+}
+#topbanner {
+	padding: 0px;
+}
+
 #variants_table {
     background: none repeat scroll 0 0 rgba(255, 255, 255, 0.75);
     clear: both;

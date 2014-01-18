@@ -15,6 +15,7 @@ var readingstats = [% reading_statistics %];
 var graphdot = '[% graphdot %]';
 </script>
 [% END -%]
+  <div id="main_page" class="clearfix">
     <div id="topbanner">
         <span class="mainnav">
             <a href="help" title="Stexaminer help" class="navlink" id="aboutlink">Help / About</a> | <a href="[% c.uri_for( '/' ) %]?withtradition=[% text_id %]" title="Index" class="navlink">Return to index</a>
@@ -83,6 +84,7 @@ var graphdot = '[% graphdot %]';
             <ul class="reading_reversion_list"></ul>
         </div>
     </div>
+  </div> <!-- main_page -->
     
     <div id="options" title="Analysis options...">
         <form id="use_variants_form" name="use_variants_form">
