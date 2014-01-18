@@ -1,13 +1,42 @@
 /* General site-wide layout */
 body { 
     margin: 0; 
-    padding: 20px; 
-    font: 1em Arial, Helvetica, sans-serif; 
+    font: 1em "Open Sans", Arial, Helvetica, sans-serif; 
     font-size: 85%; 
-    color: #666;
+    background-color: #e6e6e6;
+    color: #444;
+}
+#main_page {
     background: transparent url('../images/logo_001.png') no-repeat scroll -200px -100px;
     background-size: 600px;
+    background-color: #ffffff;
+    width: 1124px;
+    padding-bottom: 30px;
+    margin: 0 auto;
+    margin-top: 48px;
+    
 }
+.clearfix:after { 
+	content: "\00A0"; 
+	display: block; 
+	clear: both; 
+	visibility: hidden; 
+	line-height: 0; 
+	height: 0;
+}  
+.clearfix{ 
+	display: inline-block;
+}  
+html[xmlns] .clearfix { 
+	display: block;
+}  
+* html .clearfix{ 
+	height: 1%;
+}  
+.clearfix {
+	display: block
+}  
+
 h1 {
     border-bottom: 1px solid #488dd2;
     color: #488dd2;
@@ -86,7 +115,7 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
     background: url("../images/button_left_28.png") no-repeat scroll right bottom transparent;
 }
 #topbanner {
-	width: 100%;
+	padding: 30px;
 }
 #bannerinfo {
 	float: right;
@@ -94,7 +123,7 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
 	margin-top: 15px;
 }
 .navlink {
-	color: #488dd2;
+	color: #ffffff;
 	text-decoration: underline;
 }
 
@@ -104,10 +133,11 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
 
 #directory_container {
     background: none repeat scroll 0 0 rgba(255, 255, 255, 0.75);
-	float: left;
+    float: left;
 	width: 300px;
 	height: 450px;
 	border: 1px #c6dcf1 solid;
+	margin-left: 30px;
 	padding-left: 10px;
 	padding-right: 10px;
 }
@@ -131,15 +161,15 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
 	font-style: italic;
 }
 .mainnav {
-	position: absolute;
-	top: 10px;
-	right: 22px;
 	font-size: 14px;
 	font-weight: 100;
-	color: #488dd2;
+	background-color: #488dd2;
+	color: #ffffff;
+	padding: 5px;
+	float: right;
 }
 .mainnav a {
-	color: #488dd2;
+	color: #ffffff;
 }
 #textinfo_waitbox {
 	float: left;

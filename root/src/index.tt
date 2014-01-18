@@ -9,10 +9,12 @@ var textOnLoad = "[% withtradition %]";
     </script>
 
 [% END %]
-
+   <div id="main_page" class="clearfix">
+   <div class="mainnav">
+	<span>[% IF c.user_exists %]Hello! [% c.user.get_object.email %]! &nbsp; <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% ELSE %]<a class="navlink" onclick="window.open('[% c.uri_for( '/login' ) %]', 'loginwindow', 'height=385,width=445')">Login</a> | [% END %]<a class="navlink" href="[% c.uri_for( '/about' ) %]">About Stemmaweb</a> </span>
+   </div>
     <div id="topbanner">
-      <h1>Stemmaweb - a collection of tools for analysis of collated texts</h1>
-      <span class="mainnav">[% IF c.user_exists %]Hello! [% c.user.get_object.email %] <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% ELSE %]<a class="navlink" onclick="window.open('[% c.uri_for( '/login' ) %]', 'loginwindow', 'height=385,width=445')">Login</a> | [% END %]<a class="navlink" href="[% c.uri_for( '/about' ) %]">About</a> </span>
+      <h1 class="title">Stemmaweb - a collection of tools for analysis of collated texts</h1>
       <p id="compatibility_check"><span class="error">This browser does not support 
       the functions necessary for Stemmaweb to work properly. We recommend use of 
       <a href="http://mozilla.org/firefox">Mozilla Firefox</a> or 
@@ -31,7 +33,7 @@ var textOnLoad = "[% withtradition %]";
     	<h3>Loading tradition information, please wait...</h3>
     	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" alt="Loading tradition info..." />
     </div>
-    <div id="textinfo_container">
+    <div id="textinfo_container" class="clearfix">
       <div id="textinfo_load_status"></div>
       <h2>Text <span class="texttitle"></span></h2>
       <form id="open_textinfo_edit" action="" method="GET" name="edit_textinfo">
@@ -104,7 +106,8 @@ var textOnLoad = "[% withtradition %]";
     	<h3>Loading texts, please wait...</h3>
     	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" alt="Loading tradition list..."/>
     </div>
-    
+  </div> <!-- main_page -->
+  
     <!-- Textinfo editor dialog -->
     <div id="textinfo-edit-dialog" title="Edit information about this tradition">
       <div id="textinfo_edit_container">
