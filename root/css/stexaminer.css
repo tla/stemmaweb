@@ -102,28 +102,6 @@
     border-right: 20px solid #ffd5e5;
 }
 
-/* Clearfix hack to make div container height work */
-.clearfix:after {
-	content: ".";
-	display: block;
-	clear: both;
-	visibility: hidden;
-	line-height: 0;
-	height: 0;
-}
- 
-.clearfix {
-	display: inline-block;
-}
- 
-html[xmlns] .clearfix {
-	display: block;
-}
- 
-* html .clearfix {
-	height: 1%;
-}
-
 #options_button_container {
     height: 24px;
 }
