@@ -2,6 +2,9 @@
 	pagetitle = "Stemmaweb - Register"
 	applicationstyle = c.uri_for('/css/auth.css')
 %]
+	<div id="topbanner">
+		<h1>Stemmaweb - Register</h1>
+	</div>
 [% IF status_msg %]
 			<p>[% status_msg | html %]</p>
 [% END %]

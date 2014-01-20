@@ -1,7 +1,13 @@
+body {
+	padding: 20px;
+    background: transparent url('../images/logo_001.png') no-repeat scroll -200px -100px;
+    background-size: 600px;
+    background-color: #ffffff;
+}
 #topbanner {
 	width: 100%;
 	height: 50px;
-	margin-top: 20px;
+	padding: 0px;
 }
 .error {
     color: #d24848;

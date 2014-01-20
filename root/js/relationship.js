@@ -253,18 +253,19 @@ function add_relations( callback_fn ) {
 	$.getJSON( textrelpath, function(data) {
 		$.each(data, function( index, rel_info ) {
 			var type_index = $.inArray(rel_info.type, rel_types);
-			var source_found = get_ellipse( rel_info.source );
-			var target_found = get_ellipse( rel_info.target );
+			var source_found = get_ellipse( rel_info.source_id );
+			var target_found = get_ellipse( rel_info.target_id );
 			if( type_index != -1 && source_found.size() && target_found.size() ) {
-				var relation = relation_manager.create( rel_info.source, rel_info.target, type_index );
-				relation.data( 'type', rel_info.type );
-				relation.data( 'scope', rel_info.scope );
-				relation.data( 'note', rel_info.note );
+				var relation = relation_manager.create( rel_info.source_id, rel_info.target_id, type_index );
+				// Save the relationship data too.
+				$.each( rel_info, function( k, v ) {
+					relation.data( k, v );
+				});
 				if( editable ) {
-					var node_obj = get_node_obj(rel_info.source);
+					var node_obj = get_node_obj(rel_info.source_id);
 					node_obj.set_selectable( false );
 					node_obj.ellipse.data( 'node_obj', null );
-					node_obj = get_node_obj(rel_info.target);
+					node_obj = get_node_obj(rel_info.target_id);
 					node_obj.set_selectable( false );
 					node_obj.ellipse.data( 'node_obj', null );
 				}
@@ -367,8 +368,10 @@ function node_obj(ellipse) {
         var target_node_text = $('ellipse[fill="#ffccff"]').siblings("text").text();
         $('#source_node_id').val( source_node_id );
         $('#source_node_text').val( source_node_text );
+        $('.rel_rdg_a').text( "'" + source_node_text + "'" );
         $('#target_node_id').val( target_node_id );
         $('#target_node_text').val( target_node_text );
+        $('.rel_rdg_b').text( "'" + target_node_text + "'" );
         $('#dialog-form').dialog( 'open' );
     };
     $('body').unbind('mousemove');
@@ -604,6 +607,19 @@ function relation_factory() {
     this.showinfo = function(relation) {
     	$('#delete_relation_type').text( relation.data('type') );
     	$('#delete_relation_scope').text( relation.data('scope') );
+    	$('#delete_relation_attributes').empty();
+    	if( relation.data( 'a_derivable_from_b' ) ) {
+    		$('#delete_relation_attributes').append( 
+    			"'" + relation.data('source_text') + "' derivable from '" + relation.data('target_text') + "'<br/>");
+    	}
+    	if( relation.data( 'b_derivable_from_a' ) ) {
+    		$('#delete_relation_attributes').append( 
+    			"'" + relation.data('target_text') + "' derivable from '" + relation.data('source_text') + "'<br/>");
+    	}
+    	if( relation.data( 'non_independent' ) ) {
+    		$('#delete_relation_attributes').append( 
+    			"Variance unlikely to arise coincidentally<br/>");
+    	}
     	if( relation.data( 'note' ) ) {
     		$('#delete_relation_note').text('note: ' + relation.data( 'note' ) );
     	}
@@ -1042,7 +1058,7 @@ $(document).ready(function () {
 	$( '#dialog-form' ).dialog( {
 	autoOpen: false,
 	height: 270,
-	width: 290,
+	width: 330,
 	modal: true,
 	buttons: {
 	  'Merge readings': function( evt ) {
@@ -1068,10 +1084,10 @@ $(document).ready(function () {
 				var relation_found = $.inArray( source_target[2], $( '#keymap' ).data( 'relations' ) );
 				if( source_found.size() && target_found.size() && relation_found > -1 ) {
 					var relation = relation_manager.create( source_target[0], source_target[1], relation_found );
-					relation.data( 'type', source_target[2]  );
-					relation.data( 'scope', $('#scope :selected').text()  );
-					relation.data( 'note', $('#note').val()  );
 					relation_manager.toggle_active( relation.attr('id') );
+					$.each( $('#collapse_node_form').serializeArray(), function( i, k ) {
+						relation.data( k.name, k.value );
+					});
 				}
 				$(evt.target).button( 'enable' );
 		   });
@@ -1146,7 +1162,7 @@ $(document).ready(function () {
   $( "#delete-form" ).dialog({
     autoOpen: false,
     height: 135,
-    width: 250,
+    width: 300,
     modal: false,
     buttons: {
         OK: function() { $( this ).dialog( "close" ); },

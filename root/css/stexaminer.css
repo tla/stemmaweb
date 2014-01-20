@@ -1,3 +1,10 @@
+#main_page {
+	padding: 30px;
+}
+#topbanner {
+	padding: 0px;
+}
+
 #variants_table {
     background: none repeat scroll 0 0 rgba(255, 255, 255, 0.75);
     clear: both;
@@ -8,7 +15,7 @@
     overflow: auto;
 }
 #stemma_graph {
-    background: none repeat scroll 0 0 rgba(255, 255, 255, 0.75);
+    background: none repeat scroll 0 0 rgba(255, 255, 255, 1);
     height: 350px;
     clear: both;
     float: left;
@@ -92,28 +99,6 @@
 }
 .cellb7 {
     border-right: 20px solid #ffd5e5;
-}
-
-/* Clearfix hack to make div container height work */
-.clearfix:after {
-	content: ".";
-	display: block;
-	clear: both;
-	visibility: hidden;
-	line-height: 0;
-	height: 0;
-}
- 
-.clearfix {
-	display: inline-block;
-}
- 
-html[xmlns] .clearfix {
-	display: block;
-}
- 
-* html .clearfix {
-	height: 1%;
 }
 
 #options_button_container {

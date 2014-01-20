@@ -5,13 +5,12 @@ body {
     font-size: 85%; 
     background: #EDF1FA;
 }
+#topbanner {
+	padding: 0px;
+}
 #logoimg {
 	float: left;
 	margin-left: 20px;
-}
-.helptag {
-	color: #488dd2;
-	text-decoration: underline;
 }
 #logotitle {
 	float: left;

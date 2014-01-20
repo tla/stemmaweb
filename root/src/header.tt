@@ -1,11 +1,12 @@
-[% vstr = '002' -%]
+[% vstr = '003' -%]
 <!DOCTYPE HTML>
 <html>
   <head>
     <META http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link type='text/css' href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet'>
     <link type="text/css" href="[% c.uri_for('/css/cupertino/jquery-ui-1.8.13.custom.css') %]" rel="stylesheet" />
     <link type="text/css" href="[% c.uri_for('/css/jquery.multiselect.css') %]" rel="stylesheet" />
-    <link type="text/css" href="[% c.uri_for('/css/style.css') %]" rel="stylesheet" />
+    <link type="text/css" href="[% c.uri_for('/css/style.css') %]?v=[% vstr %]" rel="stylesheet" />
 [% IF applicationstyle -%]
 	<link type="text/css" href="[% applicationstyle %]?v=[% vstr %]" rel="stylesheet" />
 [% END -%]
