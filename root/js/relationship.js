@@ -58,14 +58,6 @@ function node_dblclick_listener( evt ) {
   	}
   	$('#reading_normal_form').attr( 'size', nfboxsize )
   	$('#reading_normal_form').val( normal_form );
-  	if( editable ) {
-	  	// Fill in the witnesses for the de-collation box.
-	  	$('#reading_decollate_witnesses').empty();
-	  	$.each( reading_info['witnesses'], function( idx, wit ) {
-	  		$('#reading_decollate_witnesses').append( $('<option/>').attr(
-	  			'value', wit ).text( wit ) );
-	  	});
-	}
   	// Now do the morphological properties.
   	morphology_form( reading_info['lexemes'] );
   	// and then open the dialog.
@@ -970,8 +962,9 @@ function readings_equivalent( source, target ) {
 		return true;
 	}
 	// Lowercase and strip punctuation from both and compare again
-	var stlc = sourcetext.toLowerCase().replace(/[^\w\s]|_/g, "");
-	var ttlc = targettext.toLowerCase().replace(/[^\w\s]|_/g, "");
+	var nonwc = XRegExp('[^\\p{L}\\s]|_');
+	var stlc = XRegExp.replace( sourcetext.toLocaleLowerCase(), nonwc, "", 'all' );
+	var ttlc = XRegExp.replace( targettext.toLocaleLowerCase(), nonwc, "", 'all' );
 	if( stlc === ttlc ) {
 		return true;
 	}	
