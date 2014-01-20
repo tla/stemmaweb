@@ -120,15 +120,6 @@ $(document).ready(function () {
 				<label for="reading_grammar_invalid">This word's grammar cannot be right</label>
 			</div>
 			<br/><br/>
-			<!-- Collation correction option goes here -->
-			<div id="decollation">
-				<label for="reading_decollate">Detach this reading with the selected witnesses:</label>
-				<select id="reading_decollate_witnesses" name="reading_decollate_witnesses"
-					multiple="multiple">
-				<!-- Fill in relevant reading witnesses here -->
-				</select>
-				<button id="reading_decollate" onclick="decollate(); return false;">Uncollate</button>
-			</div>
 			<!-- Morphological options go here -->
 			<div id="normalization" class="morph">
 				<label for="reading_normal_form">Normalized form: </label>
