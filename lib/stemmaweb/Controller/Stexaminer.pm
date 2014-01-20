@@ -157,9 +157,7 @@ sub graphsvg :Local {
 	my( $self, $c ) = @_;
 	my $dot = $c->request->param('dot');
 	my @layerwits = $c->request->param('layerwits[]');
-	open my $stemma_fh, '<', \$dot;
-	binmode( $stemma_fh, ':encoding(UTF-8)' );
-	my $tempstemma = Text::Tradition::Stemma->new( 'dot' => $stemma_fh );
+	my $tempstemma = Text::Tradition::Stemma->new( 'dot' => $dot );
 	my $svgopts = {};
 	if( @layerwits ) {
 		$svgopts->{'layerwits'} = \@layerwits;

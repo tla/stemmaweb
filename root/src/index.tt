@@ -91,11 +91,12 @@ var textOnLoad = "[% withtradition %]";
               <span id='relatebutton_label'>View collation and relationships</span>
             </div>
           </form>
-          <a id="dl_tradition" href="" download="file.xml">
-            <div class="button" id="download_button">
-              <span id='dlbutton_label'>Download tradition as XML</span>
+          <form id="dl_tradition" action="" method="GET" name="run_downloader">
+            <div class="button" id="download_button"
+            	onClick="$('#download-dialog').dialog('open');">
+              <span id='dlbutton_label'>Download tradition</span>
             </div>
-          </a>
+          </form>
       </div>
       <div id="stemma_load_status"></div>
       <div id="stemma_graph"></div>
@@ -175,6 +176,25 @@ var textOnLoad = "[% withtradition %]";
     	<div id="stemweb_run_status"></div>
       </div>
     </div>
+    
+    <!-- Data download dialog box -->
+    <div id="download-dialog" title="Download tradition data">
+      <div id="download_container">
+    	<form id="download_form">
+    		<input id="download_tradition" type="hidden" name="tradition"/><br/>
+    		<label for="download_format">Choose a format for download: </label>
+    		<select id="download_format" name="format">
+    			<option value="GraphML">Native XML format</option>
+    			<option value="CSV">Comma-separated values (collation only)</option>
+    			<option value="TSV">Tab-separated values (collation only)</option>
+    			<option value="SVG">SVG graph display (collation and relationships)</option>    			
+    			<!-- option value="tei_ps" -->
+    			<!-- option value="tei_dea" -->
+    		</select>
+    	</form>
+    	<div id="download_status"></div>
+      </div>
+    </div>    
     
     <!-- File upload dialog box -->
     <div id="upload-collation-dialog" title="Upload a collation">

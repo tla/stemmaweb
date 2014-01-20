@@ -636,6 +636,33 @@ $(document).ready( function() {
     	}
 	});
 		
+	// Set up the download dialog
+	$('#download-dialog').dialog({
+		autoOpen: false,
+		height: 150,
+		width: 300,
+		modal: true,
+		buttons: {
+			Download: function (evt) {
+				var dlurl = _get_url([ "download", $('#download_tradition').val(), $('#download_format').val() ]);
+				window.location = dlurl;
+				$('download-dialog').dialog('close');
+			},
+			Cancel: function() {
+				$('#download-dialog').dialog('close');
+			}
+		},
+		open: function() {
+			$('#download_tradition').attr('value', selectedTextID );
+		},
+	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+		$(event.target).parent().find('.ui-button').button("enable");
+    	if( ajaxSettings.url.indexOf( 'download' ) > -1 
+    		&& ajaxSettings.type == 'POST' ) {
+			display_error( jqXHR, $("#download_status") );
+    	}
+	});
+
 	$('#upload-collation-dialog').dialog({
 		autoOpen: false,
 		height: 360,

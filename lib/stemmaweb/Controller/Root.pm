@@ -513,26 +513,31 @@ sub stemmaroot :Local :Args(2) {
 
 =head2 download
 
- GET /download/$textid
+ GET /download/$textid/$format
  
-Returns the full XML definition of the tradition and its stemmata, if any.
+Returns a file for download of the tradition in the requested format.
  
 =cut
 
-sub download :Local :Args(1) {
-	my( $self, $c, $textid ) = @_;
+sub download :Local :Args(2) {
+	my( $self, $c, $textid, $format ) = @_;
 	my $tradition = $c->model('Directory')->tradition( $textid );
 	unless( $tradition ) {
 		return _json_error( $c, 404, "No tradition with ID $textid" );
 	}
 	my $ok = _check_permission( $c, $tradition );
 	return unless $ok;
+
+	my $outmethod = "as_" . lc( $format );
+	my $view = "View::$format";
+	$c->stash->{'name'} = $tradition->name();
+	$c->stash->{'download'} = 1;
 	try {
-		$c->stash->{'result'} = $tradition->collation->as_graphml();
+		$c->stash->{'result'} = $tradition->collation->$outmethod();
 	} catch( Text::Tradition::Error $e ) {
 		return _json_error( $c, 500, $e->message );
 	}
-	$c->forward('View::GraphML');
+	$c->forward( $view );
 }
 
 ####################
