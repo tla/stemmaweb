@@ -12,7 +12,7 @@ var textOnLoad = "[% withtradition %]";
 [% END %]
    <div id="main_page" class="clearfix">
    <div class="mainnav">
-	<span>[% IF c.user_exists %]Hello! [% c.user.get_object.email %]! &nbsp; <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% ELSE %]<a class="navlink" onclick="window.open('[% c.uri_for( '/login' ) %]', 'loginwindow', 'height=385,width=445')">Login</a> | [% END %]<a class="navlink" href="[% c.uri_for( '/about' ) %]">About Stemmaweb</a> </span>
+	<span>[% IF c.user_exists %]Hello! [% c.user.get_object.email %]! &nbsp; <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% ELSE %]<a class="navlink" onclick="window.open('[% c.uri_for( '/login' ) %]', 'loginwindow', 'height=385,width=445')">Sign in/Register</a> | [% END %]<a class="navlink" href="[% c.uri_for( '/about' ) %]">About Stemmaweb</a> </span>
    </div>
     <div id="topbanner">
       <h1 class="title">Stemmaweb - a collection of tools for analysis of collated texts</h1>

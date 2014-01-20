@@ -8,12 +8,12 @@
  
 	 <p>Stemmaweb is a set of tools that has grown out of the <a href="http://treeoftexts.arts.kuleuven.be/">Tree of Texts</a>, a CREA ("creative research") project funded by the KU Leuven. The tools were developed variously within the project, on behalf of the project by <a href="http://www.scsys.co.uk">Shadowcat Systems</a>, and in collaboration with the <a href="http://interedition.eu/">Interedition</a> project. The source code for all tools and associated libraries is available <a href="http://github.com/tla/stemmatology/">on Github</a>.</p>
  
-	 <p>All tools are free for scholarly (nonprofit) use and adaptation. Although some data may be viewed publicly without a user account, use of the tools with your own data is possible only by registering as a user. You may log in with a Google account or another OpenID account, or you may <a onclick="window.open('[% c.uri_for( '/register' ) %]', 'regwindow', 'height=385,width=445')">register</a> with a local username and password for use on the site. The Tree of Texts project and KU Leuven retain rights to uploaded text traditions only insofar as it is necessary to store and back them up, display them according to the stated preferences, and analyze them with the tools provided and linked.</p>
+	 <p>All tools are free for scholarly and nonprofit use and adaptation. Although some data may be viewed publicly without a user account, use of the tools with your own data is possible only by registering as a user. You may log in with a Google account or another OpenID account, or you may <a onclick="window.open('[% c.uri_for( '/register' ) %]', 'regwindow', 'height=385,width=445')">register</a> with a local username and password for use on the site. The Tree of Texts project and KU Leuven retain rights to uploaded text traditions only insofar as it is necessary to store and back them up, display them according to the stated preferences, and analyze them with the tools provided and linked.</p>
  
 	 <h2>Tools available</h2>
 	 <p>At present the Stemmaweb tools comprise the following:</p>
  
-	 <h3>Uploader</h3>
+	 <h3>Uploader ("Add a new text tradition")</h3>
 	 <p>Any logged-in user may upload a text collation in one of several forms:</p>
 		<ul>
 			<li>Spreadsheet collation (Excel file, CSV file, or tab-separated values). Witness sigla should appear in the first row, one per column; the text of each witness should occur in sequence in the appropriate column, with collated words/readings lined up according to row. CSV and tab-separated value files are assumed to be Unicode, in the UTF-8 encoding.</li>
@@ -24,13 +24,22 @@
 		</ul>
 	 <p>Once a tradition is successfully uploaded, you may change its name and its language, and choose whether others may view (but not edit) it.</p>
  
-	 <h3>Stemma editor</h3>
+	 <h3>Stemma editor ("Add a new stemma / Edit this stemma")</h3>
 	 <p>For any text tradition you own, you may associate one or more stemma hypotheses to the tradition. Currently the way to specify a stemma is in "dot" format, as documented within the interface for the "Add/edit stemma" buttons.</p>
+	 
+	 <h3>Stemma generation via <a href="https://github.com/Stemweb/Stemweb">Stemweb</a> ("Run a Stemweb algorithm")</h3>
+	 <p>Given an uploaded collation, it is possible to generate a stemma hypothesis using one of several algorithms. This feature, Stemweb, is a service provided by researchers at the HIIT (Helsinki Institute for Information Technology). The algorithms currently available include:
+	 <!-- TODO generate this list from the docs API! -->
+	 <ul>
+	 	<li><a href="http://cosco.hiit.fi/Articles/icdm2011.pdf">Semstem</a>: latent tree structure analysis</li>
+	 	<li><a href="http://cosco.hiit.fi/Articles/ecai06.pdf">RHM</a>: compression-based analysis</li>
+	 	<li><a href="http://en.wikipedia.org/wiki/Neighbor-net">Neighbor-Net</a>: based on neighbor-joining, recommended for highly 'contaminated' traditions</li>
+	 </ul>
+	 Both the Semstem and RHM algorithms require a single parameter, "iterations", to specify the number of times the analysis should be run to arrive at a consensus model. A higher number produces a more certain result, but requires a longer time to run. Suggested minimums are 50 iterations for Semstem and 1000000 iterations for RHM.</p>
+	 <p>All of these algorithms run "asynchronously" - when the owner of a tradition makes a request for a generated tree, the result can take some minutes (or even hours, depending on the complexity of the tradition) to return. When a request has been made, the owner can check its progress using the same button; if the stemma has meanwhile been calculated, it will be loaded. If the owner leaves the Stemmaweb site and the stemma is calculated meanwhile, it will appear when Stemmaweb is next used.<p>
+	 <p>Generated stemmas are not oriented - they have no inferred root or origin. This means that, in order to examine the texual variants against a generated stemma (see "Stexaminer" below), a root must first be chosen. This can be done simply by clicking a node in the returned graph, and choosing the option to use that node as the root. Any stemma may be re-rooted any number of times.</p>
  
-	 <h3>Relationship mapper</h3>
-	 <p>The relationship mapper tool allows you to define the relationships between variant readings within your text. This is useful for, among other things, later stemma analysis - it allows classification of the sorts of variants that may or may not yield clues as to the history of the text. Please see the "Help/about" link at the top of the relationship mapper for more information about its use.</p>
- 
-	 <h3>Stexaminer</h3>
+	 <h3>Stexaminer ("Examine variants against this stemma")</h3>
 	 <p>This tool allows visualization of the variants within a text tradition, according to the selected stemma hypothesis. The stemma graph and the variant witness groupings are sent to a calculation service, provided by the <a href="http://dtai.cs.kuleuven.be">Declarative Language and Artificial Intelligence</a> research group of the KU Leuven, that attempts to determine for each variant location within the text:</p>
 	 <ul>
 	  <li>Whether that location fits the stemma in a genealogical way</li>
@@ -38,6 +47,9 @@
 	  <li>Whether any coincidental occurrence might be a reversion to an ancestor reading</li>
 	 </ul>
 	 <p>For more information on this tool and the analysis behind it, please see <a href="http://cocomile.disi.unitn.it/2012/papers/cocomile2012_manuscript.pdf">the following paper</a>.</p>
+ 
+	 <h3>Relationship mapper ("View collation and relationships")</h3>
+	 <p>The relationship mapper tool allows you to define the relationships between variant readings within your text. This is useful for, among other things, later stemma analysis - it allows classification of the sorts of variants that may or may not yield clues as to the history of the text. Please see the "Help/about" link at the top of the relationship mapper for more information about its use.</p>
  
 	 <h2>License</h2>
 	 <p>All source code for the Stemmaweb tools and user interface is open-source. The Perl libraries are governed by the Perl license; the remaining software is governed by the GNU General Public License.</p>
