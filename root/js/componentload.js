@@ -646,9 +646,8 @@ $(document).ready( function() {
 			Download: function (evt) {
 				var dlurl = _get_url([ "download", $('#download_tradition').val(), $('#download_format').val() ]);
 				window.location = dlurl;
-				$('download-dialog').dialog('close');
 			},
-			Cancel: function() {
+			Done: function() {
 				$('#download-dialog').dialog('close');
 			}
 		},

@@ -532,8 +532,16 @@ sub download :Local :Args(2) {
 	my $view = "View::$format";
 	$c->stash->{'name'} = $tradition->name();
 	$c->stash->{'download'} = 1;
+	my @outputargs;
+	if( $format eq 'SVG' ) {
+		# Send the list of colors through to the backend.
+		# TODO Think of some way not to hard-code this.
+		push( @outputargs, { 'show_relations' => 'all',
+			'graphcolors' => [ "#5CCCCC", "#67E667", "#F9FE72", "#6B90D4", 
+				"#FF7673", "#E467B3", "#AA67D5", "#8370D8", "#FFC173" ] } );
+	}
 	try {
-		$c->stash->{'result'} = $tradition->collation->$outmethod();
+		$c->stash->{'result'} = $tradition->collation->$outmethod( @outputargs );
 	} catch( Text::Tradition::Error $e ) {
 		return _json_error( $c, 500, $e->message );
 	}
