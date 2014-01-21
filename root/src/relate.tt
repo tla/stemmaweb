@@ -12,12 +12,15 @@ var editable = "[% permission %]" === "full";
 // URLs for images referenced in Javascript
 var merge_button_yes = "[% c.uri_for( '/images/tick_circle_frame.png' ) %]";
 var merge_button_no = "[% c.uri_for( '/images/no_entry.png' ) %]";
+// Constants used in Javascript that we get from the server
 [% IF error -%]
 var relationship_types = [];
 var relationship_scopes = [];
+var ternary_values = [];
 [% ELSE -%]
 var relationship_types = [% relationship_types %];
 var relationship_scopes = [% relationship_scopes %];
+var ternary_values = [% ternary_values %];
 [% END -%]
 
 $(document).ready(function () {
@@ -71,6 +74,11 @@ $(document).ready(function () {
 			<br/><br/>
 			<label for="scope">Scope of relation&nbsp;</label>
 			<select name="scope" id="scope" class=".ui-widget select">
+				<option></option>
+			</select>
+			<br/><br/>
+			<label for="is_significant">Is this variance stemmatically significant?</label>
+			<select name="is_significant" id="is_significant" class=".ui-widget select"/>
 				<option></option>
 			</select>
 			<br/><br/>

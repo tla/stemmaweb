@@ -111,14 +111,6 @@
     top: 10px;
     margin-bottom: 24px;
 }
-.error {
-    font-weight: bold;
-    color: #ff3333;
-}
-.notification {
-	font-weight: bold;
-	color: #33ff33;
-}
 #new_file {
     position: absolute;
     top: -50px;

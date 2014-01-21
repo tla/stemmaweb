@@ -600,6 +600,14 @@ function relation_factory() {
     	$('#delete_relation_type').text( relation.data('type') );
     	$('#delete_relation_scope').text( relation.data('scope') );
     	$('#delete_relation_attributes').empty();
+    	var significance = ' is not ';
+    	if( relation.data( 'is_significant' ) === 'yes') {
+    		significance = ' is ';
+    	} else if ( relation.data( 'is_significant' ) === 'maybe' ) {
+    		significance = ' might be ';
+    	}
+		$('#delete_relation_attributes').append( 
+			"This relationship" + significance + "stemmatically significant<br/>");
     	if( relation.data( 'a_derivable_from_b' ) ) {
     		$('#delete_relation_attributes').append( 
     			"'" + relation.data('source_text') + "' derivable from '" + relation.data('target_text') + "'<br/>");
@@ -1050,7 +1058,7 @@ $(document).ready(function () {
   if( editable ) {
 	$( '#dialog-form' ).dialog( {
 	autoOpen: false,
-	height: 270,
+	height: 350,
 	width: 330,
 	modal: true,
 	buttons: {
@@ -1100,11 +1108,15 @@ $(document).ready(function () {
 		$.each( relationship_scopes, function(index, value) {   
 			 $('#scope').append( $('<option />').attr( "value", value ).text(value) ); 
 		});
-		// Handler to clear the annotation field, the first time the relationship is
-		// changed after opening the form.
+		$.each( ternary_values, function( index, value ) {
+			$('#is_significant').append( $('<option />').attr( "value", value ).text(value) );
+		});
+		// Handler to reset fields to default, the first time the relationship 
+		// is changed after opening the form.
 		$('#rel_type').change( function () {
 			if( !$(this).data( 'changed_after_open' ) ) {
 				$('#note').val('');
+				$(this).find(':checked').removeAttr('checked');
 			}
 			$(this).data( 'changed_after_open', true );
 		});
@@ -1132,7 +1144,8 @@ $(document).ready(function () {
 		$("#dialog_overlay").hide();
 	}
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		if( ajaxSettings.url == getTextURL('relationships') 
+		if( ( ajaxSettings.url == getTextURL('relationships')
+			  || ajaxSettings.url == getTextURL('merge') )
 			&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
 			var error;
 			if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {

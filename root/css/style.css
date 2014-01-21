@@ -136,4 +136,11 @@ div.pager_left_button.greyed_out, div.pager_left_button.greyed_out:hover {
 	color: #ffffff;
 	text-decoration: underline;
 }
-
+.error {
+    font-weight: bold;
+    color: #ff3333;
+}
+.notification {
+	font-weight: bold;
+	color: #33ff33;
+}

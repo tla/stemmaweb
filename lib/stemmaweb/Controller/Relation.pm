@@ -1,8 +1,10 @@
 package stemmaweb::Controller::Relation;
 use JSON qw/ to_json from_json /;
 use Moose;
+use Moose::Util::TypeConstraints qw/ find_type_constraint /;
 use Module::Load;
 use namespace::autoclean;
+use Text::Tradition::Datatypes;
 use TryCatch;
 
 BEGIN { extends 'Catalyst::Controller' }
@@ -70,7 +72,10 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	my $collation = $tradition->collation;
 	
 	# Stash the relationship definitions
-	$c->stash->{'relationship_scopes'} = to_json( [ qw/ local global / ] );
+	$c->stash->{'relationship_scopes'} = 
+		to_json( find_type_constraint( 'RelationshipScope' )->values );
+	$c->stash->{'ternary_values'} = 
+		to_json( find_type_constraint( 'Ternary' )->values );
 	my @reltypeinfo;
 	foreach my $type ( sort { _typesort( $a, $b ) } $collation->relations->types ) {
 		next if $type->is_weak;
@@ -208,6 +213,7 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 				  a_derivable_from_b => $relobj->a_derivable_from_b,
 				  b_derivable_from_a => $relobj->b_derivable_from_a,
 				  non_independent => $relobj->non_independent,
+				  is_significant => $relobj->is_significant
 				  };
 			$relhash->{'note'} = $relobj->annotation if $relobj->has_annotation;
 			push( @all_relations, $relhash );
