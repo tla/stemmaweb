@@ -39,6 +39,10 @@ set up to run the standalone service:
 		<extra_args>
 			user STEMMAWEB_USER
 			password STEMMAWEB_PASS
+			<dbi_attrs>
+				mysql_enable_utf8 1
+			</dbi_attrs>
 		</extra_args>
 		</model_args>
-* (Optionally) configure Stemmaweb to run under FastCGI, Plack, or any other Catalyst-compatible application framework. See http://www.catalystframework.org for more information.
+		
+* (Optionally) configure Stemmaweb to run under FastCGI, Starman, or any other Catalyst-compatible application framework. See http://www.catalystframework.org for more information. The provided stemmaweb.psgi was written to work with Starman running behind Apache on a specified non-root URL path.
