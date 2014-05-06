@@ -184,7 +184,7 @@ sub _process_stemweb_result {
 			}
 			$c->stash->{'result'} = { status => 'notfound' };
 		}
-	} elsif( $answer->{status} == 1 ) {
+	} elsif( $answer->{status} == -1 ) {
 		$c->stash->{'result'} = { 'status' => 'running' };
 	} else {
 		return _json_error( $c, 500,
