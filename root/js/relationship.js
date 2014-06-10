@@ -1063,18 +1063,20 @@ $(document).ready(function () {
 	modal: true,
 	buttons: {
 	  'Merge readings': function( evt ) {
-		  $( evt.target ).button( 'disable' );
+	  	  var mybuttons = $(evt.target).closest('button').parent().find('button');
+		  mybuttons.button( 'disable' );
 		  $( '#status' ).empty();
 		  form_values = $( '#collapse_node_form' ).serialize();
 		  ncpath = getTextURL( 'merge' );
 		  var jqjson = $.post( ncpath, form_values, function( data ) {
 			  merge_nodes( $( '#source_node_id' ).val(), $( '#target_node_id' ).val(), data );
-			  $(evt.target).button( 'enable' );
+			  mybuttons.button( 'enable' );
               $( '#dialog-form' ).dialog( 'close' );
 		  } );
 	  },
 	  OK: function( evt ) {
-		$( evt.target ).button( 'disable' );
+	  	var mybuttons = $(evt.target).closest('button').parent().find('button');
+		mybuttons.button( 'disable' );
 		$( '#status' ).empty();
 		form_values = $( '#collapse_node_form' ).serialize();
 		ncpath = getTextURL( 'relationships' );
@@ -1090,7 +1092,7 @@ $(document).ready(function () {
 						relation.data( k.name, k.value );
 					});
 				}
-				$(evt.target).button( 'enable' );
+				mybuttons.button( 'enable' );
 		   });
 			$( '#dialog-form' ).dialog( 'close' );
 		}, 'json' );
@@ -1221,12 +1223,13 @@ $(document).ready(function () {
         Cancel: function() { $( this ).dialog( "close" ); },
         Detach: function ( evt ) { 
             var self = $(this);
-            $( evt.target ).button( "disable" );
+	  		var mybuttons = $(evt.target).closest('button').parent().find('button');
+			mybuttons.button( 'disable' );
             var form_values = $('#detach_collated_form').serialize();
             ncpath = getTextURL( 'duplicate' );
             var jqjson = $.post( ncpath, form_values, function(data) {
                 detach_node( data );
-                $(evt.target).button("enable");
+                mybuttons.button("enable");
                 self.dialog( "close" );
             } );
         }
@@ -1308,7 +1311,8 @@ $(document).ready(function () {
 			},
 			Update: function( evt ) {
 				// Disable the button
-				$(evt.target).button("disable");
+	  			var mybuttons = $(evt.target).closest('button').parent().find('button');
+				mybuttons.button( 'disable' );
 				$('#reading_status').empty();
 				var reading_id = $('#reading_id').val()
 				form_values = {
@@ -1335,7 +1339,7 @@ $(document).ready(function () {
 					if( $('#update_workspace_button').data('locked') == false ) {
 						color_inactive( get_ellipse( reading_id ) );
 					}
-					$(evt.target).button("enable");
+					mybuttons.button("enable");
 					$( "#reading-form" ).dialog( "close" );
 				});
 				// Re-color the node if necessary

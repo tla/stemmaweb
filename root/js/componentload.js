@@ -437,7 +437,8 @@ $(document).ready( function() {
 		buttons: {
 			Save: function (evt) {
 				$("#edit_textinfo_status").empty();
-				$(evt.target).closest('button').button("disable");
+			  	var mybuttons = $(evt.target).closest('button').parent().find('button');
+				mybuttons.button( 'disable' );
 				var requrl = _get_url([ "textinfo", selectedTextID ]);
 				var reqparam = $('#edit_textinfo').serialize();
 				$.post( requrl, reqparam, function (data) {
@@ -445,7 +446,7 @@ $(document).ready( function() {
 					selectedTextInfo = data;
 					load_textinfo();
 					// Reenable the button and close the form
-					$(evt.target).closest('button').button("enable");
+					mybuttons.button("enable");
 					$('#textinfo-edit-dialog').dialog('close');
 				}, 'json' );
 			},
@@ -490,7 +491,8 @@ $(document).ready( function() {
 		buttons: {
 			Save: function (evt) {
 				$("#edit_stemma_status").empty();
-				$(evt.target).closest('button').button("disable");
+			  	var mybuttons = $(evt.target).closest('button').parent().find('button');
+				mybuttons.button( 'disable' );
 				var stemmaseq = $('#stemmaseq').val();
 				var requrl = _get_url([ "stemma", selectedTextID, stemmaseq ]);
 				var reqparam = { 'dot': $('#dot_field').val() };
@@ -507,7 +509,7 @@ $(document).ready( function() {
 					// Display the new stemma
 					load_stemma( selectedStemmaID, true );
 					// Reenable the button and close the form
-					$(evt.target).closest('button').button("enable");
+					mybuttons.button("enable");
 					$('#stemma-edit-dialog').dialog('close');
 				}, 'json' );
 			},
@@ -552,14 +554,15 @@ $(document).ready( function() {
 		buttons: {
 			Run: function (evt) {
 				$("#stemweb_run_status").empty();
-				$(evt.target).closest('button').button("disable");
+			  	var mybuttons = $(evt.target).closest('button').parent().find('button');
+				mybuttons.button( 'disable' );
 				var requrl = _get_url([ "stemweb", "request" ]);
 				var reqparam = $('#call_stemweb').serialize();
 				// TODO We need to stash the literal SVG string in stemmata
 				// somehow. Implement accept header on server side to decide
 				// whether to send application/json or application/xml?
 				$.getJSON( requrl, reqparam, function (data) {
-					$(evt.target).closest('button').button("enable");
+					mybuttons.button("enable");
 					$('#stemweb-ui-dialog').dialog('close');
 					if( 'jobid' in data ) {
 						// There is a pending job.
