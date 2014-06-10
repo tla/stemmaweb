@@ -449,7 +449,7 @@ sub stemma :Local :Args(2) {
 		$c->stash->{'result'} = $stemma->as_svg();
 		$c->forward('View::SVG');
 	} else { # JSON
-		$c->stash->{'result'} = { _stemma_info( $stemma, $stemmaid ) };
+		$c->stash->{'result'} = _stemma_info( $stemma, $stemmaid );
 		$c->forward('View::JSON');
 	}
 }
