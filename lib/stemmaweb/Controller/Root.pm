@@ -317,6 +317,10 @@ sub textinfo :Local :Args(1) {
 		public => $tradition->public || 0,
 		owner => $tradition->user ? $tradition->user->email : undef,
 		witnesses => [ map { $_->sigil } $tradition->witnesses ],
+		# TODO Send them all with appropriate parameters so that the
+		# client side can choose what to display.
+		reltypes => [ map { $_->name } grep { !$_->is_weak && $_->is_colocation }
+			$tradition->collation->relationship_types ]
 	};
 	## TODO Make these into callbacks in the other controllers maybe?
 	if( $tradition->can('language') ) {

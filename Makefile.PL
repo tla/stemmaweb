@@ -37,6 +37,8 @@ requires 'CatalystX::Controller::Auth' => '0.22';
 requires 'Catalyst::TraitFor::Controller::reCAPTCHA';
 requires 'LWP::Protocol::https';
 ##
+requires 'File::Which';
+requires 'List::Util';
 requires 'Moose';
 requires 'TryCatch';
 requires 'namespace::autoclean';

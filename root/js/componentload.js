@@ -166,32 +166,36 @@ function load_stemma( idx ) {
 function query_stemweb_progress() {
 	var requrl = _get_url([ "stemweb", "query", selectedTextInfo.stemweb_jobid ]);
 	$.getJSON( requrl, function (data) {
-		// Look for a status message, either success, running, or notfound.
-		if( data.status === 'success' ) {
-			// Add the new stemmata to the textinfo and tell the user.
-			selectedTextInfo.stemweb_jobid = 0;
-			if( data.stemmata.length > 0 ) {
-				stemmata = stemmata.concat( data.stemmata );
-				if( selectedStemmaID == -1 ) {
-					// We have a stemma for the first time; load the first one.
-					load_stemma( 0, true );
-				} else {
-					// Move to the index of the first added stemma.
-					var newIdx = stemmata.length - data.stemmata.length;
-					load_stemma( newIdx, true );
-				}
-				alert( 'You have one or more new stemmata!' );
-			} else {
-				alert( 'Stemweb run finished with no stemmata...huh?!' );
-			}
-		} else if( data.status === 'running' ) {
-			// Just tell the user.
-			alert( 'Your Stemweb query is still running!' );
-		} else if( data.status === 'notfound' ) {
-			// Ask the user to refresh, for now.
-			alert( 'Your Stemweb query probably finished and reported back. Please reload to check.' );
-		}
+		process_stemweb_result( data );
 	});
+}
+
+function process_stemweb_result(data) {
+	// Look for a status message, either success, running, or notfound.
+	if( data.status === 'success' ) {
+		// Add the new stemmata to the textinfo and tell the user.
+		selectedTextInfo.stemweb_jobid = 0;
+		if( data.stemmata.length > 0 ) {
+			stemmata = stemmata.concat( data.stemmata );
+			if( selectedStemmaID == -1 ) {
+				// We have a stemma for the first time; load the first one.
+				load_stemma( 0, true );
+			} else {
+				// Move to the index of the first added stemma.
+				var newIdx = stemmata.length - data.stemmata.length;
+				load_stemma( newIdx, true );
+			}
+			alert( 'You have one or more new stemmata!' );
+		} else {
+			alert( 'Stemweb run finished with no stemmata...huh?!' );
+		}
+	} else if( data.status === 'running' ) {
+		// Just tell the user.
+		alert( 'Your Stemweb query is still running!' );
+	} else if( data.status === 'notfound' ) {
+		// Ask the user to refresh, for now.
+		alert( 'Your Stemweb query probably finished and reported back. Please reload to check.' );
+	}
 }
 
 // Load the SVG we are given
@@ -433,7 +437,7 @@ $(document).ready( function() {
 		buttons: {
 			Save: function (evt) {
 				$("#edit_textinfo_status").empty();
-				$(evt.target).button("disable");
+				$(evt.target).closest('button').button("disable");
 				var requrl = _get_url([ "textinfo", selectedTextID ]);
 				var reqparam = $('#edit_textinfo').serialize();
 				$.post( requrl, reqparam, function (data) {
@@ -441,7 +445,7 @@ $(document).ready( function() {
 					selectedTextInfo = data;
 					load_textinfo();
 					// Reenable the button and close the form
-					$(evt.target).button("enable");
+					$(evt.target).closest('button').button("enable");
 					$('#textinfo-edit-dialog').dialog('close');
 				}, 'json' );
 			},
@@ -486,7 +490,7 @@ $(document).ready( function() {
 		buttons: {
 			Save: function (evt) {
 				$("#edit_stemma_status").empty();
-				$(evt.target).button("disable");
+				$(evt.target).closest('button').button("disable");
 				var stemmaseq = $('#stemmaseq').val();
 				var requrl = _get_url([ "stemma", selectedTextID, stemmaseq ]);
 				var reqparam = { 'dot': $('#dot_field').val() };
@@ -503,7 +507,7 @@ $(document).ready( function() {
 					// Display the new stemma
 					load_stemma( selectedStemmaID, true );
 					// Reenable the button and close the form
-					$(evt.target).button("enable");
+					$(evt.target).closest('button').button("enable");
 					$('#stemma-edit-dialog').dialog('close');
 				}, 'json' );
 			},
@@ -543,24 +547,30 @@ $(document).ready( function() {
 	$('#stemweb-ui-dialog').dialog({
 		autoOpen: false,
 		height: 160,
-		width: 225,
+		width: 240,
 		modal: true,
 		buttons: {
 			Run: function (evt) {
 				$("#stemweb_run_status").empty();
-				$(evt.target).button("disable");
+				$(evt.target).closest('button').button("disable");
 				var requrl = _get_url([ "stemweb", "request" ]);
 				var reqparam = $('#call_stemweb').serialize();
 				// TODO We need to stash the literal SVG string in stemmata
 				// somehow. Implement accept header on server side to decide
 				// whether to send application/json or application/xml?
 				$.getJSON( requrl, reqparam, function (data) {
-					// Job ID is in data.jobid. TODO do something with it.
-					selectedTextInfo.stemweb_jobid = data.jobid;
-					$(evt.target).button("enable");
+					$(evt.target).closest('button').button("enable");
 					$('#stemweb-ui-dialog').dialog('close');
-					// Reload the current stemma to rejigger the buttons
-					load_stemma( selectedStemmaID, true );
+					if( 'jobid' in data ) {
+						// There is a pending job.
+						selectedTextInfo.stemweb_jobid = data.jobid;
+						alert("Your request has been submitted to Stemweb.\nThe resulting tree will appear in due course.");
+						// Reload the current stemma to rejigger the buttons
+						load_stemma( selectedStemmaID, true );
+					} else {
+						// We appear to have an answer; process it.
+						process_stemweb_result( data );
+					}
 				}, 'json' );
 			},
 			Cancel: function() {
@@ -628,6 +638,15 @@ $(document).ready( function() {
 		open: function(evt) {
 			$('#stemweb_run_status').empty();
 			$('#stemweb_tradition').attr('value', selectedTextID );
+			$('#stemweb_merge_reltypes').empty();
+			$.each( selectedTextInfo.reltypes, function( i, r ) {
+				var relation_opt = $('<option>').attr( 'value', r ).append( r );
+				$('#stemweb_merge_reltypes').append( relation_opt );
+			});
+			$('#stemweb_merge_reltypes').multiselect({ 
+				header: false,
+				selectedList: 3
+			});
 		},
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$(event.target).parent().find('.ui-button').button("enable");

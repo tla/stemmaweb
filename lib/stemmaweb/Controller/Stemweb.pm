@@ -2,10 +2,13 @@ package stemmaweb::Controller::Stemweb;
 use Moose;
 use namespace::autoclean;
 use Encode qw/ decode_utf8 /;
+use File::Which;
 use JSON;
+use List::Util qw/ max /;
 use LWP::UserAgent;
 use Safe::Isa;
 use Scalar::Util qw/ looks_like_number /;
+use Text::Tradition::StemmaUtil qw/ character_input phylip_pars /;
 use TryCatch;
 use URI;
 
@@ -15,6 +18,16 @@ has stemweb_url => (
 	is => 'ro',
 	isa => 'Str',
 	default => 'http://slinkola.users.cs.helsinki.fi',
+	);
+	
+has pars_path => (
+	is => 'ro',
+	isa => 'Str',
+	);
+	
+has pars_pk => (
+	is => 'rw',
+	isa => 'Int',
 	);
 
 =head1 NAME
@@ -93,7 +106,24 @@ sub available :Local :Args(0) {
 	my $ua = LWP::UserAgent->new();
 	my $resp = $ua->get( $self->stemweb_url . '/algorithms/available' );
 	if( $resp->is_success ) {
-		$c->stash->{'result'} = decode_json( $resp->content );
+		my $parameters = decode_json( $resp->content );
+		# Temporary hack: add Pars
+		if( $self->_has_pars ) {
+			# Use the highest passed primary key + 1
+			my $parspk = max( map { $_->{pk} } 
+				grep { $_->{model} eq 'algorithms.algorithm' } @$parameters ) + 1;
+			# Add Pars as an algorithm
+			$self->pars_pk( $parspk );
+			push( @$parameters, {
+				pk => $parspk,
+				model => 'algorithms.algorithm',
+				fields => {
+					args => [],
+					name => 'Pars'
+				}
+			});
+		}
+		$c->stash->{'result'} = $parameters;
 	} else {
 		$c->stash->{'result'} = {};
 	}
@@ -217,43 +247,72 @@ sub request :Local :Args(0) {
 			'You do not have permission to update stemmata for this tradition' ) )
 		unless $ok eq 'full';
 	
-	# Form the request for Stemweb.
 	my $algorithm = delete $reqparams->{algorithm};
-	my $return_uri = URI->new( $c->uri_for( '/stemweb/result' ) );
-	my $stemweb_request = {
-		return_path => $return_uri->path,
-		return_host => $return_uri->host_port,
-		data => $t->collation->as_tsv({noac => 1}),
-		userid => $c->user->get_object->email,
-		textid => $tid,
-		parameters => _cast_nonstrings( $reqparams ) };
-		
-	# Call to the appropriate URL with the request parameters.
-	my $ua = LWP::UserAgent->new();
-	$c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) ); 
-	my $resp = $ua->post( $self->stemweb_url . "/algorithms/process/$algorithm/",
-		'Content-Type' => 'application/json; charset=utf-8', 
-		'Content' => encode_json( $stemweb_request ) ); 
-	if( $resp->is_success ) {
-		# Process it
-		$c->log->debug( 'Got a response from the server: '
-			. decode_utf8( $resp->content ) );
-		my $stemweb_response = decode_json( $resp->content );
+	my $mergetypes = delete $reqparams->{merge_reltypes};
+	if( $self->_has_pars && $algorithm == $self->pars_pk ) {
+		my $start_time = scalar( gmtime( time() ) );
+		$t->set_stemweb_jobid( 'local' );
+		my $cdata = character_input( $t, { collapse => $mergetypes } );
+		my $newick;
 		try {
-			$t->set_stemweb_jobid( $stemweb_response->{jobid} );
-		} catch( Text::Tradition::Error $e ) {
-			return _json_error( $c, 429, $e->message );
+			$newick = phylip_pars( $cdata, { parspath => $self->_has_pars } );
+		} catch ( Text::Tradition::Error $e ) {
+			return _json_error( $c, 503, "Parsimony tree generation failed: "
+				. $e->message );
 		}
-		$c->model('Directory')->save( $t );
-		$c->stash->{'result'} = $stemweb_response;
-		$c->forward('View::JSON');
-	} elsif( $resp->code == 500 && $resp->header('Client-Warning')
-		&& $resp->header('Client-Warning') eq 'Internal response' ) {
-		# The server was unavailable.
-		return _json_error( $c, 503, "The Stemweb server is currently unreachable." );
+		# We have a result, so form an answer to process.
+		my $answer = {
+			status => 0,
+			algorithm => 'pars',
+			'format' => 'newick',
+			textid => $tid,
+			jobid => 'local',
+			result => $newick,
+			start_time => $start_time
+		};
+		return _process_stemweb_result( $c, $answer );
 	} else {
-		return _json_error( $c, 500, "Stemweb error: " . $resp->code . " / "
-			. $resp->content );
+		# Form the request for Stemweb.
+		my $return_uri = URI->new( $c->uri_for( '/stemweb/result' ) );
+		my $tsv_options = { noac => 1 };
+		if( $mergetypes && @$mergetypes ) {
+			$tsv_options->{mergetypes} = $mergetypes;
+		}
+		my $stemweb_request = {
+			return_path => $return_uri->path,
+			return_host => $return_uri->host_port,
+			data => $t->collation->as_tsv( $tsv_options ),
+			userid => $c->user->get_object->email,
+			textid => $tid,
+			parameters => _cast_nonstrings( $reqparams ) };
+		
+		# Call to the appropriate URL with the request parameters.
+		my $ua = LWP::UserAgent->new();
+		$c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) ); 
+		my $resp = $ua->post( $self->stemweb_url . "/algorithms/process/$algorithm/",
+			'Content-Type' => 'application/json; charset=utf-8', 
+			'Content' => encode_json( $stemweb_request ) ); 
+		if( $resp->is_success ) {
+			# Process it
+			$c->log->debug( 'Got a response from the server: '
+				. decode_utf8( $resp->content ) );
+			my $stemweb_response = decode_json( $resp->content );
+			try {
+				$t->set_stemweb_jobid( $stemweb_response->{jobid} );
+			} catch( Text::Tradition::Error $e ) {
+				return _json_error( $c, 429, $e->message );
+			}
+			$c->model('Directory')->save( $t );
+			$c->stash->{'result'} = $stemweb_response;
+			$c->forward('View::JSON');
+		} elsif( $resp->code == 500 && $resp->header('Client-Warning')
+			&& $resp->header('Client-Warning') eq 'Internal response' ) {
+			# The server was unavailable.
+			return _json_error( $c, 503, "The Stemweb server is currently unreachable." );
+		} else {
+			return _json_error( $c, 500, "Stemweb error: " . $resp->code . " / "
+				. $resp->content );
+		}
 	}
 }
 
@@ -298,6 +357,11 @@ sub _json_error {
 
 sub _json_bool {
 	return $_[0] ? JSON::true : JSON::false;
+}
+
+sub _has_pars {
+	my $self = shift;
+	return $self->pars_path || which('pars');
 }
 
 

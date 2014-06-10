@@ -172,6 +172,12 @@ var textOnLoad = "[% withtradition %]";
     		<select id="stemweb_algorithm" name="algorithm"></select><br/>
     		<!-- Algorithm-specific options, if any, will be added within this div -->
     		<div id="stemweb_runtime_options"></div>
+    		<br/>
+    		<!-- Options applicable to all algorithms belong within this div -->
+    		<div id="stemweb_local_options">
+    			<label for="merge_reltypes">Disregard variation of type:</label>
+    			<select multiple name="merge_reltypes" id="stemweb_merge_reltypes"></select>
+    		</div>
     	</form>
     	<div id="stemweb_run_status"></div>
       </div>
