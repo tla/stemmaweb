@@ -548,8 +548,8 @@ $(document).ready( function() {
 
 	$('#stemweb-ui-dialog').dialog({
 		autoOpen: false,
-		height: 160,
-		width: 240,
+		height: 425,
+		width: 400,
 		modal: true,
 		buttons: {
 			Run: function (evt) {
@@ -607,6 +607,14 @@ $(document).ready( function() {
 					// "name" -> form label
 					$('#stemweb_algorithm').change( function() {
 						var pk = $(this).val();
+						// Display a link to the popup description, and fill in
+						// the description itself, if we have one.
+						if( 'desc' in algorithmTypes[pk] ) {
+							$('#stemweb_algorithm_desc_text').empty().append( algorithmTypes[pk].desc );
+							$('#stemweb_algorithm_desc').show();
+						} else {
+							$('#stemweb_algorithm_desc').hide();
+						}
 						$('#stemweb_runtime_options').empty();
 						$.each( algorithmTypes[pk].args, function( i, apk ) {
 							var argInfo = algorithmArgs[apk];

@@ -168,8 +168,13 @@ var textOnLoad = "[% withtradition %]";
       <div id="stemweb_ui_container">
     	<form id="call_stemweb">
     		<input id="stemweb_tradition" type="hidden" name="tradition"/>
+    		<h5>Choose an algorithm</h5>
     		<label for="algorithm">Run algorithm: </label>
-    		<select id="stemweb_algorithm" name="algorithm"></select><br/>
+    		<select id="stemweb_algorithm" name="algorithm"></select>
+    		<!-- span id="stemweb_algorithm_help">What is this?</span><br/ -->
+			<div id="stemweb_algorithm_desc_text"></div>
+			<br/>
+			<h5>Select the options</h5>
     		<!-- Algorithm-specific options, if any, will be added within this div -->
     		<div id="stemweb_runtime_options"></div>
     		<br/>

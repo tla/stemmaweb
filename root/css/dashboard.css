@@ -137,3 +137,10 @@
 #root_tree_dialog img {
     vertical-align: middle;
 }
+#stemweb_algorithm_desc_text {
+	overflow: auto;
+	height: 150px;
+	margin-top: 5px;
+	padding: 10px;
+	border: 1px solid #ddd;
+}
