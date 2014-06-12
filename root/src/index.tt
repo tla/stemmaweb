@@ -167,8 +167,8 @@ var textOnLoad = "[% withtradition %]";
     <div id="stemweb-ui-dialog" title="Generate a Stemweb tree">
       <div id="stemweb_ui_container">
 		<div id="sponsor_container">
-			<img id="hiit_logo" align="left" src="[% c.uri_for( '/images/hiit_logo.jpg' ) %]"></img>
-			<img id="eadh_logo" align="right" src="[% c.uri_for( '/images/eadh-150.png' ) %]"></img>
+			<img id="hiit_logo" src="[% c.uri_for( '/images/hiit_logo_cut.jpg' ) %]"></img>
+			<img id="eadh_logo" src="[% c.uri_for( '/images/eadh-150.png' ) %]"></img>
 			<p>Stemweb is a webservice provided by the Helsinki Institute for Information Technology HIIT. The integration into Stemmaweb was generously supported by a small project grant from the European Association for Digital Humanities.
 			</p>
 		</div>
