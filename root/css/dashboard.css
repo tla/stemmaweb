@@ -145,6 +145,9 @@
 	border: 1px solid #ddd;
 	display: none;
 }
+#hiit_logo {
+	padding-bottom: 20px;
+}
 #eadh_logo {
     width: 100px;
 }

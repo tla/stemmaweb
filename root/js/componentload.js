@@ -549,7 +549,7 @@ $(document).ready( function() {
 	$('#stemweb-ui-dialog').dialog({
 		autoOpen: false,
 		height: 'auto',
-		width: 400,
+		width: 500,
 		modal: true,
 		buttons: {
 			Run: function (evt) {
