@@ -171,7 +171,7 @@ var textOnLoad = "[% withtradition %]";
     		<h5>Choose an algorithm</h5>
     		<label for="algorithm">Run algorithm: </label>
     		<select id="stemweb_algorithm" name="algorithm"></select>
-    		<!-- span id="stemweb_algorithm_help">What is this?</span><br/ -->
+    		<span id="stemweb_algorithm_help">What is this?</span><br/>
 			<div id="stemweb_algorithm_desc_text"></div>
 			<br/>
 			<h5>Select the options</h5>

@@ -548,7 +548,7 @@ $(document).ready( function() {
 
 	$('#stemweb-ui-dialog').dialog({
 		autoOpen: false,
-		height: 425,
+		height: 'auto',
 		width: 400,
 		modal: true,
 		buttons: {
@@ -605,6 +605,9 @@ $(document).ready( function() {
 					// Set up the relevant options for whichever algorithm is chosen.
 					// "key" -> form name, option ID "stemweb_$key_opt"
 					// "name" -> form label
+					$('#stemweb_algorithm_help').click( function() {
+						$('#stemweb_algorithm_desc_text').toggle( 'blind' );
+						});
 					$('#stemweb_algorithm').change( function() {
 						var pk = $(this).val();
 						// Display a link to the popup description, and fill in
