@@ -288,7 +288,7 @@ sub request :Local :Args(0) {
 		
 		# Call to the appropriate URL with the request parameters.
 		my $ua = LWP::UserAgent->new();
-		$c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) ); 
+		# $c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) ); 
 		my $resp = $ua->post( $self->stemweb_url . "/algorithms/process/$algorithm/",
 			'Content-Type' => 'application/json; charset=utf-8', 
 			'Content' => encode_json( $stemweb_request ) ); 
