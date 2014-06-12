@@ -105,28 +105,28 @@ sub available :Local :Args(0) {
 	my( $self, $c ) = @_;
 	my $ua = LWP::UserAgent->new();
 	my $resp = $ua->get( $self->stemweb_url . '/algorithms/available' );
+	my $parameters = [];
 	if( $resp->is_success ) {
-		my $parameters = decode_json( $resp->content );
-		# Temporary hack: add Pars
-		if( $self->_has_pars ) {
-			# Use the highest passed primary key + 1
-			my $parspk = max( map { $_->{pk} } 
-				grep { $_->{model} eq 'algorithms.algorithm' } @$parameters ) + 1;
-			# Add Pars as an algorithm
-			$self->pars_pk( $parspk );
-			push( @$parameters, {
-				pk => $parspk,
-				model => 'algorithms.algorithm',
-				fields => {
-					args => [],
-					name => 'Pars'
-				}
-			});
-		}
-		$c->stash->{'result'} = $parameters;
-	} else {
-		$c->stash->{'result'} = {};
+		$parameters = decode_json( $resp->content );
+	} # otherwise we have no available algorithms.
+	## Temporary HACK: run Pars too
+	if( $self->_has_pars ) {
+		# Use the highest passed primary key + 1
+		my $parspk = max( map { $_->{pk} } 
+			grep { $_->{model} eq 'algorithms.algorithm' } @$parameters ) + 1;
+		# Add Pars as an algorithm
+		$self->pars_pk( $parspk );
+		push( @$parameters, {
+			pk => $parspk,
+			model => 'algorithms.algorithm',
+			fields => {
+				args => [],
+				name => 'Pars',
+				desc => 'The program "pars", from the Phylip bio-statistical software package, produces a maximum-parsimony distance tree of the witnesses. More information on maximum parsimony can be found <a href="https://wiki.hiit.fi/display/stemmatology/Maximum+parsimony">here</a>. Please note that Phylip "pars" only supports a maximum of eight variants readings in any one variant location in the text. If your text displays more divergence than this at any point, please consider disregarding orthographic and spelling variation below, or use one of the other algorithms.'
+			}
+		});
 	}
+	$c->stash->{result} = $parameters;
 	$c->forward('View::JSON');
 }
 
