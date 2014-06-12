@@ -183,6 +183,9 @@ var textOnLoad = "[% withtradition %]";
     			<label for="merge_reltypes">Disregard variation of type:</label>
     			<select multiple name="merge_reltypes" id="stemweb_merge_reltypes"></select>
     		</div>
+    		<div id="eadh_logo_container">
+    		    <img id="eadh_logo" src="[% c.uri_for( '/images/eadh-150.png' ) %]"></img>
+    		</div>
     	</form>
     	<div id="stemweb_run_status"></div>
       </div>
