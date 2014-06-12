@@ -146,12 +146,13 @@
 	display: none;
 }
 #hiit_logo {
-	padding-bottom: 5px;
+    padding-bottom: 5px;
     padding-top: 5px;
+    width: 478px;
 }
 #eadh_logo {
-    float: left;
-    padding-right: 20px;
-    padding-top: 10px;
+    float: right;
+    padding-left: 20px;
+    padding-top: 5px;
     width: 130px;
 }
