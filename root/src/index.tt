@@ -166,10 +166,22 @@ var textOnLoad = "[% withtradition %]";
 	<!-- Stemweb UI dialog box -->
     <div id="stemweb-ui-dialog" title="Generate a Stemweb tree">
       <div id="stemweb_ui_container">
-    	<form id="call_stemweb">
+		<div id="sponsor_container">
+			<img id="hiit_logo" src="[% c.uri_for( '/images/hiit_logo.jpg' ) %]"></img>
+			<img id="eadh_logo" src="[% c.uri_for( '/images/eadh-150.png' ) %]"></img>
+			<p>Stemweb is a webservice provided by the Helsinki Institute for Information Technology HIIT. The integration into Stemmaweb was generously supported by a small project grant from the European Association for Digital Humanities.
+			</p>
+		</div>
+		<hr/>
+   		<form id="call_stemweb">
     		<input id="stemweb_tradition" type="hidden" name="tradition"/>
+    		<h5>Choose an algorithm</h5>
     		<label for="algorithm">Run algorithm: </label>
-    		<select id="stemweb_algorithm" name="algorithm"></select><br/>
+    		<select id="stemweb_algorithm" name="algorithm"></select>
+    		<span id="stemweb_algorithm_help">What is this?</span><br/>
+			<div id="stemweb_algorithm_desc_text"></div>
+			<br/>
+			<h5>Set the options</h5>
     		<!-- Algorithm-specific options, if any, will be added within this div -->
     		<div id="stemweb_runtime_options"></div>
     		<br/>

@@ -253,6 +253,7 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		
 			delete $opts->{scope} unless $opts->{scope};
 			delete $opts->{annotation} unless $opts->{annotation};
+			delete $opts->{is_significant} unless $opts->{is_significant};
 			$opts->{propagate} = 1;
 			
 			try {
@@ -261,7 +262,10 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 				$m->save( $tradition );
 			} catch( Text::Tradition::Error $e ) {
 				$c->response->status( '403' );
-				$c->stash->{'result'} = { 'error' => $e->message };
+				$c->stash->{'result'} = { error => $e->message };
+			} catch {
+				$c->response->status( '500' );
+				$c->stash->{'result'} = { error => "Something went wrong with the request" };
 			}
 		} elsif( $c->request->method eq 'DELETE' ) {
 			my $node = $c->request->param('source_id');
@@ -275,7 +279,10 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 			} catch( Text::Tradition::Error $e ) {
 				$c->response->status( '403' );
 				$c->stash->{'result'} = { 'error' => $e->message };
-			}	
+			} catch {
+				$c->response->status( '500' );
+				$c->stash->{'result'} = { error => "Something went wrong with the request" };
+			}
 		}
 	}
 	$c->forward('View::JSON');
@@ -395,7 +402,7 @@ sub reading :Chained('text') :PathPart :Args(1) {
 								$errmsg = $e->message;
 							} catch {
 								# Something else went wrong, probably a Moose error
-								$c->response->status( '403' );
+								$c->response->status( '500' );
 								$errmsg = 'Something went wrong with the request';	
 							}
 						}
@@ -579,7 +586,7 @@ sub duplicate :Chained('text') :PathPart :Args(0) {
 				$errmsg = $e->message;
 			} catch {
 				# Something else went wrong, probably a Moose error
-				$c->response->status( '403' );
+				$c->response->status( '500' );
 				$errmsg = 'Something went wrong with the request';	
 			}
 			if( $newrdg ) {
