@@ -27,13 +27,61 @@ following form parameters in the body:
 
 =over 4 
 
-=item * type - Can be one of CollateX, CSV, JSON, nCritic, TEI, Tabular.
+=item * type - Can be one of CollateX, CTE, CSV, JSON, nCritic, TEI, Tabular.
 
 =item * data - The collation data itself.
 
 =back
 
 =head1 COLLATION URLs
+
+=head2 parse
+
+ GET microservice/parse
+ POST microservice/parse {
+    type: $type
+    file: $uploadfile
+ }
+ 
+Attempt a parse of the passed collation data, and return diagnostic information about whether it was successful.
+
+=cut
+
+sub parse :Local :Args(0) {
+	my( $self, $c ) = @_;
+	if( $c->req->method eq 'POST' ) {
+		# Get the passed options...
+		my $warnings = [];
+		$DB::single = 1;
+		my %newopts = (
+			'name' => $c->request->param('name') || 'Uploaded tradition',
+			'file' => $c->request->upload('file')->tempname,
+			'warnings_to' => $warnings,
+			);
+		my $type = $c->request->param( 'type' );
+		if( $type eq 'csv' ) {
+			$newopts{'input'} = 'Tabular';
+			$newopts{'sep_char'} = ',';
+		} elsif( $type eq 'tsv' ) {
+			$newopts{'input'} = 'Tabular';
+			$newopts{'sep_char'} = "\t";
+		} elsif( $type =~ /^xls/ ) {
+			$newopts{'input'} = 'Tabular';
+			$newopts{'excel'} = $type;
+		} else {
+			$newopts{'input'} = $type;
+		}
+		# Now try the parse.
+		my $tradition;
+		try {
+			$c->stash->{'result'} = Text::Tradition->new( %newopts );
+		} catch ( Text::Tradition::Error $e ) {
+			$c->stash->{'errormsg'} = $e->message; 
+		}
+		$c->stash->{'warnings'} = join( "\n", @$warnings );	
+	} 
+	$c->stash->{template} = 'testparse.tt';
+}
 
 =head2 renderSVG
 
