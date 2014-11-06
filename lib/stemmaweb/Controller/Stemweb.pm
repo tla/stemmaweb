@@ -217,8 +217,10 @@ sub _process_stemweb_result {
 	} elsif( $answer->{status} == 1 ) {
 		$c->stash->{'result'} = { 'status' => 'running' };
 	} else {
-		return _json_error( $c, 500,
-			"Stemweb failure not handled: " . $answer->{result} );
+		# Failure. Clear the job ID so that the user can try again.
+		$tradition->_clear_stemweb_jobid;
+		$m->save( $tradition );
+		$c->stash->{'result'} = { 'status' => 'failed', 'message' => $answer->{result} };
 	}
 	$c->forward('View::JSON');
 }

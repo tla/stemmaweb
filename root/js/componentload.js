@@ -137,13 +137,7 @@ function load_stemma( idx ) {
 	$('#stemma_identifier').empty();
 	// Add the relevant Stemweb functionality
 	if( selectedTextEditable ) {
-		if( selectedTextInfo.stemweb_jobid == 0 ) {
-			$('#open_stemweb_ui').show();
-			$('#query_stemweb_ui').hide();
-		} else {
-			$('#query_stemweb_ui').show();
-			$('#open_stemweb_ui').hide();
-		}
+		switch_stemweb_ui();
 	}
 	if( idx > -1 ) {
 		// Load the stemma and its properties
@@ -163,11 +157,30 @@ function load_stemma( idx ) {
 	}
 }
 
+function switch_stemweb_ui() {
+	if( selectedTextInfo.stemweb_jobid == 0 ) {
+		// We want to run Stemweb.
+		$('#open_stemweb_ui').show();
+		$('#call_stemweb').show()
+		$('#query_stemweb_ui').hide();
+		$('#stemweb_run_button').show();
+	} else {
+		$('#query_stemweb_ui').show();
+		$('#open_stemweb_ui').hide();
+		$('#call_stemweb').hide();
+		$('#stemweb_run_button').hide();
+	}
+}
+
 function query_stemweb_progress() {
 	var requrl = _get_url([ "stemweb", "query", selectedTextInfo.stemweb_jobid ]);
+	$('#stemweb-ui-dialog').dialog('open');
+	$('#stemweb_run_status').empty().append( 
+				_make_message( 'notification', 'Querying Stemweb for calculation progress...') );
 	$.getJSON( requrl, function (data) {
 		process_stemweb_result( data );
 	});
+	// TODO need an error handler
 }
 
 function process_stemweb_result(data) {
@@ -184,18 +197,37 @@ function process_stemweb_result(data) {
 				// Move to the index of the first added stemma.
 				var newIdx = stemmata.length - data.stemmata.length;
 				load_stemma( newIdx, true );
-			}
-			alert( 'You have one or more new stemmata!' );
+			} 
+			$('#stemweb_run_status').empty().append( 
+				_make_message( 'notification', 'You have one or more new stemmata!' ) );
 		} else {
-			alert( 'Stemweb run finished with no stemmata...huh?!' );
+			$('#stemweb_run_status').empty().append( 
+				_make_message( 'warning', 'Stemweb run finished with no stemmata...huh?!' ) );
 		}
 	} else if( data.status === 'running' ) {
 		// Just tell the user.
-		alert( 'Your Stemweb query is still running!' );
+		$('#stemweb_run_status').empty().append( 
+				_make_message( 'notification', 'Your Stemweb query is still running!' ) );
 	} else if( data.status === 'notfound' ) {
 		// Ask the user to refresh, for now.
-		alert( 'Your Stemweb query probably finished and reported back. Please reload to check.' );
+		$('#stemweb_run_status').empty().append( 
+				_make_message( 'warning', 'Your Stemweb query probably finished and reported back. Please reload to check.' ) );
+	} else if( data.status === 'failed' ) {
+		selectedTextInfo.stemweb_jobid = 0;
+		failureMsg = 'Your stemweb query failed';
+		if( data.message ) {
+			failureMsg = failureMsg + ' with the following message: ' + data.message
+		}
+		$('#stemweb_run_status').empty().append( 
+				_make_message( 'error', failuremsg + '.' ) );
 	}
+	switch_stemweb_ui();
+}
+
+function _make_message( type, msg ) {
+	theMessage = $('<span>').attr( 'class', type );
+	theMessage.append( msg );
+	return theMessage;
 }
 
 // Load the SVG we are given
@@ -549,10 +581,13 @@ $(document).ready( function() {
 	$('#stemweb-ui-dialog').dialog({
 		autoOpen: false,
 		height: 'auto',
-		width: 500,
+		width: 520,
 		modal: true,
 		buttons: {
-			Run: function (evt) {
+			Run: {
+				id: 'stemweb_run_button',
+				text: 'Run',
+				click: function (evt) {
 				$("#stemweb_run_status").empty();
 			  	var mybuttons = $(evt.target).closest('button').parent().find('button');
 				mybuttons.button( 'disable' );
@@ -575,10 +610,15 @@ $(document).ready( function() {
 						process_stemweb_result( data );
 					}
 				}, 'json' );
+				},
 			},
-			Cancel: function() {
+			Close: {
+				id: 'stemweb_close_button',
+				text: 'Close',
+				click: function() {
 				$('#stemweb-ui-dialog').dialog('close');
-			}
+				},
+			},
 		},
 		create: function(evt) {
 			// Call out to Stemweb to get the algorithm options, with which we
@@ -652,19 +692,21 @@ $(document).ready( function() {
 		open: function(evt) {
 			$('#stemweb_run_status').empty();
 			$('#stemweb_tradition').attr('value', selectedTextID );
-			$('#stemweb_merge_reltypes').empty();
-			$.each( selectedTextInfo.reltypes, function( i, r ) {
-				var relation_opt = $('<option>').attr( 'value', r ).append( r );
-				$('#stemweb_merge_reltypes').append( relation_opt );
-			});
-			$('#stemweb_merge_reltypes').multiselect({ 
-				header: false,
-				selectedList: 3
-			});
+			if( selectedTextInfo.stemweb_jobid == 0 ) {
+				$('#stemweb_merge_reltypes').empty();
+				$.each( selectedTextInfo.reltypes, function( i, r ) {
+					var relation_opt = $('<option>').attr( 'value', r ).append( r );
+					$('#stemweb_merge_reltypes').append( relation_opt );
+				});
+				$('#stemweb_merge_reltypes').multiselect({ 
+					header: false,
+					selectedList: 3
+				});
+			}
 		},
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$(event.target).parent().find('.ui-button').button("enable");
-    	if( ajaxSettings.url.indexOf( 'stemweb/request' ) > -1 ) {
+    	if( ajaxSettings.url.indexOf( 'stemweb/' ) > -1 ) {
 			display_error( jqXHR, $("#stemweb_run_status") );
     	}
 	});
