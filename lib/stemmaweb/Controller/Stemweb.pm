@@ -276,7 +276,7 @@ sub request :Local :Args(0) {
 	} else {
 		# Form the request for Stemweb.
 		my $return_uri = URI->new( $c->uri_for( '/stemweb/result' ) );
-		my $tsv_options = { noac => 1 };
+		my $tsv_options = { noac => 1, ascii => 1 };
 		if( $mergetypes && @$mergetypes ) {
 			$tsv_options->{mergetypes} = $mergetypes;
 		}
