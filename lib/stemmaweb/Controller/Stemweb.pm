@@ -214,7 +214,8 @@ sub _process_stemweb_result {
 			}
 			$c->stash->{'result'} = { status => 'notfound' };
 		}
-	} elsif( $answer->{status} == 1 ) {
+	} elsif( $answer->{status} == 1 || $answer->{status} == -1  ) {
+		# 1 means running, -1 means waiting to run. Either way, 'not ready'.
 		$c->stash->{'result'} = { 'status' => 'running' };
 	} else {
 		# Failure. Clear the job ID so that the user can try again.
