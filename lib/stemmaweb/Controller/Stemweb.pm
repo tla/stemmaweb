@@ -25,11 +25,6 @@ has pars_path => (
 	isa => 'Str',
 	);
 	
-has pars_pk => (
-	is => 'rw',
-	isa => 'Int',
-	);
-
 =head1 NAME
 
 stemmaweb::Controller::Stemweb - Client listener for Stemweb results
@@ -111,13 +106,10 @@ sub available :Local :Args(0) {
 	} # otherwise we have no available algorithms.
 	## Temporary HACK: run Pars too
 	if( $self->_has_pars ) {
-		# Use the highest passed primary key + 1
-		my $parspk = max( map { $_->{pk} } 
-			grep { $_->{model} eq 'algorithms.algorithm' } @$parameters ) + 1;
+		# Use 100 as the special pars key
 		# Add Pars as an algorithm
-		$self->pars_pk( $parspk );
 		push( @$parameters, {
-			pk => $parspk,
+			pk => 100,
 			model => 'algorithms.algorithm',
 			fields => {
 				args => [],
@@ -252,7 +244,7 @@ sub request :Local :Args(0) {
 	
 	my $algorithm = delete $reqparams->{algorithm};
 	my $mergetypes = delete $reqparams->{merge_reltypes};
-	if( $self->_has_pars && $algorithm == $self->pars_pk ) {
+	if( $self->_has_pars && $algorithm == 100 ) {
 		my $start_time = scalar( gmtime( time() ) );
 		$t->set_stemweb_jobid( 'local' );
 		my $cdata = character_input( $t, { collapse => $mergetypes } );
