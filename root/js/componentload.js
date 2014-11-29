@@ -161,9 +161,11 @@ function switch_stemweb_ui() {
 	if( selectedTextInfo.stemweb_jobid == 0 ) {
 		// We want to run Stemweb.
 		$('#open_stemweb_ui').show();
-		$('#call_stemweb').show()
 		$('#query_stemweb_ui').hide();
-		$('#stemweb_run_button').show();
+		if( ! $('#stemweb-ui-dialog').dialog('isOpen') ) {
+			$('#call_stemweb').show()
+			$('#stemweb_run_button').show();
+		}
 	} else {
 		$('#query_stemweb_ui').show();
 		$('#open_stemweb_ui').hide();
@@ -217,11 +219,12 @@ function process_stemweb_result(data) {
 		failureMsg = 'Your stemweb query failed';
 		if( data.message ) {
 			failureMsg = failureMsg + ' with the following message: ' + data.message
+		} else {
+			failureMsg = failureMsg + ' without telling us why.'
 		}
 		$('#stemweb_run_status').empty().append( 
-				_make_message( 'error', failuremsg + '.' ) );
+				_make_message( 'error', failureMsg ) );
 	}
-	switch_stemweb_ui();
 }
 
 function _make_message( type, msg ) {
@@ -616,7 +619,8 @@ $(document).ready( function() {
 				id: 'stemweb_close_button',
 				text: 'Close',
 				click: function() {
-				$('#stemweb-ui-dialog').dialog('close');
+					$('#stemweb-ui-dialog').dialog('close');
+					switch_stemweb_ui();
 				},
 			},
 		},
