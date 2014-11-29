@@ -185,7 +185,6 @@ function query_stemweb_progress() {
 	$.getJSON( requrl, function (data) {
 		process_stemweb_result( data );
 	});
-	// TODO need an error handler
 }
 
 function process_stemweb_result(data) {
@@ -203,6 +202,9 @@ function process_stemweb_result(data) {
 				var newIdx = stemmata.length - data.stemmata.length;
 				load_stemma( newIdx, true );
 			} 
+			// Hide the call dialog no matter how we got here
+			$('#call_stemweb').hide()
+			$('#stemweb_run_button').hide();
 			$('#stemweb_run_status').empty().append( 
 				_make_message( 'notification', 'You have one or more new stemmata!' ) );
 		} else {
@@ -212,7 +214,7 @@ function process_stemweb_result(data) {
 	} else if( data.status === 'running' ) {
 		// Just tell the user.
 		$('#stemweb_run_status').empty().append( 
-				_make_message( 'notification', 'Your Stemweb query is still running!' ) );
+				_make_message( 'warning', 'Your Stemweb query is still running!' ) );
 	} else if( data.status === 'notfound' ) {
 		// Ask the user to refresh, for now.
 		$('#stemweb_run_status').empty().append( 
@@ -604,13 +606,13 @@ $(document).ready( function() {
 				// whether to send application/json or application/xml?
 				$.getJSON( requrl, reqparam, function (data) {
 					mybuttons.button("enable");
-					$('#stemweb-ui-dialog').dialog('close');
 					if( 'jobid' in data ) {
 						// There is a pending job.
 						selectedTextInfo.stemweb_jobid = data.jobid;
-						alert("Your request has been submitted to Stemweb.\nThe resulting tree will appear in due course.");
+						$('#stemweb_run_status').empty().append( 
+							_make_message( 'notification', "Your request has been submitted to Stemweb.\nThe resulting tree will appear in due course." ) );
 						// Reload the current stemma to rejigger the buttons
-						load_stemma( selectedStemmaID, true );
+						switch_stemweb_ui();
 					} else {
 						// We appear to have an answer; process it.
 						process_stemweb_result( data );
