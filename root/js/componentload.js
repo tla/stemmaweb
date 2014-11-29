@@ -85,7 +85,10 @@ function load_textinfo() {
 	$('#textinfo_waitbox').hide();
 	$('#textinfo_load_status').empty();
 	$('#textinfo_container').show();
+	// The tradition name should appear here and should be identical in the
+	// corresponding directory span. In case the name was just changed...
 	$('.texttitle').empty().append( selectedTextInfo.name );
+	$('#' + selectedTextID).empty().append( selectedTextInfo.name );
 	// Witnesses
 	$('#witness_num').empty().append( selectedTextInfo.witnesses.size );
 	$('#witness_list').empty().append( selectedTextInfo.witnesses.join( ', ' ) );
