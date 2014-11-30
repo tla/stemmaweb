@@ -247,7 +247,7 @@ function add_relations( callback_fn ) {
 			var type_index = $.inArray(rel_info.type, rel_types);
 			var source_found = get_ellipse( rel_info.source_id );
 			var target_found = get_ellipse( rel_info.target_id );
-			var emphasis = rel_info.is_significant === "yes";
+			var emphasis = rel_info.is_significant;
 			if( type_index != -1 && source_found.size() && target_found.size() ) {
 				var relation = relation_manager.create( rel_info.source_id, rel_info.target_id, type_index, emphasis );
 				// Save the relationship data too.
@@ -674,7 +674,7 @@ function draw_relation( source_id, target_id, relation_color, emphasis ) {
     var ey = parseInt( target_ellipse.attr('cy') );
     var relation = svg.group( $("#svgenlargement svg g"), { 'class':'relation', 'id':relation_id } );
     svg.title( relation, source_id + '->' + target_id );
-    var stroke_width = emphasis ? 6 : 3;
+    var stroke_width = emphasis === "yes" ? 6 : emphasis === "maybe" ? 4 : 2;
     svg.path( relation, path.move( sx, sy ).curveC( sx + (2*rx), sy, ex + (2*rx), ey, ex, ey ), {fill: 'none', stroke: relation_color, strokeWidth: stroke_width });
     var relation_element = $('#svgenlargement .relation').filter( ':last' );
     relation_element.insertBefore( $('#svgenlargement g g').filter(':first') );
@@ -1061,7 +1061,7 @@ $(document).ready(function () {
 	$( '#dialog-form' ).dialog( {
 	autoOpen: false,
 	height: 350,
-	width: 330,
+	width: 340,
 	modal: true,
 	buttons: {
 	  'Merge readings': function( evt ) {
@@ -1088,7 +1088,7 @@ $(document).ready(function () {
 				var target_found = get_ellipse( source_target[1] );
 				var relation_found = $.inArray( source_target[2], $( '#keymap' ).data( 'relations' ) );
 				if( source_found.size() && target_found.size() && relation_found > -1 ) {
-					var emphasis = $('#is_significant option:selected').attr('value') === "yes";
+					var emphasis = $('#is_significant option:selected').attr('value');
 					var relation = relation_manager.create( source_target[0], source_target[1], relation_found, emphasis );
 					relation_manager.toggle_active( relation.attr('id') );
 					$.each( $('#collapse_node_form').serializeArray(), function( i, k ) {
