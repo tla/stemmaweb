@@ -133,7 +133,7 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	$c->stash->{'startseg'} = $startseg if defined $startseg;
 	$c->stash->{'svg_string'} = $svg_str;
 	$c->stash->{'text_title'} = $tradition->name;
-	if( $tradition->can('language') ) {
+	if( $tradition->can('language') && $tradition->language ) {
 		$c->stash->{'text_lang'} = $tradition->language;
 		$c->stash->{'can_morphologize'} = 1;
 	} else {
