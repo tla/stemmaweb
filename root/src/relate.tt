@@ -69,17 +69,14 @@ $(document).ready(function () {
 			<input type="hidden" name="target_text" id="target_node_text"/>
 			<label for="rel_type">Relation type&nbsp;</label>
 			<select name="type" id="rel_type" class=".ui-widget select">
-				<option></option>
 			</select>
 			<br/><br/>
 			<label for="scope">Scope of relation&nbsp;</label>
 			<select name="scope" id="scope" class=".ui-widget select">
-				<option></option>
 			</select>
 			<br/><br/>
 			<label for="is_significant">Is this variance stemmatically significant?</label>
 			<select name="is_significant" id="is_significant" class=".ui-widget select"/>
-				<option></option>
 			</select>
 			<br/><br/>
 			<input type="checkbox" name="b_derivable_from_a" id="b_derivable_from_a"/>

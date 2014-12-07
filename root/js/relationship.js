@@ -247,8 +247,9 @@ function add_relations( callback_fn ) {
 			var type_index = $.inArray(rel_info.type, rel_types);
 			var source_found = get_ellipse( rel_info.source_id );
 			var target_found = get_ellipse( rel_info.target_id );
+			var emphasis = rel_info.is_significant;
 			if( type_index != -1 && source_found.size() && target_found.size() ) {
-				var relation = relation_manager.create( rel_info.source_id, rel_info.target_id, type_index );
+				var relation = relation_manager.create( rel_info.source_id, rel_info.target_id, type_index, emphasis );
 				// Save the relationship data too.
 				$.each( rel_info, function( k, v ) {
 					relation.data( k, v );
@@ -559,10 +560,10 @@ function relation_factory() {
             temporary = null; 
         }
     }
-    this.create = function( source_node_id, target_node_id, color_index ) {
+    this.create = function( source_node_id, target_node_id, color_index, emphasis ) {
         //TODO: Protect from (color_)index out of bound..
         var relation_color = self.relation_colors[ color_index ];
-        var relation = draw_relation( source_node_id, target_node_id, relation_color );
+        var relation = draw_relation( source_node_id, target_node_id, relation_color, emphasis );
         get_node_obj( source_node_id ).update_elements();
         get_node_obj( target_node_id ).update_elements();
         return relation;
@@ -660,7 +661,7 @@ function get_related_nodes( relation_id ) {
 	return srctotarg.split('-...-');
 }
 
-function draw_relation( source_id, target_id, relation_color ) {
+function draw_relation( source_id, target_id, relation_color, emphasis ) {
     var source_ellipse = get_ellipse( source_id );
     var target_ellipse = get_ellipse( target_id );
     var relation_id = get_relation_id( source_id, target_id );
@@ -673,7 +674,8 @@ function draw_relation( source_id, target_id, relation_color ) {
     var ey = parseInt( target_ellipse.attr('cy') );
     var relation = svg.group( $("#svgenlargement svg g"), { 'class':'relation', 'id':relation_id } );
     svg.title( relation, source_id + '->' + target_id );
-    svg.path( relation, path.move( sx, sy ).curveC( sx + (2*rx), sy, ex + (2*rx), ey, ex, ey ), {fill: 'none', stroke: relation_color, strokeWidth: 4});
+    var stroke_width = emphasis === "yes" ? 6 : emphasis === "maybe" ? 4 : 2;
+    svg.path( relation, path.move( sx, sy ).curveC( sx + (2*rx), sy, ex + (2*rx), ey, ex, ey ), {fill: 'none', stroke: relation_color, strokeWidth: stroke_width });
     var relation_element = $('#svgenlargement .relation').filter( ':last' );
     relation_element.insertBefore( $('#svgenlargement g g').filter(':first') );
     return relation_element;
@@ -1059,7 +1061,7 @@ $(document).ready(function () {
 	$( '#dialog-form' ).dialog( {
 	autoOpen: false,
 	height: 350,
-	width: 330,
+	width: 340,
 	modal: true,
 	buttons: {
 	  'Merge readings': function( evt ) {
@@ -1086,7 +1088,8 @@ $(document).ready(function () {
 				var target_found = get_ellipse( source_target[1] );
 				var relation_found = $.inArray( source_target[2], $( '#keymap' ).data( 'relations' ) );
 				if( source_found.size() && target_found.size() && relation_found > -1 ) {
-					var relation = relation_manager.create( source_target[0], source_target[1], relation_found );
+					var emphasis = $('#is_significant option:selected').attr('value');
+					var relation = relation_manager.create( source_target[0], source_target[1], relation_found, emphasis );
 					relation_manager.toggle_active( relation.attr('id') );
 					$.each( $('#collapse_node_form').serializeArray(), function( i, k ) {
 						relation.data( k.name, k.value );

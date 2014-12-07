@@ -24,16 +24,24 @@
  <p>Fill in the details of the relationship as indicated in the dialog:</p>
  <img src="[% c.uri_for( '/images/02_relationdialog.png' ) %]">
  
-<p><em>Type</em> can be any one of the types that appears in the key to the right of the screen.</p>
+ <p><em>Type</em> can be any one of the types that appears in the key to the right of the screen.</p>
 <p><em>Scope</em> can be one of:</p>
 <ul>
 	<li>Local - the relationship applies only at this point in the text</li>
 	<li>Document - the relationship applies throughout the text</li>
 	<li>Global - the relationship applies throughout all texts of this language</li>
 </ul>
- <p><em>NOTE:</em> at the moment, "global" scope is treated as "document" scope, i.e. only applies throughout the individual text.</p>
+ <p><em>n.b.</em> At the moment, "global" scope is treated as "document" scope, i.e. the setting only applies throughout the individual text and not throughout all the user's texts.</p>
  
- <p>The relationships are displayed as colored paths between readings. While in 'edit' mode, clicking on a relationship path will display the information associated with it, and give the user an option to delete it.  Deletion of a 'global' relationship will remove that relationship throughout the graph.</p>
+ <p>The remaining options concern the stemmatic significance of the reading, as judged by the philologist. It is possible to answer the following questions:
+ <ul>
+ 	<li>Is this likely to be a stemmatically significant instance of variance?</li>
+ 	<li>Would a scribe, seeing the first reading, consciously alter ('correct') it to the second?</li>
+ 	<li>Would the scribe correct the second to the first?</li>
+ 	<li>Is this variation reasonably likely to occur in multiple witnesses by chance?</li>
+ </ul>
+ 
+ <p>The relationships are displayed as colored paths between readings. Relationships marked 'stemmatically significant' will appear with much thicker lines than those that are not; relationships that might be significant will be somewhat thicker than those that are not. While in 'edit' mode, hovering the mouse over a relationship path will display the information associated with it, and give the user an option to delete it.  Deletion of a 'global' relationship will remove that relationship throughout the graph.</p>
  <img src="[% c.uri_for( '/images/03_infodelete.png' ) %]">
  
  <p>When you are ready to move elsewhere in the graph, click the 'hand' icon to return to select mode.<p>
