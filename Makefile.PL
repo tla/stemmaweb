@@ -10,9 +10,9 @@ name 'stemmaweb';
 all_from 'lib/stemmaweb.pm';
 
 # Tradition libraries
-requires 'Text::Tradition' => '1.2';
+requires 'Text::Tradition' => '2.0.0';
 requires 'Text::Tradition::Directory';
-requires 'Text::Tradition::Analysis' => '1.3';
+requires 'Text::Tradition::Analysis' => '2.0.0';
 requires 'Text::Tradition::StemmaUtil';
 # Catalyst libraries
 requires 'Catalyst::Runtime' => '5.90002';
