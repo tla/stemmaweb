@@ -274,6 +274,11 @@ function loadSVG(svgData) {
 
 function set_stemma_interactive( svg_element ) {
 	if( selectedTextEditable ) {
+	  // unbind is needed as this set_stemma_interactive is called each time
+	  // the stemma is re-rooted, and each time jquery adds an 
+	  // onclick handler to the root_tree_dialog_button_ok
+	  // that all re-root the stemma, that all add an onclick, etc..
+	  $( "#root_tree_dialog_button_ok" ).unbind();
 		$( "#root_tree_dialog_button_ok" ).click( function() {
 			var requrl = _get_url([ "stemmaroot", selectedTextID, selectedStemmaID ]);
 			var targetnode = $('#root_tree_dialog').data( 'selectedNode' );
