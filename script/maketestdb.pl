@@ -40,13 +40,18 @@ say "Created test database";
 my $user = $dir->add_user({ username => 'user@example.org', password => 'UserPass' });
 my $admin = $dir->add_user({ username => 'admin@example.org', 
 	password => 'AdminPass', role => 'admin' });
-die "Failed to create test users" unless $user && $admin;
+my $openid_user = $dir->add_user({
+        username => 'https://www.google.com/accounts/o8/id?id=AItOawlFTlpuHGcI67tqahtw7xOod9VNWffB-Qg',
+        password => 'pass'
+    });
+die "Failed to create test users" unless $user && $admin && $openid_user;
 say "Created users";
 
 my $t1 = Text::Tradition->new( input => 'Self', file => 't/data/besoin.xml' );
 die "Failed to create test tradition #1" unless $t1;
 $t1->add_stemma( dotfile => 't/data/besoin_stemweb.dot' );
 $user->add_tradition( $t1 );
+$openid_user->add_tradition($t1);
 $dir->store( $user );
 say "Created test user tradition";
 

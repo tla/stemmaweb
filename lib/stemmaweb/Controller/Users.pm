@@ -2,6 +2,13 @@ package stemmaweb::Controller::Users;
 use Moose;
 use namespace::autoclean;
 
+use Google::JWT;
+
+use JSON::MaybeXS;
+use JSON::WebToken;
+
+use MIME::Base64;
+
 BEGIN {extends 'CatalystX::Controller::Auth'; }
 with 'Catalyst::TraitFor::Controller::reCAPTCHA';
 
@@ -75,14 +82,23 @@ before register => sub {
 
     ## When submitting, check recaptcha passes, else re-draw form
     if($c->req->method eq 'POST') {
-        if(!$c->forward('captcha_check')) {
-            
+        if(!$c->forward('captcha_check') || 0 ) {
             ## Need these two lines to detach, so end can draw the correct template again:
             my $form = $self->form_handler->new( active => [ $self->login_id_field, 'password', 'confirm_password' ] );
             $c->stash( template => $self->register_template, form => $form );
 
             $c->detach();
         }
+    }
+};
+
+before login => sub {
+    my ($self, $c) = @_;
+
+    if ($c->req->params->{email} && $c->req->params->{id_token}) {
+
+        $c->req->param( realm => 'google');
+
     }
 };
 

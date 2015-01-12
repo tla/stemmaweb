@@ -94,6 +94,15 @@ __PACKAGE__->config(
             },
             auto_create_user => 1,
         },
+        google => {
+            credential => {
+                class => '+stemmaweb::Authentication::Credential::Google',
+            },
+            store => {
+                class => 'Model::KiokuDB',
+                model_name => 'Directory',
+            }
+        },
     },
     ## Auth with CatalystX::Controller::Auth
     'Controller::Users' => {

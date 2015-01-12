@@ -37,6 +37,14 @@ requires 'CatalystX::Controller::Auth' => '0.22';
 requires 'Catalyst::TraitFor::Controller::reCAPTCHA';
 requires 'LWP::Protocol::https';
 ##
+requires 'Date::Parse';
+requires 'LWP::Protocol::https';
+requires 'strictures';
+requires 'Crypt::OpenSSL::X509';
+requires 'Crypt::OpenSSL::RSA';
+requires 'JSON::WebToken';
+requires 'JSON::MaybeXS';
+requires 'MIME::Base64';
 requires 'File::Which';
 requires 'List::Util';
 requires 'Moose';
