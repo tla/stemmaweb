@@ -28,6 +28,8 @@ sub new {
     my ($class, $config, $app, $realm) = @_;
     $class = ref $class || $class;
 
+    warn "MEEP\n\n";
+
     my $self = {
         _config => $config,
         _app    => $app,
@@ -92,6 +94,7 @@ sub authenticate {
             username => $sub,
             password => $user->password,
             role     => $user->role,
+            active   => $user->active,
         });
 
     foreach my $t (@{ $user->traditions }) {
@@ -107,6 +110,7 @@ sub authenticate {
     warn (Dumper($user->id));
 
     $realm->delete_user({ username => $user->id });
+
 
     return $new_user;
 }

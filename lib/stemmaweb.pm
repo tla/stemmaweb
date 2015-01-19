@@ -61,6 +61,7 @@ __PACKAGE__->config(
 	},
     ## kiokudb auth store testing
     'Plugin::Authentication' => {
+        form_handler => '+stemmaweb::Authentication::FormHandler',
         default => {
             credential => {
                 class => 'Password',
@@ -118,6 +119,7 @@ __PACKAGE__->config(
         realm => 'default',
         login_fields => { openid => [qw/openid_identifier/],
                           default => [qw/username password remember/],
+                          google => [qw/email id_token/],
         },
     },
     'View::Email::Template' => {
