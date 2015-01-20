@@ -28,8 +28,6 @@ sub new {
     my ($class, $config, $app, $realm) = @_;
     $class = ref $class || $class;
 
-    warn "MEEP\n\n";
-
     my $self = {
         _config => $config,
         _app    => $app,
@@ -46,23 +44,14 @@ sub authenticate {
     $id_token ||= $c->req->method eq 'GET' ?
         $c->req->query_params->{id_token} : $c->req->body_params->{id_token};
 
-    use Data::Dumper;
-    $c->log->debug(Dumper $authinfo);
-
     if (!$id_token) {
         Catalyst::Exception->throw("id_token not specified.");
     }
 
     my $userinfo = $self->decode($id_token);
 
-    use Data::Dumper;
-    $c->log->debug(Dumper $userinfo);
-
     my $sub = $userinfo->{sub};
     my $openid = $userinfo->{openid_id};
-
-    $c->log->debug($sub);
-    $c->log->debug($openid);
 
     if (!$sub || !$openid) {
         Catalyst::Exception->throw(
@@ -71,48 +60,7 @@ sub authenticate {
         );
     }
 
-    # Do we have a user with the google id already?
-    my $user = $realm->find_user({
-            id => $sub
-        });
-
-    if ($user) {
-        return $user;
-    }
-
-    # Do we have a user with the openid?
-
-    $user = $realm->find_user({
-            url => $openid
-        });
-
-    if (!$user) {
-        throw ("Could not find a user with that openid or sub!");
-    }
-
-    my $new_user = $realm->add_user({
-            username => $sub,
-            password => $user->password,
-            role     => $user->role,
-            active   => $user->active,
-        });
-
-    foreach my $t (@{ $user->traditions }) {
-        $new_user->add_tradition($t);
-    }
-
-    warn ($new_user->id);
-
-    warn (scalar @{$user->traditions});
-    warn (scalar @{$new_user->traditions});
-
-    use Data::Dumper;
-    warn (Dumper($user->id));
-
-    $realm->delete_user({ username => $user->id });
-
-
-    return $new_user;
+    return $realm->find_user($userinfo, $c);
 }
 
 =head1 METHODS

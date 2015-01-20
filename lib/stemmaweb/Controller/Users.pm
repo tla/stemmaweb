@@ -63,6 +63,10 @@ before login => sub {
   my($self, $c) = @_;
   $c->req->param( realm => 'openid')
     if $c->req->param('openid-check');
+
+  if ($c->req->params->{email} && $c->req->params->{id_token}) {
+    $c->req->param( realm => 'google');
+  }
 };
 
 =head2 register with recaptcha
@@ -89,16 +93,6 @@ before register => sub {
 
             $c->detach();
         }
-    }
-};
-
-before login => sub {
-    my ($self, $c) = @_;
-
-    if ($c->req->params->{email} && $c->req->params->{id_token}) {
-
-        $c->req->param( realm => 'google');
-
     }
 };
 

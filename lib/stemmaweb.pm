@@ -33,6 +33,8 @@ use Catalyst qw/
 
 extends 'Catalyst';
 
+use stemmaweb::Authentication::FormHandler;
+
 our $VERSION = '0.01';
 
 # Configure the application.
@@ -61,7 +63,6 @@ __PACKAGE__->config(
 	},
     ## kiokudb auth store testing
     'Plugin::Authentication' => {
-        form_handler => '+stemmaweb::Authentication::FormHandler',
         default => {
             credential => {
                 class => 'Password',
@@ -107,6 +108,7 @@ __PACKAGE__->config(
     },
     ## Auth with CatalystX::Controller::Auth
     'Controller::Users' => {
+        form_handler => 'stemmaweb::Authentication::FormHandler',
         model => 'User',
         login_id_field => 'username',
         login_db_field => 'username',
