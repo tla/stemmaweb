@@ -82,7 +82,7 @@ $(document).ready(function() {
 			<span
 			class="g-signin"
 			data-callback="googleSignIn"
-			data-clientid="577442226093-pi2ud795g49ibip78bgfoabhl4kdrguc.apps.googleusercontent.com"
+			data-clientid="[% google_client_id %]"
 			data-cookiepolicy="single_host_origin"
 			data-requestvisibleactions="http://schema.org/AddAction"
 			data-scope="https://www.googleapis.com/auth/plus.profile.emails.read"

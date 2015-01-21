@@ -67,6 +67,8 @@ before login => sub {
   if ($c->req->params->{email} && $c->req->params->{id_token}) {
     $c->req->param( realm => 'google');
   }
+
+  $c->stash->{google_client_id} = $c->config->{'Authentication::Credential::Google'}->{client_id};
 };
 
 =head2 register with recaptcha
