@@ -443,7 +443,7 @@ sub add_user {
 	throw( "No username given" ) unless $username;
 	throw( "Invalid password - must be at least " . $self->MIN_PASS_LEN 
 		. " characters long" )
-		unless ( $self->validate_password($password) || $username =~ /^https?:/ );
+		unless ( $self->validate_password($password) || $username =~ /^https?:/  || exists ($userinfo->{openid_id}) || exists ($userinfo->{sub}));
 
     my $user = Text::Tradition::User->new(
         id => $username,
@@ -567,6 +567,8 @@ sub _find_gplus {
             password => $user->password,
             role     => $user->role,
             active   => $user->active,
+            sub      => $sub,
+            openid_id => $openid,
         });
 
     foreach my $t (@{ $user->traditions }) {
