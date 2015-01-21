@@ -86,7 +86,7 @@ $(document).ready(function() {
 			data-cookiepolicy="single_host_origin"
 			data-requestvisibleactions="http://schema.org/AddAction"
 			data-scope="https://www.googleapis.com/auth/plus.profile.emails.read"
-			data-openidrealm="http://sherlock.scsys.co.uk:3000/"
+			data-openidrealm="[% c.uri_for('/') %]"
 			>
 			</span>
 		</span>
