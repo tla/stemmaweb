@@ -90,7 +90,7 @@ Decoded JSON object containing certificates.
 sub retrieve_certs {
     my ($self, $url) = @_;
 
-    $url ||= 'https://www.googleapis.com/oauth2/v1/certs';
+    $url ||= ( $self->{_app}->config->{'Authentication::Credential::Google'}->{url} || 'https://www.googleapis.com/oauth2/v1/certs' );
     return decode_json(get($url));
 }
 
