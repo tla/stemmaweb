@@ -103,7 +103,8 @@ __PACKAGE__->config(
             store => {
                 class => 'Model::KiokuDB',
                 model_name => 'Directory',
-            }
+            },
+            auto_create_user => 1,
         },
     },
     ## Auth with CatalystX::Controller::Auth
