@@ -6,7 +6,7 @@ use strict;
 use FindBin;
 
 sub new_db {
-    my $DBDIR = "$FindBin::Bin/db";
+    my $DBDIR = "$FindBin::Bin/../db";
     my $DBNAME = 'traditions.db';
     my $DBEXT = 'test';
 

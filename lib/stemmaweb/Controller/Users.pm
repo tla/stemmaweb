@@ -83,8 +83,6 @@ form with an error message.
 before register => sub {
     my ($self, $c) = @_;
 
-    warn $c->config->{'Registration'}->{'no_recaptcha'};
-
     ## Puts HTML into stash in "recaptcha" key.
     if (!$c->config->{'Registration'}->{'no_recaptcha'}) {
         $c->forward('captcha_get');
