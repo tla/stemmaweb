@@ -83,12 +83,16 @@ form with an error message.
 before register => sub {
     my ($self, $c) = @_;
 
+    warn $c->config->{'Registration'}->{'no_recaptcha'};
+
     ## Puts HTML into stash in "recaptcha" key.
-    $c->forward('captcha_get');
+    if (!$c->config->{'Registration'}->{'no_recaptcha'}) {
+        $c->forward('captcha_get');
+    }
 
     ## When submitting, check recaptcha passes, else re-draw form
     if($c->req->method eq 'POST') {
-        if(!$c->forward('captcha_check') || 0 ) {
+        if ( !$c->config->{'Registration'}->{'no_recaptcha'} && !$c->forward('captcha_check') ) {
             ## Need these two lines to detach, so end can draw the correct template again:
             my $form = $self->form_handler->new( active => [ $self->login_id_field, 'password', 'confirm_password' ] );
             $c->stash( template => $self->register_template, form => $form );
