@@ -55,6 +55,7 @@ requires 'Config::General'; # This should reflect the config file format you've 
 test_requires 'Test::More' => '0.88';
 test_requires 'LWP::Protocol::PSGI';
 test_requires 'Test::WWW::Mechanize';
+test_requires 'IPC::System::Simple';
 catalyst;
 
 install_script glob('script/*.pl');

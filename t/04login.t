@@ -9,6 +9,11 @@ use Test::More;
 use HTML::TreeBuilder;
 use Data::Dumper;
 
+use FindBin;
+
+use IPC::System::Simple qw(system);
+system("$FindBin::Bin/../script/maketestdb.pl");
+
 LWP::Protocol::PSGI->register(stemmaweb->psgi_app);
 
 my $ua = Test::WWW::Mechanize->new;
