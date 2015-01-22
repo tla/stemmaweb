@@ -10,9 +10,11 @@ use HTML::TreeBuilder;
 use Data::Dumper;
 
 use FindBin;
+use lib ("$FindBin::Bin/lib");
 
-use IPC::System::Simple qw(system);
-system("$FindBin::Bin/../script/maketestdb.pl");
+use stemmaweb::Test::DB;
+
+stemmaweb::Test::DB->new_db;
 
 LWP::Protocol::PSGI->register(stemmaweb->psgi_app);
 
