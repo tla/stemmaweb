@@ -18,6 +18,10 @@ use stemmaweb::Test::DB;
 
 my $dir = stemmaweb::Test::DB->new_db;
 
+# NOTE: this test uses Text::Tradition::Directory
+# to check user accounts really have been created.
+# It'll need to be changed once that is replaced...
+
 my $scope = $dir->new_scope;
 
 LWP::Protocol::PSGI->register(stemmaweb->psgi_app);
