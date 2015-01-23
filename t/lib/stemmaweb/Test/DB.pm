@@ -38,6 +38,7 @@ sub new_db {
 
     # Create users
     my $user = $dir->add_user({ username => 'user@example.org', password => 'UserPass' });
+    my $openid_user = $dir->add_user({ username => 'http://localhost/' });
 
 
     my $t2 = Text::Tradition->new( input => 'Tabular', sep_char => ',', 
@@ -45,6 +46,8 @@ sub new_db {
     $t2->add_stemma( dotfile => 't/data/florilegium.dot' );
 
     $user->add_tradition($t2);
+
+    return $dir;
 }
 
 1;
