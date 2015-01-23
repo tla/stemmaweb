@@ -440,6 +440,10 @@ sub add_user {
     my $password = $userinfo->{password};
     my $role = $userinfo->{role} || 'user';
 
+    if ($userinfo->{sub}) {
+        $username = $userinfo->{sub};
+    }
+
 	throw( "No username given" ) unless $username;
 	throw( "Invalid password - must be at least " . $self->MIN_PASS_LEN 
 		. " characters long" )
@@ -559,7 +563,7 @@ sub _find_gplus {
         });
 
     if (!$user) {
-        throw ("Could not find a user with that openid or sub!");
+        return undef;
     }
 
     my $new_user = $self->add_user({
