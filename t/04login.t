@@ -32,4 +32,21 @@ $ua->content_contains('Stemmaweb - Logged in', 'Log in successful.');
 my $content  = $ua->get('/');
 $ua->content_contains('Hello! user@example.org', 'We are logged in.');
 
+$ua->get('/logout');
+$ua->get('/login');
+
+$ua->submit_form;
+
+$ua->content_contains('Your username is required.', 'Username is required to log in');
+$ua->content_contains('Your password is required.', 'Password is required to log in.');
+
+$ua->submit_form(
+    fields => {
+        username    => 'nonexistant',
+        password    => 'nonexistant',
+    });
+
+$ua->content_contains('Bad username or password.', 'Error is shown on incorrect details.');
+
+
 done_testing;
