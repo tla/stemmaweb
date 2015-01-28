@@ -13,6 +13,7 @@ use Test::WWW::Mechanize;
 use Test::More;
 use HTML::TreeBuilder;
 use Data::Dumper;
+use IO::All;
 
 use stemmaweb::Test::DB;
 
@@ -25,6 +26,8 @@ my $dir = stemmaweb::Test::DB->new_db;
 LWP::Protocol::PSGI->register(stemmaweb->psgi_app);
 
 my $ua = Test::WWW::Mechanize->new;
+
+io("$FindBin::Bin/var")->rmtree;
 
 {
     my $scope = $dir->new_scope;
@@ -218,5 +221,7 @@ my $ua = Test::WWW::Mechanize->new;
 
     $ua->content_contains('Hello! 4242!', 'We are logged in.');
 }
+
+io("$FindBin::Bin/var")->rmtree;
 
 done_testing;
