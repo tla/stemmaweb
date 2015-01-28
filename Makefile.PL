@@ -16,6 +16,7 @@ requires 'Text::Tradition::Analysis' => '2.0.0';
 requires 'Text::Tradition::StemmaUtil';
 # Catalyst libraries
 requires 'Catalyst::Runtime' => '5.90002';
+requires 'Catalyst::Plugin::Cache';
 requires 'Catalyst::Plugin::ConfigLoader';
 requires 'Catalyst::Plugin::StackTrace';
 requires 'Catalyst::Plugin::Static::Simple';
@@ -52,6 +53,7 @@ requires 'TryCatch';
 requires 'namespace::autoclean';
 requires 'Config::General'; # This should reflect the config file format you've chosen
                  # See Catalyst::Plugin::ConfigLoader for supported formats
+requires 'Cache::FileCache';
 test_requires 'Test::More' => '0.88';
 test_requires 'LWP::Protocol::PSGI';
 test_requires 'Test::WWW::Mechanize';

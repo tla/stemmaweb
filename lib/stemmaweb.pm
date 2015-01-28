@@ -29,10 +29,12 @@ use Catalyst qw/
     Session::State::Cookie
     StatusMessage
     StackTrace
+    Cache
 /;
 
 extends 'Catalyst';
 
+use Cache::FileCache;
 use stemmaweb::Authentication::FormHandler;
 
 our $VERSION = '0.01';
@@ -61,6 +63,15 @@ __PACKAGE__->config(
 			stemmaweb->path_to( 'root', 'src' ),
 		],
 	},
+
+    'Plugin::Cache' => {
+        backend => {
+            class => 'Cache::FileCache',
+            namespace => 'cache',
+            default_expires_in => 86400,
+        },
+    },
+
     ## kiokudb auth store testing
     'Plugin::Authentication' => {
         default => {

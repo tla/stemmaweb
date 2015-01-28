@@ -90,8 +90,42 @@ Decoded JSON object containing certificates.
 sub retrieve_certs {
     my ($self, $url) = @_;
 
-    $url ||= ( $self->{_app}->config->{'Authentication::Credential::Google'}->{public_cert_url} || 'https://www.googleapis.com/oauth2/v1/certs' );
-    return decode_json(get($url));
+    my $c = $self->{_app};
+    my $cached = 0;
+    my $certs;
+    my $cache;
+
+    $url ||= ( $c->config->{'Authentication::Credential::Google'}->{public_cert_url} || 'https://www.googleapis.com/oauth2/v1/certs' );
+
+    if ( ($c->registered_plugins('Catalyst::Plugin::Cache')) && ($cache = $c->cache) ) {
+        if ($certs = $cache->get('certs')) {
+            $certs = decode_json($certs);
+
+            foreach my $key (keys %$certs) {
+                my $cert = $certs->{$key};
+                my $x509 = Crypt::OpenSSL::X509->new_from_string($cert);
+
+                if ($self->is_cert_expired($x509)) {
+                    $cached = 0;
+                    last;
+                } else {
+                    $cached = 1;
+                }
+            }
+        }
+    }
+
+    if (!$cached) {
+        my $certs_encoded = get($url);
+
+        if ($cache) {
+            $cache->set('certs', $certs_encoded);
+        }
+
+        $certs = decode_json($certs_encoded);
+    }
+
+    return $certs;
 }
 
 =head2 get_key_from_cert
