@@ -173,4 +173,50 @@ my $ua = Test::WWW::Mechanize->new;
     $ua->content_contains('Hello! 2!', 'We are logged in.');
 }
 
+# Decoding token
+
+{
+    my $scope = $dir->new_scope;
+
+    ok !$dir->find_user({ sub => 4242, openid_id => 'https://www.google.com/accounts/o8/id3' }), 'The G+ user is not yet there.';
+
+    $ua->get('/logout');
+
+    $ua->get_ok('http://localhost/login');
+
+    $ua->submit_form(
+        form_number => 1,
+        fields => {
+            id_token => 'eyJraWQiOiJhIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiI0MjQyIiwib3BlbmlkX2lkIjoiaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS9hY2NvdW50cy9vOC9pZDMifQ.moNERe3UHCY4xGMPxdCqmbg2JKW5feVnYlA8jeB4CdE4c_KL3YHvICQeql-S486HT-AlWBeDJWMr6wWH1kkwz11a2D1oyJ8qCWBssHIkhfv8dm3dphmRbtzYssAOFdGsmnPH1oXolCnl-Qu9WgHkhYYnRJWHr3CkeNA6Yh1xOV3nkaa8REtJckuzh3jyKQgx_rjIFsWBPDmT1rqa_Q0XOGVK34N5tADwpcWmkb3fFnbddzd9L6MnybbFzF_S238Bpr5vNa9doXRBwvJ85AdSn1AWX8R6qVpDbbaiGL2RCahuZYF9XECYm6anee-KTKvxh02KXkG2zniKVvweaMlcbQ',
+            email    => 'email@example.org',
+        },
+    );
+
+    $ua->content_contains('You have logged in.', 'We can now log in to our created user - the token was decoded');
+
+    $ua->get('/');
+
+    $ua->content_contains('Hello! 4242!', 'We are logged in.');
+
+    ok $dir->find_user({ sub => 4242, openid_id => 'https://www.google.com/accounts/o8/id3' }), 'The G+ user is there.';
+
+    $ua->get('/logout');
+
+    $ua->get_ok('http://localhost/login');
+
+    $ua->submit_form(
+        form_number => 1,
+        fields => {
+            id_token => 'eyJraWQiOiJhIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiI0MjQyIiwib3BlbmlkX2lkIjoiaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS9hY2NvdW50cy9vOC9pZDMifQ.moNERe3UHCY4xGMPxdCqmbg2JKW5feVnYlA8jeB4CdE4c_KL3YHvICQeql-S486HT-AlWBeDJWMr6wWH1kkwz11a2D1oyJ8qCWBssHIkhfv8dm3dphmRbtzYssAOFdGsmnPH1oXolCnl-Qu9WgHkhYYnRJWHr3CkeNA6Yh1xOV3nkaa8REtJckuzh3jyKQgx_rjIFsWBPDmT1rqa_Q0XOGVK34N5tADwpcWmkb3fFnbddzd9L6MnybbFzF_S238Bpr5vNa9doXRBwvJ85AdSn1AWX8R6qVpDbbaiGL2RCahuZYF9XECYm6anee-KTKvxh02KXkG2zniKVvweaMlcbQ',
+            email   => 'email@example.org',
+        },
+    );
+
+    $ua->content_contains('You have logged in.', 'We can login again');
+
+    $ua->get('/');
+
+    $ua->content_contains('Hello! 4242!', 'We are logged in.');
+}
+
 done_testing;
