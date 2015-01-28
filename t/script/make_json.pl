@@ -5,11 +5,12 @@ use strict;
 use JSON::MaybeXS;
 use stemmaweb::Authentication::Credential::Google;
 use Crypt::OpenSSL::RSA;
+use FindBin;
 
 use IO::All;
 
-my $cert = io('/home/erryk/certonly.pem')->slurp;
-my $priv = io('/home/erryk/privkey')->slurp;
+my $cert = io("$FindBin::Bin/../etc/certonly.pem")->slurp;
+my $priv = io("$FindBin::Bin/../etc/privkey")->slurp;
 
 my $hash = { 'a' => $cert };
 
