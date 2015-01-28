@@ -27,7 +27,7 @@ LWP::Protocol::PSGI->register(stemmaweb->psgi_app);
 
 my $ua = Test::WWW::Mechanize->new;
 
-io("$FindBin::Bin/var")->rmtree;
+io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
 {
     my $scope = $dir->new_scope;
@@ -222,6 +222,6 @@ io("$FindBin::Bin/var")->rmtree;
     $ua->content_contains('Hello! 4242!', 'We are logged in.');
 }
 
-io("$FindBin::Bin/var")->rmtree;
+io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
 done_testing;
