@@ -199,7 +199,7 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
     $ua->get('/');
 
-    $ua->content_contains('Hello! 4242!', 'We are logged in.');
+    $ua->content_contains('Hello! email@example.org!', 'We are logged in.');
 
     ok $dir->find_user({ sub => 4242, openid_id => 'https://www.google.com/accounts/o8/id3' }), 'The G+ user is there.';
 
@@ -219,7 +219,7 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
     $ua->get('/');
 
-    $ua->content_contains('Hello! 4242!', 'We are logged in.');
+    $ua->content_contains('Hello! email@example.org!', 'We ar logged in.');
 }
 
 io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;

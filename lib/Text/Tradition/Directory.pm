@@ -545,6 +545,7 @@ sub _find_gplus {
 
     my $sub = $userinfo->{sub};
     my $openid = $userinfo->{openid_id};
+    my $email = $userinfo->{email};
 
     # Do we have a user with the google id already?
 
@@ -567,12 +568,13 @@ sub _find_gplus {
     }
 
     my $new_user = $self->add_user({
-            username => $sub,
-            password => $user->password,
-            role     => $user->role,
-            active   => $user->active,
-            sub      => $sub,
+            username  => $sub,
+            password  => $user->password,
+            role      => $user->role,
+            active    => $user->active,
+            sub       => $sub,
             openid_id => $openid,
+            email     => $email,
         });
 
     foreach my $t (@{ $user->traditions }) {
