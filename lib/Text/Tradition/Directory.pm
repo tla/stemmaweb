@@ -581,7 +581,7 @@ sub _find_gplus {
         $new_user->add_tradition($t);
     }
 
-    $self->delete_user({ username => $user->id });
+    # $self->delete_user({ username => $user->id });
     return $new_user;
 }
 

@@ -88,7 +88,7 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 {
     my $scope = $dir->new_scope;
 
-    ok !$dir->find_user({ url => 'https://www.google.com/accounts/o8/id' }), 'Old google-openid is gone.';
+    # ok !$dir->find_user({ url => 'https://www.google.com/accounts/o8/id' }), 'Old google-openid is gone.';
 
     ok $dir->find_user({ sub => 42, openid_id => 'https://www.google.com/accounts/o8/id' }), 'The G+ user is there.';
 
