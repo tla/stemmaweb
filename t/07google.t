@@ -30,6 +30,7 @@ my $ua = Test::WWW::Mechanize->new;
 io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
 {
+    diag("Create OpenID based Google account");
     my $scope = $dir->new_scope;
 
     $ua->get_ok('http://localhost/login');
@@ -37,15 +38,18 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
     local *Catalyst::Authentication::Credential::OpenID::authenticate = sub {
         my ( $self, $c, $realm, $authinfo ) = @_;
 
-        return $realm->find_user({ url => 'https://www.google.com/accounts/o8/id' }, $c);
+        return $realm->find_user({
+            url => 'https://www.google.com/accounts/o8/id?id=XYZ',
+            email => 'test@example.com',
+                                 }, $c);
     };
 
-    ok !$dir->find_user({ url => 'https://www.google.com/accounts/o8/id' }), 'No such user, yet.';
+    ok !$dir->find_user({ url => 'https://www.google.com/accounts/o8/id?id=XYZ' }), 'No such user, yet.';
 
     $ua->submit_form(
         form_number => 2,
         fields => {
-            openid_identifier => 'https://www.google.com/accounts/o8/id',
+            openid_identifier => 'https://www.google.com/accounts/o8/id?id=XYZ',
         },
     );
 
@@ -53,19 +57,24 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
     $ua->get('/');
 
-    $ua->content_contains('Hello! https://www.google.com/accounts/o8/id!', 'We are logged in.');
+    $ua->content_contains('Hello! test@example.com!', 'We are logged in.');
 
-    ok $dir->find_user({ url => 'https://www.google.com/accounts/o8/id' }), 'The user is now there.';
+    diag("Verify new OpenID Google account exists");
+    ok $dir->find_user({ url => 'https://www.google.com/accounts/o8/id?id=XYZ',
+                         email => 'test@example.com',
+                       }), 'The user is now there.';
     $ua->get('/logout');
 
     # Converting to Google ID.
 
+    diag("Login/Convert to new Google+ account");
     local *stemmaweb::Authentication::Credential::Google::authenticate = sub {
         my ( $self, $c, $realm, $authinfo ) = @_;
 
         return $realm->find_user({
-                openid_id => 'https://www.google.com/accounts/o8/id',
+                openid_id => 'https://www.google.com/accounts/o8/id?id=XYZ',
                 sub        => 42,
+                email => $authinfo->{email},
             }, $c);
     };
     $ua->get_ok('http://localhost/login');
@@ -74,7 +83,7 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
         form_number => 1,
         fields => {
             id_token => 'something',
-            email    => 'email@example.org',
+            email    => 'test@example.com',
         },
     );
 
@@ -82,15 +91,134 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
     $ua->get('/');
 
-    $ua->content_contains('Hello! 42!', 'We are logged in.');
+    $ua->content_contains('Hello! test@example.com!', 'We are logged in.');
+
+    $ua->get_ok('/logout', 'Logged out');
 }
 
 {
+    diag("Create OpenID based Google account for email match");
     my $scope = $dir->new_scope;
 
-    # ok !$dir->find_user({ url => 'https://www.google.com/accounts/o8/id' }), 'Old google-openid is gone.';
+    $ua->get_ok('http://localhost/login');
 
-    ok $dir->find_user({ sub => 42, openid_id => 'https://www.google.com/accounts/o8/id' }), 'The G+ user is there.';
+    local *Catalyst::Authentication::Credential::OpenID::authenticate = sub {
+        my ( $self, $c, $realm, $authinfo ) = @_;
+
+        return $realm->find_user({
+            url => 'https://www.google.com/accounts/o8/id?id=42XYZ',
+            email => 'test42@example.com',
+                                 }, $c);
+    };
+
+    ok !$dir->find_user({ url => 'https://www.google.com/accounts/o8/id?id=42XYZ' }), 'No such user, yet.';
+
+    $ua->submit_form(
+        form_number => 2,
+        fields => {
+            openid_identifier => 'https://www.google.com/accounts/o8/id?id=42XYZ',
+        },
+    );
+
+    $ua->content_contains('You have logged in.', 'Openid login works');
+
+    $ua->get('/');
+
+    $ua->content_contains('Hello! test42@example.com!', 'We are logged in.');
+
+    diag("Verify new OpenID Google account for email match exists");
+    ok $dir->find_user({ url => 'https://www.google.com/accounts/o8/id?id=42XYZ',
+                         email => 'test42@example.com',
+                       }), 'The user is now there.';
+    $ua->get('/logout');
+
+    # Converting to Google ID.
+
+    diag("Login/Convert to new Google+ account matching only on email");
+    local *stemmaweb::Authentication::Credential::Google::authenticate = sub {
+        my ( $self, $c, $realm, $authinfo ) = @_;
+
+        return $realm->find_user({
+                openid_id => 'https://www.google.com/accounts/o8/id?id=45XYZ',
+                sub        => 45,
+                email => $authinfo->{email},
+            }, $c);
+    };
+    $ua->get_ok('http://localhost/login');
+
+    $ua->submit_form(
+        form_number => 1,
+        fields => {
+            id_token => 'something',
+            email    => 'test42@example.com',
+        },
+    );
+
+    $ua->content_contains('You have logged in.', 'G+ login works');
+
+    $ua->get('/');
+
+    $ua->content_contains('Hello! test42@example.com!', 'We are logged in.');
+
+    $ua->get('/logout');
+}
+
+{
+    diag("Test converting OpenID based Google account with traditions");
+    my $scope = $dir->new_scope;
+
+    my $openid_u = $dir->find_user({ url => 'https://www.google.com/accounts/o8/id?id=AItOawlFTlpuHGcI67tqahtw7xOod9VNWffB-Qg',
+                         email => 'openid@example.org',
+                       });
+    ok($openid_u, 'The user is there.');
+
+    diag("Login/Convert to new Google+ account");
+    local *stemmaweb::Authentication::Credential::Google::authenticate = sub {
+        my ( $self, $c, $realm, $authinfo ) = @_;
+
+        return $realm->find_user({
+                openid_id => 'https://www.google.com/accounts/o8/id?id=AItOawlFTlpuHGcI67tqahtw7xOod9VNWffB-Qg',
+                sub        => 450,
+                email => $authinfo->{email},
+            }, $c);
+    };
+    $ua->get_ok('http://localhost/login');
+
+    $ua->submit_form(
+        form_number => 1,
+        fields => {
+            id_token => 'something',
+            email    => 'openid@example.org',
+        },
+    );
+
+    $ua->content_contains('You have logged in.', 'G+ login works');
+    $ua->get('/');
+    $ua->content_contains('Hello! openid@example.org!', 'We are logged in.');
+
+    my $gplus_u = $dir->find_user({
+        openid_id => 'https://www.google.com/accounts/o8/id?id=AItOawlFTlpuHGcI67tqahtw7xOod9VNWffB-Qg',
+        sub        => 450,
+        email => 'openid@example.org'
+    });
+
+    foreach my $trad_id (0..$#{ $openid_u->traditions }) {
+        is($gplus_u->traditions->[$trad_id]->name, $openid_u->traditions->[$trad_id]->name, 'Traditions were copied over to G+ user');
+    }
+
+    $ua->get('/logout');
+}
+
+{
+    diag("Verify we can login the new Google+ account again");
+    my $scope = $dir->new_scope;
+#    ok !$dir->find_user({ url => 'https://www.google.com/accounts/o8/id?id=XYZ' }), 'Old google-openid is gone.';
+
+    ok $dir->find_user({
+        sub => 42,
+        openid_id => 'https://www.google.com/accounts/o8/id?id=XYZ',
+        email    => 'test@example.com',
+    }), 'The G+ user is there.';
 
     $ua->get('/logout');
 
@@ -100,8 +228,9 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
         my ( $self, $c, $realm, $authinfo ) = @_;
 
         return $realm->find_user({
-                openid_id => 'https://www.google.com/accounts/o8/id',
+                openid_id => 'https://www.google.com/accounts/o8/id?id=XYZ',
                 sub        => 42,
+                email      => $authinfo->{email},
             }, $c);
     };
 
@@ -109,7 +238,7 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
         form_number => 1,
         fields => {
             id_token => 'something',
-            email   => 'email@example.org',
+            email   => 'test@example.com',
         },
     );
 
@@ -117,16 +246,16 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
     $ua->get('/');
 
-    $ua->content_contains('Hello! 42!', 'We are logged in.');
+    $ua->content_contains('Hello! test@example.com!', 'We are logged in.');
 }
 
 # Brand new user just from open id.
 
 {
+    diag("Create a fresh Google+ user");
     my $scope = $dir->new_scope;
 
-
-    ok !$dir->find_user({ sub => 2, openid_id => 'https://www.google.com/accounts/o8/id2' }), 'The G+ user is not yet there.';
+    ok !$dir->find_user({ sub => 2, openid_id => 'https://www.google.com/accounts/o8/id2?id=XYZ', email => 'test2@exmple.com' }), 'The G+ user is not yet there.';
 
     $ua->get('/logout');
 
@@ -136,8 +265,9 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
         my ( $self, $c, $realm, $authinfo ) = @_;
 
         return $realm->find_user({
-                openid_id => 'https://www.google.com/accounts/o8/id2',
+                openid_id => 'https://www.google.com/accounts/o8/id2?id=XYZ',
                 sub        => 2,
+                email      => $authinfo->{email},
             }, $c);
     };
 
@@ -145,7 +275,7 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
         form_number => 1,
         fields => {
             id_token => 'something',
-            email   => 'email@example.org',
+            email    => 'test2@example.com',
         },
     );
 
@@ -153,9 +283,9 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
     $ua->get('/');
 
-    $ua->content_contains('Hello! 2!', 'We are logged in.');
+    $ua->content_contains('Hello! test2@example.com!', 'We are logged in.');
 
-    ok $dir->find_user({ sub => 2, openid_id => 'https://www.google.com/accounts/o8/id2' }), 'The G+ user is there.';
+    ok $dir->find_user({ sub => 2, openid_id => 'https://www.google.com/accounts/o8/id2?id=XYZ', email => 'test2@example.com' }), 'The G+ user is there.';
 
     $ua->get('/logout');
 
@@ -165,7 +295,7 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
         form_number => 1,
         fields => {
             id_token => 'something',
-            email   => 'email@example.org',
+            email    => 'test2@example.com',
         },
     );
 
@@ -173,7 +303,7 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
     $ua->get('/');
 
-    $ua->content_contains('Hello! 2!', 'We are logged in.');
+    $ua->content_contains('Hello! test2@example.com!', 'We are logged in.');
 }
 
 # Decoding token
@@ -181,7 +311,7 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 {
     my $scope = $dir->new_scope;
 
-    ok !$dir->find_user({ sub => 4242, openid_id => 'https://www.google.com/accounts/o8/id3' }), 'The G+ user is not yet there.';
+    ok !$dir->find_user({ sub => 4242, openid_id => 'https://www.google.com/accounts/o8/id3', email => 'email@example.org' }), 'The G+ user is not yet there.';
 
     $ua->get('/logout');
 
@@ -201,7 +331,7 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
     $ua->content_contains('Hello! email@example.org!', 'We are logged in.');
 
-    ok $dir->find_user({ sub => 4242, openid_id => 'https://www.google.com/accounts/o8/id3' }), 'The G+ user is there.';
+    ok $dir->find_user({ sub => 4242, openid_id => 'https://www.google.com/accounts/o8/id3', email => 'email@example.org' }), 'The G+ user is there.';
 
     $ua->get('/logout');
 
@@ -219,7 +349,7 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
 
     $ua->get('/');
 
-    $ua->content_contains('Hello! email@example.org!', 'We ar logged in.');
+    $ua->content_contains('Hello! email@example.org!', 'We are logged in.');
 }
 
 io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;

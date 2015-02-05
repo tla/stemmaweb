@@ -40,9 +40,9 @@ say "Created test database";
 my $user = $dir->add_user({ username => 'user@example.org', password => 'UserPass' });
 my $admin = $dir->add_user({ username => 'admin@example.org', 
 	password => 'AdminPass', role => 'admin' });
-my $openid_user = $dir->add_user({
-        username => 'https://www.google.com/accounts/o8/id?id=AItOawlFTlpuHGcI67tqahtw7xOod9VNWffB-Qg',
-        password => 'pass'
+my $openid_user = $dir->create_user({
+        url      => 'https://www.google.com/accounts/o8/id?id=AItOawlFTlpuHGcI67tqahtw7xOod9VNWffB-Qg',
+        extensions => {'http://openid.net/srv/ax/1.0' => { 'value.email' =>'openid@example.org' } },
     });
 die "Failed to create test users" unless $user && $admin && $openid_user;
 say "Created users";
@@ -51,8 +51,11 @@ my $t1 = Text::Tradition->new( input => 'Self', file => 't/data/besoin.xml' );
 die "Failed to create test tradition #1" unless $t1;
 $t1->add_stemma( dotfile => 't/data/besoin_stemweb.dot' );
 $user->add_tradition( $t1 );
-$openid_user->add_tradition($t1);
+my $t2 = Text::Tradition->new( input => 'Self', file => 't/data/besoin.xml' );
+$t2->add_stemma( dotfile => 't/data/besoin_stemweb.dot' );
+$openid_user->add_tradition($t2);
 $dir->store( $user );
+$dir->store( $openid_user );
 say "Created test user tradition";
 
 my $t2 = Text::Tradition->new( input => 'Tabular', sep_char => ',', 

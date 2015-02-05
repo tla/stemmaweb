@@ -53,6 +53,7 @@ sub authenticate {
     $c->req->body_params->{email};
 
     my $userinfo = $self->decode($id_token);
+    $userinfo->{email} = $authinfo->{email};
 
     my $sub = $userinfo->{sub};
     my $openid = $userinfo->{openid_id};

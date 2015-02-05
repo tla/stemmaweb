@@ -38,14 +38,21 @@ sub new_db {
 
     # Create users
     my $user = $dir->add_user({ username => 'user@example.org', password => 'UserPass' });
-    my $openid_user = $dir->add_user({ username => 'http://localhost/' });
+    my $openid_user = $dir->create_user({
+        url      => 'https://www.google.com/accounts/o8/id?id=AItOawlFTlpuHGcI67tqahtw7xOod9VNWffB-Qg',
+        extensions => {'http://openid.net/srv/ax/1.0' => { 'value.email' =>'openid@example.org' } },
+    });
 
+    my $t1 = Text::Tradition->new( input => 'Self', file => 't/data/besoin.xml' );
+    $t1->add_stemma( dotfile => 't/data/besoin_stemweb.dot' );
+    $openid_user->add_tradition($t1);
+    $dir->store( $openid_user );
 
     my $t2 = Text::Tradition->new( input => 'Tabular', sep_char => ',', 
     file => 't/data/florilegium.csv' );
     $t2->add_stemma( dotfile => 't/data/florilegium.dot' );
-
     $user->add_tradition($t2);
+    $dir->store( $user );
 
     return $dir;
 }
