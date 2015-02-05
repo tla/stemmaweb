@@ -43,6 +43,7 @@ requires 'LWP::Protocol::https';
 requires 'strictures';
 requires 'Crypt::OpenSSL::X509';
 requires 'Crypt::OpenSSL::RSA';
+requires 'IO::All';
 requires 'JSON::WebToken';
 requires 'JSON::MaybeXS';
 requires 'MIME::Base64';
