@@ -2,6 +2,7 @@
 
 BEGIN {
     $ENV{CATALYST_SCRIPT_GEN} = 40;
+    $DB::deep = 1000;
 }
 
 use Catalyst::ScriptRunner;
