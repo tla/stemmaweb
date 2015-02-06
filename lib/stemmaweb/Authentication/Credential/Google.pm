@@ -48,10 +48,17 @@ sub authenticate {
         Catalyst::Exception->throw("id_token not specified.");
     }
 
+    my $email = $authinfo->{email};
+    $email ||= $c->req->method eq 'GET' ? $c->req->query_params->{email} :
+    $c->req->body_params->{email};
+
     my $userinfo = $self->decode($id_token);
+    $userinfo->{email} = $authinfo->{email};
 
     my $sub = $userinfo->{sub};
     my $openid = $userinfo->{openid_id};
+
+    $userinfo->{email} = $email if $email;
 
     if (!$sub || !$openid) {
         Catalyst::Exception->throw(

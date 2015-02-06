@@ -2,9 +2,29 @@
 	pagetitle = "Stemmaweb - Sign in"
 	applicationstyle = c.uri_for('/css/auth.css')
 %]
-    <script type="text/javascript">
-$(document).ready(function() {
-    // call out to load the directory div
+
+<meta name="google-signin-clientid" content="[% google_client_id %]" />
+<meta name="google-signin-scope" content="https://www.googleapis.com/auth/plus.profile.emails.read" />
+<meta name="google-signin-requestvisibleactions" content="http://schema.org/AddAction" />
+<meta name="google-signin-cookiepolicy" content="single_host_origin" />
+<meta name="google-signin-openidrealm" content="[% c.uri_for('/') %]" />
+<script src="https://apis.google.com/js/client:platform.js?onload=render" async defer>
+</script>
+<script>
+ /* Executed when the APIs finish loading */
+ function render() {
+
+    document.getElementById('signinButton').disabled = false;
+   var additionalParams = {
+     'callback': googleSignIn
+   };
+
+   // Attach a click listener to a button to trigger the flow.
+   var signinButton = document.getElementById('signinButton');
+   signinButton.addEventListener('click', function() {
+     gapi.auth.signIn(additionalParams); // Will use page level configuration
+   });
+
     $('#login_actions').accordion();
     $('.login_button').button();
     $('#submit').button();
@@ -17,11 +37,13 @@ $(document).ready(function() {
     		e.preventDefault();
     	}, 2000 );
     }
-});
+ }
+</script>
+    <script type="text/javascript">
 
 	function googleSignIn(authResult) {
 		if (authResult['status']['signed_in']) {
-			document.getElementById('signinButton').setAttribute('style', 'display:none');
+			document.getElementById('signinButton').disabled = true;
 			gapi.client.load('plus', 'v1', function apiClientLoaded() {
 				gapi.client.plus.people.get({ userId: 'me'}).execute(function infoRetrieved(resp) {
 					var primaryEmail;
@@ -49,7 +71,6 @@ $(document).ready(function() {
 	}
 
     </script>
-	<script src="https://apis.google.com/js/client:platform.js" async defer></script>
 [% END %]
 	<div id="topbanner">
 		<h1>Stemmaweb - Sign in</h1>
@@ -78,18 +99,8 @@ $(document).ready(function() {
 	<h3><a href="#">Sign in with Google</a></h3>
 	<div>
 		<p>If you have a Google account, you may use it to sign into Stemmaweb.</p>
-		<span id="signinButton">
-			<span
-			class="g-signin"
-			data-callback="googleSignIn"
-			data-clientid="[% google_client_id %]"
-			data-cookiepolicy="single_host_origin"
-			data-requestvisibleactions="http://schema.org/AddAction"
-			data-scope="https://www.googleapis.com/auth/plus.profile.emails.read"
-			data-openidrealm="[% c.uri_for('/') %]"
-			>
-			</span>
-		</span>
+
+        <button disabled id="signinButton">Sign in with Google</button>
 		<form id="google_form" action="[% c.uri_for_action('/users/login') | html %]" method="post">
 			<input id='email' name='email' value='' type='hidden' />
 			<input id='id_token' name='id_token' value='' type='hidden' />
