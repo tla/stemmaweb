@@ -163,6 +163,9 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
     $ua->get('/logout');
 }
 
+my $openid_uid;
+my $gplus_uid;
+my %tradition_names;
 {
     diag("Test converting OpenID based Google account with traditions");
     my $scope = $dir->new_scope;
@@ -201,12 +204,27 @@ io("$FindBin::Bin/var")->rmtree if io("$FindBin::Bin/var")->exists;
         sub        => 450,
         email => 'openid@example.org'
     });
+    $openid_uid = $openid_u->kiokudb_object_id;
+    $gplus_uid = $gplus_u->kiokudb_object_id;
 
     foreach my $trad_id (0..$#{ $openid_u->traditions }) {
-        is($gplus_u->traditions->[$trad_id]->name, $openid_u->traditions->[$trad_id]->name, 'Traditions were copied over to G+ user');
+    	my $trad = $gplus_u->traditions->[$trad_id];
+    	$tradition_names{$trad->name} = 1;
+        is($trad->name, $openid_u->traditions->[$trad_id]->name, 'Traditions were copied over to G+ user');
     }
 
     $ua->get('/logout');
+}
+
+{ 
+	diag("Check that the user traditions were removed from the old user");
+	my $scope = $dir->new_scope;
+	my $openid_u = $dir->lookup( $openid_uid );
+	my $gplus_u = $dir->lookup( $gplus_uid );
+	is( scalar @{$openid_u->traditions}, 0, "Traditions were removed from old user" );
+	foreach my $tradition ( @{$gplus_u->traditions} ) {
+		ok( $tradition_names{ $tradition->name }, "Tradition has remained with new user" );
+	}
 }
 
 {
