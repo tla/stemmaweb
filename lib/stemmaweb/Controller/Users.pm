@@ -68,6 +68,9 @@ before login => sub {
     $c->req->param( realm => 'google');
   }
 
+  $c->stash->{baseu} = $c->req->base->clone;
+  $c->stash->{baseu}->path('/');
+
   $c->stash->{google_client_id} = $c->config->{'Authentication::Credential::Google'}->{client_id};
 };
 
