@@ -118,6 +118,9 @@ $(document).ready(function () {
 		<form id="reading_data_form" action="#">
 			<input type="hidden" name="reading_id" id="reading_id"/>
 			<div class="morph">
+				<input type="checkbox" name="reading_is_lemma" id="reading_is_lemma"/>
+				<label for="reading_is_lemma">Lemmatize this reading</label>
+				<br/>
 				<input type="checkbox" name="reading_is_nonsense" id="reading_is_nonsense"/>
 				<label for="reading_is_nonsense">This is a nonsense word</label>
 				<br/>

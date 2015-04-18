@@ -301,6 +301,7 @@ my %read_write_keys = (
 	'text' => 0,
 	'is_meta' => 0,
 	'grammar_invalid' => 1,
+	'is_lemma' => 'make_lemma',
 	'is_nonsense' => 1,
 	'normal_form' => 1,
 );
@@ -310,7 +311,8 @@ sub _reading_struct {
 	# Return a JSONable struct of the useful keys.  Keys meant to be writable
 	# have a true value; read-only keys have a false value.
 	my $struct = {};
-	map { $struct->{$_} = $reading->$_ if $reading->can( $_ ) } keys( %read_write_keys );
+	map { $struct->{$_} = $reading->$_ 
+		if $reading->can( $_ ) } keys( %read_write_keys );
 	# Special case
 	$struct->{'lexemes'} = $reading->can( 'lexemes' ) ? [ $reading->lexemes ] : [];
 	# Look up any words related via spelling or orthography
@@ -408,8 +410,9 @@ sub reading :Chained('text') :PathPart :Args(1) {
 						}
 						$lx->disambiguate( $idx ) if defined $idx;
 					} elsif( $read_write_keys{$p} ) {
+						my $method = $read_write_keys{$p} eq 1 ? $p : $read_write_keys{$p};
 						my $val = _clean_booleans( $rdg, $p, $c->request->param( $p ) );
-						$rdg->$p( $val );
+						$rdg->$method( $val );
 					}
 				}		
 			}

@@ -45,6 +45,7 @@ function node_dblclick_listener( evt ) {
   	// Set the easy properties first
   	$('#reading-form').dialog( 'option', 'title', 'Reading information for "' + reading_info['text'] + '"' );
   	$('#reading_id').val( reading_id );
+  	toggle_checkbox( $('#reading_is_lemma'), reading_info['is_lemma'] );
   	toggle_checkbox( $('#reading_is_nonsense'), reading_info['is_nonsense'] );
   	toggle_checkbox( $('#reading_grammar_invalid'), reading_info['grammar_invalid'] );
   	// Use .text as a backup for .normal_form
@@ -62,6 +63,7 @@ function node_dblclick_listener( evt ) {
   	morphology_form( reading_info['lexemes'] );
   	// and then open the dialog.
   	$('#reading-form').dialog("open");
+  	return false;
 }
 
 function toggle_checkbox( box, value ) {
@@ -182,7 +184,6 @@ function svgEnlargementLoaded() {
 	    $('#update_workspace_button').data('locked', false);
     	$('#update_workspace_button').css('background-position', '0px 44px');
     }
-    $('#svgenlargement ellipse').parent().dblclick( node_dblclick_listener );
     var graph_svg = $('#svgenlargement svg');
     var svg_g = $('#svgenlargement svg g')[0];
     if (!svg_g) return;
@@ -312,6 +313,7 @@ function node_obj(ellipse) {
           $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
           self.ellipse.siblings('text').attr('class', '');
           $(self.ellipse).parent().unbind(); 
+          $(self.ellipse).parent().dblclick(node_dblclick_listener);
           $('body').unbind('mousemove');
           $('body').unbind('mouseup');
       }
@@ -1320,6 +1322,7 @@ $(document).ready(function () {
 				var reading_id = $('#reading_id').val()
 				form_values = {
 					'id' : reading_id,
+					'is_lemma': $('#reading_is_lemma').is(':checked'),
 					'is_nonsense': $('#reading_is_nonsense').is(':checked'),
 					'grammar_invalid': $('#reading_grammar_invalid').is(':checked'),
 					'normal_form': $('#reading_normal_form').val() };
