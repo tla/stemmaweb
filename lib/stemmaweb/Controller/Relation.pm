@@ -410,13 +410,13 @@ sub reading :Chained('text') :PathPart :Args(1) {
 						}
 						$lx->disambiguate( $idx ) if defined $idx;
 					} elsif( $read_write_keys{$p} ) {
-						my $method = $read_write_keys{$p} eq 1 ? $p : $read_write_keys{$p};
+						my $meth = $read_write_keys{$p} eq 1 ? $p : $read_write_keys{$p};
 						my $val = _clean_booleans( $rdg, $p, $c->request->param( $p ) );
-						$rdg->$method( $val );
+						$rdg->$meth( $val );
 					}
 				}		
 			}
-			$m->save( $rdg );
+			$m->save( $tradition );
 		} else {
 			$errmsg = "Reading does not exist or cannot be morphologized";
 		}

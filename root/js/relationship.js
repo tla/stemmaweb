@@ -137,11 +137,15 @@ function color_inactive ( el ) {
 	// otherwise color it green.
 	$(el).attr( {stroke:'green', fill:'#b3f36d'} );
 	if( reading_info ) {
-		$.each( reading_info['lexemes'], function ( idx, lex ) {
-			if( !lex['is_disambiguated'] || lex['is_disambiguated'] == 0 ) {
-				$(el).attr( {stroke:'orange', fill:'#fee233'} );
-			}
-		});
+		if( reading_info['is_lemma'] ) {
+			$(el).attr( {stroke:'red', fill:'#f36d6f'} );
+		} else {
+			$.each( reading_info['lexemes'], function ( idx, lex ) {
+				if( !lex['is_disambiguated'] || lex['is_disambiguated'] == 0 ) {
+					$(el).attr( {stroke:'orange', fill:'#fee233'} );
+				}
+			});
+		}
 	}
 }
 
