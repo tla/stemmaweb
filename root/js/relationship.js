@@ -575,21 +575,13 @@ function relation_factory() {
         var relation_path = relation.children('path');
         if( !relation.data( 'active' ) ) {
             relation_path.css( {'cursor':'pointer'} );
-            relation_path.mouseenter( function(event) { 
-                outerTimer = setTimeout( function() { 
-                    timer = setTimeout( function() { 
-                        var related_nodes = get_related_nodes( relation_id );
-                        var source_node_id = related_nodes[0];
-                        var target_node_id = related_nodes[1];
-                        $('#delete_source_node_id').val( source_node_id );
-                        $('#delete_target_node_id').val( target_node_id );
-                        self.showinfo(relation); 
-                    }, 500 ) 
-                }, 1000 );
-            });
-            relation_path.mouseleave( function(event) {
-                clearTimeout(outerTimer); 
-                if( timer != null ) { clearTimeout(timer); } 
+            relation_path.click( function(event) { 
+				var related_nodes = get_related_nodes( relation_id );
+				var source_node_id = related_nodes[0];
+				var target_node_id = related_nodes[1];
+				$('#delete_source_node_id').val( source_node_id );
+				$('#delete_target_node_id').val( target_node_id );
+				self.showinfo(relation); 
             });
             relation.data( 'active', true );
         } else {
@@ -1214,7 +1206,7 @@ $(document).ready(function () {
     		$( this ).dialog( "option", "width", 200 );
     		buttonset.find( "button:contains('Delete')" ).show();
 		}    	
-        mouseWait = setTimeout( function() { $("#delete-form").dialog( "close" ) }, 2000 );
+        // mouseWait = setTimeout( function() { $("#delete-form").dialog( "close" ) }, 2000 );
     },
     close: function() {}
   });
