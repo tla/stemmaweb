@@ -91,7 +91,7 @@ $(document).ready(function () {
 			<label for="note">Annotation or note&nbsp;</label>
 			<textarea rows="3" style="width:100%;" name="annotation" id="note" class=".ui-widget input"></textarea>
 		</fieldset>
-    	<div id="status"></div>		
+    	<div id="dialog-form-status"></div>		
 		</form>
 	</div>
 	<div id="dialog_overlay"></div>
@@ -104,7 +104,9 @@ $(document).ready(function () {
 		<div id="delete-form-text">Type: <span id="delete_relation_type"></span><br/>
 		    Scope: <span id="delete_relation_scope"></span><br/>
 		    <span id="delete_relation_attributes"></span>
-		    <span id="delete_relation_note"></span></div>
+		    <span id="delete_relation_note"></span>
+		</div>
+		<div id="delete-form-status"></div>
 	</div>
 
 	<div id="multipleselect-form" title="Multiple nodes selected...">
@@ -143,8 +145,8 @@ $(document).ready(function () {
 				<div id="morphology"></div>
 			</div>
 			</select>
-			<div id="reading_status"></div>
 		</form>
+		<div id="reading-form-status"></div>
     </div>
 	
     <p/><p/>	

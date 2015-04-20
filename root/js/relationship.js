@@ -979,6 +979,24 @@ function readings_equivalent( source, target ) {
 	return false;
 }
 
+function display_error( event, jqXHR, status_div, condition, text ) {
+	if( condition() ) {
+			var error;
+			if( jqXHR.responseText.indexOf('do not have permission') > -1
+			 ) {
+				error = 'You are not authorized to modify this tradition. (Try logging in again?)';
+			} else {
+				try {
+					var errobj = jQuery.parseJSON( jqXHR.responseText );
+					error = errobj.error + '</br>' + text + '</p>';
+				} catch(e) {
+					error = jqXHR.responseText;
+				}
+			}
+			status_div.append( '<p class="error">Error: ' + error );
+		}
+		$(event.target).parent().find('.ui-button').button("enable");
+}
 
 $(document).ready(function () {
     
@@ -1135,6 +1153,7 @@ $(document).ready(function () {
 			buttonset.find( "button:contains('Merge readings')" ).hide();
 		}
 		$(".ui-widget-overlay").css("background", "none");
+		$("#dialog-form-status").empty();
 		$("#dialog_overlay").show();
 		$("#dialog_overlay").height( $("#enlargement_container").height() );
 		$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
@@ -1143,34 +1162,26 @@ $(document).ready(function () {
 	},
 	close: function() {
 		relation_manager.remove_temporary();
-		$( '#status' ).empty();
 		$("#dialog_overlay").hide();
 	}
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		if( ( ajaxSettings.url == getTextURL('relationships')
-			  || ajaxSettings.url == getTextURL('merge') )
-			&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-			var error;
-			if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
-				error = 'You are not authorized to modify this tradition. (Try logging in again?)';
-			} else {
-				try {
-					var errobj = jQuery.parseJSON( jqXHR.responseText );
-					error = errobj.error + '</br>The relationship cannot be made.</p>';
-				} catch(e) {
-					error = jqXHR.responseText;
-				}
+		condition = function() {
+			if( ( ajaxSettings.url == getTextURL('relationships')
+				  || ajaxSettings.url == getTextURL('merge') ) 
+				&& ajaxSettings.type == 'POST' ) {
+				return true;
 			}
-			$('#status').append( '<p class="error">Error: ' + error );
-		}
-		$(event.target).parent().find('.ui-button').button("enable");
+			return false;
+		};
+		message = 'The relationship cannot be made.';
+		display_error( event, jqXHR, $('#dialog-form-status'), condition, message )
 	} );
   }
 
   // Set up the relationship info display and deletion dialog.  
   $( "#delete-form" ).dialog({
     autoOpen: false,
-    height: 135,
+    height: 200,
     width: 300,
     modal: false,
     buttons: {
@@ -1209,12 +1220,38 @@ $(document).ready(function () {
     	} else {
     		$( this ).dialog( "option", "width", 200 );
     		buttonset.find( "button:contains('Delete')" ).show();
-		}    	
+		}
+		$('#delete-form-status').empty();	
         // mouseWait = setTimeout( function() { $("#delete-form").dialog( "close" ) }, 2000 );
     },
     close: function() {}
+  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+  	condition = function() {
+			if( ajaxSettings.url == getTextURL('relationships')
+				&& ajaxSettings.type == 'DELETE' ) {
+				return true;
+			}
+			return false;
+		};
+		message = 'The relationship cannot be removed.';
+		display_error( event, jqXHR, $('#delete-form-status'), condition, message );
   });
 
+  // Helper for relationship deletion
+  function delete_relation( scopewide ) {
+	  form_values = $('#delete_relation_form').serialize();
+	  if( scopewide ) {
+	  	form_values += "&scopewide=true";
+	  }
+	  ncpath = getTextURL( 'relationships' );
+	  var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
+		  $.each( data, function(item, source_target) { 
+			  relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
+		  });
+		  $( "#delete-form" ).dialog( "close" );
+	  }, dataType: 'json', type: 'DELETE' });
+  }
+  
   $( "#multipleselect-form" ).dialog({
     autoOpen: false,
     height: 150,
@@ -1253,50 +1290,17 @@ $(document).ready(function () {
         $("#dialog_overlay").hide();
     }
   }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-    if( ajaxSettings.url == getTextURL('duplicate') 
-      && ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-      var error;
-      if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
-        error = 'You are not authorized to modify this tradition. (Try logging in again?)';
-      } else {
-        try {
-          var errobj = jQuery.parseJSON( jqXHR.responseText );
-          error = errobj.error + '</br>The relationship cannot be made.</p>';
-        } catch(e) {
-          error = jqXHR.responseText;
-        }
-      }
-      $('#multipleselect-form-status').append( '<p class="error">Error: ' + error );
-    }
-    $(event.target).parent().find('.ui-button').button("enable");
+		condition = function() {
+			if( ajaxSettings.url == getTextURL('duplicate') && 
+				ajaxSettings.type == 'POST' ) {
+				return true;
+			}
+			return false;
+		};
+		message = 'The readings cannot be duplicated.';
+		display_error( event, jqXHR, $('#multipleselect-form-status'), condition, message );
   }); 
 
-
-  // Helpers for relationship deletion
-  
-  function delete_relation( scopewide ) {
-	  form_values = $('#delete_relation_form').serialize();
-	  if( scopewide ) {
-	  	form_values += "&scopewide=true";
-	  }
-	  ncpath = getTextURL( 'relationships' );
-	  var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
-		  $.each( data, function(item, source_target) { 
-			  relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
-		  });
-		  $( "#delete-form" ).dialog( "close" );
-	  }, dataType: 'json', type: 'DELETE' });
-  }
-  
-  function toggle_relation_active( node_id ) {
-      $('#svgenlargement .relation').find( "title:contains('" + node_id +  "')" ).each( function(index) {
-          matchid = new RegExp( "^" + node_id );
-          if( $(this).text().match( matchid ) != null ) {
-          	  var relation_id = $(this).parent().attr('id');
-              relation_manager.toggle_active( relation_id );
-          };
-      });
-  }
 
   // function for reading form dialog should go here; 
   // just hide the element for now if we don't have morphology
@@ -1359,7 +1363,7 @@ $(document).ready(function () {
 		open: function() {
 			$(".ui-widget-overlay").css("background", "none");
 			$("#dialog_overlay").show();
-			$('#reading_status').empty();
+			$('#reading-form-status').empty();
 			$("#dialog_overlay").height( $("#enlargement_container").height() );
 			$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
 			$("#dialog_overlay").offset( $("#enlargement_container").offset() );
@@ -1369,22 +1373,15 @@ $(document).ready(function () {
 			$("#dialog_overlay").hide();
 		}
 	  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1
-			&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-			var error;
-			if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
-				error = 'You are not authorized to modify this tradition. (Try logging in again?)';
-			} else {
-				try {
-					var errobj = jQuery.parseJSON( jqXHR.responseText );
-					error = errobj.error + '</br>The relationship cannot be made.</p>';
-				} catch(e) {
-					error = jqXHR.responseText;
-				}
+		condition = function() {
+			if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1 &&
+				ajaxSettings.type == 'POST' ) {
+				return true;
 			}
-			$('#status').append( '<p class="error">Error: ' + error );
-		}
-		$(event.target).parent().find('.ui-button').button("enable");
+			return false;
+		};
+		message = 'The reading data cannot be saved.';
+		display_error( event, jqXHR, $('#reading-form-status'), condition, message );
 	  });
 	} else {
 		$('#reading-form').hide();
@@ -1437,6 +1434,16 @@ $(document).ready(function () {
          $(this).data('locked', true );
      }
   });
+  // Helper for #update_workspace_button
+  function toggle_relation_active( node_id ) {
+      $('#svgenlargement .relation').find( "title:contains('" + node_id +  "')" ).each( function(index) {
+          matchid = new RegExp( "^" + node_id );
+          if( $(this).text().match( matchid ) != null ) {
+          	  var relation_id = $(this).parent().attr('id');
+              relation_manager.toggle_active( relation_id );
+          };
+      });
+  }
 
   if( !editable ) {  
     // Hide the unused elements
