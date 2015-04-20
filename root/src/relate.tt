@@ -61,7 +61,7 @@ $(document).ready(function () {
 	<div id="update_workspace_button"></div>
 	
 	<div id="dialog-form" title="Create relation between two nodes...">
-		<form id="collapse_node_form" action="#">
+		<form id="merge_node_form" action="#">
 		<fieldset>
 			<input type="hidden" name="source_id" id="source_node_id"/>
 			<input type="hidden" name="source_text" id="source_node_text"/>

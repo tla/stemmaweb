@@ -1087,7 +1087,7 @@ $(document).ready(function () {
 	  	  var mybuttons = $(evt.target).closest('button').parent().find('button');
 		  mybuttons.button( 'disable' );
 		  $( '#status' ).empty();
-		  form_values = $( '#collapse_node_form' ).serialize();
+		  form_values = $( '#merge_node_form' ).serialize();
 		  ncpath = getTextURL( 'merge' );
 		  var jqjson = $.post( ncpath, form_values, function( data ) {
 			  merge_nodes( $( '#source_node_id' ).val(), $( '#target_node_id' ).val(), data );
@@ -1099,7 +1099,7 @@ $(document).ready(function () {
 	  	var mybuttons = $(evt.target).closest('button').parent().find('button');
 		mybuttons.button( 'disable' );
 		$( '#status' ).empty();
-		form_values = $( '#collapse_node_form' ).serialize();
+		form_values = $( '#merge_node_form' ).serialize();
 		ncpath = getTextURL( 'relationships' );
 		var jqjson = $.post( ncpath, form_values, function( data ) {
 			$.each( data, function( item, source_target ) { 
@@ -1110,7 +1110,7 @@ $(document).ready(function () {
 					var emphasis = $('#is_significant option:selected').attr('value');
 					var relation = relation_manager.create( source_target[0], source_target[1], relation_found, emphasis );
 					relation_manager.toggle_active( relation.attr('id') );
-					$.each( $('#collapse_node_form').serializeArray(), function( i, k ) {
+					$.each( $('#merge_node_form').serializeArray(), function( i, k ) {
 						relation.data( k.name, k.value );
 					});
 				}
