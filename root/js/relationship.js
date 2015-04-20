@@ -573,28 +573,17 @@ function relation_factory() {
         var relation = draw_relation( source_node_id, target_node_id, relation_color, emphasis );
         get_node_obj( source_node_id ).update_elements();
         get_node_obj( target_node_id ).update_elements();
+        // Set the relationship info box on click.
+        relation.children('path').css( {'cursor':'pointer'} );
+        relation.children('path').click( function(event) { 
+            var related_nodes = get_related_nodes( relation.attr('id') );
+            var source_node_id = related_nodes[0];
+            var target_node_id = related_nodes[1];
+            $('#delete_source_node_id').val( source_node_id );
+            $('#delete_target_node_id').val( target_node_id );
+            self.showinfo(relation); 
+        });
         return relation;
-    }
-    this.toggle_active = function( relation_id ) {
-        var relation = $( jq( relation_id ) );
-        var relation_path = relation.children('path');
-        if( !relation.data( 'active' ) ) {
-            relation_path.css( {'cursor':'pointer'} );
-            relation_path.click( function(event) { 
-				var related_nodes = get_related_nodes( relation_id );
-				var source_node_id = related_nodes[0];
-				var target_node_id = related_nodes[1];
-				$('#delete_source_node_id').val( source_node_id );
-				$('#delete_target_node_id').val( target_node_id );
-				self.showinfo(relation); 
-            });
-            relation.data( 'active', true );
-        } else {
-            relation_path.unbind( 'mouseenter' );
-            relation_path.unbind( 'mouseleave' );
-            relation_path.css( {'cursor':'inherit'} );
-            relation.data( 'active', false );
-        }
     }
     this.showinfo = function(relation) {
     	$('#delete_relation_type').text( relation.data('type') );
@@ -1109,7 +1098,6 @@ $(document).ready(function () {
 				if( source_found.size() && target_found.size() && relation_found > -1 ) {
 					var emphasis = $('#is_significant option:selected').attr('value');
 					var relation = relation_manager.create( source_target[0], source_target[1], relation_found, emphasis );
-					relation_manager.toggle_active( relation.attr('id') );
 					$.each( $('#merge_node_form').serializeArray(), function( i, k ) {
 						relation.data( k.name, k.value );
 					});
@@ -1402,8 +1390,6 @@ $(document).ready(function () {
                  $(this).data( 'node_obj' ).ungreyout_edges();
                  $(this).data( 'node_obj' ).set_selectable( false );
                  color_inactive( $(this) );
-                 var node_id = $(this).data( 'node_obj' ).get_id();
-                 toggle_relation_active( node_id );
                  $(this).data( 'node_obj', null );
              }
          })
@@ -1428,24 +1414,12 @@ $(document).ready(function () {
                      $(this).data( 'node_obj' ).set_selectable( true );
                  }
                  $(this).data( 'node_obj' ).greyout_edges();
-                 var node_id = $(this).data( 'node_obj' ).get_id();
-                 toggle_relation_active( node_id );
              }
          });
          $(this).css('background-position', '0px 0px');
          $(this).data('locked', true );
      }
   });
-  // Helper for #update_workspace_button
-  function toggle_relation_active( node_id ) {
-      $('#svgenlargement .relation').find( "title:contains('" + node_id +  "')" ).each( function(index) {
-          matchid = new RegExp( "^" + node_id );
-          if( $(this).text().match( matchid ) != null ) {
-          	  var relation_id = $(this).parent().attr('id');
-              relation_manager.toggle_active( relation_id );
-          };
-      });
-  }
 
   if( !editable ) {  
     // Hide the unused elements
