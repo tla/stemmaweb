@@ -222,6 +222,7 @@ function svgEnlargementLoaded() {
         var rdgpath = getTextURL( 'readings' );
         $.getJSON( rdgpath, function( data ) {
             readingdata = data;
+            $('#svgenlargement ellipse').parent().dblclick(node_dblclick_listener);
             $('#svgenlargement ellipse').each( function( i, el ) { color_inactive( el ) });
             $('#loading_overlay').hide(); 
         });
@@ -1072,7 +1073,9 @@ $(document).ready(function () {
   
   // Set up the relationship creation dialog. This also functions as the reading
   // merge dialog where appropriate.
-			  
+  // dialog-form (relationship creation) and multiselect should only be set up
+  // if the tradition is editable. delete-form (relationship info) and reading-form
+  // should be set up in all cases.
   if( editable ) {
 	$( '#dialog-form' ).dialog( {
 	autoOpen: false,
@@ -1176,12 +1179,61 @@ $(document).ready(function () {
 		message = 'The relationship cannot be made.';
 		display_error( event, jqXHR, $('#dialog-form-status'), condition, message )
 	} );
+	
+	$( "#multipleselect-form" ).dialog({
+		autoOpen: false,
+		height: 150,
+		width: 250,
+		modal: true,
+		buttons: {
+			Cancel: function() { $( this ).dialog( "close" ); },
+			Detach: function ( evt ) { 
+				var self = $(this);
+				var mybuttons = $(evt.target).closest('button').parent().find('button');
+				mybuttons.button( 'disable' );
+				var form_values = $('#detach_collated_form').serialize();
+				ncpath = getTextURL( 'duplicate' );
+				var jqjson = $.post( ncpath, form_values, function(data) {
+					detach_node( data );
+					mybuttons.button("enable");
+					self.dialog( "close" );
+				} );
+			}
+		},
+		create: function(event, ui) {
+			var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
+			buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
+		},
+		open: function() {
+			$( this ).dialog( "option", "width", 200 );
+			$(".ui-widget-overlay").css("background", "none");
+			$('#multipleselect-form-status').empty();
+			$("#dialog_overlay").show();
+			$("#dialog_overlay").height( $("#enlargement_container").height() );
+			$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
+			$("#dialog_overlay").offset( $("#enlargement_container").offset() );
+		},
+		close: function() { 
+			marquee.unselect();
+			$("#dialog_overlay").hide();
+		}
+	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+		condition = function() {
+			if( ajaxSettings.url == getTextURL('duplicate') && 
+				ajaxSettings.type == 'POST' ) {
+				return true;
+			}
+			return false;
+		};
+		message = 'The readings cannot be duplicated.';
+		display_error( event, jqXHR, $('#multipleselect-form-status'), condition, message );
+	}); 
   }
 
   // Set up the relationship info display and deletion dialog.  
   $( "#delete-form" ).dialog({
     autoOpen: false,
-    height: 200,
+    height: 150,
     width: 300,
     modal: false,
     buttons: {
@@ -1252,56 +1304,6 @@ $(document).ready(function () {
 	  }, dataType: 'json', type: 'DELETE' });
   }
   
-  $( "#multipleselect-form" ).dialog({
-    autoOpen: false,
-    height: 150,
-    width: 250,
-    modal: true,
-    buttons: {
-        Cancel: function() { $( this ).dialog( "close" ); },
-        Detach: function ( evt ) { 
-            var self = $(this);
-	  		var mybuttons = $(evt.target).closest('button').parent().find('button');
-			mybuttons.button( 'disable' );
-            var form_values = $('#detach_collated_form').serialize();
-            ncpath = getTextURL( 'duplicate' );
-            var jqjson = $.post( ncpath, form_values, function(data) {
-                detach_node( data );
-                mybuttons.button("enable");
-                self.dialog( "close" );
-            } );
-        }
-    },
-    create: function(event, ui) {
-        var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
-        buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
-    },
-    open: function() {
-        $( this ).dialog( "option", "width", 200 );
-        $(".ui-widget-overlay").css("background", "none");
-        $('#multipleselect-form-status').empty();
-        $("#dialog_overlay").show();
-        $("#dialog_overlay").height( $("#enlargement_container").height() );
-        $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
-        $("#dialog_overlay").offset( $("#enlargement_container").offset() );
-    },
-    close: function() { 
-        marquee.unselect();
-        $("#dialog_overlay").hide();
-    }
-  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		condition = function() {
-			if( ajaxSettings.url == getTextURL('duplicate') && 
-				ajaxSettings.type == 'POST' ) {
-				return true;
-			}
-			return false;
-		};
-		message = 'The readings cannot be duplicated.';
-		display_error( event, jqXHR, $('#multipleselect-form-status'), condition, message );
-  }); 
-
-
   // function for reading form dialog should go here; 
   // just hide the element for now if we don't have morphology
   if( can_morphologize ) {
@@ -1343,12 +1345,12 @@ $(document).ready(function () {
 						reading_element[key] = value;
 					});
 					if( $('#update_workspace_button').data('locked') == false ) {
+						// Re-color the node if necessary
 						color_inactive( get_ellipse( reading_id ) );
 					}
 					mybuttons.button("enable");
 					$( "#reading-form" ).dialog( "close" );
 				});
-				// Re-color the node if necessary
 				return false;
 			}
 		},
@@ -1448,6 +1450,7 @@ $(document).ready(function () {
   if( !editable ) {  
     // Hide the unused elements
     $('#dialog-form').hide();
+    $('#multipleselect-form').hide();
     $('#update_workspace_button').hide();
   }
 
