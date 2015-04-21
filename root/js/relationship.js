@@ -1157,12 +1157,9 @@ $(document).ready(function () {
 	}
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		condition = function() {
-			if( ( ajaxSettings.url == getTextURL('relationships')
-				  || ajaxSettings.url == getTextURL('merge') ) 
-				&& ajaxSettings.type == 'POST' ) {
-				return true;
-			}
-			return false;
+			return (ajaxSettings.url == getTextURL('relationships') || 
+					ajaxSettings.url == getTextURL('merge') ) && 
+				  ajaxSettings.type == 'POST';
 		};
 		message = 'The relationship cannot be made.';
 		display_error( event, jqXHR, $('#dialog-form-status'), condition, message )
@@ -1207,11 +1204,8 @@ $(document).ready(function () {
 		}
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		condition = function() {
-			if( ajaxSettings.url == getTextURL('duplicate') && 
-				ajaxSettings.type == 'POST' ) {
-				return true;
-			}
-			return false;
+			return ajaxSettings.url == getTextURL('duplicate') && 
+				ajaxSettings.type == 'POST';
 		};
 		message = 'The readings cannot be duplicated.';
 		display_error( event, jqXHR, $('#multipleselect-form-status'), condition, message );
@@ -1267,11 +1261,8 @@ $(document).ready(function () {
     close: function() {}
   }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
   	condition = function() {
-			if( ajaxSettings.url == getTextURL('relationships')
-				&& ajaxSettings.type == 'DELETE' ) {
-				return true;
-			}
-			return false;
+			return ajaxSettings.url == getTextURL('relationships') && 
+				ajaxSettings.type == 'DELETE';
 		};
 		message = 'The relationship cannot be removed.';
 		display_error( event, jqXHR, $('#delete-form-status'), condition, message );
@@ -1364,11 +1355,8 @@ $(document).ready(function () {
 		}
 	  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		condition = function() {
-			if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1 &&
-				ajaxSettings.type == 'POST' ) {
-				return true;
-			}
-			return false;
+			return ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1 &&
+				ajaxSettings.type == 'POST';
 		};
 		message = 'The reading data cannot be saved.';
 		display_error( event, jqXHR, $('#reading-form-status'), condition, message );
