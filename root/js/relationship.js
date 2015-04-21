@@ -1239,8 +1239,15 @@ $(document).ready(function () {
     modal: false,
     buttons: {
         OK: function() { $( this ).dialog( "close" ); },
-        "Delete all": function () { delete_relation( true ); },
-        Delete: function() { delete_relation( false ); }
+        "Delete all": function () { 
+			form_values = $('#delete_relation_form').serialize();
+			form_values += "&scopewide=true";
+        	delete_relation( form_values ); 
+        },
+        Delete: function() { 
+			form_values = $('#delete_relation_form').serialize();
+	        delete_relation( form_values ); 
+	    }
     },
     create: function(event, ui) {
     	// TODO What is this logic doing?
@@ -1288,11 +1295,7 @@ $(document).ready(function () {
   });
 
   // Helper for relationship deletion
-  function delete_relation( scopewide ) {
-	  form_values = $('#delete_relation_form').serialize();
-	  if( scopewide ) {
-	  	form_values += "&scopewide=true";
-	  }
+  function delete_relation( form_values ) {
 	  ncpath = getTextURL( 'relationships' );
 	  var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
 		  $.each( data, function(item, source_target) { 
@@ -1388,33 +1391,42 @@ $(document).ready(function () {
   
 	// Set up the keyboard shortcuts.
 	$(document).bind( 'keypress', function( event ) {
-  		if( event.which == '108' ) {
-  			// L for making a Lemma
-  			$.each( readings_selected, function( i, reading_id ) {
-  				// need current state of lemmatization
-				var reading_element = readingdata[reading_id];
-				var set_lemma = !reading_element['is_lemma']
-  				var ncpath = getReadingURL( reading_id );
-  				var form_values = {
-  					'id': reading_id,
-  					'is_lemma': set_lemma,
-  				};
-				var jqjson = $.post( ncpath, form_values, function(data) {
-					$.each( data, function(key, value) { 
-						reading_element[key] = value;
+		if(!$(".ui-dialog").is(":visible")){
+			if( event.which == '108' ) {
+				// L for making a Lemma
+				$.each( readings_selected, function( i, reading_id ) {
+					// need current state of lemmatization
+					var reading_element = readingdata[reading_id];
+					var set_lemma = !reading_element['is_lemma']
+					var ncpath = getReadingURL( reading_id );
+					var form_values = {
+						'id': reading_id,
+						'is_lemma': set_lemma,
+					};
+					var jqjson = $.post( ncpath, form_values, function(data) {
+						$.each( data, function(key, value) { 
+							reading_element[key] = value;
+						});
+						if( $('#update_workspace_button').data('locked') ) {
+							color_active( get_ellipse( reading_id ) );
+						} else {
+							// Re-color the node if necessary
+							color_inactive( get_ellipse( reading_id ) );
+						}
 					});
-					if( $('#update_workspace_button').data('locked') ) {
-						color_active( get_ellipse( reading_id ) );
-					} else {
-						// Re-color the node if necessary
-						color_inactive( get_ellipse( reading_id ) );
-					}
 				});
-  			});
-  		} else if( event.which == '100' ) {
-  			// D for Detach
-  			$('#multipleselect-form').dialog( 'open' );
-  		}   // TODO also do C for Compress and maybe S for Split?
+			} else if( event.which == '100' ) {
+				// D for Detach
+				$('#multipleselect-form').dialog( 'open' );
+			} else if( event.which == '120' ) {
+				// X for eXpunge relationships
+				$.each( readings_selected, function( i, reading_id ) {
+					var form_values = 'from_reading=' + reading_id;
+					delete_relation( form_values );
+				});
+			}
+			// TODO also do C for Compress and maybe S for Split?
+		}
   	});
 
   $('#update_workspace_button').click( function() {

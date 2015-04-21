@@ -268,20 +268,41 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 				$c->stash->{'result'} = { error => "Something went wrong with the request" };
 			}
 		} elsif( $c->request->method eq 'DELETE' ) {
-			my $node = $c->request->param('source_id');
-			my $target = $c->request->param('target_id');
-			my $scopewide = $c->request->param('scopewide') 
+			# We can delete either by specifying the relationship or by
+			# specifying a reading, and deleting all relationships of that
+			# reading.
+			my( @pairs, $scopewide );
+			my $rdg_id = $c->request->param('from_reading');
+			if( $rdg_id ) {
+				my $rdg = $collation->reading( $rdg_id );
+				foreach my $target ( $rdg->related_readings() ) {
+					push( @pairs, [ $rdg, $target ] );
+				}
+			} else {
+				my $node = $c->request->param('source_id');
+				my $target = $c->request->param('target_id');
+				push( @pairs, [ $node, $target ] );
+			}
+			$scopewide = $c->request->param('scopewide') 
 				&& $c->request->param('scopewide') eq 'true';
-			try {
-				my @vectors = $collation->del_relationship( $node, $target, $scopewide );
+			my @vectors;
+			foreach my $pair ( @pairs ) {
+				my( $node, $target ) = @$pair;
+				try {
+					push( @vectors, $collation->del_relationship( $node, $target, $scopewide ) );
+				} catch( Text::Tradition::Error $e ) {
+					$c->response->status( 403 );
+					$c->stash->{'result'} = { 'error' => $e->message };
+				} catch {
+					$c->response->status( 500 );
+					$c->stash->{'result'} = { error => "Something went wrong with the request" };
+				}
+			}
+			unless( $c->response->status > 400 ) {
+				# If we haven't trapped an error, save the tradition and 
+				# stash the result.
 				$m->save( $tradition );
 				$c->stash->{'result'} = \@vectors;
-			} catch( Text::Tradition::Error $e ) {
-				$c->response->status( '403' );
-				$c->stash->{'result'} = { 'error' => $e->message };
-			} catch {
-				$c->response->status( '500' );
-				$c->stash->{'result'} = { error => "Something went wrong with the request" };
 			}
 		}
 	}
