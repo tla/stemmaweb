@@ -4,6 +4,7 @@ var svg_root_element = null;
 var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
+var readings_selected = [];
 
 jQuery.removeFromArray = function(value, arr) {
     return jQuery.grep(arr, function(elem, index) {
@@ -145,6 +146,19 @@ function color_inactive ( el ) {
 					$(el).attr( {stroke:'orange', fill:'#fee233'} );
 				}
 			});
+		}
+	}
+}
+
+function color_active ( el ) {
+	var reading_id = $(el).parent().attr('id');
+	var reading_info = readingdata[reading_id];
+	// If the reading info is a lemma, color it a light shade of red;
+	// otherwise color it white.
+	$(el).attr( {stroke:'black', fill:'#fff'} );
+	if( reading_info ) {
+		if( reading_info['is_lemma'] ) {
+			$(el).attr( {stroke:'red', fill:'#ffdddd'} );
 		}
 	}
 }
@@ -301,8 +315,9 @@ function node_obj(ellipse) {
   }
   
   this.set_selectable = function( clickable ) {
+  	  color_active( $(self.ellipse) );
       if( clickable && editable ) {
-          $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
+          // $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
           $(self.ellipse).parent().hover( this.enter_node, this.leave_node );
           $(self.ellipse).parent().mousedown( function(evt) { evt.stopPropagation() } ); 
           $(self.ellipse).parent().click( function(evt) { 
@@ -312,10 +327,11 @@ function node_obj(ellipse) {
                     $(this).data( 'node_obj' ).set_draggable( false );
                 } );
               }
-              self.set_draggable( true ) 
+              self.set_draggable( true )
+              readings_selected = [ self.get_id() ]
           });
       } else {
-          $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
+          // $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
           self.ellipse.siblings('text').attr('class', '');
           $(self.ellipse).parent().unbind(); 
           $(self.ellipse).parent().dblclick(node_dblclick_listener);
@@ -879,6 +895,7 @@ function Marquee() {
         if( rect.length != 0 ) {
             //unselect any possible selected first
             //TODO: unless SHIFT?
+            readings_selected = []
             if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
               $('ellipse[fill="#9999ff"]').each( function() { 
                   $(this).data( 'node_obj' ).set_draggable( false );
@@ -899,9 +916,7 @@ function Marquee() {
             p.y=bottom;
             var cx_max = p.matrixTransform(tf).x;
             var cy_max = p.matrixTransform(tf).y;
-            //select any node with its center inside the marquee
-            var readings = [];
-            //also merge witness sets from nodes
+            // Local variable for witness sigla, for the HTML form
             var witnesses = [];
             $('#svgenlargement ellipse').each( function( index ) {
                 var cx = parseInt( $(this).attr('cx') );
@@ -915,13 +930,14 @@ function Marquee() {
                     cy = cy + org_translate[1];
                 }
                 
-                if( cx > cx_min && cx < cx_max) {
+	           //select any node with its center inside the marquee
+               if( cx > cx_min && cx < cx_max) {
                     if( cy > cy_min && cy < cy_max) {
                         // we actually heve no real 'selected' state for nodes, except coloring
                         $(this).attr( 'fill', '#9999ff' );
                         // Take note of the selected reading(s) and applicable witness(es)
                         // so we can populate the multipleselect-form 
-                        readings.push( $(this).parent().attr('id') ); 
+                        readings_selected.push( $(this).parent().attr('id') ); 
                         var this_witnesses = $(this).data( 'node_obj' ).get_witnesses();
                         witnesses = arrayUnique( witnesses.concat( this_witnesses ) );
                     }
@@ -930,7 +946,7 @@ function Marquee() {
             if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
                 //add intersection of witnesses sets to the multi select form and open it
                 $('#detach_collated_form').empty();
-                $.each( readings, function( index, value ) {
+                $.each( readings_selected, function( index, value ) {
                   $('#detach_collated_form').append( $('<input>').attr(
                     "type", "hidden").attr("name", "readings[]").attr(
                     "value", value ) );
@@ -940,15 +956,19 @@ function Marquee() {
                       '<input type="checkbox" name="witnesses[]" value="' + value 
                       + '">' + value + '<br>' ); 
                 });
-                $('#multiple_selected_readings').attr('value', readings.join(',') ); 
-                $('#multipleselect-form').dialog( 'open' );
+                $('#multiple_selected_readings').attr('value', readings_selected.join(',') ); 
+                // Form will open on keypress.
+                // $('#multipleselect-form').dialog( 'open' );
             }
             self.svg_rect.remove( $('#marquee') );
         }
     };
     
     this.unselect = function() {
-        $('ellipse[fill="#9999ff"]').attr( 'fill', '#fff' );
+    	$.each( readings_selected, function( i, reading ) {
+    		get_ellipse( reading ).attr( 'fill', '#fff' );
+    	});
+    	readings_selected = [];
     }
      
 }
@@ -1060,9 +1080,8 @@ $(document).ready(function () {
   });
   
   
-  // Set up the relationship creation dialog. This also functions as the reading
-  // merge dialog where appropriate.
-  // dialog-form (relationship creation) and multiselect should only be set up
+  // Set up the various dialog boxes.
+  // dialog-form (relationship creation/merge) and multiselect should only be set up
   // if the tradition is editable. delete-form (relationship info) and reading-form
   // should be set up in all cases.
   if( editable ) {
@@ -1326,6 +1345,8 @@ $(document).ready(function () {
 					if( $('#update_workspace_button').data('locked') == false ) {
 						// Re-color the node if necessary
 						color_inactive( get_ellipse( reading_id ) );
+					} else {
+						color_active( get_ellipse( reading_id ) );
 					}
 					mybuttons.button("enable");
 					$( "#reading-form" ).dialog( "close" );
@@ -1365,6 +1386,36 @@ $(document).ready(function () {
 		$('#reading-form').hide();
 	}
   
+	// Set up the keyboard shortcuts.
+	$(document).bind( 'keypress', function( event ) {
+  		if( event.which == '108' ) {
+  			// L for making a Lemma
+  			$.each( readings_selected, function( i, reading_id ) {
+  				// need current state of lemmatization
+				var reading_element = readingdata[reading_id];
+				var set_lemma = !reading_element['is_lemma']
+  				var ncpath = getReadingURL( reading_id );
+  				var form_values = {
+  					'id': reading_id,
+  					'is_lemma': set_lemma,
+  				};
+				var jqjson = $.post( ncpath, form_values, function(data) {
+					$.each( data, function(key, value) { 
+						reading_element[key] = value;
+					});
+					if( $('#update_workspace_button').data('locked') ) {
+						color_active( get_ellipse( reading_id ) );
+					} else {
+						// Re-color the node if necessary
+						color_inactive( get_ellipse( reading_id ) );
+					}
+				});
+  			});
+  		} else if( event.which == '100' ) {
+  			// D for Detach
+  			$('#multipleselect-form').dialog( 'open' );
+  		}   // TODO also do C for Compress and maybe S for Split?
+  	});
 
   $('#update_workspace_button').click( function() {
   	 if( !editable ) {
