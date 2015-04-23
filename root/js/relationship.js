@@ -320,7 +320,6 @@ function node_obj(ellipse) {
   this.set_selectable = function( clickable ) {
   	  color_active( $(self.ellipse) );
       if( clickable && editable ) {
-          // $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
           $(self.ellipse).parent().hover( this.enter_node, this.leave_node );
           $(self.ellipse).parent().mousedown( function(evt) { evt.stopPropagation() } ); 
           $(self.ellipse).parent().click( function(evt) { 
@@ -334,7 +333,6 @@ function node_obj(ellipse) {
               readings_selected = [ self.get_id() ]
           });
       } else {
-          // $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
           self.ellipse.siblings('text').attr('class', '');
           $(self.ellipse).parent().unbind(); 
           $(self.ellipse).parent().dblclick(node_dblclick_listener);
@@ -350,7 +348,7 @@ function node_obj(ellipse) {
       $(self.ellipse).parent().unbind( 'mouseenter' ).unbind( 'mouseleave' );
       self.ellipse.siblings('text').attr('class', 'noselect draggable');
     } else {
-      $(self.ellipse).attr( {stroke:'black', fill:'#fff'} );
+      color_active( $(self.ellipse) );
       self.ellipse.siblings('text').attr('class', '');
       $(self.ellipse).parent().unbind( 'mousedown ');
       $(self.ellipse).parent().mousedown( function(evt) { evt.stopPropagation() } ); 
@@ -412,7 +410,7 @@ function node_obj(ellipse) {
   }
 
   this.leave_node = function(evt) {
-    self.ellipse.attr( 'fill', '#fff' );
+    color_active( self.ellipse );
   }
 
   this.greyout_edges = function() {
@@ -969,7 +967,7 @@ function Marquee() {
     
     this.unselect = function() {
     	$.each( readings_selected, function( i, reading ) {
-    		get_ellipse( reading ).attr( 'fill', '#fff' );
+    		color_active( get_ellipse( reading ) );
     	});
     	readings_selected = [];
     }
