@@ -257,8 +257,13 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 			$opts->{propagate} = 1;
 			
 			try {
-				my @vectors = $collation->add_relationship( $node, $target, $opts );
-				$c->stash->{'result'} = \@vectors;
+				my @changed_readings = ();
+				my @vectors = $collation->add_relationship( 
+					$node, $target, $opts, \@changed_readings );
+				$c->stash->{'result'} = {
+					relationships => \@vectors,
+					readings => [ map { _reading_struct( $_ ) } @changed_readings ],
+				};
 				$m->save( $tradition );
 			} catch( Text::Tradition::Error $e ) {
 				$c->response->status( '403' );
@@ -302,7 +307,7 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 				# If we haven't trapped an error, save the tradition and 
 				# stash the result.
 				$m->save( $tradition );
-				$c->stash->{'result'} = \@vectors;
+				$c->stash->{'result'} = { relationships => \@vectors };
 			}
 		}
 	}
@@ -327,12 +332,17 @@ my %read_write_keys = (
 	'normal_form' => 1,
 );
 
+my %has_side_effect = (
+	'make_lemma' => 1,
+	'normal_form' => 1,
+);
+
 sub _reading_struct {
 	my( $reading ) = @_;
 	# Return a JSONable struct of the useful keys.  Keys meant to be writable
 	# have a true value; read-only keys have a false value.
 	my $struct = {};
-	map { $struct->{$_} = $reading->$_ 
+	map { $struct->{$_} = _clean_booleans( $reading, $_, $reading->$_ )
 		if $reading->can( $_ ) } keys( %read_write_keys );
 	# Special case
 	$struct->{'lexemes'} = $reading->can( 'lexemes' ) ? [ $reading->lexemes ] : [];
@@ -395,18 +405,19 @@ sub reading :Chained('text') :PathPart :Args(1) {
 			return;
 		}
 		my $errmsg;
+		my %changed_readings = ( $rdg->id => $rdg );
 		if( $rdg && $rdg->does('Text::Tradition::Morphology') ) {
 			# Are we re-lemmatizing?
 			if( $c->request->param('relemmatize') ) {
 				my $nf = $c->request->param('normal_form');
-				# TODO throw error unless $nf
-				$rdg->normal_form( $nf );
-				# TODO throw error if lemmatization fails
-				# TODO skip this if normal form hasn't changed
-				$rdg->lemmatize();
+				if( $nf && $nf ne $rdg->normal_form ) {
+					my @altered = $rdg->normal_form( $nf );
+					map { $changed_readings{$_->id} = $_ } @altered;
+					# TODO throw error if lemmatization fails
+					$rdg->lemmatize();
+				}
 			} else {
 				# Set all the values that we have for the reading.
-				# TODO error handling
 				foreach my $p ( keys %{$c->request->params} ) {
 					if( $p =~ /^morphology_(\d+)$/ ) {
 						# Set the form on the correct lexeme
@@ -431,9 +442,23 @@ sub reading :Chained('text') :PathPart :Args(1) {
 						}
 						$lx->disambiguate( $idx ) if defined $idx;
 					} elsif( $read_write_keys{$p} ) {
-						my $meth = $read_write_keys{$p} eq 1 ? $p : $read_write_keys{$p};
+						my $meth = $read_write_keys{$p} eq '1' 
+							? $p : $read_write_keys{$p};
+						$DB::single = 1 if $p eq 'is_lemma';
 						my $val = _clean_booleans( $rdg, $p, $c->request->param( $p ) );
-						$rdg->$meth( $val );
+						my @altered;
+						try {
+							if( $has_side_effect{$meth} ) {
+								@altered = $rdg->$meth( $val );
+							} else {
+								$rdg->$meth( $val );
+							}
+						} catch( my $e ) {
+							$errmsg = $e->message;
+						}
+						if( @altered ) {
+							map { $changed_readings{$_->id} = $_ } @altered;
+						}
 					}
 				}		
 			}
@@ -441,9 +466,14 @@ sub reading :Chained('text') :PathPart :Args(1) {
 		} else {
 			$errmsg = "Reading does not exist or cannot be morphologized";
 		}
-		$c->stash->{'result'} = $errmsg ? { 'error' => $errmsg }
-			: _reading_struct( $rdg );
-
+		if( $errmsg ) {
+			$c->stash->{'result'} = { 'error' => $errmsg };
+		} else {
+			$c->stash->{'result'} = {
+				readings => [ map { _reading_struct( $_ ) } 
+								values( %changed_readings ) ]
+			};
+		}
 	}
 	$c->forward('View::JSON');
 
@@ -658,9 +688,11 @@ sub _check_permission {
 
 sub _clean_booleans {
 	my( $obj, $param, $val ) = @_;
-	if( $obj->meta->get_attribute( $param )->type_constraint->name eq 'Bool' ) {
+	return $val unless $obj->meta->get_attribute( $param );
+	if( $obj->meta->get_attribute( $param )->type_constraint->name eq 'Bool'
+		&& defined( $val ) ) {
 		$val = 1 if $val eq 'true';
-		$val = undef if $val eq 'false';
+		$val = undef if $val eq 'false' || $val eq '0';
 	} 
 	return $val;
 }

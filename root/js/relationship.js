@@ -173,11 +173,14 @@ function relemmatize () {
 		'relemmatize': 1 };
 	var jqjson = $.post( ncpath, form_values, function( data ) {
 		// Update the form with the return
-		if( 'id' in data ) {
-			// We got back a good answer. Stash it
-			readingdata[reading_id] = data;
+		if( 'readings' in data ) {
+			// We got back a good answer. Stash the info for the readings
+			// that have changed
+			$.each( data['readings'], function( i, new_data ) {
+				readingdata[new_data['id']] = new_data;
+			});
 			// and regenerate the morphology form.
-			morphology_form( data['lexemes'] );
+			morphology_form( data['readings'][reading_id]['lexemes'] );
 		} else {
 			alert("Could not relemmatize as requested: " + data['error']);
 		}
@@ -1110,7 +1113,8 @@ $(document).ready(function () {
 		form_values = $( '#merge_node_form' ).serialize();
 		ncpath = getTextURL( 'relationships' );
 		var jqjson = $.post( ncpath, form_values, function( data ) {
-			$.each( data, function( item, source_target ) { 
+			// Stash the new relationships.
+			$.each( data['relationships'], function( item, source_target ) { 
 				var source_found = get_ellipse( source_target[0] );
 				var target_found = get_ellipse( source_target[1] );
 				var relation_found = $.inArray( source_target[2], $( '#keymap' ).data( 'relations' ) );
@@ -1121,8 +1125,13 @@ $(document).ready(function () {
 						relation.data( k.name, k.value );
 					});
 				}
-				mybuttons.button( 'enable' );
-		   });
+			});
+			// Stash any changed readings.
+			$.each( data['readings'], function( i, rdgdata ) {
+				rid = rdgdata['id'];
+				readingdata[rid] = rdgdata;
+			});
+			mybuttons.button( 'enable' );
 			$( '#dialog-form' ).dialog( 'close' );
 		}, 'json' );
 	  },
@@ -1298,7 +1307,7 @@ $(document).ready(function () {
   function delete_relation( form_values ) {
 	  ncpath = getTextURL( 'relationships' );
 	  var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
-		  $.each( data, function(item, source_target) { 
+		  $.each( data['relationships'], function(item, source_target) { 
 			  relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
 		  });
 		  $( "#delete-form" ).dialog( "close" );
@@ -1339,18 +1348,21 @@ $(document).ready(function () {
 				});
 				// Make the JSON call
 				ncpath = getReadingURL( reading_id );
-				var reading_element = readingdata[reading_id];
 				// $(':button :contains("Update")').attr("disabled", true);
 				var jqjson = $.post( ncpath, form_values, function(data) {
-					$.each( data, function(key, value) { 
-						reading_element[key] = value;
+					$.each( data['readings'], function(i, rdgdata) { 
+						var this_rdgid = rdgdata['id'];
+						var reading_element = readingdata[this_rdgid];
+						$.each( rdgdata, function( key, value ) {
+							reading_element[key] = value;
+						});
+						if( $('#update_workspace_button').data('locked') == false ) {
+							// Re-color the node if necessary
+							color_inactive( get_ellipse( this_rdgid ) );
+						} else {
+							color_active( get_ellipse( this_rdgid ) );
+						}
 					});
-					if( $('#update_workspace_button').data('locked') == false ) {
-						// Re-color the node if necessary
-						color_inactive( get_ellipse( reading_id ) );
-					} else {
-						color_active( get_ellipse( reading_id ) );
-					}
 					mybuttons.button("enable");
 					$( "#reading-form" ).dialog( "close" );
 				});
@@ -1396,23 +1408,27 @@ $(document).ready(function () {
 				// L for making a Lemma
 				$.each( readings_selected, function( i, reading_id ) {
 					// need current state of lemmatization
-					var reading_element = readingdata[reading_id];
-					var set_lemma = !reading_element['is_lemma']
+					var selected = readingdata[reading_id]
+					var set_lemma = !selected['is_lemma']
 					var ncpath = getReadingURL( reading_id );
 					var form_values = {
 						'id': reading_id,
 						'is_lemma': set_lemma,
 					};
 					var jqjson = $.post( ncpath, form_values, function(data) {
-						$.each( data, function(key, value) { 
-							reading_element[key] = value;
+						$.each( data['readings'], function(i, rdgdata) { 
+							var this_rdgid = rdgdata['id'];
+							var reading_element = readingdata[this_rdgid]
+							$.each( rdgdata, function( key, value ) {
+								reading_element[key] = value;
+							});
+							if( $('#update_workspace_button').data('locked') ) {
+								color_active( get_ellipse( this_rdgid ) );
+							} else {
+								// Re-color the node if necessary
+								color_inactive( get_ellipse( this_rdgid ) );
+							}
 						});
-						if( $('#update_workspace_button').data('locked') ) {
-							color_active( get_ellipse( reading_id ) );
-						} else {
-							// Re-color the node if necessary
-							color_inactive( get_ellipse( reading_id ) );
-						}
 					});
 				});
 			} else if( event.which == '100' ) {
