@@ -823,22 +823,22 @@ function merge_nodes( source_node_id, target_node_id, consequences ) {
                 parent_g = svg.group( $('#svgenlargement svg g') );
                 var ids_text = node_ids[0] + '-' + node_ids[1]; 
                 var merge_id = 'merge-' + ids_text;
-                svg.image( parent_g, xC, (yC-8), 16, 16, merge_button_yes, { id: merge_id } );
-                svg.image( parent_g, (xC+20), (yC-8), 16, 16, merge_button_no, { id: 'no' + merge_id } );
-                $( '#' + merge_id ).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
-                $( '#no' + merge_id ).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
-                $( '#' + merge_id ).click( function( evt ){ 
+                var yes = svg.image( parent_g, xC, (yC-8), 16, 16, merge_button_yes, { id: merge_id } );
+                var no = svg.image( parent_g, (xC+20), (yC-8), 16, 16, merge_button_no, { id: 'no' + merge_id } );
+                $(yes).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
+                $(no).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
+                $(yes).click( function( evt ){ 
                     merge_node( node_ids[0], node_ids[1] );
                     temp_relation.remove();
-                    $( '#' + merge_id ).parent().remove();
+                    $(evt.target).parent().remove();
                     //notify backend
                     var ncpath = getTextURL( 'merge' );
                     var form_values = "source_id=" + node_ids[0] + "&target_id=" + node_ids[1] + "&single=true";
                     $.post( ncpath, form_values );
                 } );
-                $( '#no' + merge_id ).click( function( evt ) {
+                $(no).click( function( evt ) {
                     temp_relation.remove();
-                    $( '#' + merge_id ).parent().remove();
+                    $(evt.target).parent().remove();
                 } );
             } );
         }
