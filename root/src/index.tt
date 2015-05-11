@@ -225,6 +225,15 @@ var textOnLoad = "[% withtradition %]";
             <input id="new_name" type="text" name="name" size="40"/><br/>
             <label for="new_lang">Primary language of the text: </label>
             <input id="new_lang" type="text" name="language" size="20"/><br/>
+
+            <label for="direction">Text direction:</label>
+
+            <select name="direction" id="direction">
+                <option value="LR" selected>Left to Right</option>
+                <option value="RL">Right to Left</option>
+                <option value="BI">Bi-directional</option>
+            </select><Br/>
+
             <label for="new_public">Allow public display: </label>
             <input id="new_public" name="public" type="checkbox"/><br/>
         </form>

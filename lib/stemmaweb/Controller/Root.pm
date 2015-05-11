@@ -123,12 +123,15 @@ sub newtradition :Local :Args(0) {
 	my $name = $c->request->param('name') || 'Uploaded tradition';
 	my $lang = $c->request->param( 'language' ) || 'Default';
 	my $public = $c->request->param( 'public' ) ? 1 : undef;
+	my $direction = $c->request->param('direction') || 'LR';
+
 	my( $ext ) = $upload->filename =~ /\.(\w+)$/;
 	my %newopts = (
 		'name' => $name,
 		'language' => $lang,
 		'public' => $public,
-		'file' => $upload->tempname
+		'file' => $upload->tempname,
+		'direction' => $direction,
 		);
 
 	my $tradition;
