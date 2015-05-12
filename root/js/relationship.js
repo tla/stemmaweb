@@ -4,6 +4,7 @@ var svg_root_element = null;
 var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
+var text_direction = 'LR';
 
 jQuery.removeFromArray = function(value, arr) {
     return jQuery.grep(arr, function(elem, index) {
@@ -224,7 +225,10 @@ function svgEnlargementLoaded() {
     
     //initialize marquee
     marquee = new Marquee();
-    
+
+	if (text_direction == 'RL') {
+		scrollToEnd();
+	}
 }
 
 function add_relations( callback_fn ) {
@@ -981,6 +985,21 @@ function readings_equivalent( source, target ) {
 	return false;
 }
 
+function scrollToEnd() {
+	var stateTf = svg_root_element.getCTM().inverse();
+
+	var vbdim = svg_root.viewBox.baseVal;
+	var width = Math.floor(svg_root_element.getBoundingClientRect().width) - vbdim.width;
+
+	var p = svg_root.createSVGPoint();
+	p.x = width;
+	p.y = 0;
+	p = p.matrixTransform(stateTf);
+
+	var matrix = stateTf.inverse().translate(-p.x, -100);
+	var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
+	svg_root_element.setAttribute("transform", s);
+}
 
 $(document).ready(function () {
     
@@ -1468,7 +1487,9 @@ function expandFillPageClients() {
 	});
 }
 
-function loadSVG(svgData) {
+function loadSVG(svgData, direction) {
+	text_direction = direction;
+
 	var svgElement = $('#svgenlargement');
 
 	$(svgElement).svg('destroy');
