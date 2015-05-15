@@ -428,6 +428,87 @@ sub reading :Chained('text') :PathPart :Args(1) {
 
 }
 
+sub compress :Chained('text') :PathPart :Args(0) {
+	my( $self, $c ) = @_;
+	my $tradition = delete $c->stash->{'tradition'};
+	my $collation = $tradition->collation;
+	my $m = $c->model('Directory');
+
+	my @rids = $c->request->param('readings[]');
+	my @readings;
+
+	foreach my $rid (@rids) {
+		my $rdg = $collation->reading( $rid );
+
+		push @readings, $rdg;
+	}
+
+	my $len = scalar @readings;
+
+	if( $c->request->method eq 'POST' ) {
+		if( $c->stash->{'permission'} ne 'full' ) {
+			$c->response->status( '403' );
+			$c->stash->{'result'} = { 
+				'error' => 'You do not have permission to modify this tradition.' };
+			$c->detach('View::JSON');
+			return;
+		}
+
+		# Sanity check: first save the original text of each witness.
+		my %origtext;
+		foreach my $wit ( $tradition->witnesses ) {
+			$origtext{$wit->sigil} = $collation->path_text( $wit->sigil );
+			if( $wit->is_layered ) {
+				my $acsig = $wit->sigil . $collation->ac_label;
+				$origtext{$acsig} = $collation->path_text( $acsig );
+			}
+		}
+
+		my $first = 0;
+
+		for (my $i = 0; $i < $len; $i++) {
+			my $rdg = $readings[$i];
+
+			if ($rdg->is_combinable) {
+				$first = $i;
+				last;
+			}
+		}
+
+		for (my $i = $first+1; $i < $len; $i++) {
+			my $rdg = $readings[$first];
+			my $next = $readings[$i];
+
+			last unless $next->is_combinable;
+
+			warn "Joining readings $rdg and $next\n";
+
+			$collation->merge_readings( "$rdg", "$next", 1 );
+		}
+		
+		# Finally, make sure we haven't screwed anything up.
+		foreach my $wit ( $tradition->witnesses ) {
+			my $pathtext = $collation->path_text( $wit->sigil );
+			throw( "Text differs for witness " . $wit->sigil )
+				unless $pathtext eq $origtext{$wit->sigil};
+			if( $wit->is_layered ) {
+				my $acsig = $wit->sigil . $collation->ac_label;
+				$pathtext = $collation->path_text( $acsig );
+				throw( "Layered text differs for witness " . $wit->sigil )
+					unless $pathtext eq $origtext{$acsig};
+			}
+		}
+
+		$collation->relations->rebuild_equivalence();
+		$collation->calculate_ranks();
+
+		$m->save($collation);
+
+		$c->stash->{'result'} = {};
+		$c->forward('View::JSON');
+	}
+}
+
 =head2 merge
 
  POST relation/$textid/merge { data }

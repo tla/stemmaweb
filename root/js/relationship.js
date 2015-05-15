@@ -5,6 +5,7 @@ var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
 var text_direction = 'LR';
+var current_selected = [];
 
 jQuery.removeFromArray = function(value, arr) {
     return jQuery.grep(arr, function(elem, index) {
@@ -855,6 +856,38 @@ function merge_node( source_node_id, target_node_id ) {
     $( jq( source_node_id ) ).remove();    
 }
 
+function compress_nodes(readings) {
+    //add text of other readings to 1st reading
+    for (var i = 1; i < readings.length; i++) {
+        var first = get_ellipse(readings[0]);
+        var cur   = get_ellipse(readings[i]);
+
+        var first_title = first.parent().find('text')[0];
+        var cur_title   = cur.parent().find('text')[0];
+
+        first_title.textContent += " " + cur_title.textContent;
+    };
+
+    //delete all others
+    for (var i = 1; i < readings.length; i++) {
+        var node = get_ellipse(readings[i]);
+        var rid = readings[i-1] + '->' + readings[i];
+
+        //[].slice.call(s.getElementsByTagName('title')).find(function(elem){return elem.textContent=='r64.2->r66.2'}).parentNode.remove()
+
+        console.log(svg_root, svg_root_element);
+
+        console.log(rid);
+
+        [].slice.call(svg_root.getElementsByTagName('title'))
+            .find(function(elem){
+                return elem.textContent==rid
+            }).parentNode.remove();
+
+        node.parent().remove();
+    }
+}
+
 function Marquee() {
     
     var self = this;
@@ -944,19 +977,55 @@ function Marquee() {
                 }
             });
             if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
+                current_selected = readings;
+
                 //add intersection of witnesses sets to the multi select form and open it
                 $('#detach_collated_form').empty();
+
                 $.each( readings, function( index, value ) {
                   $('#detach_collated_form').append( $('<input>').attr(
                     "type", "hidden").attr("name", "readings[]").attr(
                     "value", value ) );
-              	});
-				$.each( witnesses, function( index, value ) {
+                });
+                $.each( witnesses, function( index, value ) {
                     $('#detach_collated_form').append( 
                       '<input type="checkbox" name="witnesses[]" value="' + value 
                       + '">' + value + '<br>' ); 
                 });
                 $('#multiple_selected_readings').attr('value', readings.join(',') ); 
+
+                if ($('#action-merge')[0].checked) {
+                    $('#detach_collated_form').hide();
+                    $('#multipleselect-form-text').hide();
+
+                    $('#detach_btn').hide();
+                    $('#merge_btn').show();
+                } else {
+                    $('#detach_collated_form').show();
+                    $('#multipleselect-form-text').show();
+
+                    $('#detach_btn').show();
+                    $('#merge_btn').hide();
+                }
+
+                $('#action-detach').change(function() {
+                    if ($('#action-detach')[0].checked) {
+                        $('#detach_collated_form').show();
+
+                        $('#detach_btn').show();
+                        $('#merge_btn').hide();
+                    }
+                });
+
+                $('#action-merge').change(function() {
+                    if ($('#action-merge')[0].checked) {
+                        $('#detach_collated_form').hide();
+
+                        $('#detach_btn').hide();
+                        $('#merge_btn').show();
+                    }
+                });
+
                 $('#multipleselect-form').dialog( 'open' );
             }
             self.svg_rect.remove( $('#marquee') );
@@ -1243,10 +1312,12 @@ $(document).ready(function () {
     modal: true,
     buttons: {
         Cancel: function() { $( this ).dialog( "close" ); },
-        Detach: function ( evt ) { 
+        Detach: function ( evt ) {
+            evt.target.id = 'detach_btn';
+
             var self = $(this);
-	  		var mybuttons = $(evt.target).closest('button').parent().find('button');
-			mybuttons.button( 'disable' );
+            var mybuttons = $(evt.target).closest('button').parent().find('button');
+            mybuttons.button( 'disable' );
             var form_values = $('#detach_collated_form').serialize();
             ncpath = getTextURL( 'duplicate' );
             var jqjson = $.post( ncpath, form_values, function(data) {
@@ -1254,6 +1325,24 @@ $(document).ready(function () {
                 mybuttons.button("enable");
                 self.dialog( "close" );
             } );
+        },
+        Merge: function (evt) {
+            evt.target.id = 'merge_btn';
+
+            var self = $(this);
+            var mybuttons = $(evt.target).closest('button').parent().find('button');
+            mybuttons.button('disable');
+
+            var ncpath = getTextURL('compress');
+            var form_values = $('#detach_collated_form').serialize();
+
+            var jqjson = $.post(ncpath, form_values, function(data) {
+                compress_nodes(current_selected);
+                current_selected = [];
+
+                mybuttons.button('enable');
+                self.dialog('close');
+            });
         }
     },
     create: function(event, ui) {
@@ -1268,6 +1357,11 @@ $(document).ready(function () {
         $("#dialog_overlay").height( $("#enlargement_container").height() );
         $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
         $("#dialog_overlay").offset( $("#enlargement_container").offset() );
+
+        var mybuttons = $(this).parent().find('button');
+
+        mybuttons[1].id = 'detach_btn';
+        mybuttons[2].id = 'merge_btn';
     },
     close: function() { 
         marquee.unselect();
