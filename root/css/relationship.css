@@ -233,3 +233,7 @@ user-select: none;
     background-color: #FFFFCC;
     z-index: 51; /* Cf. #update_workspace_button */
 }
+
+.error {
+    color: red;
+}

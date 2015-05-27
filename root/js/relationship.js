@@ -5,7 +5,6 @@ var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
 var text_direction = 'LR';
-var current_selected = [];
 
 jQuery.removeFromArray = function(value, arr) {
     return jQuery.grep(arr, function(elem, index) {
@@ -858,11 +857,12 @@ function merge_node( source_node_id, target_node_id ) {
 
 function compress_nodes(readings) {
     //add text of other readings to 1st reading
-    for (var i = 1; i < readings.length; i++) {
-        var first = get_ellipse(readings[0]);
-        var cur   = get_ellipse(readings[i]);
 
-        var first_title = first.parent().find('text')[0];
+    var first = get_ellipse(readings[0]);
+    var first_title = first.parent().find('text')[0];
+
+    for (var i = 1; i < readings.length; i++) {
+        var cur         = get_ellipse(readings[i]);
         var cur_title   = cur.parent().find('text')[0];
 
         first_title.textContent += " " + cur_title.textContent;
@@ -977,8 +977,6 @@ function Marquee() {
                 }
             });
             if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
-                current_selected = readings;
-
                 //add intersection of witnesses sets to the multi select form and open it
                 $('#detach_collated_form').empty();
 
@@ -1011,6 +1009,7 @@ function Marquee() {
                 $('#action-detach').change(function() {
                     if ($('#action-detach')[0].checked) {
                         $('#detach_collated_form').show();
+                        $('#multipleselect-form-text').show();
 
                         $('#detach_btn').show();
                         $('#merge_btn').hide();
@@ -1020,6 +1019,7 @@ function Marquee() {
                 $('#action-merge').change(function() {
                     if ($('#action-merge')[0].checked) {
                         $('#detach_collated_form').hide();
+                        $('#multipleselect-form-text').hide();
 
                         $('#detach_btn').hide();
                         $('#merge_btn').show();
@@ -1337,11 +1337,18 @@ $(document).ready(function () {
             var form_values = $('#detach_collated_form').serialize();
 
             var jqjson = $.post(ncpath, form_values, function(data) {
-                compress_nodes(current_selected);
-                current_selected = [];
+                if (data.success) {
+                    if (data.nodes) {
+                        compress_nodes(data.nodes);
+                    }
 
-                mybuttons.button('enable');
-                self.dialog('close');
+                    mybuttons.button('enable');
+                    self.dialog('close');
+                } else if (data.error_msg) {
+                    document.getElementById('duplicate-merge-error').innerHTML = data.error_msg;
+                    mybuttons.button('enable');
+
+                }
             });
         }
     },

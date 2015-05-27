@@ -10,6 +10,14 @@ use TryCatch;
 BEGIN { extends 'Catalyst::Controller' }
 
 
+sub throw {
+	Text::Tradition::Error->throw(
+		'ident' => 'Collation error',
+		'message' => $_[0],
+		);
+}
+
+
 =head1 NAME
 
 stemmaweb::Controller::Relation - Controller for the relationship mapper
@@ -475,36 +483,60 @@ sub compress :Chained('text') :PathPart :Args(0) {
 			}
 		}
 
+		my @nodes;
+		push @nodes, "$readings[$first]";
+
 		for (my $i = $first+1; $i < $len; $i++) {
 			my $rdg = $readings[$first];
 			my $next = $readings[$i];
 
 			last unless $next->is_combinable;
+			push @nodes, "$next";
 
-			warn "Joining readings $rdg and $next\n";
+			try {
+				$collation->merge_readings( "$rdg", "$next", 1 );
+			} catch ($e) {
+				$c->stash->{result} = {
+					error_msg => $e->message,
+				};
 
-			$collation->merge_readings( "$rdg", "$next", 1 );
-		}
-		
-		# Finally, make sure we haven't screwed anything up.
-		foreach my $wit ( $tradition->witnesses ) {
-			my $pathtext = $collation->path_text( $wit->sigil );
-			throw( "Text differs for witness " . $wit->sigil )
-				unless $pathtext eq $origtext{$wit->sigil};
-			if( $wit->is_layered ) {
-				my $acsig = $wit->sigil . $collation->ac_label;
-				$pathtext = $collation->path_text( $acsig );
-				throw( "Layered text differs for witness " . $wit->sigil )
-					unless $pathtext eq $origtext{$acsig};
+				$c->detach('View::JSON');
 			}
 		}
+		
+		try {
+			# Finally, make sure we haven't screwed anything up.
+			foreach my $wit ( $tradition->witnesses ) {
+				my $pathtext = $collation->path_text( $wit->sigil );
+				throw( "Text differs for witness " . $wit->sigil )
+					unless $pathtext eq $origtext{$wit->sigil};
+				if( $wit->is_layered ) {
+					my $acsig = $wit->sigil . $collation->ac_label;
+					$pathtext = $collation->path_text( $acsig );
+					throw( "Layered text differs for witness " . $wit->sigil )
+						unless $pathtext eq $origtext{$acsig};
+				}
+			}
+		} catch ($e) {
+			$c->stash->{result} = {
+				error_msg => $e->message,
+			};
+
+			$c->detach('View::JSON');
+		}
+
 
 		$collation->relations->rebuild_equivalence();
 		$collation->calculate_ranks();
 
 		$m->save($collation);
 
-		$c->stash->{'result'} = {};
+
+		$c->stash->{'result'} = {
+			success => 1,
+			nodes   => \@nodes,
+		};
+
 		$c->forward('View::JSON');
 	}
 }
