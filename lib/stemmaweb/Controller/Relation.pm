@@ -531,6 +531,9 @@ sub compress :Chained('text') :PathPart :Args(0) {
 
 		$m->save($collation);
 
+		if ($collation->direction eq 'RL') {
+			@nodes = reverse @nodes;
+		}
 
 		$c->stash->{'result'} = {
 			success => 1,

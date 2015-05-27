@@ -875,16 +875,30 @@ function compress_nodes(readings) {
 
         //[].slice.call(s.getElementsByTagName('title')).find(function(elem){return elem.textContent=='r64.2->r66.2'}).parentNode.remove()
 
-        console.log(svg_root, svg_root_element);
+        var titles = svg_root.getElementsByTagName('title');
+        var titlesArray = [].slice.call(titles);
 
-        console.log(rid);
+        if (titlesArray.length > 0) {
+            var title = titlesArray.find(function(elem){
+                return elem.textContent === rid;
+            });
 
-        [].slice.call(svg_root.getElementsByTagName('title'))
-            .find(function(elem){
-                return elem.textContent==rid
-            }).parentNode.remove();
+            if (title && title.parentNode) {
+                title.parentNode.remove();
+            }
+        }
 
-        node.parent().remove();
+        var x = parseInt(first[0].getAttribute('cx'), 10);
+
+        first[0].setAttribute('rx', 4.5 * first_title.textContent.length);
+
+        if (text_direction !== "BI") {
+            first[0].setAttribute('cx', x +  first_title.textContent.length + 20);
+            first_title.setAttribute('x', first[0].getAttribute('cx'));
+        }
+
+        merge_node(readings[i], readings[0]);
+        //node.parent().remove();
     }
 }
 
