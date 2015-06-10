@@ -1325,7 +1325,10 @@ $(document).ready(function () {
     width: 250,
     modal: true,
     buttons: {
-        Cancel: function() { $( this ).dialog( "close" ); },
+        Cancel: function() {
+            document.getElementById('duplicate-merge-error').innerHTML = "";
+            $( this ).dialog( "close" );
+        },
         Detach: function ( evt ) {
             evt.target.id = 'detach_btn';
 
@@ -1352,6 +1355,8 @@ $(document).ready(function () {
 
             var jqjson = $.post(ncpath, form_values, function(data) {
                 if (data.success) {
+                    document.getElementById('duplicate-merge-error').innerHTML = "";
+
                     if (data.nodes) {
                         compress_nodes(data.nodes);
                     }
