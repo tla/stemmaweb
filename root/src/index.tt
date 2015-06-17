@@ -120,6 +120,12 @@ var textOnLoad = "[% withtradition %]";
     		<input id="edit_language" type="text" size="12" name="language"/>
     		<label for="edit_public">Publicly viewable: </label>
     		<input id="edit_public" type="checkbox" name="public"/><br/>
+    		<label for="edit_direction">Text direction: </label>
+    		<select id="edit_direction" name="direction">
+    			<option value="LR" selected>Left-to-right</option>
+    			<option value="RL">Right-to-left</option>
+    			<option value="BI">Bidirectional</option>
+    		</select><br/>
 [% IF c.user_exists -%]
 [% IF c.user.get_object.is_admin -%]
     		<label for="edit_owner">Tradition owner: </label>

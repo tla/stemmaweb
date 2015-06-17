@@ -278,6 +278,20 @@ sub textinfo :Local :Args(1) {
 			$changed = 1 if $ispublic;
 		}
 		
+		# Handle text direction
+		my $tdval = delete $params->{direction} || 'LR';
+		
+		unless( $tradition->collation->direction
+				&& $tradition->collation->direction eq $tdval ) {
+			try {
+				$tradition->collation->change_direction( $tdval );
+				$changed = 1;
+			} catch {
+				return _json_error( $c, 500, "Error setting direction to $tdval: $@" );
+			}
+		}
+		
+		
 		# Handle ownership change
 		if( exists $params->{'owner'} ) {
 			# Only admins can update user / owner
@@ -317,6 +331,7 @@ sub textinfo :Local :Args(1) {
 	my $textinfo = {
 		textid => $textid,
 		name => $tradition->name,
+		direction => $tradition->collation->direction || 'LR',
 		public => $tradition->public || 0,
 		owner => $tradition->user ? $tradition->user->email : undef,
 		witnesses => [ map { $_->sigil } $tradition->witnesses ],
