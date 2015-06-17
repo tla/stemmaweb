@@ -24,7 +24,7 @@ var ternary_values = [% ternary_values %];
 [% END -%]
 
 $(document).ready(function () {
-  loadSVG('[% svg_string %]');
+  loadSVG('[% svg_string %]', '[% direction %]');
 });
 </script>
 [% END %]

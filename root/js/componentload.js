@@ -503,7 +503,7 @@ $(document).ready( function() {
 			$("#edit_textinfo_status").empty();
 			// Populate the form fields with the current values
 			// edit_(name, language, public, owner)
-			$.each([ 'name', 'language', 'owner' ], function( idx, k ) {
+			$.each([ 'name', 'language', 'owner', 'direction' ], function( idx, k ) {
 				var fname = '#edit_' + k;
 				// Special case: language Default is basically language null
 				if( k == 'language' && selectedTextInfo[k] == 'Default' ) {

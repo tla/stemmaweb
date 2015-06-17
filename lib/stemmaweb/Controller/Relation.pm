@@ -70,7 +70,10 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	my( $self, $c ) = @_;
 	my $tradition = delete $c->stash->{'tradition'};
 	my $collation = $tradition->collation;
-	
+
+	# Stash text direction to use in JS.
+	$c->stash->{'direction'} = $collation->direction;
+
 	# Stash the relationship definitions
 	$c->stash->{'relationship_scopes'} = 
 		to_json( find_type_constraint( 'RelationshipScope' )->values );

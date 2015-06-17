@@ -123,12 +123,15 @@ sub newtradition :Local :Args(0) {
 	my $name = $c->request->param('name') || 'Uploaded tradition';
 	my $lang = $c->request->param( 'language' ) || 'Default';
 	my $public = $c->request->param( 'public' ) ? 1 : undef;
+	my $direction = $c->request->param('direction') || 'LR';
+
 	my( $ext ) = $upload->filename =~ /\.(\w+)$/;
 	my %newopts = (
 		'name' => $name,
 		'language' => $lang,
 		'public' => $public,
-		'file' => $upload->tempname
+		'file' => $upload->tempname,
+		'direction' => $direction,
 		);
 
 	my $tradition;
@@ -275,6 +278,20 @@ sub textinfo :Local :Args(1) {
 			$changed = 1 if $ispublic;
 		}
 		
+		# Handle text direction
+		my $tdval = delete $params->{direction} || 'LR';
+		
+		unless( $tradition->collation->direction
+				&& $tradition->collation->direction eq $tdval ) {
+			try {
+				$tradition->collation->change_direction( $tdval );
+				$changed = 1;
+			} catch {
+				return _json_error( $c, 500, "Error setting direction to $tdval: $@" );
+			}
+		}
+		
+		
 		# Handle ownership change
 		if( exists $params->{'owner'} ) {
 			# Only admins can update user / owner
@@ -314,6 +331,7 @@ sub textinfo :Local :Args(1) {
 	my $textinfo = {
 		textid => $textid,
 		name => $tradition->name,
+		direction => $tradition->collation->direction || 'LR',
 		public => $tradition->public || 0,
 		owner => $tradition->user ? $tradition->user->email : undef,
 		witnesses => [ map { $_->sigil } $tradition->witnesses ],
