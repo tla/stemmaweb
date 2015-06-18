@@ -9,6 +9,7 @@ var basepath = "[% c.uri_for( '/relation/' ) %]";
 var textid = "[% textid %]";
 var can_morphologize = "[% can_morphologize %]";
 var editable = "[% permission %]" === "full";
+var text_direction = "[% direction %]";
 // URLs for images referenced in Javascript
 var merge_button_yes = "[% c.uri_for( '/images/tick_circle_frame.png' ) %]";
 var merge_button_no = "[% c.uri_for( '/images/no_entry.png' ) %]";
@@ -24,7 +25,7 @@ var ternary_values = [% ternary_values %];
 [% END -%]
 
 $(document).ready(function () {
-  loadSVG('[% svg_string %]', '[% direction %]');
+  loadSVG('[% svg_string %]');
 });
 </script>
 [% END %]

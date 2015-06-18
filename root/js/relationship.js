@@ -4,7 +4,6 @@ var svg_root_element = null;
 var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
-var text_direction = 'LR';
 
 jQuery.removeFromArray = function(value, arr) {
     return jQuery.grep(arr, function(elem, index) {
@@ -1607,9 +1606,7 @@ function expandFillPageClients() {
 	});
 }
 
-function loadSVG(svgData, direction) {
-	text_direction = direction;
-
+function loadSVG(svgData) {
 	var svgElement = $('#svgenlargement');
 
 	$(svgElement).svg('destroy');

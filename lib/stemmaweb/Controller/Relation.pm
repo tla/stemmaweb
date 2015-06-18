@@ -71,7 +71,7 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	my $collation = $tradition->collation;
 
 	# Stash text direction to use in JS.
-	$c->stash->{'direction'} = $collation->direction;
+	$c->stash->{'direction'} = $collation->direction || 'BI';
 
 	# Stash the relationship definitions
 	$c->stash->{'relationship_scopes'} = 
@@ -521,10 +521,6 @@ sub compress :Chained('text') :PathPart :Args(0) {
 		$collation->calculate_ranks();
 
 		$m->save($collation);
-
-		if ($collation->direction eq 'RL') {
-			@nodes = reverse @nodes;
-		}
 
 		$c->stash->{'result'} = {
 			success => 1,
