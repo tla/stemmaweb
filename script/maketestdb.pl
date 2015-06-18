@@ -65,13 +65,18 @@ die "Failed to create test tradition #2" unless $t2;
 $t2->public( 1 );
 $dir->store( $t2 );
 my $t3 = Text::Tradition->new( input => 'Self', file => 't/data/john.xml' );
+$t3->collation->change_direction('BI');
 $t3->public( 1 );
 $t3->name( 'John verse' );
+$user->add_tradition( $t3 );
 $dir->store( $t3 );
 my $t4 = Text::Tradition->new( input => 'Self', file => 't/data/collatecorr.xml' );
 $t4->public( 1 );
 $user->add_tradition( $t4 );
 $dir->store( $t4 );
+my $t5 = Text::Tradition->new( input => 'Tabular', file => 't/data/arabic_snippet.csv', sep_char => ',', direction => 'RL', name => 'RTL test' );
+$user->add_tradition( $t5 );
+$dir->store( $t5 );
 $dir->store( $user );
 
 say "Created test public traditions";
