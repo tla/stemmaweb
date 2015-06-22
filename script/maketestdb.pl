@@ -59,12 +59,12 @@ $dir->store( $openid_user );
 say "Created test user tradition";
 
 my $t2 = Text::Tradition->new( input => 'Tabular', sep_char => ',', 
-	file => 't/data/florilegium.csv' );
+	file => 't/data/florilegium.csv', language => 'Greek' );
 $t2->add_stemma( dotfile => 't/data/florilegium.dot' );
 die "Failed to create test tradition #2" unless $t2;
 $t2->public( 1 );
 $dir->store( $t2 );
-my $t3 = Text::Tradition->new( input => 'Self', file => 't/data/john.xml' );
+my $t3 = Text::Tradition->new( input => 'Self', file => 't/data/john.xml', language => 'Greek' );
 $t3->collation->change_direction('BI');
 $t3->public( 1 );
 $t3->name( 'John verse' );
@@ -74,7 +74,7 @@ my $t4 = Text::Tradition->new( input => 'Self', file => 't/data/collatecorr.xml'
 $t4->public( 1 );
 $user->add_tradition( $t4 );
 $dir->store( $t4 );
-my $t5 = Text::Tradition->new( input => 'Tabular', file => 't/data/arabic_snippet.csv', sep_char => ',', direction => 'RL', name => 'RTL test' );
+my $t5 = Text::Tradition->new( input => 'Tabular', file => 't/data/arabic_snippet.csv', sep_char => ',', direction => 'RL', name => 'RTL test', language => 'Arabic' );
 $user->add_tradition( $t5 );
 $dir->store( $t5 );
 $dir->store( $user );
