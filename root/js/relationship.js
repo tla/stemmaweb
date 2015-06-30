@@ -1387,6 +1387,20 @@ $(document).ready(function () {
 
         mybuttons[1].id = 'detach_btn';
         mybuttons[2].id = 'merge_btn';
+
+        if ($('#action-merge')[0].checked) {
+            $('#detach_collated_form').hide();
+            $('#multipleselect-form-text').hide();
+
+            $('#detach_btn').hide();
+            $('#merge_btn').show();
+        } else {
+            $('#detach_collated_form').show();
+            $('#multipleselect-form-text').show();
+
+            $('#detach_btn').show();
+            $('#merge_btn').hide();
+        }
     },
     close: function() { 
         marquee.unselect();
