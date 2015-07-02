@@ -200,16 +200,42 @@ function svgEnlargementLoaded() {
     //This is essential to make sure zooming and panning works properly.
     svg_root.viewBox.baseVal.width = graph_svg.attr( 'width' );
     svg_root.viewBox.baseVal.height = graph_svg.attr( 'height' );
+
     //Now set scale and translate so svg height is about 150px and vertically centered in viewbox.
     //This is just to create a nice starting enlargement.
     var initial_svg_height = 250;
     var scale = initial_svg_height/graph_svg.attr( 'height' );
     var additional_translate = (graph_svg.attr( 'height' ) - initial_svg_height)/(2*scale);
     var transform = svg_g.getAttribute('transform');
-    var translate = parseFloat( transform.match( /translate\([^\)]*\)/ )[0].split('(')[1].split(' ')[1].split(')')[0] );
-    translate += additional_translate;
-    var transform = 'rotate(0) scale(' + scale + ') translate(4 ' + translate + ')';
-    svg_g.setAttribute('transform', transform);
+
+	var x = 4;
+
+	var y = parseFloat( transform.match( /translate\([^\)]*\)/ )[0].split('(')[1].split(' ')[1].split(')')[0] );
+	y += additional_translate;
+
+	var transform = 'rotate(0) scale(' + scale + ')';
+	svg_g.setAttribute('transform', transform);
+
+	var keymap = document.getElementById("keymap");
+
+	var keymap_right = keymap.getBoundingClientRect().right;
+	keymap_right = svg_root.viewBox.baseVal.width -  keymap_right;
+
+	var keymap_left = keymap.getBoundingClientRect().width;
+
+	if (text_direction == 'RL') {
+		// Edge of screen minus the width of the svg minus the width of the
+		// keymap minus the margin
+
+		x = (scrollToEnd()  - keymap_right  - keymap_left  - 40) / scale;
+	}
+	else if (text_direction == 'BI') {
+		x = placeMiddle() / scale;
+		y = (svg_g.getBoundingClientRect().height + 50) / scale;
+	}
+
+	svg_g.setAttribute('transform', transform + ' translate(' + x + ' ' + y + ')');
+
     //used to calculate min and max zoom level:
     start_element_height = $('#__START__').children('ellipse')[0].getBBox().height;
     //some use of call backs to ensure succesive execution
@@ -224,10 +250,6 @@ function svgEnlargementLoaded() {
     
     //initialize marquee
     marquee = new Marquee();
-
-	if (text_direction == 'RL') {
-		scrollToEnd();
-	}
 }
 
 function add_relations( callback_fn ) {
@@ -1070,18 +1092,25 @@ function readings_equivalent( source, target ) {
 function scrollToEnd() {
 	var stateTf = svg_root_element.getCTM().inverse();
 
+	var elem_width = Math.floor(svg_root_element.getBoundingClientRect().width);
 	var vbdim = svg_root.viewBox.baseVal;
-	var width = Math.floor(svg_root_element.getBoundingClientRect().width) - vbdim.width;
 
-	var p = svg_root.createSVGPoint();
-	p.x = width;
-	p.y = 0;
-	p = p.matrixTransform(stateTf);
+	var x =  vbdim.width -  elem_width;
 
-	var matrix = stateTf.inverse().translate(-p.x, -100);
-	var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
-	svg_root_element.setAttribute("transform", s);
+	return x;
 }
+
+function placeMiddle() {
+	var stateTf = svg_root_element.getCTM().inverse();
+
+	var elem_width = Math.floor(svg_root_element.getBoundingClientRect().width);
+	var vbdim = svg_root.viewBox.baseVal;
+
+	var x = Math.floor((vbdim.width - elem_width) /2);
+
+	return x;
+}
+
 
 $(document).ready(function () {
     
