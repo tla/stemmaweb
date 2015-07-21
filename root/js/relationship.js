@@ -876,11 +876,27 @@ function merge_node( source_node_id, target_node_id ) {
     $( jq( source_node_id ) ).remove();    
 }
 
+function merge_left( source_node_id, target_node_id ) {
+    $.each( edges_of( get_ellipse( source_node_id ) ), function( index, edge ) {
+        if( edge.is_incoming == true ) {
+            edge.attach_endpoint( target_node_id );
+        }
+    } );
+    $( jq( source_node_id ) ).remove();    
+}
+
 function compress_nodes(readings) {
     //add text of other readings to 1st reading
 
     var first = get_ellipse(readings[0]);
+    var first = get_ellipse(readings[0]);
     var first_title = first.parent().find('text')[0];
+    var last_edges = edges_of(get_ellipse(readings[readings.length-1]));
+    for (var i = 0; i < last_edges.length; i++) {
+        if(last_edges[i].is_incoming == false) {
+          var last = last_edges[i];
+        }
+    }
 
     for (var i = 1; i < readings.length; i++) {
         var cur         = get_ellipse(readings[i]);
@@ -889,38 +905,53 @@ function compress_nodes(readings) {
         first_title.textContent += " " + cur_title.textContent;
     };
 
-    //delete all others
+    // Reattach last external edge to new to-be-merged node: NB: We
+    // can't to this after the removal as startpoint wants the cx etc
+    // of the ellipse the edge is moving from..
+//    last.attach_startpoint(readings[0]);
+
+
+    // do this once:
+    var x = parseInt(first[0].getAttribute('cx'), 10);
+    first[0].setAttribute('rx', 4.5 * first_title.textContent.length);
+
+    if (text_direction !== "BI") {
+        first[0].setAttribute('cx', x +  first_title.textContent.length + 20);
+        first_title.setAttribute('x', first[0].getAttribute('cx'));
+    }
+
+    //merge then delete all others
     for (var i = 1; i < readings.length; i++) {
         var node = get_ellipse(readings[i]);
         var rid = readings[i-1] + '->' + readings[i];
 
-        //[].slice.call(s.getElementsByTagName('title')).find(function(elem){return elem.textContent=='r64.2->r66.2'}).parentNode.remove()
-
         var titles = svg_root.getElementsByTagName('title');
         var titlesArray = [].slice.call(titles);
 
+        // old edge, delete after moving stuff around!
         if (titlesArray.length > 0) {
             var title = titlesArray.find(function(elem){
                 return elem.textContent === rid;
             });
-
-            if (title && title.parentNode) {
-                title.parentNode.remove();
-            }
         }
 
-        var x = parseInt(first[0].getAttribute('cx'), 10);
+        //[].slice.call(s.getElementsByTagName('title')).find(function(elem){return elem.textContent=='r64.2->r66.2'}).parentNode.remove()
 
-        first[0].setAttribute('rx', 4.5 * first_title.textContent.length);
-
-        if (text_direction !== "BI") {
-            first[0].setAttribute('cx', x +  first_title.textContent.length + 20);
-            first_title.setAttribute('x', first[0].getAttribute('cx'));
+        // only merge start on the last one, else, we get ourselves confused!
+        if(readings[i] == readings[readings.length-1]) {
+            merge_node(readings[i], readings[0]);
+        } else {
+            merge_left(readings[i], readings[0]);
         }
 
-        merge_node(readings[i], readings[0]);
-        //node.parent().remove();
+        if (title && title.parentNode) {
+            title.parentNode.remove();
+        }
+
     }
+
+    get_node_obj(readings[0]).update_elements();
+
 }
 
 function Marquee() {
