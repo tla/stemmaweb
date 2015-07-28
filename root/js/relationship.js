@@ -898,12 +898,17 @@ function compress_nodes(readings) {
         }
     }
 
+    var total = parseInt(first[0].getAttribute('cx'), 10);
+
     for (var i = 1; i < readings.length; i++) {
         var cur         = get_ellipse(readings[i]);
         var cur_title   = cur.parent().find('text')[0];
 
         first_title.textContent += " " + cur_title.textContent;
+        total += parseInt(cur[0].getAttribute('cx'), 10);
     };
+
+    var avg = Math.round(total / readings.length);
 
     // Reattach last external edge to new to-be-merged node: NB: We
     // can't to this after the removal as startpoint wants the cx etc
@@ -916,7 +921,7 @@ function compress_nodes(readings) {
     first[0].setAttribute('rx', 4.5 * first_title.textContent.length);
 
     if (text_direction !== "BI") {
-        first[0].setAttribute('cx', x +  first_title.textContent.length + 20);
+        first[0].setAttribute('cx', avg);
         first_title.setAttribute('x', first[0].getAttribute('cx'));
     }
 
