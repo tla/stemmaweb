@@ -115,13 +115,12 @@ function Edge( g_elem ) {
                 var dy = (target_cy - source_cy);
                 end_point_arrowhead.reposition( dx, dy );
                 edge_path.reposition( dx, dy );
-                // var new_title = g_elem.children('title').text().replace( self.end_node_id, target_node_id );
-                // console.log( new_title );
+                g_elem.children('title').text(g_elem.children('title').text().replace( self.end_node_id, target_node_id ));
             }
         }
     }
 
-    this.attach_startpoint = function( target_node_id ) {
+    this.attach_startpoint = function( target_node_id, compressing ) {
         // first let's find out if the endpoint might also be linked to the target already
         // in that case we need to remove this edge and transfer the witnesses to the 
         // appropriate edge of the target_node
@@ -146,10 +145,19 @@ function Edge( g_elem ) {
             var source_cx = parseFloat( source_ellipse.attr( 'cx' ) );
             var source_cy = parseFloat( source_ellipse.attr( 'cy' ) );
             var source_rx = parseFloat( source_ellipse.attr( 'rx' ) );
+
             var dx = (target_cx + target_rx) - (source_cx + source_rx);
             var dy = (target_cy - source_cy);
             edge_path.reposition( dx, dy );
+
+            if (compressing && text_direction === 'RL') {
+                edge_path.reposition((target_cx-target_rx)-edge_path.path.x, 0);
+            } else if (compressing && text_direction === 'BI') {
+                edge_path.reposition(-target_rx/2, 0);
+            }
+
+
+            self.g_elem.children('title').text(self.g_elem.children('title').text().replace( self.start_node_id, target_node_id ));
         }
     }
-    
 }

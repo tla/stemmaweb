@@ -200,16 +200,42 @@ function svgEnlargementLoaded() {
     //This is essential to make sure zooming and panning works properly.
     svg_root.viewBox.baseVal.width = graph_svg.attr( 'width' );
     svg_root.viewBox.baseVal.height = graph_svg.attr( 'height' );
+
     //Now set scale and translate so svg height is about 150px and vertically centered in viewbox.
     //This is just to create a nice starting enlargement.
     var initial_svg_height = 250;
     var scale = initial_svg_height/graph_svg.attr( 'height' );
     var additional_translate = (graph_svg.attr( 'height' ) - initial_svg_height)/(2*scale);
     var transform = svg_g.getAttribute('transform');
-    var translate = parseFloat( transform.match( /translate\([^\)]*\)/ )[0].split('(')[1].split(' ')[1].split(')')[0] );
-    translate += additional_translate;
-    var transform = 'rotate(0) scale(' + scale + ') translate(4 ' + translate + ')';
-    svg_g.setAttribute('transform', transform);
+
+	var x = 4;
+
+	var y = parseFloat( transform.match( /translate\([^\)]*\)/ )[0].split('(')[1].split(' ')[1].split(')')[0] );
+	y += additional_translate;
+
+	var transform = 'rotate(0) scale(' + scale + ')';
+	svg_g.setAttribute('transform', transform);
+
+	var keymap = document.getElementById("keymap");
+
+	var keymap_right = keymap.getBoundingClientRect().right;
+	keymap_right = svg_root.viewBox.baseVal.width -  keymap_right;
+
+	var keymap_left = keymap.getBoundingClientRect().width;
+
+	if (text_direction == 'RL') {
+		// Edge of screen minus the width of the svg minus the width of the
+		// keymap minus the margin
+
+		x = (scrollToEnd()  - keymap_right  - keymap_left  - 40) / scale;
+	}
+	else if (text_direction == 'BI') {
+		x = placeMiddle() / scale;
+		y = (svg_g.getBoundingClientRect().height + 50) / scale;
+	}
+
+	svg_g.setAttribute('transform', transform + ' translate(' + x + ' ' + y + ')');
+
     //used to calculate min and max zoom level:
     start_element_height = $('#__START__').children('ellipse')[0].getBBox().height;
     //some use of call backs to ensure succesive execution
@@ -224,10 +250,6 @@ function svgEnlargementLoaded() {
     
     //initialize marquee
     marquee = new Marquee();
-
-	if (text_direction == 'RL') {
-		scrollToEnd();
-	}
 }
 
 function add_relations( callback_fn ) {
@@ -843,12 +865,21 @@ function merge_nodes( source_node_id, target_node_id, consequences ) {
     }
 }
 
-function merge_node( source_node_id, target_node_id ) {
+function merge_node( source_node_id, target_node_id, compressing ) {
     $.each( edges_of( get_ellipse( source_node_id ) ), function( index, edge ) {
         if( edge.is_incoming == true ) {
             edge.attach_endpoint( target_node_id );
         } else {
-            edge.attach_startpoint( target_node_id );
+            edge.attach_startpoint( target_node_id, compressing );
+        }
+    } );
+    $( jq( source_node_id ) ).remove();
+}
+
+function merge_left( source_node_id, target_node_id ) {
+    $.each( edges_of( get_ellipse( source_node_id ) ), function( index, edge ) {
+        if( edge.is_incoming == true ) {
+            edge.attach_endpoint( target_node_id );
         }
     } );
     $( jq( source_node_id ) ).remove();    
@@ -858,47 +889,135 @@ function compress_nodes(readings) {
     //add text of other readings to 1st reading
 
     var first = get_ellipse(readings[0]);
+    var first = get_ellipse(readings[0]);
     var first_title = first.parent().find('text')[0];
+    var last_edges = edges_of(get_ellipse(readings[readings.length-1]));
+    for (var i = 0; i < last_edges.length; i++) {
+        if(last_edges[i].is_incoming == false) {
+          var last = last_edges[i];
+        }
+    }
+
+    var total = parseInt(first[0].getAttribute('cx'), 10);
 
     for (var i = 1; i < readings.length; i++) {
         var cur         = get_ellipse(readings[i]);
         var cur_title   = cur.parent().find('text')[0];
 
         first_title.textContent += " " + cur_title.textContent;
+        total += parseInt(cur[0].getAttribute('cx'), 10);
     };
 
-    //delete all others
+    var avg = Math.round(total / readings.length);
+
+    // Reattach last external edge to new to-be-merged node: NB: We
+    // can't to this after the removal as startpoint wants the cx etc
+    // of the ellipse the edge is moving from..
+//    last.attach_startpoint(readings[0]);
+
+
+    // do this once:
+    var x = parseInt(first[0].getAttribute('cx'), 10);
+    first[0].setAttribute('rx', 4.5 * first_title.textContent.length);
+
+    if (text_direction !== "BI") {
+        first[0].setAttribute('cx', avg);
+        first_title.setAttribute('x', first[0].getAttribute('cx'));
+    }
+
+    //merge then delete all others
     for (var i = 1; i < readings.length; i++) {
         var node = get_ellipse(readings[i]);
         var rid = readings[i-1] + '->' + readings[i];
 
-        //[].slice.call(s.getElementsByTagName('title')).find(function(elem){return elem.textContent=='r64.2->r66.2'}).parentNode.remove()
-
         var titles = svg_root.getElementsByTagName('title');
         var titlesArray = [].slice.call(titles);
 
+        // old edge, delete after moving stuff around!
         if (titlesArray.length > 0) {
             var title = titlesArray.find(function(elem){
                 return elem.textContent === rid;
             });
+        }
 
-            if (title && title.parentNode) {
-                title.parentNode.remove();
+        // only merge start on the last one, else, we get ourselves confused!
+        if(readings[i] == readings[readings.length-1]) {
+            merge_node(readings[i], readings[0], true);
+        } else {
+            merge_left(readings[i], readings[0]);
+        }
+
+        if (title && title.parentNode) {
+            title.parentNode.remove();
+        }
+    }
+
+    /* Fix size of arrows to node for LR/RL texts. */
+    if (text_direction !== "BI") {
+        /* This is the remaining node; find the incoming edge, which is now the
+         * wrong size */
+        var first_edge;
+        var first_edges = edges_of(first);
+
+        for (var i = 0; i < first_edges.length; i++) {
+            if(first_edges[i].is_incoming == true) {
+                first_edge = first_edges[i];
+                break;
             }
         }
 
-        var x = parseInt(first[0].getAttribute('cx'), 10);
+        if (first_edge) {
+            //arrow
+            var polygon = first_edge.g_elem.children( 'polygon' );
 
-        first[0].setAttribute('rx', 4.5 * first_title.textContent.length);
+            if( polygon.size() > 0 ) {
+                //the line
+                var edge_elem = first_edge.g_elem.children('path')[0];
 
-        if (text_direction !== "BI") {
-            first[0].setAttribute('cx', x +  first_title.textContent.length + 20);
-            first_title.setAttribute('x', first[0].getAttribute('cx'));
+                var d = edge_elem.getAttribute('d');
+                //https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
+                //This 'Curveto' property determines how long the line is.
+                //The Syntax is C c1x,c1y c2x,c2y x,y where x,y are where the
+                //path ends.
+                var c_attr = d.match(/C(\S+) (\S+) (\S+)/);
+
+                var c_x = parseInt(first[0].getAttribute('cx'), 10);
+                var r_x = parseInt(first[0].getAttribute('rx'), 10);
+
+                var x;
+                if (text_direction === 'LR') {
+                    //line ends to the left of the ellipse,
+                    //so its center minus its radius
+                    x = c_x - r_x;
+                } else if (text_direction === 'RL') {
+                    //line ends to the right of the ellipse,
+                    //so its center plus its radius
+                    x = c_x + r_x;
+                }
+
+                if (c_attr.length >= 4) {
+                    var full = c_attr.shift();
+
+                    var end_point = c_attr[2].split(',');
+                    var end_x = parseInt(end_point[0]);
+                    var end_y = parseInt(end_point[1]);
+                    //how much do we need to move the arrow by?
+                    //this is the same amount we'll be moving its line
+                    var dx = x - end_x;
+
+                    //build the new 'C' property. We only changed 'x' here
+                    var new_cattr = "C" + c_attr[0] + " " + c_attr[1] + " " + x + "," + end_y;
+                    edge_elem.setAttribute('d', d.replace(full, new_cattr));
+
+                    //and moe the arrow
+                    var end_point_arrowhead = new svgshape( polygon );
+                    end_point_arrowhead.reposition(dx, 0);
+                }
+            }
         }
-
-        merge_node(readings[i], readings[0]);
-        //node.parent().remove();
     }
+
+    get_node_obj(readings[0]).update_elements();
 }
 
 function Marquee() {
@@ -1070,18 +1189,25 @@ function readings_equivalent( source, target ) {
 function scrollToEnd() {
 	var stateTf = svg_root_element.getCTM().inverse();
 
+	var elem_width = Math.floor(svg_root_element.getBoundingClientRect().width);
 	var vbdim = svg_root.viewBox.baseVal;
-	var width = Math.floor(svg_root_element.getBoundingClientRect().width) - vbdim.width;
 
-	var p = svg_root.createSVGPoint();
-	p.x = width;
-	p.y = 0;
-	p = p.matrixTransform(stateTf);
+	var x =  vbdim.width -  elem_width;
 
-	var matrix = stateTf.inverse().translate(-p.x, -100);
-	var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
-	svg_root_element.setAttribute("transform", s);
+	return x;
 }
+
+function placeMiddle() {
+	var stateTf = svg_root_element.getCTM().inverse();
+
+	var elem_width = Math.floor(svg_root_element.getBoundingClientRect().width);
+	var vbdim = svg_root.viewBox.baseVal;
+
+	var x = Math.floor((vbdim.width - elem_width) /2);
+
+	return x;
+}
+
 
 $(document).ready(function () {
     
@@ -1387,6 +1513,20 @@ $(document).ready(function () {
 
         mybuttons[1].id = 'detach_btn';
         mybuttons[2].id = 'merge_btn';
+
+        if ($('#action-merge')[0].checked) {
+            $('#detach_collated_form').hide();
+            $('#multipleselect-form-text').hide();
+
+            $('#detach_btn').hide();
+            $('#merge_btn').show();
+        } else {
+            $('#detach_collated_form').show();
+            $('#multipleselect-form-text').show();
+
+            $('#detach_btn').show();
+            $('#merge_btn').hide();
+        }
     },
     close: function() { 
         marquee.unselect();
