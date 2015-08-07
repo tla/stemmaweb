@@ -1451,53 +1451,60 @@ $(document).ready(function () {
     height: 150,
     width: 250,
     modal: true,
-    buttons: {
-        Cancel: function() {
-            document.getElementById('duplicate-merge-error').innerHTML = "";
-            $( this ).dialog( "close" );
-        },
-        Detach: function ( evt ) {
-            evt.target.id = 'detach_btn';
+    buttons: [
+    	{
+			text: "Cancel",
+			click: function() {
+				document.getElementById('duplicate-merge-error').innerHTML = "";
+				$( this ).dialog( "close" );
+			}
+		},
+        {
+			text: "Detach",
+			id: "detach_btn",
+			click: function ( evt ) {
+				var self = $(this);
+				var mybuttons = $(evt.target).closest('button').parent().find('button');
+				mybuttons.button( 'disable' );
+				var form_values = $('#detach_collated_form').serialize();
+				ncpath = getTextURL( 'duplicate' );
+				var jqjson = $.post( ncpath, form_values, function(data) {
+					detach_node( data );
+					mybuttons.button("enable");
+					self.dialog( "close" );
+				} );
+			}
+		},
+        {
+        	text: "Merge",
+        	id: "merge_btn",
+        	click: function (evt) {
+				var self = $(this);
+				var mybuttons = $(evt.target).closest('button').parent().find('button');
+				mybuttons.button('disable');
 
-            var self = $(this);
-            var mybuttons = $(evt.target).closest('button').parent().find('button');
-            mybuttons.button( 'disable' );
-            var form_values = $('#detach_collated_form').serialize();
-            ncpath = getTextURL( 'duplicate' );
-            var jqjson = $.post( ncpath, form_values, function(data) {
-                detach_node( data );
-                mybuttons.button("enable");
-                self.dialog( "close" );
-            } );
-        },
-        Merge: function (evt) {
-            evt.target.id = 'merge_btn';
+				var ncpath = getTextURL('compress');
+				var form_values = $('#detach_collated_form').serialize();
 
-            var self = $(this);
-            var mybuttons = $(evt.target).closest('button').parent().find('button');
-            mybuttons.button('disable');
+				var jqjson = $.post(ncpath, form_values, function(data) {
+					if (data.success) {
+						document.getElementById('duplicate-merge-error').innerHTML = "";
 
-            var ncpath = getTextURL('compress');
-            var form_values = $('#detach_collated_form').serialize();
+						if (data.nodes) {
+							compress_nodes(data.nodes);
+						}
 
-            var jqjson = $.post(ncpath, form_values, function(data) {
-                if (data.success) {
-                    document.getElementById('duplicate-merge-error').innerHTML = "";
+						mybuttons.button('enable');
+						self.dialog('close');
+					} else if (data.error_msg) {
+						document.getElementById('duplicate-merge-error').innerHTML = data.error_msg;
+						mybuttons.button('enable');
 
-                    if (data.nodes) {
-                        compress_nodes(data.nodes);
-                    }
-
-                    mybuttons.button('enable');
-                    self.dialog('close');
-                } else if (data.error_msg) {
-                    document.getElementById('duplicate-merge-error').innerHTML = data.error_msg;
-                    mybuttons.button('enable');
-
-                }
-            });
-        }
-    },
+					}
+				});
+			}
+		}
+	],
     create: function(event, ui) {
         var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
         buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
@@ -1510,11 +1517,6 @@ $(document).ready(function () {
         $("#dialog_overlay").height( $("#enlargement_container").height() );
         $("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
         $("#dialog_overlay").offset( $("#enlargement_container").offset() );
-
-        var mybuttons = $(this).parent().find('button');
-
-        mybuttons[1].id = 'detach_btn';
-        mybuttons[2].id = 'merge_btn';
 
         if ($('#action-merge')[0].checked) {
             $('#detach_collated_form').hide();
