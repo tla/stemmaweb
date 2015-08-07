@@ -9,7 +9,6 @@ use TryCatch;
 
 BEGIN { extends 'Catalyst::Controller' }
 
-
 =head1 NAME
 
 stemmaweb::Controller::Relation - Controller for the relationship mapper
@@ -72,7 +71,7 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	my $collation = $tradition->collation;
 
 	# Stash text direction to use in JS.
-	$c->stash->{'direction'} = $collation->direction;
+	$c->stash->{'direction'} = $collation->direction || 'BI';
 
 	# Stash the relationship definitions
 	$c->stash->{'relationship_scopes'} = 
@@ -426,6 +425,110 @@ sub reading :Chained('text') :PathPart :Args(1) {
 	}
 	$c->forward('View::JSON');
 
+}
+
+sub compress :Chained('text') :PathPart :Args(0) {
+	my( $self, $c ) = @_;
+	my $tradition = delete $c->stash->{'tradition'};
+	my $collation = $tradition->collation;
+	my $m = $c->model('Directory');
+
+	my @rids = $c->request->param('readings[]');
+	my @readings;
+
+	foreach my $rid (@rids) {
+		my $rdg = $collation->reading( $rid );
+
+		push @readings, $rdg;
+	}
+
+	my $len = scalar @readings;
+
+	if( $c->request->method eq 'POST' ) {
+		if( $c->stash->{'permission'} ne 'full' ) {
+			$c->response->status( '403' );
+			$c->stash->{'result'} = { 
+				'error' => 'You do not have permission to modify this tradition.' };
+			$c->detach('View::JSON');
+			return;
+		}
+
+		# Sanity check: first save the original text of each witness.
+		my %origtext;
+		foreach my $wit ( $tradition->witnesses ) {
+			$origtext{$wit->sigil} = $collation->path_text( $wit->sigil );
+			if( $wit->is_layered ) {
+				my $acsig = $wit->sigil . $collation->ac_label;
+				$origtext{$acsig} = $collation->path_text( $acsig );
+			}
+		}
+
+		my $first = 0;
+
+		for (my $i = 0; $i < $len; $i++) {
+			my $rdg = $readings[$i];
+
+			if ($rdg->is_combinable) {
+				$first = $i;
+				last;
+			}
+		}
+
+		my @nodes;
+		push @nodes, "$readings[$first]";
+
+		for (my $i = $first+1; $i < $len; $i++) {
+			my $rdg = $readings[$first];
+			my $next = $readings[$i];
+
+			last unless $next->is_combinable;
+			push @nodes, "$next";
+
+			try {
+				$collation->merge_readings( "$rdg", "$next", 1 );
+			} catch ($e) {
+				$c->stash->{result} = {
+					error_msg => $e->message,
+				};
+
+				$c->detach('View::JSON');
+			}
+		}
+		
+		try {
+			# Finally, make sure we haven't screwed anything up.
+			foreach my $wit ( $tradition->witnesses ) {
+				my $pathtext = $collation->path_text( $wit->sigil );
+				Text::Tradition::Error->throw_collation_error( "Text differs for witness " . $wit->sigil )
+					unless $pathtext eq $origtext{$wit->sigil};
+				if( $wit->is_layered ) {
+					my $acsig = $wit->sigil . $collation->ac_label;
+					$pathtext = $collation->path_text( $acsig );
+					Text::Tradition::Error->throw_collation_error( "Layered text differs for witness " . $wit->sigil )
+						unless $pathtext eq $origtext{$acsig};
+				}
+			}
+		} catch (Text::Tradition::Error $e) {
+			$c->stash->{result} = {
+				error_msg => $e->message,
+			};
+
+			$c->detach('View::JSON');
+		}
+
+
+		$collation->relations->rebuild_equivalence();
+		$collation->calculate_ranks();
+
+		$m->save($collation);
+
+		$c->stash->{'result'} = {
+			success => 1,
+			nodes   => \@nodes,
+		};
+
+		$c->forward('View::JSON');
+	}
 }
 
 =head2 merge

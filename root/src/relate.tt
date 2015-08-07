@@ -9,6 +9,7 @@ var basepath = "[% c.uri_for( '/relation/' ) %]";
 var textid = "[% textid %]";
 var can_morphologize = "[% can_morphologize %]";
 var editable = "[% permission %]" === "full";
+var text_direction = "[% direction %]";
 // URLs for images referenced in Javascript
 var merge_button_yes = "[% c.uri_for( '/images/tick_circle_frame.png' ) %]";
 var merge_button_no = "[% c.uri_for( '/images/no_entry.png' ) %]";
@@ -24,7 +25,7 @@ var ternary_values = [% ternary_values %];
 [% END -%]
 
 $(document).ready(function () {
-  loadSVG('[% svg_string %]', '[% direction %]');
+  loadSVG('[% svg_string %]');
 });
 </script>
 [% END %]
@@ -109,6 +110,22 @@ $(document).ready(function () {
 
 	<div id="multipleselect-form" title="Multiple nodes selected...">
 		<div id="multipleselect-form-status"></div>
+	
+		<div class="error" id="duplicate-merge-error">
+		</div>
+
+		Detach or merge?<br/>
+		
+		<form autocomplete="off">
+			<label>
+				<input id="action-detach" checked name='option' type='radio' /> Detach
+			</label>
+
+			<label>
+				<input id="action-merge" name='option' type='radio' /> Merge
+			</label>
+		</form>
+
 		<div id="multipleselect-form-text">Select witness(es) to detach:</div>
 		<form id="detach_collated_form" action="#">
 		</form>
