@@ -10,6 +10,7 @@
 [% IF applicationstyle -%]
 	<link type="text/css" href="[% applicationstyle %]?v=[% vstr %]" rel="stylesheet" />
 [% END -%]
+    <script type="text/javascript" src="[% c.uri_for('/js/common.js') %]"></script>
     <script type="text/javascript" src="[% c.uri_for('/js/jquery-2.1.4.min.js') %]"></script>
     <script type="text/javascript" src="[% c.uri_for('/js/jquery-ui-1.11.4.min.js') %]"></script>
     <script type="text/javascript" src="[% c.uri_for('/js/jquery.mousewheel.min.js') %]"></script>
