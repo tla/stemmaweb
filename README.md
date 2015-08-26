@@ -24,7 +24,7 @@ set up to run the standalone service:
 * Install the following Perl modules:
   * App::cpanminus
   * Module::Install::Catalyst
-* Create a database for the storage of text tradition data. This can be anything supported by Perl's DBI.
+* Create a database for the storage of text tradition data. This can be anything supported by Perl's DBI. (If you are taking stemmaweb for a test spin only you could use the default test database without changing the database settings (see below). The test configuration relies on SQLite being present on the system.)
 * Install the dependencies for Stemmaweb from this directory: 
 
 		cd /PATH/TO/stemmaweb && cpanm -S --installdeps .
