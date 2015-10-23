@@ -256,7 +256,7 @@ sub textinfo :Local :Args(1) {
 		# Handle language param, making Default => null
 		my $langval = delete $params->{language} || 'Default';
 		
-		unless( $tradition->language eq $langval || !$tradition->can('language') ) {
+		unless( !$tradition->can('language') || $tradition->language eq $langval ) {
 			try {
 				$tradition->language( $langval );
 				$changed = 1;
