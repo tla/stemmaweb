@@ -1,9 +1,12 @@
 package stemmaweb::Model::Directory;
 use strict;
 use warnings;
+use JSON qw/ from_json /;
+use LWP::UserAgent;
 use Moose;
 use stemmaweb::Model::User;
 use stemmaweb::Model::Tradition;
+use stemmaweb::Model::Util;
 
 # A shadow class for the root of the Neo4J service.
 BEGIN { extends 'Catalyst::Model' }
@@ -20,7 +23,36 @@ sub traditionList {
 
 ## PUT /tradition
 sub newtradition {
-	my( $self, $req ) = @_;
+	my( $self, $user, $req ) = @_;
+	
+	# Grab the file upload, check its name/extension, and call the
+	# appropriate parser(s).
+	my $upload = $req->upload('file');
+	my $fileargs = [ $upload->tempname, $upload->filename ];
+	if( $upload->type ) {
+		push( @$fileargs, 'Content-Type', $upload->type );
+	}
+	if( $upload->charset ) {
+		push( @$fileargs, 'Content-Encoding', $upload->charset );
+	}
+
+	my %newopts = (
+		'name' => $req->param('name') || 'Uploaded tradition',
+		'language' => $req->param('language') || 'Default',
+		'public' => $req->param('public') ? 1 : undef,
+		'direction' => $req->param('direction') || 'LR',
+		'userId' => $user->id,
+		'filetype' => $req->param('filetype'),
+		'file' => $fileargs
+	);
+	
+	my $ua = LWP::UserAgent->new();
+	my $resp = $ua->put( $tradition_repo . "/tradition", \%newopts );
+	if( $resp->is_success ) {
+		return response_content( $resp );
+	} else {
+		throw_ua( $resp );
+	}
 }
 
 ## GET /user/$ID

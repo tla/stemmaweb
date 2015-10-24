@@ -1,6 +1,7 @@
 package stemmaweb::Model::Stemma;
 use strict;
 use warnings;
+use LWP::UserAgent;
 use Moose;
 
 # A shadow class for a Neo4J tradition.
@@ -13,15 +14,21 @@ has baseurl => (
 
 has identifier => (
 	is => 'ro',
-	isa => 'Str'
+	isa => 'Str',
+	writer => '_set_identifier'
 );
 
 has is_undirected => (
 	is => 'ro',
-	isa => 'Boolean'
+	isa => 'Boolean',
+	writer => '_set_is_undirected'
 );
 
-has from_jobid => ();
+has from_jobid => (
+	is => 'ro',
+	isa => 'Int',
+	writer => '_set_from_jobid'
+));
 
 
 sub BUILDARGS {
@@ -31,6 +38,27 @@ sub BUILDARGS {
 		baseurl => sprintf("%s/stemma/%s", $tradition_repo, $identifier),
 		identifier => $id
 	};	
+}
+
+sub BUILD {
+	my $self = shift;
+	## Load the stemma from the DB.
+	my $ua = LWP::UserAgent->new();
+	my $resp = $ua->get( $self->baseurl );
+	my $parameters ;
+	if( $resp->is_success ) {
+		$parameters = decode_json( $resp->content );
+	} else {
+	
+	}
+	foreach my $key ( keys %$parameters ) {
+		$self->_set_$key( $parameters->{$key} );
+	}	
+}
+
+sub alter {
+	my( $self, $dot ) = @_;
+		
 }
 
 sub root_graph {
