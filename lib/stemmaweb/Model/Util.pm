@@ -7,7 +7,7 @@ use vars qw/ @EXPORT /;
 use LWP::UserAgent;
 use stemmaweb::Error;
 
-@EXPORT = qw/ throw_ua load response_content /;
+@EXPORT = qw/ throw_ua load load_from_response response_content /;
 
 sub throw_ua {
 	stemmaweb::Error->throw(
@@ -21,7 +21,12 @@ sub load {
 	## Load the object from the DB and populate its data fields.
 	my $ua = LWP::UserAgent->new();
 	my $resp = $ua->get( $object->baseurl );
-	my $parameters ;
+	load_from_response( $resp );
+}
+
+sub load_from_response {
+	my( $object, $resp ) = @_;
+	my $parameters;
 	if( $resp->is_success ) {
 		$parameters = decode_json( $resp->content );
 	} else {

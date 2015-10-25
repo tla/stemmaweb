@@ -18,7 +18,16 @@ has tradition_repo => (
 
 ## GET /traditions
 sub traditionList {
-	my $self = shift;
+	my( $self, $public ) = @_;
+	my $requesturl = $self->baseurl . "/traditions";
+	$requesturl .= "?public=true" if $public;
+	my $resp = $LWP::UserAgent->new()->get( $requesturl );
+	my $content;
+	if( $resp->is_success ) {
+		$content = response_content( $resp );
+	} else {
+		throw_ua( $resp );
+	}
 }
 
 ## PUT /tradition
@@ -47,7 +56,7 @@ sub newtradition {
 	);
 	
 	my $ua = LWP::UserAgent->new();
-	my $resp = $ua->put( $tradition_repo . "/tradition", \%newopts );
+	my $resp = $ua->put( $self->tradition_repo . "/tradition", \%newopts );
 	if( $resp->is_success ) {
 		return response_content( $resp );
 	} else {

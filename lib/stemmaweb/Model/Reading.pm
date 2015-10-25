@@ -8,7 +8,7 @@ BEGIN { extends 'Catalyst::Model' }
 
 has baseurl => (
 	is => 'ro',
-	isa => Str
+	isa => 'Str'
 );
 
 has id => (
@@ -16,23 +16,59 @@ has id => (
 	isa => 'Str'
 );
 
-has text => ();
+has text => (
+	is => 'ro',
+	isa => 'Str',
+	writer => '_set_text',
+);
 
-has is_meta => ();
+has is_meta => (
+	is => 'ro',
+	isa => 'Bool',
+	writer => '_set_is_meta',
+);
 
-has is_start => ();
+has is_start => (
+	is => 'ro',
+	isa => 'Bool',
+	writer => '_set_is_start',
+);
 
-has is_end => ();
+has is_end => (
+	is => 'ro',
+	isa => 'Bool',
+	writer => '_set_is_end',
+);
 
-has grammar_invalid => ();
+has grammar_invalid => (
+	is => 'ro',
+	isa => 'Bool',
+	writer => '_set_grammar_invalid',
+);
 
-has is_nonsense => ();
+has is_nonsense => (
+	is => 'ro',
+	isa => 'Bool',
+	writer => '_set_is_nonsense',
+);
 
-has normal_form => ();
+has normal_form => (
+	is => 'ro',
+	isa => 'Str',
+	writer => '_set_normal_form',
+);
 
-has witnesses => ();
+has witnesses => (
+	is => 'ro',
+	isa => 'Str',
+	writer => '_set_witnesses',
+);
 
-has lexemes => ();
+has lexemes => (
+	is => 'ro',
+	isa => 'Str',
+	writer => '_set_lexemes',
+);
 
 
 

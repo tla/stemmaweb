@@ -31,10 +31,12 @@ before 'throw' => sub {
 # 				$args{message} = $msg->message;
 # 		}
 	}
-}
+};
 
 sub _stringify {
         my $self = shift;
         return "Error: " . $self->ident . " // " . $self->message
                 . "\n" . $self->stack_trace->as_string;
 }
+
+1;

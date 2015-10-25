@@ -90,8 +90,8 @@ sub directory :Local :Args(0) {
 		$c->stash->{is_admin} = 1 if $user->is_admin;
 	}
 	# List public (i.e. readonly) texts separately from any user (i.e.
-	# full access) texts that exist. Admin users therefore have nothing
-	# in this list.
+	# full access) texts that exist. 
+	# TODO separate out admin texts...
 	my @plist = grep { !$usertexts{$_->{id}} } $m->traditionlist('public');
 	$c->stash->{publictexts} = \@plist;
 	$c->stash->{template} = 'directory.tt';

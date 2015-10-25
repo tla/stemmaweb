@@ -14,48 +14,48 @@ BEGIN { extends 'Catalyst::Model' }
 
 has baseurl => (
 	is => 'ro',
-	isa => Str
+	isa => 'Str'
 );
 
 has id => (
 	is => 'ro',
-	isa => 'Str'
+	isa => 'Str',
 	writer => '_set_id',
 );
 
 has name => (
 	is => 'ro',
-	isa => 'Str'
+	isa => 'Str',
 	writer => '_set_name',
 );
 
 has language => (
 	is => 'ro',
-	isa => 'Str'
+	isa => 'Str',
 	writer => '_set_language',
 );
 
 has is_public => (
 	is => 'ro',
-	isa => 'Bool'
+	isa => 'Bool',
 	writer => '_set_is_public',
 );
 
 has direction => (
 	is => 'ro',
-	isa => 'Str'
+	isa => 'Str',
 	writer => '_set_direction',
 );
 
 has owner => (
 	is => 'ro',
-	isa => 'stemmaweb::Model::User'
+	isa => 'stemmaweb::Model::User',
 	writer => '_set_user',
 );
 
 has stemweb_jobid => (
 	is => 'ro',
-	isa => 'Int'
+	isa => 'Int',
 	writer => '_set_stemweb_jobid',
 );
 
@@ -72,9 +72,6 @@ sub BUILD {
 	## Load the tradition from the DB.
 	load( @_ );
 }
-
-## TODO check for existence of tradition in DB, with throw/catch; also 
-## cache tradition info
 
 sub textinfo {
 	my $self = shift;
@@ -98,23 +95,26 @@ sub set_textinfo {
 	my( $self, $params ) = @_;
 	my $ua = LWP::UserAgent->new;
 	my $resp = $ua->post( $self->baseurl, $params );
-	if( $resp->is_success ) {
-		return response_content( $resp );
-	} else {
-		throw_ua( $resp );
-	}
-
+	# Save the new parameters to our own object
+	load_from_response( $self, $resp );
 }
 
 ## TODO tradition ownership
 
 sub readings {
-	
+	my $self = shift;
+	my $ua = LWP::UserAgent->new();
+	my $resp = $ua->get( $self->baseurl . "/readings" );
+	if( $resp->is_success ) {
+		return response_content( $resp );
+	} else {
+		throw_ua( $resp );
+	}
 }
 
 sub reading {
 	my( $self, $id ) = @_;
-	return stemmaweb::Model::Reading( $self->baseurl, id );
+	return stemmaweb::Model::Reading->new( $self->baseurl, $id );
 }
 
 sub compress_readings {
@@ -138,7 +138,14 @@ sub relationship_types {
 }
 
 sub relationships {
-	
+	my $self = shift;
+	my $ua = LWP::UserAgent->new();
+	my $resp = $ua->get( $self->baseurl . "/readings" );
+	if( $resp->is_success ) {
+		return response_content( $resp );
+	} else {
+		throw_ua( $resp );
+	}	
 }
 
 sub relationship {
@@ -155,7 +162,14 @@ sub delete_relationship {
 }
 
 sub witnesses {
-	
+	my $self = shift;
+	my $ua = LWP::UserAgent->new();
+	my $resp = $ua->get( $self->baseurl . "/witnesses" );
+	if( $resp->is_success ) {
+		return response_content( $resp );
+	} else {
+		throw_ua( $resp );
+	}	
 }
 
 sub witness {
@@ -163,8 +177,20 @@ sub witness {
 	return stemmaweb::Model::Witness( $self->baseurl, $sigil );
 }
 
+## Needs to return objects with svg, identifier, and rootedness
 sub stemmata {
-	
+	my $self = shift;
+	my $ua = LWP::UserAgent->new();
+	my $resp = $ua->get( $self->baseurl . "/stemmata" );
+	if( $resp->is_success ) {
+		my $stemmalist = [];
+		foreach my $dot ( response_content( $resp ) ) {
+			push( @$stemmalist, stemmaweb::Model::Stemma->new(dot => $dot) );
+		}
+		return $stemmalist;
+	} else {
+		throw_ua( $resp );
+	}
 }
 
 ## GET .../stemma/$name

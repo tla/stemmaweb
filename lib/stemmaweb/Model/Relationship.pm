@@ -8,7 +8,7 @@ BEGIN { extends 'Catalyst::Model' }
 
 has baseurl => (
 	is => 'ro',
-	isa => Str
+	isa => 'Str'
 );
 
 has sigil => (
