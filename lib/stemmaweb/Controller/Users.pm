@@ -1,6 +1,7 @@
 package stemmaweb::Controller::Users;
 use Moose;
 use namespace::autoclean;
+use TryCatch;
 
 use Google::JWT;
 
@@ -108,6 +109,15 @@ A stub page returned on login / registration success.
 
 sub success :Local :Args(0) {
     my ( $self, $c ) = @_;
+
+	# Make the Neo4J stub user if it doesn't exist already
+	my $m = $c->model('Directory');
+	my $n4ju;
+	try {
+		$n4ju = $m->find_user( $c->user->id );
+	} catch ( stemmaweb::Error $e where { $_->status == 204 } ) {
+		$m->create_user( $c->user->get_object );
+	}	
 
 	$c->load_status_msgs;
     $c->stash->{template} = 'auth/success.tt';

@@ -1,10 +1,7 @@
-package stemmaweb::Model::Reading;
+package stemmaweb::Neo4J::Reading;
 use strict;
 use warnings;
 use Moose;
-
-# A shadow class for a Neo4J tradition.
-BEGIN { extends 'Catalyst::Model' }
 
 has baseurl => (
 	is => 'ro',
@@ -98,5 +95,7 @@ sub split {
 sub related_readings {
 	
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;

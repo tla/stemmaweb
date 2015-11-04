@@ -1,10 +1,7 @@
-package stemmaweb::Model::Relationship;
+package stemmaweb::Neo4J::Relationship;
 use strict;
 use warnings;
 use Moose;
-
-# A shadow class for a Neo4J tradition.
-BEGIN { extends 'Catalyst::Model' }
 
 has baseurl => (
 	is => 'ro',
@@ -30,5 +27,7 @@ sub BUILDARGS {
 sub fetch_relationship {
 	
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;

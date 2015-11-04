@@ -82,7 +82,7 @@ __PACKAGE__->config(
             },
             store => {
                 class => 'Model::KiokuDB',
-                model_name => 'Directory',
+                model_name => 'Userdir',
             },
         },
         openid => {
@@ -103,7 +103,7 @@ __PACKAGE__->config(
             },
             store => {
                 class => 'Model::KiokuDB',
-                model_name => 'Directory',
+                model_name => 'Userdir',
             },
             auto_create_user => 1,
         },
@@ -113,7 +113,7 @@ __PACKAGE__->config(
             },
             store => {
                 class => 'Model::KiokuDB',
-                model_name => 'Directory',
+                model_name => 'Userdir',
             },
             auto_create_user => 1,
         },

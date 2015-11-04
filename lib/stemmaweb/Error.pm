@@ -1,4 +1,4 @@
-package Text::Tradition::Error;
+package stemmaweb::Error;
 
 use strict;
 use warnings;
@@ -13,13 +13,21 @@ has 'status' => (
 	isa => 'Int'
 );
 
-before 'throw' => sub {
-	my( $class, $args ) = @_;
+around 'throw' => sub {
+	my $orig = shift;
+	my $class = shift;
+	my $args;
+	if( @_ == 1 ) {
+			$args = $_[0];
+	} else {
+			$args = { @_ };
+	}
+
 	## If we have been passed a UserAgent response, parse it into proper 
 	## throw init arguments.
 	if( exists $args->{'response'} ) {
 		my $resp = delete $args->{'response'};
-		$args->{'status'} = $resp->status;
+		$args->{'status'} = $resp->code;
 		## TODO see if it is JSON and decode it as such if so.
 		$args->{'message'} = $resp->content;
 		
@@ -31,6 +39,8 @@ before 'throw' => sub {
 # 				$args{message} = $msg->message;
 # 		}
 	}
+	
+	$class->$orig( $args );
 };
 
 sub _stringify {
@@ -38,5 +48,7 @@ sub _stringify {
         return "Error: " . $self->ident . " // " . $self->message
                 . "\n" . $self->stack_trace->as_string;
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;

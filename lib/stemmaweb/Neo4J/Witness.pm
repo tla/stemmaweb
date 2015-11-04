@@ -1,10 +1,7 @@
-package stemmaweb::Model::Witness;
+package stemmaweb::Neo4J::Witness;
 use strict;
 use warnings;
 use Moose;
-
-# A shadow class for a Neo4J tradition.
-BEGIN { extends 'Catalyst::Model' }
 
 has baseurl => (
 	is => 'ro',
@@ -32,5 +29,7 @@ sub text {
 sub readings {
 	my $self = shift;
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;

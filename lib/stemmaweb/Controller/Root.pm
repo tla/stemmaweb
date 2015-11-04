@@ -83,9 +83,9 @@ sub directory :Local :Args(0) {
     	# The Catalyst/Kioku user
     	my $user = $c->user->get_object;
     	# The Neo4J user
-    	my $n4ju = $m->user( $user->id );
+    	my $n4ju = $m->find_user( $user->id );
     	my @list = $n4ju->traditionlist;
-    	map { $usertexts{$_->{id}} = 1 } 
+    	map { $usertexts{$_->{id}} = 1 } @list;
 		$c->stash->{usertexts} = \@list;
 		$c->stash->{is_admin} = 1 if $user->is_admin;
 	}
@@ -123,7 +123,7 @@ sub newtradition :Local :Args(0) {
 	## The Catalyst user
 	my $m = $c->model('Directory');
 	try {
-		$c->stash->{'result'} = $m->newtradition( $user, $c->request );
+		$c->stash->{'result'} = $m->newtradition( $c->user, $c->request );
 	} catch ( stemmaweb::Error $e ) {
 		return _json_error( $c, $e->status, $e->message );
 	}
@@ -146,7 +146,7 @@ Returns information about a particular text.
 =cut
 
 sub textinfo :Local :Args(1) {
-	my $self = shift;
+	my( $self, $c ) = @_;
 	my( $tradition, $ok ) = _load_tradition( @_ );
 	return unless $ok;
 	if( $c->req->method eq 'POST' ) {
@@ -168,7 +168,7 @@ sub textinfo :Local :Args(1) {
 	}
 
 	# Now return the current textinfo, whether GET or successful POST.
-
+	my $textinfo = $tradition->textinfo();
 	my @stemmasvg = map { _stemma_info( $_ ) } $tradition->stemmata;
 	$textinfo->{stemmata} = \@stemmasvg;
 	$c->stash->{'result'} = $tradition->textinfo;
@@ -184,7 +184,7 @@ Returns the variant graph for the text specified at $textid, in SVG form.
 =cut
 
 sub variantgraph :Local :Args(1) {
-	my $self = shift;
+	my( $self, $c ) = @_;
 	my( $tradition, $ok ) = _load_tradition( @_ );
 	return unless $ok;
 

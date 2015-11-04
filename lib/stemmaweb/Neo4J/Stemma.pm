@@ -1,12 +1,9 @@
-package stemmaweb::Model::Stemma;
+package stemmaweb::Neo4J::Stemma;
 use strict;
 use warnings;
 use Graph::Reader::Dot;
 use LWP::UserAgent;
 use Moose;
-
-# A shadow class for a Neo4J tradition.
-BEGIN { extends 'Catalyst::Model' }
 
 has baseurl => (
 	is => 'ro',
@@ -185,5 +182,7 @@ sub _dotquote {
 sub _by_vertex {
 	return $a->[0].$a->[1] cmp $b->[0].$b->[1];
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;

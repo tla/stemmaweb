@@ -1,16 +1,13 @@
-package stemmaweb::Model::Tradition;
+package stemmaweb::Neo4J::Tradition;
 use strict;
 use warnings;
 use LWP::UserAgent;
 use Moose;
-use stemmaweb::Model::Witness;
-use stemmaweb::Model::Stemma;
-use stemmaweb::Model::Relationship;
-use stemmaweb::Model::Reading;
-use stemmaweb::Model::Util;
-
-# A shadow class for a Neo4J tradition.
-BEGIN { extends 'Catalyst::Model' }
+use stemmaweb::Neo4J::Witness;
+use stemmaweb::Neo4J::Stemma;
+use stemmaweb::Neo4J::Relationship;
+use stemmaweb::Neo4J::Reading;
+use stemmaweb::Neo4J::Util;
 
 has baseurl => (
 	is => 'ro',
@@ -49,7 +46,7 @@ has direction => (
 
 has owner => (
 	is => 'ro',
-	isa => 'stemmaweb::Model::User',
+	isa => 'stemmaweb::Neo4J::User',
 	writer => '_set_user',
 );
 
@@ -88,7 +85,7 @@ sub textinfo {
 		# client side can choose what to display.
 		reltypes => [ map { $_->name } $self->relationship_types ]
 	};
-
+	return $textinfo;
 }
 
 sub set_textinfo {
@@ -114,7 +111,7 @@ sub readings {
 
 sub reading {
 	my( $self, $id ) = @_;
-	return stemmaweb::Model::Reading->new( $self->baseurl, $id );
+	return stemmaweb::Neo4J::Reading->new( $self->baseurl, $id );
 }
 
 sub compress_readings {
@@ -150,7 +147,7 @@ sub relationships {
 
 sub relationship {
 	my( $self, @vector ) = @_;
-	return stemmaweb::Model::Relationship( $self->baseurl, @vector );
+	return stemmaweb::Neo4J::Relationship( $self->baseurl, @vector );
 }
 
 sub add_relationship {
@@ -174,7 +171,7 @@ sub witnesses {
 
 sub witness {
 	my( $self, $sigil ) = @_;
-	return stemmaweb::Model::Witness( $self->baseurl, $sigil );
+	return stemmaweb::Neo4J::Witness( $self->baseurl, $sigil );
 }
 
 ## Needs to return objects with svg, identifier, and rootedness
@@ -185,7 +182,7 @@ sub stemmata {
 	if( $resp->is_success ) {
 		my $stemmalist = [];
 		foreach my $dot ( response_content( $resp ) ) {
-			push( @$stemmalist, stemmaweb::Model::Stemma->new(dot => $dot) );
+			push( @$stemmalist, stemmaweb::Neo4J::Stemma->new(dot => $dot) );
 		}
 		return $stemmalist;
 	} else {
@@ -196,7 +193,7 @@ sub stemmata {
 ## GET .../stemma/$name
 sub stemma {
 	my( $self, $name ) = @_;
-	return stemmaweb::Model::Stemma( $self->baseurl, $name );
+	return stemmaweb::Neo4J::Stemma( $self->baseurl, $name );
 }
 
 ## PUT .../stemma
@@ -224,5 +221,7 @@ sub clear_stemweb_jobid {
 sub run_analysis {
 	my( $self, @options ) = @_;
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;

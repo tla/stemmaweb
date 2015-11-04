@@ -1,8 +1,9 @@
-package stemmaweb::Model::Util;
+package stemmaweb::Neo4J::Util;
 
 use strict;
 use warnings;
 use Exporter 'import';
+use JSON qw/ from_json decode_json /;
 use vars qw/ @EXPORT /;
 use LWP::UserAgent;
 use stemmaweb::Error;
@@ -21,20 +22,27 @@ sub load {
 	## Load the object from the DB and populate its data fields.
 	my $ua = LWP::UserAgent->new();
 	my $resp = $ua->get( $object->baseurl );
-	load_from_response( $resp );
+	load_from_response( $object, $resp );
 }
 
 sub load_from_response {
 	my( $object, $resp ) = @_;
 	my $parameters;
-	if( $resp->is_success ) {
+	if( $resp->is_success && $resp->content ) {
 		$parameters = decode_json( $resp->content );
 	} else {
 		throw_ua( $resp );
 	}
 	foreach my $key ( keys %$parameters ) {
+		$DB::single = 1 if $key eq 'active';
+		next if $key eq 'id';
+		my $val = $parameters->{$key};
+		if( $object->meta->get_attribute( $key )->type_constraint->name eq 'Bool' ) {
+			# Turn the JSON boolean into a Perl boolean.
+			$val = $val ? 1 : 0;
+		}
 		my $setter = "_set_$key";
-		$object->$setter( $parameters->{$key} );
+		$object->$setter( $val );
 	}
 }
 
