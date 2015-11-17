@@ -1,5 +1,6 @@
 package stemmaweb::View::CSV;
 use Moose;
+use Encode qw/ encode /;
 use namespace::autoclean;
 
 extends 'Catalyst::View';
@@ -10,7 +11,7 @@ sub process {
         $c->res->content_encoding( 'UTF-8' );
         $c->res->header( 'Content-Disposition', 
         	sprintf( "attachment; filename=\"%s.csv\"", $c->stash->{name} ) );
-        $c->res->output( $c->stash->{result} );
+        $c->res->output( encode( 'UTF-8', $c->stash->{result} ) );
 }
 
 =head1 NAME
