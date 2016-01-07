@@ -2,6 +2,7 @@ package stemmaweb::Neo4J::Util;
 
 use strict;
 use warnings;
+use feature 'say';
 use Exporter 'import';
 use JSON qw/ from_json decode_json /;
 use vars qw/ @EXPORT /;
@@ -34,9 +35,9 @@ sub load_from_response {
 		throw_ua( $resp );
 	}
 	foreach my $key ( keys %$parameters ) {
-		$DB::single = 1 if $key eq 'active';
 		next if $key eq 'id';
 		my $val = $parameters->{$key};
+		next unless defined $val;
 		if( $object->meta->get_attribute( $key )->type_constraint->name eq 'Bool' ) {
 			# Turn the JSON boolean into a Perl boolean.
 			$val = $val ? 1 : 0;

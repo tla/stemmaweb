@@ -44,10 +44,19 @@ has direction => (
 	writer => '_set_direction',
 );
 
+# This is the owner ID string set on the TRADITION node
 has owner => (
 	is => 'ro',
+	isa => 'Str',
+	writer => '_set_owner',
+);
+
+# This is the user object corresponding to the owner ID
+has user => (
+	is => 'ro',
 	isa => 'stemmaweb::Neo4J::User',
-	writer => '_set_user',
+	lazy => 1,
+	builder => '_lookup_user',
 );
 
 has stemweb_jobid => (
@@ -68,6 +77,15 @@ sub BUILDARGS {
 sub BUILD {
 	## Load the tradition from the DB.
 	load( @_ );
+	$DB::single = 1;
+	print "Got here\n";
+}
+
+sub _lookup_user {
+	my $self = shift;
+	my $repo = $self->baseurl;
+	$repo =~ s/\/tradition.*//;
+	return stemmaweb::Neo4J::User->new( $repo, $self->owner );
 }
 
 sub textinfo {
@@ -77,7 +95,7 @@ sub textinfo {
 		name => $self->name,
 		direction => $self->direction || 'LR',
 		public => $self->is_public || 0,
-		owner => $self->owner ? $self->owner->email : undef,
+		owner => $self->user ? $self->user->email : undef,
 		language => $self->language || 'Default',
 		stemweb_jobid => $self->stemweb_jobid || 0,
 		witnesses => [ map { $_->sigil } $self->witnesses ],

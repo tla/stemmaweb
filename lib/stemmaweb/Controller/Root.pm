@@ -145,9 +145,10 @@ Returns information about a particular text.
 
 =cut
 
+#TODO pass through
 sub textinfo :Local :Args(1) {
-	my( $self, $c ) = @_;
-	my( $tradition, $ok ) = _load_tradition( @_ );
+	my( $self, $c, $textid ) = @_;
+	my( $tradition, $ok ) = _load_tradition( $c, $textid );
 	return unless $ok;
 	if( $c->req->method eq 'POST' ) {
 		return _json_error( $c, 403, 
@@ -183,6 +184,7 @@ Returns the variant graph for the text specified at $textid, in SVG form.
 
 =cut
 
+# TODO pass through
 sub variantgraph :Local :Args(1) {
 	my( $self, $c ) = @_;
 	my( $tradition, $ok ) = _load_tradition( @_ );
@@ -363,6 +365,7 @@ sub _check_permission {
 	my( $c, $tradition ) = @_;
     my $user = $c->user_exists ? $c->user->get_object : undef;
     if( $user ) {
+    	$DB::single = 1;
     	return 'full' if ( $user->is_admin || 
     		( $tradition->user->id eq $user->id ) );
     }

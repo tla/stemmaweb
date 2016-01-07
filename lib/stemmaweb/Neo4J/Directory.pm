@@ -42,6 +42,14 @@ sub newtradition {
 	if( $upload->charset ) {
 		push( @$fileargs, 'Content-Encoding', $upload->charset );
 	}
+	
+	# Figure out the filetype unless it exists.
+	my $filetype = $req->param('filetype');
+	unless( $filetype ) {
+		$filetype = $upload->type;
+		$filetype =~ s/^.*\///;
+		$filetype = 'tsv' if $filetype eq 'txt';
+	}
 
 	my %newopts = (
 		'name' => $req->param('name') || 'Uploaded tradition',
@@ -49,12 +57,13 @@ sub newtradition {
 		'public' => $req->param('public') ? 'true' : 'false',
 		'direction' => $req->param('direction') || 'LR',
 		'userId' => $user->id,
-		'filetype' => $req->param('filetype'),
+		'filetype' => $filetype,
 		'file' => $fileargs
 	);
 	
 	my $ua = LWP::UserAgent->new();
-	my $resp = $ua->put( $self->tradition_repo . "/tradition", \%newopts );
+	my $resp = $ua->put( $self->tradition_repo . "/tradition", \%newopts, 
+		'Content-Type' => 'form-data' );
 	if( $resp->is_success ) {
 		return response_content( $resp );
 	} else {

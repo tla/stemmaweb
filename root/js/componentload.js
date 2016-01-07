@@ -422,10 +422,10 @@ function upload_new () {
 		data.append( 'file', newfile );
 		var upload_url = _get_url([ 'newtradition' ]);
 		post_xhr2( upload_url, data, function( ret ) {
-			if( ret.id ) {
+			if( ret.tradId ) {
 				$('#upload-collation-dialog').dialog('close');
 				refreshDirectory();
-				loadTradition( ret.id, ret.name, 1 );
+				loadTradition( ret.tradId, ret.name, 1 );
 			} else if( ret.error ) {
 				$('#upload_status').empty().append( 
 					$('<span>').attr('class', 'error').append( ret.error ) );

@@ -47,6 +47,8 @@ my $openid_user = $dir->create_user({
 die "Failed to create test users" unless $user && $admin && $openid_user;
 say "Created users";
 
+exit if @ARGV && $ARGV[0] =~ /-u/;
+
 my $t1 = Text::Tradition->new( input => 'Self', file => 't/data/besoin.xml' );
 die "Failed to create test tradition #1" unless $t1;
 $t1->add_stemma( dotfile => 't/data/besoin_stemweb.dot' );
