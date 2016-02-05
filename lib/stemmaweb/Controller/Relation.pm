@@ -27,19 +27,13 @@ Renders the application for the text identified by $textid.
 
 =cut
 
+# Here is the template...
 sub index :Path :Args(0) {
 	my( $self, $c ) = @_;
 	$c->stash->{'template'} = 'relate.tt';
 }
 
-=head2 text
-
- GET relation/$textid/
- 
- Runs the relationship mapper for the specified text ID.
- 
-=cut
-
+# ...and here is the tradition lookup and ACL check...
 sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	my( $self, $c, $textid ) = @_;
 	my $tradition = $c->model('Directory')->tradition( $textid );
@@ -65,6 +59,7 @@ sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	$c->stash->{'tradition'} = $tradition;
 }
 
+# ...and here is the page variable initialization.
 sub main :Chained('text') :PathPart('') :Args(0) {
 	my( $self, $c ) = @_;
 	my $tradition = delete $c->stash->{'tradition'};
@@ -182,15 +177,31 @@ sub help :Local :Args(1) {
 
  GET relation/$textid/relationships
 
-Returns the list of relationships defined for this text.
+Returns a JSON list of relationships defined for this text. Each relationship
+is an object that looks like this:
+
+ {"target_id":"n345",
+  "target_text":"scilicet ",
+  "source_id":"n341",
+  "source_text":"scilicet ",
+  "scope":"local",
+  "type":"transposition",
+  "non_independent":null,
+  "b_derivable_from_a":null,
+  "a_derivable_from_b":null,
+  "is_significant":"no"}
 
  POST relation/$textid/relationships { request }
  
-Attempts to define the requested relationship within the text. Returns 200 on
-success or 403 on error.
+Accepts a form data post with keys as above, and attempts to create the requested 
+relationship. On success, returns a JSON list of relationships that should be 
+created in [source_id, target_id, type] tuple form.
 
  DELETE relation/$textid/relationships { request }
  
+Accepts a form data post with a source_id and a target_id to indicate the 
+relationship to delete. On success, returns a JSON list of relationships that 
+should be removed in [source_id, target_id] tuple form.
 
 =cut
 
@@ -294,7 +305,15 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 
  GET relation/$textid/readings
 
-Returns the list of readings defined for this text along with their metadata.
+Returns a JSON dictionary, keyed on reading ID, of all readings defined for this 
+text along with their metadata. A typical object in this dictionary will look like:
+
+  {"witnesses":["Gr314","Kf133","Mu11475","Kr299","MuU151","Er16","Ba96","Wi3818","Mu28315"],
+   "lexemes":[],
+   "text":"dicens.",
+   "id":"n1051",
+   "is_meta":null,
+   "variants":[]}
 
 =cut
 
@@ -347,12 +366,18 @@ sub readings :Chained('text') :PathPart :Args(0) {
 
  GET relation/$textid/reading/$id
 
-Returns the list of readings defined for this text along with their metadata.
+Returns a JSON object describing the reading identified by $id.
 
  POST relation/$textid/reading/$id { request }
  
-Alters the reading according to the values in request. Returns 403 Forbidden if
-the alteration isn't allowed.
+Accepts form data containing the following fields:
+
+  - id (required)
+  - grammar_invalid (checked or not)
+  - is_nonsense (checked or not)
+  - normal_form (text)
+  
+and updates the reading attributes as indicated.
 
 =cut
 
@@ -426,6 +451,20 @@ sub reading :Chained('text') :PathPart :Args(1) {
 	$c->forward('View::JSON');
 
 }
+
+=head2 compress
+
+ POST relation/$textid/compress { data }
+ 
+Accepts form data containing a list of 'readings[]'.
+Concatenates the requested readings into a single reading, All relationships of 
+the affected readings must be removed; this is the responsibility of the client. 
+On success returns a JSON object that looks like this:
+
+  {"nodes":["n158","n159","n160","n161","n162","n163"],
+   "success":1}
+
+=cut
 
 sub compress :Chained('text') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
@@ -535,9 +574,21 @@ sub compress :Chained('text') :PathPart :Args(0) {
 
  POST relation/$textid/merge { data }
  
+Accepts form data identical to the ../relationships POST call, with one extra
+Boolean parameter 'single'.
 Merges the requested readings, combining the witnesses of both readings into
-the target reading. All non-conflicting source relationships are inherited by
-the target relationship.
+the target reading. All relationships of the source reading must be transferred
+to the target reading; this is the responsibility of the client. On success
+returns a JSON object that looks like this:
+
+  {"status":"ok",
+   "checkalign":[["n135","n130"],
+                 ["n133","n127"],
+                 ["n126","n132"]]}
+                
+The "checkalign" key will only be included if 'single' does not have a true 
+value. It contains a list of tuples indicating readings that seem to be identical, 
+and that the user may want to merge in addition.
 
 =cut
 
@@ -603,12 +654,22 @@ sub merge :Chained('text') :PathPart :Args(0) {
 
  POST relation/$textid/duplicate { data }
  
+Accepts form data with a list of 'readings[]' and a list of 'witnesses[]'. 
 Duplicates the requested readings, detaching the witnesses specified in
-the list to use the new reading(s) instead of the old. The data to be
-passed should be a JSON structure:
+the list to use the new reading(s) instead of the old. Returns a JSON object
+that contains a key for each new reading thus created, as well as a key
+'DELETED' that contains a list of tuples indicating the relationships that
+should be removed from the graph. For example:
 
- { readings: rid1,rid2,rid3,...
-   witnesses: [ wit1, ... ] }
+  {"DELETED":[["n135","n130"]],
+   "n131_0":{"id":"n131_0",
+             "variants":[],
+             "orig_rdg":"n131",
+             "is_meta":null,
+             "lexemes":[],
+             "witnesses":["Ba96"],
+             "text":"et "}}
+
 
 =cut
 
