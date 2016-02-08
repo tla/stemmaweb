@@ -111,9 +111,6 @@ $(document).ready(function () {
 	<div id="multipleselect-form" title="Multiple nodes selected...">
 		<div id="multipleselect-form-status"></div>
 	
-		<div class="error" id="duplicate-merge-error">
-		</div>
-
 		Detach or merge?<br/>
 		
 		<form autocomplete="off">

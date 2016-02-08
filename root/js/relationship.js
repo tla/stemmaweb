@@ -1480,7 +1480,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     	{
 			text: "Cancel",
 			click: function() {
-				document.getElementById('duplicate-merge-error').innerHTML = "";
+				$('#multipleselect-form-status').empty();
 				$( this ).dialog( "close" );
 			}
 		},
@@ -1512,19 +1512,15 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				var form_values = $('#detach_collated_form').serialize();
 
 				var jqjson = $.post(ncpath, form_values, function(data) {
+					mybuttons.button('enable');
 					if (data.success) {
-						document.getElementById('duplicate-merge-error').innerHTML = "";
-
 						if (data.nodes) {
 							compress_nodes(data.nodes);
 						}
-
-						mybuttons.button('enable');
 						self.dialog('close');
 					} else if (data.error_msg) {
-						document.getElementById('duplicate-merge-error').innerHTML = data.error_msg;
-						mybuttons.button('enable');
-
+						var dataerror = $('<p>').attr('class', 'error').text(data.error_msg);
+						$('#multipleselect-form-status').append(dataerror);
 					}
 				});
 			}
