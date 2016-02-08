@@ -1211,7 +1211,50 @@ function placeMiddle() {
 }
 
 
-$(document).ready(function () {
+$(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+	var error;
+	var errordiv;
+	// Is it an authorization error?
+	if( ajaxSettings.type == 'POST' && jqXHR.status == 403 
+		&& jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
+		error = 'You are not authorized to modify this tradition. (Try logging in again?)';
+	} else {
+		try {
+			var errobj = jQuery.parseJSON( jqXHR.responseText );
+			error = errobj.error;
+		} catch(e) {
+			error = jqXHR.responseText;
+		}
+	}
+	
+	// To which box does it belong?
+	if( ajaxSettings.url == getTextURL('relationships')
+		  || ajaxSettings.url == getTextURL('merge') ) {
+		// relationship / merge box
+		error += '</br>The relationship cannot be made.</p>';
+		errordiv = '#status';
+		// $('#status').append( '<p class="error">Error: ' + error );
+	} else if ( ajaxSettings.url == getTextURL('duplicate') ) {
+		// multipleselect box
+		error += '</br>The reading cannot be duplicated.</p>';
+		errordiv = '#multipleselect-form-status';
+	} else if ( ajaxSettings.url == getTextURL('compress') ) {
+		// multipleselect box
+		error += '</br>The readings cannot be merged.</p>';
+		errordiv = '#multipleselect-form-status';
+	} else if ( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1 ) {
+		// reading box
+		error += '</br>The reading cannot be altered.</p>';
+		errordiv = '#reading_status';
+	}
+	
+	// Populate the box with the error message
+	$(errordiv).append( '<p class="error">Error: ' + error );
+	
+	// Reset the buttons
+	$(errordiv).parents('.ui-dialog').find('.ui-button').button("enable");
+	
+}).ready(function () {
     
   timer = null;
   relation_manager = new relation_factory();
@@ -1377,25 +1420,7 @@ $(document).ready(function () {
 		$( '#status' ).empty();
 		$("#dialog_overlay").hide();
 	}
-	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		if( ( ajaxSettings.url == getTextURL('relationships')
-			  || ajaxSettings.url == getTextURL('merge') )
-			&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-			var error;
-			if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
-				error = 'You are not authorized to modify this tradition. (Try logging in again?)';
-			} else {
-				try {
-					var errobj = jQuery.parseJSON( jqXHR.responseText );
-					error = errobj.error + '</br>The relationship cannot be made.</p>';
-				} catch(e) {
-					error = jqXHR.responseText;
-				}
-			}
-			$('#status').append( '<p class="error">Error: ' + error );
-		}
-		$(event.target).parent().find('.ui-button').button("enable");
-	} );
+	});
   }
 
   // Set up the relationship info display and deletion dialog.  
@@ -1536,23 +1561,6 @@ $(document).ready(function () {
         marquee.unselect();
         $("#dialog_overlay").hide();
     }
-  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-    if( ajaxSettings.url == getTextURL('duplicate') 
-      && ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-      var error;
-      if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
-        error = 'You are not authorized to modify this tradition. (Try logging in again?)';
-      } else {
-        try {
-          var errobj = jQuery.parseJSON( jqXHR.responseText );
-          error = errobj.error + '</br>The relationship cannot be made.</p>';
-        } catch(e) {
-          error = jqXHR.responseText;
-        }
-      }
-      $('#multipleselect-form-status').append( '<p class="error">Error: ' + error );
-    }
-    $(event.target).parent().find('.ui-button').button("enable");
   }); 
 
 
@@ -1651,23 +1659,6 @@ $(document).ready(function () {
 		close: function() {
 			$("#dialog_overlay").hide();
 		}
-	  }).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		if( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1
-			&& ajaxSettings.type == 'POST' && jqXHR.status == 403 ) {
-			var error;
-			if( jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
-				error = 'You are not authorized to modify this tradition. (Try logging in again?)';
-			} else {
-				try {
-					var errobj = jQuery.parseJSON( jqXHR.responseText );
-					error = errobj.error + '</br>The relationship cannot be made.</p>';
-				} catch(e) {
-					error = jqXHR.responseText;
-				}
-			}
-			$('#status').append( '<p class="error">Error: ' + error );
-		}
-		$(event.target).parent().find('.ui-button').button("enable");
 	  });
 	} else {
 		$('#reading-form').hide();
