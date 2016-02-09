@@ -1210,7 +1210,7 @@ function placeMiddle() {
 	return x;
 }
 
-
+// First error handling...
 $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	var error;
 	var errordiv;
@@ -1230,21 +1230,26 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	// To which box does it belong?
 	if( ajaxSettings.url == getTextURL('relationships')
 		  || ajaxSettings.url == getTextURL('merge') ) {
-		// relationship / merge box
-		error += '</br>The relationship cannot be made.</p>';
-		errordiv = '#status';
-		// $('#status').append( '<p class="error">Error: ' + error );
+		if( ajaxSettings.type == 'DELETE' ) {
+		  	// the delete box
+		  	error += '<br>The relationship cannot be deleted.</p>';
+		  	errordiv = '#delete-status';
+		} else {
+			// relationship / merge box
+			error += '<br>The relationship cannot be made.</p>';
+			errordiv = '#status';
+		}
 	} else if ( ajaxSettings.url == getTextURL('duplicate') ) {
 		// multipleselect box
-		error += '</br>The reading cannot be duplicated.</p>';
+		error += '<br>The reading cannot be duplicated.</p>';
 		errordiv = '#multipleselect-form-status';
 	} else if ( ajaxSettings.url == getTextURL('compress') ) {
 		// multipleselect box
-		error += '</br>The readings cannot be merged.</p>';
+		error += '<br>The readings cannot be merged.</p>';
 		errordiv = '#multipleselect-form-status';
 	} else if ( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1 ) {
 		// reading box
-		error += '</br>The reading cannot be altered.</p>';
+		error += '<br>The reading cannot be altered.</p>';
 		errordiv = '#reading_status';
 	}
 	
@@ -1253,7 +1258,8 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	
 	// Reset the buttons
 	$(errordiv).parents('.ui-dialog').find('.ui-button').button("enable");
-	
+
+// ...then initialization.
 }).ready(function () {
     
   timer = null;
@@ -1426,11 +1432,14 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
   // Set up the relationship info display and deletion dialog.  
   $( "#delete-form" ).dialog({
     autoOpen: false,
-    height: 135,
+    height: "auto",
     width: 300,
     modal: false,
     buttons: {
-        OK: function() { $( this ).dialog( "close" ); },
+        OK: function() { 
+        	$('#delete-status').empty()
+        	$( this ).dialog( "close" ); 
+        },
         "Delete all": function () { delete_relation( true ); },
         Delete: function() { delete_relation( false ); }
     },
@@ -1440,15 +1449,6 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     	// Not sure how essential it is, does anything break if it's not here?
         var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
         buttonset.find( "button:contains('OK')" ).css( 'float', 'right' );
-    	// A: This makes sure that the pop up delete relation dialogue for a hovered over
-    	// relation auto closes if the user doesn't engage (mouseover) with it.
-        var dialog_aria = $("div[aria-labelledby='ui-dialog-title-delete-form']");  
-        dialog_aria.mouseenter( function() {
-            if( mouseWait != null ) { clearTimeout(mouseWait) };
-        })
-        dialog_aria.mouseleave( function() {
-            mouseWait = setTimeout( function() { $("#delete-form").dialog( "close" ) }, 2000 );
-        })
     },
     open: function() {
     	// Show the appropriate buttons...
@@ -1466,14 +1466,13 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     		$( this ).dialog( "option", "width", 200 );
     		buttonset.find( "button:contains('Delete')" ).show();
 		}    	
-        mouseWait = setTimeout( function() { $("#delete-form").dialog( "close" ) }, 2000 );
     },
     close: function() {}
   });
 
   $( "#multipleselect-form" ).dialog({
     autoOpen: false,
-    height: 150,
+    height: "auto",
     width: 250,
     modal: true,
     buttons: [
