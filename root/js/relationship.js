@@ -1289,7 +1289,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			var errobj = jQuery.parseJSON( jqXHR.responseText );
 			error = errobj.error;
 		} catch(e) {
-			error = jqXHR.responseText;
+			error = jqXHR.statusText;
 		}
 	}
 	
@@ -1303,7 +1303,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		} else {
 			// relationship / merge box
 			error += '<br>The relationship cannot be made.</p>';
-			errordiv = '#status';
+			errordiv = '#dialog-form-status';
 		}
 	} else if ( ajaxSettings.url == getTextURL('duplicate') ) {
 		// multipleselect box
@@ -1405,7 +1405,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
   if( editable ) {
 	$( '#dialog-form' ).dialog( {
 	autoOpen: false,
-	height: 350,
+	height: auto,
 	width: 340,
 	modal: true,
 	buttons: {
@@ -1449,7 +1449,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			}, 'json' );
 		},
 		Cancel: function() {
-			$( '#status' ).empty();
+			$( '#dialog-form-status' ).empty();
 			$( this ).dialog( 'close' );
 		}
 	},

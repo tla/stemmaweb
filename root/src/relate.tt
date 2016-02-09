@@ -62,6 +62,7 @@ $(document).ready(function () {
 	<div id="update_workspace_button"></div>
 	
 	<div id="dialog-form" title="Create relation between two nodes...">
+    	<div id="dialog-form-status"></div>		
 		<form id="merge_node_form" action="#">
 		<fieldset>
 			<input type="hidden" name="source_id" id="source_node_id"/>
@@ -92,7 +93,6 @@ $(document).ready(function () {
 			<label for="note">Annotation or note&nbsp;</label>
 			<textarea rows="3" style="width:100%;" name="annotation" id="note" class=".ui-widget input"></textarea>
 		</fieldset>
-    	<div id="dialog-form-status"></div>		
 		</form>
 	</div>
 	<div id="dialog_overlay"></div>
