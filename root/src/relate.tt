@@ -62,7 +62,7 @@ $(document).ready(function () {
 	<div id="update_workspace_button"></div>
 	
 	<div id="dialog-form" title="Create relation between two nodes...">
-		<form id="collapse_node_form" action="#">
+		<form id="merge_node_form" action="#">
 		<fieldset>
 			<input type="hidden" name="source_id" id="source_node_id"/>
 			<input type="hidden" name="source_text" id="source_node_text"/>
@@ -92,7 +92,7 @@ $(document).ready(function () {
 			<label for="note">Annotation or note&nbsp;</label>
 			<textarea rows="3" style="width:100%;" name="annotation" id="note" class=".ui-widget input"></textarea>
 		</fieldset>
-    	<div id="status"></div>		
+    	<div id="dialog-form-status"></div>		
 		</form>
 	</div>
 	<div id="dialog_overlay"></div>
@@ -134,6 +134,9 @@ $(document).ready(function () {
 		<form id="reading_data_form" action="#">
 			<input type="hidden" name="reading_id" id="reading_id"/>
 			<div class="morph">
+				<input type="checkbox" name="reading_is_lemma" id="reading_is_lemma"/>
+				<label for="reading_is_lemma">Lemmatize this reading</label>
+				<br/>
 				<input type="checkbox" name="reading_is_nonsense" id="reading_is_nonsense"/>
 				<label for="reading_is_nonsense">This is a nonsense word</label>
 				<br/>
@@ -156,8 +159,8 @@ $(document).ready(function () {
 				<div id="morphology"></div>
 			</div>
 			</select>
-			<div id="reading_status"></div>
 		</form>
+		<div id="reading-form-status"></div>
     </div>
 	
     <p/><p/>	
