@@ -155,13 +155,14 @@ function color_inactive ( el ) {
 function color_active ( el ) {
 	var reading_id = $(el).parent().attr('id');
 	var reading_info = readingdata[reading_id];
-	// If the reading info is a lemma, color it a light shade of red;
-	// otherwise color it white.
-	$(el).attr( {stroke:'black', fill:'#fff'} );
-	if( reading_info ) {
-		if( reading_info['is_lemma'] ) {
-			$(el).attr( {stroke:'red', fill:'#ffdddd'} );
-		}
+	// If the reading is currently selected, color it accordingly; otherwise
+	// red for lemma and white for not.
+	if( readings_selected.indexOf(reading_id) > -1 ) {
+		$(el).attr( {stroke:'black', fill:'#9999ff'} );
+	} else if( reading_info && reading_info['is_lemma'] ) {
+		$(el).attr( {stroke:'red', fill:'#ffdddd'} );
+	} else {
+		$(el).attr( {stroke:'black', fill:'#fff'} );
 	}
 }
 
@@ -351,13 +352,13 @@ function node_obj(ellipse) {
           $(self.ellipse).parent().mousedown( function(evt) { evt.stopPropagation() } ); 
           $(self.ellipse).parent().click( function(evt) { 
               evt.stopPropagation();              
+              readings_selected = [ self.get_id() ]
               if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
                 $('ellipse[fill="#9999ff"]').each( function() { 
                     $(this).data( 'node_obj' ).set_draggable( false );
                 } );
               }
               self.set_draggable( true )
-              readings_selected = [ self.get_id() ]
           });
       } else {
           self.ellipse.siblings('text').attr('class', '');
