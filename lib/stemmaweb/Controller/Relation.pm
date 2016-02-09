@@ -406,6 +406,7 @@ Returns a JSON object describing the reading identified by $id.
 Accepts form data containing the following fields:
 
   - id (required)
+  - is_lemma (checked or not)
   - grammar_invalid (checked or not)
   - is_nonsense (checked or not)
   - normal_form (text)
@@ -419,10 +420,20 @@ sub reading :Chained('text') :PathPart :Args(1) {
 	my $tradition = delete $c->stash->{'tradition'};
 	my $collation = $tradition->collation;
 	my $rdg = $collation->reading( $reading_id );
+	
+	# Check that the reading exists
+	unless( $rdg ) {
+		$c->response->status('404');
+		$c->stash->{'result'} = { 'error' => 'No reading with ID ' . $reading_id };
+		$c->detach('View::JSON');
+		return;
+	}
+		
 	my $m = $c->model('Directory');
 	if( $c->request->method eq 'GET' ) {
-		$c->stash->{'result'} = $rdg ? _reading_struct( $rdg )
-			: { 'error' => "No reading with ID $reading_id" };
+		$c->stash->{'result'} = _reading_struct( $rdg );
+		
+	# Do an auth check and edit the reading
 	} elsif ( $c->request->method eq 'POST' ) {
 		if( $c->stash->{'permission'} ne 'full' ) {
 			$c->response->status( '403' );
@@ -433,9 +444,55 @@ sub reading :Chained('text') :PathPart :Args(1) {
 		}
 		my $errmsg;
 		my %changed_readings = ( $rdg->id => $rdg );
-		if( $rdg && $rdg->does('Text::Tradition::Morphology') ) {
-			# Are we re-lemmatizing?
-			if( $c->request->param('relemmatize') ) {
+		my $can_morphologize = $rdg->does('Text::Tradition::Morphology');
+		
+		# Set all the values that we have for the reading.
+		foreach my $p ( keys %{$c->request->params} ) {
+			if( $p =~ /^morphology_(\d+)$/ && $can_morphologize ) {
+				# Set the form on the correct lexeme. Ignore these keys
+				# if we don't have the Morphology module installed.
+				my $morphval = $c->request->param( $p );
+				next unless $morphval;
+				my $midx = $1;
+				my $lx = $rdg->lexeme( $midx );
+				my $strrep = $rdg->language . ' // ' . $morphval;
+				my $idx = $lx->has_form( $strrep );
+				unless( defined $idx ) {
+					# Make the word form and add it to the lexeme.
+					try {
+						$idx = $lx->add_matching_form( $strrep ) - 1;
+					} catch( Text::Tradition::Error $e ) {
+						$c->response->status( '403' );
+						$errmsg = $e->message;
+					} catch {
+						# Something else went wrong, probably a Moose error
+						$c->response->status( '500' );
+						$errmsg = 'Something went wrong with the request';	
+					}
+				}
+				$lx->disambiguate( $idx ) if defined $idx;
+			} elsif( $read_write_keys{$p} ) {
+				my $meth = $read_write_keys{$p} eq '1' 
+					? $p : $read_write_keys{$p};
+				my $val = _clean_booleans( $rdg, $p, $c->request->param( $p ) );
+				my @altered;
+				try {
+					if( $has_side_effect{$meth} ) {
+						@altered = $rdg->$meth( $val );
+					} else {
+						$rdg->$meth( $val );
+					}
+				} catch( my $e ) {
+					$errmsg = $e->message;
+				}
+				if( @altered ) {
+					map { $changed_readings{$_->id} = $_ } @altered;
+				}
+			}
+		}
+		# Re-lemmatize if we have been asked to, and are able
+		if( $c->request->param('relemmatize') ) {
+			if( $can_morphologize ) {
 				my $nf = $c->request->param('normal_form');
 				if( $nf && $nf ne $rdg->normal_form ) {
 					my @altered = $rdg->normal_form( $nf );
@@ -444,58 +501,16 @@ sub reading :Chained('text') :PathPart :Args(1) {
 					$rdg->lemmatize();
 				}
 			} else {
-				# Set all the values that we have for the reading.
-				foreach my $p ( keys %{$c->request->params} ) {
-					if( $p =~ /^morphology_(\d+)$/ ) {
-						# Set the form on the correct lexeme
-						my $morphval = $c->request->param( $p );
-						next unless $morphval;
-						my $midx = $1;
-						my $lx = $rdg->lexeme( $midx );
-						my $strrep = $rdg->language . ' // ' . $morphval;
-						my $idx = $lx->has_form( $strrep );
-						unless( defined $idx ) {
-							# Make the word form and add it to the lexeme.
-							try {
-								$idx = $lx->add_matching_form( $strrep ) - 1;
-							} catch( Text::Tradition::Error $e ) {
-								$c->response->status( '403' );
-								$errmsg = $e->message;
-							} catch {
-								# Something else went wrong, probably a Moose error
-								$c->response->status( '500' );
-								$errmsg = 'Something went wrong with the request';	
-							}
-						}
-						$lx->disambiguate( $idx ) if defined $idx;
-					} elsif( $read_write_keys{$p} ) {
-						my $meth = $read_write_keys{$p} eq '1' 
-							? $p : $read_write_keys{$p};
-						$DB::single = 1 if $p eq 'is_lemma';
-						my $val = _clean_booleans( $rdg, $p, $c->request->param( $p ) );
-						my @altered;
-						try {
-							if( $has_side_effect{$meth} ) {
-								@altered = $rdg->$meth( $val );
-							} else {
-								$rdg->$meth( $val );
-							}
-						} catch( my $e ) {
-							$errmsg = $e->message;
-						}
-						if( @altered ) {
-							map { $changed_readings{$_->id} = $_ } @altered;
-						}
-					}
-				}		
+				$errmsg = "Morphology package not installed";
+				$c->response->status('500');
 			}
-			$m->save( $tradition );
-		} else {
-			$errmsg = "Reading does not exist or cannot be morphologized";
-		}
+		} 
+		
+		# Assemble our return value and save the tradition if no error has occurred.
 		if( $errmsg ) {
 			$c->stash->{'result'} = { 'error' => $errmsg };
 		} else {
+			$m->save( $tradition );
 			$c->stash->{'result'} = {
 				readings => [ map { _reading_struct( $_ ) } 
 								values( %changed_readings ) ]
