@@ -155,6 +155,58 @@ sub textinfo :Local :Args(1) {
 			'You do not have permission to update this tradition' ) 
 			unless $ok eq 'full';
 		my $params = $c->request->parameters;
+		# Handle changes to owner-accessible parameters
+		my $m = $c->model('Directory');
+		my $changed;
+		# Handle name param - easy
+		if( exists $params->{name} ) {
+			my $newname = delete $params->{name};
+			unless( $tradition->name eq $newname ) {
+				try {
+					$tradition->name( $newname );
+					$changed = 1;
+				} catch {
+					return _json_error( $c, 500, "Error setting name to $newname: $@" );
+				}
+			}
+		}
+		# Handle language param, making Default => null
+		my $langval = delete $params->{language} || 'Default';
+		
+		unless( !$tradition->can('language') || $tradition->language eq $langval ) {
+			try {
+				$tradition->language( $langval );
+				$changed = 1;
+			} catch {
+				return _json_error( $c, 500, "Error setting language to $langval: $@" );
+			}
+		}
+
+		# Handle our boolean
+		my $ispublic = $tradition->public;
+		if( delete $params->{'public'} ) {  # if it's any true value...
+			$tradition->public( 1 );
+			$changed = 1 unless $ispublic;
+		} else {  # the checkbox was unchecked, ergo it should not be public
+			$tradition->public( 0 );
+			$changed = 1 if $ispublic;
+		}
+		
+		# Handle text direction
+		my $tdval = delete $params->{direction} || 'LR';
+		
+		unless( $tradition->collation->direction
+				&& $tradition->collation->direction eq $tdval ) {
+			try {
+				$tradition->collation->change_direction( $tdval );
+				$changed = 1;
+			} catch {
+				return _json_error( $c, 500, "Error setting direction to $tdval: $@" );
+			}
+		}
+		
+		
+		# Handle ownership change
 		if( exists $params->{'owner'} ) {
 			unless( $c->user->get_object->is_admin ) {
 				return _json_error( $c, 403, 

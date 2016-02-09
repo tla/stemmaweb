@@ -9,13 +9,21 @@ function handle_row_click( row ) {
     $('#stemma_graph').append( imghtml );
 	if( rs.layerwits ) {
 		var stemma_form = { 'dot': graphdot, 'layerwits': rs.layerwits };
-		$.post( baseurl + 'graphsvg', stemma_form, function( data ) {
-			var oSerializer = new XMLSerializer();
-			var xmlString = oSerializer.serializeToString( data.documentElement );
-			loadSVG( xmlString, function () { 
-				color_row( row );
-				show_stats( rs );
-			});
+		$.ajax({
+			type: "POST",
+			url: baseurl + 'graphsvg', 
+			data: stemma_form, 
+			success: function( data ) {
+				var oSerializer = new XMLSerializer();
+				var xmlString = oSerializer.serializeToString( data.documentElement );
+				loadSVG( xmlString, function () { 
+					color_row( row );
+					show_stats( rs );
+				});
+				},
+			error: function( jqXHR, textStatus, errorThrown ) {
+				alert("Got an error");
+			}
 		});
 	} else {
 		loadSVG( original_svg, function() {

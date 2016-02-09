@@ -27,19 +27,13 @@ Renders the application for the text identified by $textid.
 
 =cut
 
+# Here is the template...
 sub index :Path :Args(0) {
 	my( $self, $c ) = @_;
 	$c->stash->{'template'} = 'relate.tt';
 }
 
-=head2 text
-
- GET relation/$textid/
- 
- Runs the relationship mapper for the specified text ID.
- 
-=cut
-
+# ...and here is the tradition lookup and ACL check...
 sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	my( $self, $c, $textid ) = @_;
 	my $tradition = $c->model('Directory')->tradition( $textid );
@@ -65,6 +59,7 @@ sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	$c->stash->{'tradition'} = $tradition;
 }
 
+# ...and here is the page variable initialization.
 sub main :Chained('text') :PathPart('') :Args(0) {
 	my( $self, $c ) = @_;
 	my $tradition = delete $c->stash->{'tradition'};
@@ -182,15 +177,31 @@ sub help :Local :Args(1) {
 
  GET relation/$textid/relationships
 
-Returns the list of relationships defined for this text.
+Returns a JSON list of relationships defined for this text. Each relationship
+is an object that looks like this:
+
+ {"target_id":"n345",
+  "target_text":"scilicet ",
+  "source_id":"n341",
+  "source_text":"scilicet ",
+  "scope":"local",
+  "type":"transposition",
+  "non_independent":null,
+  "b_derivable_from_a":null,
+  "a_derivable_from_b":null,
+  "is_significant":"no"}
 
  POST relation/$textid/relationships { request }
  
-Attempts to define the requested relationship within the text. Returns 200 on
-success or 403 on error.
+Accepts a form data post with keys as above, and attempts to create the requested 
+relationship. On success, returns a JSON list of relationships that should be 
+created in [source_id, target_id, type] tuple form.
 
  DELETE relation/$textid/relationships { request }
  
+Accepts a form data post with a source_id and a target_id to indicate the 
+relationship to delete. On success, returns a JSON list of relationships that 
+should be removed in [source_id, target_id] tuple form.
 
 =cut
 
@@ -259,8 +270,13 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 			$opts->{propagate} = 1;
 			
 			try {
-				my @vectors = $collation->add_relationship( $node, $target, $opts );
-				$c->stash->{'result'} = \@vectors;
+				my @changed_readings = ();
+				my @vectors = $collation->add_relationship( 
+					$node, $target, $opts, \@changed_readings );
+				$c->stash->{'result'} = {
+					relationships => \@vectors,
+					readings => [ map { _reading_struct( $_ ) } @changed_readings ],
+				};
 				$m->save( $tradition );
 			} catch( Text::Tradition::Error $e ) {
 				$c->response->status( '403' );
@@ -270,20 +286,41 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 				$c->stash->{'result'} = { error => "Something went wrong with the request" };
 			}
 		} elsif( $c->request->method eq 'DELETE' ) {
-			my $node = $c->request->param('source_id');
-			my $target = $c->request->param('target_id');
-			my $scopewide = $c->request->param('scopewide') 
+			# We can delete either by specifying the relationship or by
+			# specifying a reading, and deleting all relationships of that
+			# reading.
+			my( @pairs, $scopewide );
+			my $rdg_id = $c->request->param('from_reading');
+			if( $rdg_id ) {
+				my $rdg = $collation->reading( $rdg_id );
+				foreach my $target ( $rdg->related_readings() ) {
+					push( @pairs, [ $rdg, $target ] );
+				}
+			} else {
+				my $node = $c->request->param('source_id');
+				my $target = $c->request->param('target_id');
+				push( @pairs, [ $node, $target ] );
+			}
+			$scopewide = $c->request->param('scopewide') 
 				&& $c->request->param('scopewide') eq 'true';
-			try {
-				my @vectors = $collation->del_relationship( $node, $target, $scopewide );
+			my @vectors;
+			foreach my $pair ( @pairs ) {
+				my( $node, $target ) = @$pair;
+				try {
+					push( @vectors, $collation->del_relationship( $node, $target, $scopewide ) );
+				} catch( Text::Tradition::Error $e ) {
+					$c->response->status( 403 );
+					$c->stash->{'result'} = { 'error' => $e->message };
+				} catch {
+					$c->response->status( 500 );
+					$c->stash->{'result'} = { error => "Something went wrong with the request" };
+				}
+			}
+			unless( $c->response->status > 400 ) {
+				# If we haven't trapped an error, save the tradition and 
+				# stash the result.
 				$m->save( $tradition );
-				$c->stash->{'result'} = \@vectors;
-			} catch( Text::Tradition::Error $e ) {
-				$c->response->status( '403' );
-				$c->stash->{'result'} = { 'error' => $e->message };
-			} catch {
-				$c->response->status( '500' );
-				$c->stash->{'result'} = { error => "Something went wrong with the request" };
+				$c->stash->{'result'} = { relationships => \@vectors };
 			}
 		}
 	}
@@ -294,7 +331,15 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 
  GET relation/$textid/readings
 
-Returns the list of readings defined for this text along with their metadata.
+Returns a JSON dictionary, keyed on reading ID, of all readings defined for this 
+text along with their metadata. A typical object in this dictionary will look like:
+
+  {"witnesses":["Gr314","Kf133","Mu11475","Kr299","MuU151","Er16","Ba96","Wi3818","Mu28315"],
+   "lexemes":[],
+   "text":"dicens.",
+   "id":"n1051",
+   "is_meta":null,
+   "variants":[]}
 
 =cut
 
@@ -303,7 +348,13 @@ my %read_write_keys = (
 	'text' => 0,
 	'is_meta' => 0,
 	'grammar_invalid' => 1,
+	'is_lemma' => 'make_lemma',
 	'is_nonsense' => 1,
+	'normal_form' => 1,
+);
+
+my %has_side_effect = (
+	'make_lemma' => 1,
 	'normal_form' => 1,
 );
 
@@ -312,7 +363,8 @@ sub _reading_struct {
 	# Return a JSONable struct of the useful keys.  Keys meant to be writable
 	# have a true value; read-only keys have a false value.
 	my $struct = {};
-	map { $struct->{$_} = $reading->$_ if $reading->can( $_ ) } keys( %read_write_keys );
+	map { $struct->{$_} = _clean_booleans( $reading, $_, $reading->$_ )
+		if $reading->can( $_ ) } keys( %read_write_keys );
 	# Special case
 	$struct->{'lexemes'} = $reading->can( 'lexemes' ) ? [ $reading->lexemes ] : [];
 	# Look up any words related via spelling or orthography
@@ -347,12 +399,19 @@ sub readings :Chained('text') :PathPart :Args(0) {
 
  GET relation/$textid/reading/$id
 
-Returns the list of readings defined for this text along with their metadata.
+Returns a JSON object describing the reading identified by $id.
 
  POST relation/$textid/reading/$id { request }
  
-Alters the reading according to the values in request. Returns 403 Forbidden if
-the alteration isn't allowed.
+Accepts form data containing the following fields:
+
+  - id (required)
+  - is_lemma (checked or not)
+  - grammar_invalid (checked or not)
+  - is_nonsense (checked or not)
+  - normal_form (text)
+  
+and updates the reading attributes as indicated.
 
 =cut
 
@@ -361,10 +420,20 @@ sub reading :Chained('text') :PathPart :Args(1) {
 	my $tradition = delete $c->stash->{'tradition'};
 	my $collation = $tradition->collation;
 	my $rdg = $collation->reading( $reading_id );
+	
+	# Check that the reading exists
+	unless( $rdg ) {
+		$c->response->status('404');
+		$c->stash->{'result'} = { 'error' => 'No reading with ID ' . $reading_id };
+		$c->detach('View::JSON');
+		return;
+	}
+		
 	my $m = $c->model('Directory');
 	if( $c->request->method eq 'GET' ) {
-		$c->stash->{'result'} = $rdg ? _reading_struct( $rdg )
-			: { 'error' => "No reading with ID $reading_id" };
+		$c->stash->{'result'} = _reading_struct( $rdg );
+		
+	# Do an auth check and edit the reading
 	} elsif ( $c->request->method eq 'POST' ) {
 		if( $c->stash->{'permission'} ne 'full' ) {
 			$c->response->status( '403' );
@@ -374,58 +443,97 @@ sub reading :Chained('text') :PathPart :Args(1) {
 			return;
 		}
 		my $errmsg;
-		if( $rdg && $rdg->does('Text::Tradition::Morphology') ) {
-			# Are we re-lemmatizing?
-			if( $c->request->param('relemmatize') ) {
-				my $nf = $c->request->param('normal_form');
-				# TODO throw error unless $nf
-				$rdg->normal_form( $nf );
-				# TODO throw error if lemmatization fails
-				# TODO skip this if normal form hasn't changed
-				$rdg->lemmatize();
-			} else {
-				# Set all the values that we have for the reading.
-				# TODO error handling
-				foreach my $p ( keys %{$c->request->params} ) {
-					if( $p =~ /^morphology_(\d+)$/ ) {
-						# Set the form on the correct lexeme
-						my $morphval = $c->request->param( $p );
-						next unless $morphval;
-						my $midx = $1;
-						my $lx = $rdg->lexeme( $midx );
-						my $strrep = $rdg->language . ' // ' . $morphval;
-						my $idx = $lx->has_form( $strrep );
-						unless( defined $idx ) {
-							# Make the word form and add it to the lexeme.
-							try {
-								$idx = $lx->add_matching_form( $strrep ) - 1;
-							} catch( Text::Tradition::Error $e ) {
-								$c->response->status( '403' );
-								$errmsg = $e->message;
-							} catch {
-								# Something else went wrong, probably a Moose error
-								$c->response->status( '500' );
-								$errmsg = 'Something went wrong with the request';	
-							}
-						}
-						$lx->disambiguate( $idx ) if defined $idx;
-					} elsif( $read_write_keys{$p} ) {
-						my $val = _clean_booleans( $rdg, $p, $c->request->param( $p ) );
-						$rdg->$p( $val );
+		my %changed_readings = ( $rdg->id => $rdg );
+		my $can_morphologize = $rdg->does('Text::Tradition::Morphology');
+		
+		# Set all the values that we have for the reading.
+		foreach my $p ( keys %{$c->request->params} ) {
+			if( $p =~ /^morphology_(\d+)$/ && $can_morphologize ) {
+				# Set the form on the correct lexeme. Ignore these keys
+				# if we don't have the Morphology module installed.
+				my $morphval = $c->request->param( $p );
+				next unless $morphval;
+				my $midx = $1;
+				my $lx = $rdg->lexeme( $midx );
+				my $strrep = $rdg->language . ' // ' . $morphval;
+				my $idx = $lx->has_form( $strrep );
+				unless( defined $idx ) {
+					# Make the word form and add it to the lexeme.
+					try {
+						$idx = $lx->add_matching_form( $strrep ) - 1;
+					} catch( Text::Tradition::Error $e ) {
+						$c->response->status( '403' );
+						$errmsg = $e->message;
+					} catch {
+						# Something else went wrong, probably a Moose error
+						$c->response->status( '500' );
+						$errmsg = 'Something went wrong with the request';	
 					}
-				}		
+				}
+				$lx->disambiguate( $idx ) if defined $idx;
+			} elsif( $read_write_keys{$p} ) {
+				my $meth = $read_write_keys{$p} eq '1' 
+					? $p : $read_write_keys{$p};
+				my $val = _clean_booleans( $rdg, $p, $c->request->param( $p ) );
+				my @altered;
+				try {
+					if( $has_side_effect{$meth} ) {
+						@altered = $rdg->$meth( $val );
+					} else {
+						$rdg->$meth( $val );
+					}
+				} catch( my $e ) {
+					$errmsg = $e->message;
+				}
+				if( @altered ) {
+					map { $changed_readings{$_->id} = $_ } @altered;
+				}
 			}
-			$m->save( $rdg );
-		} else {
-			$errmsg = "Reading does not exist or cannot be morphologized";
 		}
-		$c->stash->{'result'} = $errmsg ? { 'error' => $errmsg }
-			: _reading_struct( $rdg );
-
+		# Re-lemmatize if we have been asked to, and are able
+		if( $c->request->param('relemmatize') ) {
+			if( $can_morphologize ) {
+				my $nf = $c->request->param('normal_form');
+				if( $nf && $nf ne $rdg->normal_form ) {
+					my @altered = $rdg->normal_form( $nf );
+					map { $changed_readings{$_->id} = $_ } @altered;
+					# TODO throw error if lemmatization fails
+					$rdg->lemmatize();
+				}
+			} else {
+				$errmsg = "Morphology package not installed";
+				$c->response->status('500');
+			}
+		} 
+		
+		# Assemble our return value and save the tradition if no error has occurred.
+		if( $errmsg ) {
+			$c->stash->{'result'} = { 'error' => $errmsg };
+		} else {
+			$m->save( $tradition );
+			$c->stash->{'result'} = {
+				readings => [ map { _reading_struct( $_ ) } 
+								values( %changed_readings ) ]
+			};
+		}
 	}
 	$c->forward('View::JSON');
 
 }
+
+=head2 compress
+
+ POST relation/$textid/compress { data }
+ 
+Accepts form data containing a list of 'readings[]'.
+Concatenates the requested readings into a single reading, All relationships of 
+the affected readings must be removed; this is the responsibility of the client. 
+On success returns a JSON object that looks like this:
+
+  {"nodes":["n158","n159","n160","n161","n162","n163"],
+   "success":1}
+
+=cut
 
 sub compress :Chained('text') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
@@ -535,9 +643,21 @@ sub compress :Chained('text') :PathPart :Args(0) {
 
  POST relation/$textid/merge { data }
  
+Accepts form data identical to the ../relationships POST call, with one extra
+Boolean parameter 'single'.
 Merges the requested readings, combining the witnesses of both readings into
-the target reading. All non-conflicting source relationships are inherited by
-the target relationship.
+the target reading. All relationships of the source reading must be transferred
+to the target reading; this is the responsibility of the client. On success
+returns a JSON object that looks like this:
+
+  {"status":"ok",
+   "checkalign":[["n135","n130"],
+                 ["n133","n127"],
+                 ["n126","n132"]]}
+                
+The "checkalign" key will only be included if 'single' does not have a true 
+value. It contains a list of tuples indicating readings that seem to be identical, 
+and that the user may want to merge in addition.
 
 =cut
 
@@ -603,12 +723,22 @@ sub merge :Chained('text') :PathPart :Args(0) {
 
  POST relation/$textid/duplicate { data }
  
+Accepts form data with a list of 'readings[]' and a list of 'witnesses[]'. 
 Duplicates the requested readings, detaching the witnesses specified in
-the list to use the new reading(s) instead of the old. The data to be
-passed should be a JSON structure:
+the list to use the new reading(s) instead of the old. Returns a JSON object
+that contains a key for each new reading thus created, as well as a key
+'DELETED' that contains a list of tuples indicating the relationships that
+should be removed from the graph. For example:
 
- { readings: rid1,rid2,rid3,...
-   witnesses: [ wit1, ... ] }
+  {"DELETED":[["n135","n130"]],
+   "n131_0":{"id":"n131_0",
+             "variants":[],
+             "orig_rdg":"n131",
+             "is_meta":null,
+             "lexemes":[],
+             "witnesses":["Ba96"],
+             "text":"et "}}
+
 
 =cut
 
@@ -740,9 +870,11 @@ sub _check_permission {
 
 sub _clean_booleans {
 	my( $obj, $param, $val ) = @_;
-	if( $obj->meta->get_attribute( $param )->type_constraint->name eq 'Bool' ) {
+	return $val unless $obj->meta->get_attribute( $param );
+	if( $obj->meta->get_attribute( $param )->type_constraint->name eq 'Bool'
+		&& defined( $val ) ) {
 		$val = 1 if $val eq 'true';
-		$val = undef if $val eq 'false';
+		$val = undef if $val eq 'false' || $val eq '0';
 	} 
 	return $val;
 }
