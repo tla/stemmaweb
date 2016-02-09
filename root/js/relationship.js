@@ -1219,6 +1219,63 @@ function placeMiddle() {
 	return x;
 }
 
+// Set up keypress commands:
+
+var keyCommands = {
+	// TODO maybe also 'c' for compress and/or 's' for split...
+	'100': {
+		'key': 'd',
+		'description': 'Detach one or more witnesses from the collation at this point',
+		'function': function () {
+			// D for Detach
+			$('#multipleselect-form').dialog( 'open' );
+		} },
+	'108': { 
+		'key': 'l',
+		'description': 'Set / unset this reading as the apparatus lemma',
+		'function': function () {
+			// L for making a Lemma
+			$.each( readings_selected, function( i, reading_id ) {
+				// need current state of lemmatization
+				var selected = readingdata[reading_id]
+				var set_lemma = !selected['is_lemma']
+				var ncpath = getReadingURL( reading_id );
+				var form_values = {
+					'id': reading_id,
+					'is_lemma': set_lemma,
+				};
+				var jqjson = $.post( ncpath, form_values, function(data) {
+					readings_selected = [];
+					$.each( data['readings'], function(i, rdgdata) { 
+						var this_rdgid = rdgdata['id'];
+						var reading_element = readingdata[this_rdgid]
+						$.each( rdgdata, function( key, value ) {
+							reading_element[key] = value;
+						});
+						if( $('#update_workspace_button').data('locked') ) {
+							color_active( get_ellipse( this_rdgid ) );
+						} else {
+							// Re-color the node if necessary
+							color_inactive( get_ellipse( this_rdgid ) );
+						}
+					});
+				});
+			});
+		} },
+	'120': {
+		'key': 'x',
+		'description': 'Expunge all relationships for the selected reading(s)',
+		'function': function () {
+			// X for eXpunge relationships
+			$.each( readings_selected, function( i, reading_id ) {
+				var form_values = 'from_reading=' + reading_id;
+				delete_relation( form_values );
+			});
+		} },
+};
+
+
+// Now get to work on the document.
 // First error handling...
 $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	var error;
@@ -1465,6 +1522,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 					var form_values = $('#detach_collated_form').serialize();
 					ncpath = getTextURL( 'duplicate' );
 					var jqjson = $.post( ncpath, form_values, function(data) {
+						readings_selected = [];
 						detach_node( data );
 						mybuttons.button("enable");
 						self.dialog( "close" );
@@ -1670,49 +1728,6 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$('#reading-form').hide();
 	}
   
-	// Set up the keyboard shortcuts.
-	$(document).bind( 'keypress', function( event ) {
-		if(!$(".ui-dialog").is(":visible")){
-			if( event.which == '108' ) {
-				// L for making a Lemma
-				$.each( readings_selected, function( i, reading_id ) {
-					// need current state of lemmatization
-					var selected = readingdata[reading_id]
-					var set_lemma = !selected['is_lemma']
-					var ncpath = getReadingURL( reading_id );
-					var form_values = {
-						'id': reading_id,
-						'is_lemma': set_lemma,
-					};
-					var jqjson = $.post( ncpath, form_values, function(data) {
-						$.each( data['readings'], function(i, rdgdata) { 
-							var this_rdgid = rdgdata['id'];
-							var reading_element = readingdata[this_rdgid]
-							$.each( rdgdata, function( key, value ) {
-								reading_element[key] = value;
-							});
-							if( $('#update_workspace_button').data('locked') ) {
-								color_active( get_ellipse( this_rdgid ) );
-							} else {
-								// Re-color the node if necessary
-								color_inactive( get_ellipse( this_rdgid ) );
-							}
-						});
-					});
-				});
-			} else if( event.which == '100' ) {
-				// D for Detach
-				$('#multipleselect-form').dialog( 'open' );
-			} else if( event.which == '120' ) {
-				// X for eXpunge relationships
-				$.each( readings_selected, function( i, reading_id ) {
-					var form_values = 'from_reading=' + reading_id;
-					delete_relation( form_values );
-				});
-			}
-			// TODO also do C for Compress and maybe S for Split?
-		}
-  	});
 
   $('#update_workspace_button').click( function() {
   	 if( !editable ) {
@@ -1778,7 +1793,17 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     expandFillPageClients();
   });
 
-});
+
+// and then the keyboard shortcuts.
+}).bind( 'keypress', function( event ) {
+		if(!$(".ui-dialog").is(":visible")){
+			if( event.which in keyCommands ) {
+				var fn = keyCommands[event.which]['function'];
+				fn();
+			}
+		}
+  	});
+;
 
 
 function expandFillPageClients() {
