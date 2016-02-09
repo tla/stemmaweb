@@ -59,6 +59,9 @@ p.api {
 span.apimore {
 	font-family: Courier;
 }
+.ui-tooltip { 
+	max-width: 500px;
+}
 #enlargement_container {
     height: 504px;
     width: 90%;

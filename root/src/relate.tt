@@ -54,7 +54,7 @@ $(document).ready(function () {
 			<div id="loading_message"><span>Loading, please wait...</span></div>
 		</div>
 		<div id="dialog_overlay"></div>
-		<div id="enlargement" style="">
+		<div id="enlargement" style="" title="Test title">
 	        <div id="svgenlargement"  class="fillPage"></div>
 		</div>
 	</div>
@@ -113,7 +113,7 @@ $(document).ready(function () {
 	<div id="multipleselect-form" title="Multiple nodes selected...">
 		<div id="multipleselect-form-status"></div>
 	
-		Detach or merge?<br/>
+		Detach or concatenate?<br/>
 		
 		<form autocomplete="off">
 			<label>
@@ -121,7 +121,7 @@ $(document).ready(function () {
 			</label>
 
 			<label>
-				<input id="action-merge" name='option' type='radio' /> Merge
+				<input id="action-concat" name='option' type='radio' /> Concatenate
 			</label>
 		</form>
 
@@ -161,6 +161,9 @@ $(document).ready(function () {
 			</select>
 		</form>
 		<div id="reading-form-status"></div>
+    </div>
+    
+    <div id="error-display" title="Error">
     </div>
 	
     <p/><p/>	

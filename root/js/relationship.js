@@ -5,6 +5,7 @@ var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
 var readings_selected = [];
+var help_display = false;
 
 jQuery.removeFromArray = function(value, arr) {
     return jQuery.grep(arr, function(elem, index) {
@@ -200,9 +201,14 @@ function svgEnlargementLoaded() {
 	$("#loading_overlay").height( lo_height );
 	$("#loading_overlay").width( lo_width );
 	$("#loading_overlay").offset( $("#enlargement_container").offset() );
-	$("#loading_message").offset(
-		{ 'top': lo_height / 2 - $("#loading_message").height() / 2,
-		  'left': lo_width / 2 - $("#loading_message").width() / 2 });
+	// $("#loading_message").offset(
+	// 	{ 'top': lo_height / 2 - $("#loading_message").height() / 2,
+	// 	  'left': lo_width / 2 - $("#loading_message").width() / 2 });
+	$('#loading_message').position({
+		my: 'center',
+		at: 'top + ' + $('#loading_message').height(),
+		of: '#loading_overlay'
+	});
     if( editable ) {
     	// Show the update toggle button.
 	    $('#update_workspace_button').data('locked', false);
@@ -331,6 +337,21 @@ function get_node_obj( node_id ) {
     return node_ellipse.data( 'node_obj' );
 }
 
+function unselect_all_readings() {
+	if( readings_selected.length > 0 ) {
+		var unselected = readings_selected;
+		readings_selected = [];
+		$.each( unselected, function( i, rdg ) {
+			var rdgnode = get_node_obj( rdg );
+			if( rdgnode ) {
+				rdgnode.set_draggable( false );
+			}
+		});
+	}
+}
+
+
+
 function node_obj(ellipse) {
   this.ellipse = ellipse;
   var self = this;
@@ -351,13 +372,9 @@ function node_obj(ellipse) {
           $(self.ellipse).parent().hover( this.enter_node, this.leave_node );
           $(self.ellipse).parent().mousedown( function(evt) { evt.stopPropagation() } ); 
           $(self.ellipse).parent().click( function(evt) { 
-              evt.stopPropagation();              
+              evt.stopPropagation();
+              unselect_all_readings();
               readings_selected = [ self.get_id() ]
-              if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
-                $('ellipse[fill="#9999ff"]').each( function() { 
-                    $(this).data( 'node_obj' ).set_draggable( false );
-                } );
-              }
               self.set_draggable( true )
           });
       } else {
@@ -714,6 +731,16 @@ function draw_relation( source_id, target_id, relation_color, emphasis ) {
     return relation_element;
 }
 
+function delete_relation( form_values ) {
+	ncpath = getTextURL( 'relationships' );
+	var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
+		$.each( data['relationships'], function(item, source_target) { 
+			relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
+		});
+		$( "#delete-form" ).dialog( "close" );
+	}, dataType: 'json', type: 'DELETE' });
+}
+  
 function detach_node( readings ) {
     // separate out the deleted relationships, discard for now
     if( 'DELETED' in readings ) {
@@ -893,6 +920,7 @@ function merge_left( source_node_id, target_node_id ) {
     $( jq( source_node_id ) ).remove();    
 }
 
+// This calls merge_node, as topologically it is doing basically the same thing.
 function compress_nodes(readings) {
     //add text of other readings to 1st reading
 
@@ -1068,12 +1096,8 @@ function Marquee() {
         if( rect.length != 0 ) {
             //unselect any possible selected first
             //TODO: unless SHIFT?
-            readings_selected = []
-            if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
-              $('ellipse[fill="#9999ff"]').each( function() { 
-                  $(this).data( 'node_obj' ).set_draggable( false );
-              } );
-            }
+            unselect_all_readings();
+            
             //compute dimension of marquee
             var left = $('#marquee').offset().left;
             var top = $('#marquee').offset().top;
@@ -1090,7 +1114,6 @@ function Marquee() {
             var cx_max = p.matrixTransform(tf).x;
             var cy_max = p.matrixTransform(tf).y;
             // Local variable for witness sigla, for the HTML form
-            var witnesses = [];
             $('#svgenlargement ellipse').each( function( index ) {
                 var cx = parseInt( $(this).attr('cx') );
                 var cy = parseInt( $(this).attr('cy') );
@@ -1106,77 +1129,23 @@ function Marquee() {
 	           //select any node with its center inside the marquee
                if( cx > cx_min && cx < cx_max) {
                     if( cy > cy_min && cy < cy_max) {
-                        // we actually heve no real 'selected' state for nodes, except coloring
-                        $(this).attr( 'fill', '#9999ff' );
                         // Take note of the selected reading(s) and applicable witness(es)
                         // so we can populate the multipleselect-form 
                         readings_selected.push( $(this).parent().attr('id') ); 
-                        var this_witnesses = $(this).data( 'node_obj' ).get_witnesses();
-                        witnesses = arrayUnique( witnesses.concat( this_witnesses ) );
                     }
                 }
             });
-            if( $('ellipse[fill="#9999ff"]').size() > 0 ) {
-                //add intersection of witnesses sets to the multi select form and open it
-                $('#detach_collated_form').empty();
-                $.each( readings_selected, function( index, value ) {
-                  $('#detach_collated_form').append( $('<input>').attr(
-                    "type", "hidden").attr("name", "readings[]").attr(
-                    "value", value ) );
-                });
-                $.each( witnesses, function( index, value ) {
-                    $('#detach_collated_form').append( 
-                      '<input type="checkbox" name="witnesses[]" value="' + value 
-                      + '">' + value + '<br>' ); 
-                });
-                $('#multiple_selected_readings').attr('value', readings_selected.join(',') ); 
+            
+            $.each( readings_selected, function ( i, reading ) {
+            	color_active( get_ellipse( reading ) );
+            });
 
-                if ($('#action-merge')[0].checked) {
-                    $('#detach_collated_form').hide();
-                    $('#multipleselect-form-text').hide();
-
-                    $('#detach_btn').hide();
-                    $('#merge_btn').show();
-                } else {
-                    $('#detach_collated_form').show();
-                    $('#multipleselect-form-text').show();
-
-                    $('#detach_btn').show();
-                    $('#merge_btn').hide();
-                }
-
-                $('#action-detach').change(function() {
-                    if ($('#action-detach')[0].checked) {
-                        $('#detach_collated_form').show();
-                        $('#multipleselect-form-text').show();
-
-                        $('#detach_btn').show();
-                        $('#merge_btn').hide();
-                    }
-                });
-
-                $('#action-merge').change(function() {
-                    if ($('#action-merge')[0].checked) {
-                        $('#detach_collated_form').hide();
-                        $('#multipleselect-form-text').hide();
-
-                        $('#detach_btn').hide();
-                        $('#merge_btn').show();
-                    }
-                });
-
-                // Form will open on keypress.
-                // $('#multipleselect-form').dialog( 'open' );
-            }
             self.svg_rect.remove( $('#marquee') );
         }
     };
     
     this.unselect = function() {
-    	$.each( readings_selected, function( i, reading ) {
-    		color_active( get_ellipse( reading ) );
-    	});
-    	readings_selected = [];
+    	unselect_all_readings();
     }
      
 }
@@ -1223,16 +1192,41 @@ function placeMiddle() {
 
 var keyCommands = {
 	// TODO maybe also 'c' for compress and/or 's' for split...
+	'104': {
+		'key': 'h',
+		'description': 'Show / hide this menu',
+		'function': function () {
+			if( help_display ) {
+				$('#enlargement').tooltip("close").tooltip("disable");
+				help_display = false;
+			} else {
+				$('#enlargement').tooltip("enable").tooltip("open");
+				help_display = true;
+			}
+        } },
+	'99': {
+		'key': 'c',
+		'description': 'Concatenate a sequence of readings into a single reading',
+		'function': function () {
+			// C for Compress; TODO get rid of dialog altogether
+			if( readings_selected.length > 0 ) {
+				$('#action-concat').prop('checked', true);
+				$('#multipleselect-form').dialog( 'open' );
+			}
+		} },
 	'100': {
 		'key': 'd',
-		'description': 'Detach one or more witnesses from the collation at this point',
+		'description': 'Detach one or more witnesses from the collation for the selected reading(s)',
 		'function': function () {
 			// D for Detach
-			$('#multipleselect-form').dialog( 'open' );
+			if( readings_selected.length > 0 ) {
+				$('#action-detach').prop('checked', true);
+				$('#multipleselect-form').dialog( 'open' );
+			}
 		} },
 	'108': { 
 		'key': 'l',
-		'description': 'Set / unset this reading as the apparatus lemma',
+		'description': 'Set / unset the selected reading(s) as canonical / lemma',
 		'function': function () {
 			// L for making a Lemma
 			$.each( readings_selected, function( i, reading_id ) {
@@ -1264,7 +1258,7 @@ var keyCommands = {
 		} },
 	'120': {
 		'key': 'x',
-		'description': 'Expunge all relationships for the selected reading(s)',
+		'description': 'Expunge all relationships on the selected reading(s)',
 		'function': function () {
 			// X for eXpunge relationships
 			$.each( readings_selected, function( i, reading_id ) {
@@ -1273,6 +1267,19 @@ var keyCommands = {
 			});
 		} },
 };
+
+// Return the content of the keystroke menu.
+function keystroke_menu () {
+	var htmlstr = '<h4>Keystroke commands for selected readings</h4><p>Click the pen to enable reading ' + 
+	'selection. Readings can be selected by clicking, or by dragging across ' + 
+	'the screen in edit mode. Press any of the following keys to take the ' + 
+	'corresponding action:</p><ul>';
+	$.each( keyCommands, function( k, v ) {
+		htmlstr += '<li><b>' + v['key'] + '</b>: ' + v['description'] + '</li>'; 
+	});
+	htmlstr += '</ul><p>Double-click a reading to access its properties; drag a reading to another one to create a relationship. For fuller documentation see the "About/Help" link.</p>';
+	return htmlstr;
+}
 
 
 // Now get to work on the document.
@@ -1294,36 +1301,45 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	}
 	
 	// To which box does it belong?
-	if( ajaxSettings.url == getTextURL('relationships')
-		  || ajaxSettings.url == getTextURL('merge') ) {
-		if( ajaxSettings.type == 'DELETE' ) {
+	if( $('#dialog-form').dialog('isOpen') ) {
+		if( ajaxSettings.url == getTextURL('merge') ) {
+			error += '<br>The readings cannot be merged.</p>';
+		} else {
+			// we were trying to make a relationship
+			error += '<br>The relationship cannot be made.</p>';
+		}
+		errordiv = '#dialog-form-status';
+	} else if ( $('#delete-form').dialog('isOpen') ) {
 		  	// the delete box
 		  	error += '<br>The relationship cannot be deleted.</p>';
 		  	errordiv = '#delete-status';
-		} else {
-			// relationship / merge box
-			error += '<br>The relationship cannot be made.</p>';
-			errordiv = '#dialog-form-status';
+	} else if ( $('#multipleselect-form').dialog('isOpen') ) {
+		errordiv = '#multipleselect-form-status';
+		if( ajaxSettings.url == getTextURL('duplicate') ) {
+			error += '<br>The reading cannot be duplicated.</p>';
+		} else  {
+			error += '<br>The readings cannot be concatenated.</p>';
 		}
-	} else if ( ajaxSettings.url == getTextURL('duplicate') ) {
-		// multipleselect box
-		error += '<br>The reading cannot be duplicated.</p>';
-		errordiv = '#multipleselect-form-status';
-	} else if ( ajaxSettings.url == getTextURL('compress') ) {
-		// multipleselect box
-		error += '<br>The readings cannot be merged.</p>';
-		errordiv = '#multipleselect-form-status';
-	} else if ( ajaxSettings.url.lastIndexOf( getReadingURL('') ) > -1 ) {
+	} else if ( $('#reading-form').dialog('isOpen') ) {
 		// reading box
 		error += '<br>The reading cannot be altered.</p>';
 		errordiv = '#reading_status';
+	} else {
+		// Probably a keystroke action
+		error += '<br>The action cannot be performed.</p>';
+		errordiv = '#error-display';
 	}
 	
 	// Populate the box with the error message
 	$(errordiv).append( '<p class="error">Error: ' + error );
 	
-	// Reset the buttons
-	$(errordiv).parents('.ui-dialog').find('.ui-button').button("enable");
+	// Open the dialog explicitly if we need to
+	if( errordiv == '#error-display' ) {
+		$(errordiv).dialog('open');
+	} else {
+		// Reset the buttons on the existing dialog
+		$(errordiv).parents('.ui-dialog').find('.ui-button').button("enable");
+	}
 
 // ...then initialization.
 }).ready(function () {
@@ -1395,6 +1411,14 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
   }).css({
     'overflow' : 'hidden',
     'cursor' : '-moz-grab'
+  }).tooltip({
+	content: keystroke_menu,
+	disabled: true,
+	position: {
+		my: 'top',
+		at: 'top',
+		collision: 'none'
+	}
   });
   
   
@@ -1405,7 +1429,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
   if( editable ) {
 	$( '#dialog-form' ).dialog( {
 	autoOpen: false,
-	height: auto,
+	height: "auto",
 	width: 340,
 	modal: true,
 	buttons: {
@@ -1530,8 +1554,8 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				}
 			},
 			{
-				text: "Merge",
-				id: "merge_btn",
+				text: "Concatenate",
+				id: "concat_btn",
 				click: function (evt) {
 					var self = $(this);
 					var mybuttons = $(evt.target).closest('button').parent().find('button');
@@ -1558,6 +1582,25 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		create: function(event, ui) {
 			var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
 			buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
+			$('#action-detach').change(function() {
+				if ($('#action-detach')[0].checked) {
+					$('#detach_collated_form').show();
+					$('#multipleselect-form-text').show();
+
+					$('#detach_btn').show();
+					$('#concat_btn').hide();
+				}
+			});
+
+			$('#action-concat').change(function() {
+				if ($('#action-concat')[0].checked) {
+					$('#detach_collated_form').hide();
+					$('#multipleselect-form-text').hide();
+
+					$('#detach_btn').hide();
+					$('#concat_btn').show();
+				}
+			});
 		},
 		open: function() {
 			$( this ).dialog( "option", "width", 200 );
@@ -1568,19 +1611,37 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
 			$("#dialog_overlay").offset( $("#enlargement_container").offset() );
 
-			if ($('#action-merge')[0].checked) {
+			if ($('#action-concat')[0].checked) {
 				$('#detach_collated_form').hide();
 				$('#multipleselect-form-text').hide();
 
 				$('#detach_btn').hide();
-				$('#merge_btn').show();
+				$('#concat_btn').show();
 			} else {
 				$('#detach_collated_form').show();
 				$('#multipleselect-form-text').show();
 
 				$('#detach_btn').show();
-				$('#merge_btn').hide();
+				$('#concat_btn').hide();
 			}
+			
+			// Populate the forms with the currently selected readings
+			$('#detach_collated_form').empty();
+			var witnesses = [];
+			$.each( readings_selected, function( index, value ) {
+			  	$('#detach_collated_form').append( $('<input>').attr(
+					"type", "hidden").attr("name", "readings[]").attr(
+					"value", value ) );
+				var this_witnesses = readingdata[value]['witnesses'];
+                witnesses = arrayUnique( witnesses.concat( this_witnesses ) );
+
+			});
+			$.each( witnesses, function( index, value ) {
+				$('#detach_collated_form').append( 
+				  '<input type="checkbox" name="witnesses[]" value="' + value 
+				  + '">' + value + '<br>' ); 
+			});
+			$('#multiple_selected_readings').attr('value', readings_selected.join(',') ); 
 		},
 		close: function() { 
 			marquee.unselect();
@@ -1638,17 +1699,6 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
   });
 
 
-  // Helper for relationship deletion
-  function delete_relation( form_values ) {
-	  ncpath = getTextURL( 'relationships' );
-	  var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
-		  $.each( data['relationships'], function(item, source_target) { 
-			  relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
-		  });
-		  $( "#delete-form" ).dialog( "close" );
-	  }, dataType: 'json', type: 'DELETE' });
-  }
-  
   // function for reading form dialog should go here; 
   // just hide the element for now if we don't have morphology
   if( can_morphologize ) {
@@ -1728,6 +1778,17 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$('#reading-form').hide();
 	}
   
+	// Set up the error message dialog, for results from keystroke commands
+	$('#error-display').dialog({
+		autoOpen: false,
+		width: 450,
+		modal: true,
+		buttons: {
+			OK: function() {
+				$( this ).dialog( "close" );
+			},
+		}
+	});
 
   $('#update_workspace_button').click( function() {
   	 if( !editable ) {
@@ -1774,8 +1835,6 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 
   if( !editable ) {  
     // Hide the unused elements
-    $('#dialog-form').hide();
-    $('#multipleselect-form').hide();
     $('#update_workspace_button').hide();
   }
 
@@ -1792,18 +1851,22 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
   $(window).resize(function() {
     expandFillPageClients();
   });
+  
+  // Show the help menu on initial load
+  $('#enlargement').tooltip("enable").tooltip("open");
+  help_display = true;
 
 
-// and then the keyboard shortcuts.
+// Enable the keyboard shortcuts.
 }).bind( 'keypress', function( event ) {
-		if(!$(".ui-dialog").is(":visible")){
-			if( event.which in keyCommands ) {
-				var fn = keyCommands[event.which]['function'];
-				fn();
-			}
+	if(!$(".ui-dialog").is(":visible")){
+		if( event.which in keyCommands ) {
+			var fn = keyCommands[event.which]['function'];
+			fn();
 		}
-  	});
-;
+	}
+});
+
 
 
 function expandFillPageClients() {
