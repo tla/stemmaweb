@@ -27,7 +27,7 @@ if( -l "$DBDIR/$DBNAME" ) {
 		or die "Could not rename existing $DBNAME";
 } 
 # Set up the test directory
-symlink( "$DBNAME.$DBEXT", "$DBDIR/$DBNAME" ) or die "Could not set up testing db symlink";
+symlink( "$DBDIR/$DBNAME.$DBEXT", "$DBDIR/$DBNAME" ) or die "Could not set up testing db symlink";
 
 my $dir = Text::Tradition::Directory->new(
 	dsn => "dbi:SQLite:dbname=$DBDIR/$DBNAME",

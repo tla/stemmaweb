@@ -49,7 +49,7 @@ $(document).ready(function () {
 		</div>
 	</div>
 
-	<div id="enlargement_container" class="fillPage">	
+	<div id="enlargement_container" class="fillPage">
 		<div id="loading_overlay">
 			<div id="loading_message"><span>Loading, please wait...</span></div>
 		</div>
@@ -58,11 +58,11 @@ $(document).ready(function () {
 	        <div id="svgenlargement"  class="fillPage"></div>
 		</div>
 	</div>
-	
+
 	<div id="update_workspace_button"></div>
-	
+
 	<div id="dialog-form" title="Create relation between two nodes...">
-    	<div id="dialog-form-status"></div>		
+    	<div id="dialog-form-status"></div>
 		<form id="merge_node_form" action="#">
 		<fieldset>
 			<input type="hidden" name="source_id" id="source_node_id"/>
@@ -112,9 +112,9 @@ $(document).ready(function () {
 
 	<div id="multipleselect-form" title="Multiple nodes selected...">
 		<div id="multipleselect-form-status"></div>
-	
+
 		Detach or concatenate?<br/>
-		
+
 		<form autocomplete="off">
 			<label>
 				<input id="action-detach" checked name='option' type='radio' /> Detach
@@ -129,7 +129,7 @@ $(document).ready(function () {
 		<form id="detach_collated_form" action="#">
 		</form>
 	</div>
-	
+
 	<div id="reading-form" title="Reading info...">
 		<form id="reading_data_form" action="#">
 			<input type="hidden" name="reading_id" id="reading_id"/>
@@ -162,15 +162,15 @@ $(document).ready(function () {
 		</form>
 		<div id="reading-form-status"></div>
     </div>
-    
+
     <div id="error-display" title="Error">
     </div>
-	
-    <p/><p/>	
+
+    <p/><p/>
     <div id="keymap">
         <ul id="keymaplist">
           <li></li>
         </ul>
     </div>
-    
+
 [% PROCESS footer.tt %]

@@ -33,7 +33,7 @@ function getReadingURL( reading_id ) {
 }
 
 // Make an XML ID into a valid selector
-function jq(myid) { 
+function jq(myid) {
 	return '#' + myid.replace(/(:|\.)/g,'\\$1');
 }
 
@@ -93,8 +93,8 @@ function morphology_form ( lexlist ) {
 			var formstr = '';
 			if( 'form' in lex ) {
 				formstr = stringify_wordform( lex['form'] );
-			} 
-			var form_morph_elements = morph_elements( 
+			}
+			var form_morph_elements = morph_elements(
 				formtag, lex['string'], formstr, morphoptions );
 			$.each( form_morph_elements, function( idx, el ) {
 				$('#morphology').append( el );
@@ -118,17 +118,17 @@ function morph_elements ( formtag, formtxt, currform, morphoptions ) {
 	if ( !currform ) {
 		currform = clicktag;
 	}
-	var formlabel = $('<label/>').attr( 'id', 'label_' + formtag ).attr( 
+	var formlabel = $('<label/>').attr( 'id', 'label_' + formtag ).attr(
 		'for', 'reading_' + formtag ).text( formtxt + ': ' );
-	var forminput = $('<input/>').attr( 'id', 'reading_' + formtag ).attr( 
+	var forminput = $('<input/>').attr( 'id', 'reading_' + formtag ).attr(
 		'name', 'reading_' + formtag ).attr( 'size', '50' ).attr(
 		'class', 'reading_morphology' ).val( currform );
 	forminput.autocomplete({ source: morphoptions, minLength: 0	});
-	forminput.focus( function() { 
+	forminput.focus( function() {
 		if( $(this).val() == clicktag ) {
 			$(this).val('');
 		}
-		$(this).autocomplete('search', '') 
+		$(this).autocomplete('search', '')
 	});
 	var morphel = [ formlabel, forminput, $('<br/>') ];
 	return morphel;
@@ -172,8 +172,8 @@ function relemmatize () {
 	$('#relemmatize_pending').show();
 	var reading_id = $('#reading_id').val()
 	ncpath = getReadingURL( reading_id );
-	form_values = { 
-		'normal_form': $('#reading_normal_form').val(), 
+	form_values = {
+		'normal_form': $('#reading_normal_form').val(),
 		'relemmatize': 1 };
 	var jqjson = $.post( ncpath, form_values, function( data ) {
 		// Update the form with the return
@@ -270,28 +270,28 @@ function svgEnlargementLoaded() {
     //used to calculate min and max zoom level:
     start_element_height = $('#__START__').children('ellipse')[0].getBBox().height;
     //some use of call backs to ensure succesive execution
-    add_relations( function() { 
+    add_relations( function() {
         var rdgpath = getTextURL( 'readings' );
         $.getJSON( rdgpath, function( data ) {
             readingdata = data;
             $('#svgenlargement ellipse').parent().dblclick(node_dblclick_listener);
             $('#svgenlargement ellipse').each( function( i, el ) { color_inactive( el ) });
-            $('#loading_overlay').hide(); 
+            $('#loading_overlay').hide();
         });
     });
-    
+
     //initialize marquee
     marquee = new Marquee();
 }
 
 function add_relations( callback_fn ) {
 	// Add the relationship types to the keymap list
-	$.each( relationship_types, function(index, typedef) {   
-		 li_elm = $('<li class="key">').css( "border-color", 
+	$.each( relationship_types, function(index, typedef) {
+		 li_elm = $('<li class="key">').css( "border-color",
 		 	relation_manager.relation_colors[index] ).text(typedef.name);
 		 li_elm.append( $('<div>').attr('class', 'key_tip_container').append(
 		 	$('<div>').attr('class', 'key_tip').text(typedef.description) ) );
-		 $('#keymaplist').append( li_elm ); 
+		 $('#keymaplist').append( li_elm );
 	});
 	// Now fetch the relationships themselves and add them to the graph
 	var rel_types = $.map( relationship_types, function(t) { return t.name });
@@ -355,23 +355,23 @@ function unselect_all_readings() {
 function node_obj(ellipse) {
   this.ellipse = ellipse;
   var self = this;
-  
+
   this.x = 0;
   this.y = 0;
   this.dx = 0;
   this.dy = 0;
   this.node_elements = node_elements_for(self.ellipse);
-  
+
   this.get_id = function() {
     return $(self.ellipse).parent().attr('id')
   }
-  
+
   this.set_selectable = function( clickable ) {
   	  color_active( $(self.ellipse) );
       if( clickable && editable ) {
           $(self.ellipse).parent().hover( this.enter_node, this.leave_node );
-          $(self.ellipse).parent().mousedown( function(evt) { evt.stopPropagation() } ); 
-          $(self.ellipse).parent().click( function(evt) { 
+          $(self.ellipse).parent().mousedown( function(evt) { evt.stopPropagation() } );
+          $(self.ellipse).parent().click( function(evt) {
               evt.stopPropagation();
               unselect_all_readings();
               readings_selected = [ self.get_id() ]
@@ -379,13 +379,13 @@ function node_obj(ellipse) {
           });
       } else {
           self.ellipse.siblings('text').attr('class', '');
-          $(self.ellipse).parent().unbind(); 
+          $(self.ellipse).parent().unbind();
           $(self.ellipse).parent().dblclick(node_dblclick_listener);
           $('body').unbind('mousemove');
           $('body').unbind('mouseup');
       }
   }
-  
+
   this.set_draggable = function( draggable ) {
     if( draggable && editable ) {
       $(self.ellipse).attr( {stroke:'black', fill:'#9999ff'} );
@@ -396,7 +396,7 @@ function node_obj(ellipse) {
       color_active( $(self.ellipse) );
       self.ellipse.siblings('text').attr('class', '');
       $(self.ellipse).parent().unbind( 'mousedown ');
-      $(self.ellipse).parent().mousedown( function(evt) { evt.stopPropagation() } ); 
+      $(self.ellipse).parent().mousedown( function(evt) { evt.stopPropagation() } );
       $(self.ellipse).parent().hover( this.enter_node, this.leave_node );
     }
   }
@@ -422,7 +422,7 @@ function node_obj(ellipse) {
     return false;
   }
 
-  this.mouseup_listener = function(evt) {    
+  this.mouseup_listener = function(evt) {
     if( $('ellipse[fill="#ffccff"]').size() > 0 ) {
         var source_node_id = $(self.ellipse).parent().attr('id');
         var source_node_text = self.ellipse.siblings('text').text();
@@ -441,7 +441,7 @@ function node_obj(ellipse) {
     self.ellipse.attr( 'fill', '#9999ff' );
     self.reset_elements();
   }
-  
+
   this.cpos = function() {
     return { x: self.ellipse.attr('cx'), y: self.ellipse.attr('cy') };
   }
@@ -473,7 +473,7 @@ function node_obj(ellipse) {
   this.reposition = function( dx, dy ) {
     $.each( self.node_elements, function(index, value) {
       value.reposition( dx, dy );
-    } );    
+    } );
   }
 
   this.move_elements = function() {
@@ -502,11 +502,11 @@ function node_obj(ellipse) {
 function svgshape( shape_element ) {
   this.shape = shape_element;
   this.reposx = 0;
-  this.reposy = 0; 
+  this.reposy = 0;
   this.repositioned = this.shape.parent().data( 'repositioned' );
   if( this.repositioned != null ) {
       this.reposx = this.repositioned[0];
-      this.reposy = this.repositioned[1]; 
+      this.reposy = this.repositioned[1];
   }
   this.reposition = function (dx, dy) {
       this.move( dx, dy );
@@ -532,6 +532,72 @@ function svgshape( shape_element ) {
   }
 }
 
+// This is a facade/imposter/proxy/wrapper whatever you want to call it
+// in between the svgpath( path_element, svg_element ) and
+// get_edge_elements_for( ellipse ) methods below. Chrome introduced a
+// SVG API change even if it was not a W3C recommendation yet. This removed
+// the up for deprecation SVGPathSeg API from chrome's ECMA script.
+// Although there is a polyfill for that (https://github.com/progers/pathseg)
+// I chose to use the polyfill for SVG getPathData() and setPathData()
+// (https://github.com/jarek-foksa/path-data-polyfill.js) as PathData is
+// supposedly *to* *be* the spec, although Chrome kindly forgot to
+// implement it. The path_element_class translates between this new spec/polyfill
+// and Stemmaweb's own svgpath abstraction. It's extra plumbing, ducktape,
+// staples, and elastic bands. It'll work. How hard can it be. As long as the
+// center holds, hm?
+function path_element_class( svgpath_for_edge, out_edge ) {
+  this.svgpath_for_edge = svgpath_for_edge;
+  this.out_edge = out_edge;
+  Object.defineProperty( this, "x", {
+    get: function() {
+      var path_data = svgpath_for_edge.getPathData();
+      if( out_edge == true ) {
+        var m_path = path_data[0];
+        return m_path.values[0];
+      } else {
+        var m_path = path_data[ path_data.length - 1 ];
+        return m_path.values[ m_path.values.length - 2 ];
+      }
+    },
+    set: function(value_for_x) {
+      console.log( value_for_x );
+      var path_data = svgpath_for_edge.getPathData();
+      if( out_edge == true ) {
+        var m_path = path_data[0];
+        m_path.values[0] = value_for_x;
+      } else {
+        var m_path = path_data[ path_data.length - 1 ];
+        m_path.values[ m_path.values.length - 2 ] = value_for_x;
+      }
+      svgpath_for_edge.setPathData( path_data );
+    }
+  } );
+  Object.defineProperty( this, "y", {
+    get: function() {
+      var path_data = svgpath_for_edge.getPathData();
+      if( out_edge == true ) {
+        var m_path = path_data[0];
+        return m_path.values[1];
+      } else {
+        var m_path = path_data[ path_data.length - 1 ];
+        return m_path.values[ m_path.values.length - 1 ];
+      }
+    },
+    set: function (value_for_y) {
+      console.log( value_for_y );
+      var path_data = svgpath_for_edge.getPathData();
+      if( out_edge == true ) {
+        var m_path = path_data[0];
+        m_path.values[1] = value_for_y;
+      } else {
+        var m_path = path_data[ path_data.length - 1 ];
+        m_path.values[ m_path.values.length - 1 ] = value_for_y;
+      }
+      svgpath_for_edge.setPathData( path_data );
+    }
+  } );
+}
+
 function svgpath( path_element, svg_element ) {
   this.svg_element = svg_element;
   this.path = path_element;
@@ -540,7 +606,7 @@ function svgpath( path_element, svg_element ) {
 
   this.reposition = function (dx, dy) {
       this.x = this.x + dx;
-      this.y = this.y + dy;      
+      this.y = this.y + dy;
       this.path.x = this.x;
       this.path.y = this.y;
   }
@@ -549,12 +615,12 @@ function svgpath( path_element, svg_element ) {
     this.path.x = this.x + dx;
     this.path.y = this.y + dy;
   }
-  
+
   this.reset = function() {
     this.path.x = this.x;
     this.path.y = this.y;
   }
-  
+
   this.grey_out = function(filter) {
       if( this.svg_element.parent(filter).size() != 0 ) {
           this.svg_element.attr('stroke', '#e5e5e5');
@@ -590,16 +656,18 @@ function get_edge_elements_for( ellipse ) {
         if( polygon.size() > 0 ) {
             edge_elements.push( new svgshape( polygon ) );
         }
-        path_segments = $(this).siblings('path')[0].pathSegList;
-        edge_elements.push( new svgpath( path_segments.getItem(path_segments.numberOfItems - 1), $(this).siblings('path') ) );
+        var path = $(this).siblings('path')[0];
+        var path_element_object = new path_element_class( path, false );
+        edge_elements.push( new svgpath( path_element_object, $(this).siblings('path') ) );
     }
     if( edge_out_pattern.test(title) ) {
-      path_segments = $(this).siblings('path')[0].pathSegList;
-      edge_elements.push( new svgpath( path_segments.getItem(0), $(this).siblings('path') ) );
+      var path = $(this).siblings('path')[0];
+      var path_element_object = new path_element_class( path, true );
+      edge_elements.push( new svgpath( path_element_object, $(this).siblings('path') ) );
     }
   });
   return edge_elements;
-} 
+}
 
 function relation_factory() {
     var self = this;
@@ -611,7 +679,7 @@ function relation_factory() {
     this.create_temporary = function( source_node_id, target_node_id ) {
     	var relation_id = get_relation_id( source_node_id, target_node_id );
         var relation = $( jq( relation_id ) );
-        if( relation.size() == 0 ) { 
+        if( relation.size() == 0 ) {
             draw_relation( source_node_id, target_node_id, self.temp_color );
         } else {
             self.color_memo = relation.children('path').attr( 'stroke' );
@@ -626,7 +694,7 @@ function relation_factory() {
         } else {
             var temporary = path_element.parent('g').remove();
             temporary.empty();
-            temporary = null; 
+            temporary = null;
         }
     }
     this.create = function( source_node_id, target_node_id, color_index, emphasis ) {
@@ -637,13 +705,13 @@ function relation_factory() {
         get_node_obj( target_node_id ).update_elements();
         // Set the relationship info box on click.
         relation.children('path').css( {'cursor':'pointer'} );
-        relation.children('path').click( function(event) { 
+        relation.children('path').click( function(event) {
             var related_nodes = get_related_nodes( relation.attr('id') );
             var source_node_id = related_nodes[0];
             var target_node_id = related_nodes[1];
             $('#delete_source_node_id').val( source_node_id );
             $('#delete_target_node_id').val( target_node_id );
-            self.showinfo(relation); 
+            self.showinfo(relation);
         });
         return relation;
     }
@@ -657,18 +725,18 @@ function relation_factory() {
     	} else if ( relation.data( 'is_significant' ) === 'maybe' ) {
     		significance = ' might be ';
     	}
-		$('#delete_relation_attributes').append( 
+		$('#delete_relation_attributes').append(
 			"This relationship" + significance + "stemmatically significant<br/>");
     	if( relation.data( 'a_derivable_from_b' ) ) {
-    		$('#delete_relation_attributes').append( 
+    		$('#delete_relation_attributes').append(
     			"'" + relation.data('source_text') + "' derivable from '" + relation.data('target_text') + "'<br/>");
     	}
     	if( relation.data( 'b_derivable_from_a' ) ) {
-    		$('#delete_relation_attributes').append( 
+    		$('#delete_relation_attributes').append(
     			"'" + relation.data('target_text') + "' derivable from '" + relation.data('source_text') + "'<br/>");
     	}
     	if( relation.data( 'non_independent' ) ) {
-    		$('#delete_relation_attributes').append( 
+    		$('#delete_relation_attributes').append(
     			"Variance unlikely to arise coincidentally<br/>");
     	}
     	if( relation.data( 'note' ) ) {
@@ -716,7 +784,7 @@ function draw_relation( source_id, target_id, relation_color, emphasis ) {
     var target_ellipse = get_ellipse( target_id );
     var relation_id = get_relation_id( source_id, target_id );
     var svg = $('#svgenlargement').children('svg').svg().svg('get');
-    var path = svg.createPath(); 
+    var path = svg.createPath();
     var sx = parseInt( source_ellipse.attr('cx') );
     var rx = parseInt( source_ellipse.attr('rx') );
     var sy = parseInt( source_ellipse.attr('cy') );
@@ -734,13 +802,13 @@ function draw_relation( source_id, target_id, relation_color, emphasis ) {
 function delete_relation( form_values ) {
 	ncpath = getTextURL( 'relationships' );
 	var jqjson = $.ajax({ url: ncpath, data: form_values, success: function(data) {
-		$.each( data['relationships'], function(item, source_target) { 
+		$.each( data['relationships'], function(item, source_target) {
 			relation_manager.remove( get_relation_id( source_target[0], source_target[1] ) );
 		});
 		$( "#delete-form" ).dialog( "close" );
 	}, dataType: 'json', type: 'DELETE' });
 }
-  
+
 function detach_node( readings ) {
     // separate out the deleted relationships, discard for now
     if( 'DELETED' in readings ) {
@@ -748,7 +816,7 @@ function detach_node( readings ) {
     	$.each( readings['DELETED'], function( idx, pair ) {
     		var relation_id = get_relation_id( pair[0], pair[1] );
 			var relation = $( jq( relation_id ) );
-			if( relation.size() == 0 ) { 
+			if( relation.size() == 0 ) {
     			relation_id = get_relation_id( pair[1], pair[0] );
     		}
     		relation_manager.remove( relation_id );
@@ -763,10 +831,10 @@ function detach_node( readings ) {
             var witnesses = readingdata[ reading.orig_rdg ].witnesses;
             readingdata[ reading.orig_rdg ].witnesses = $.removeFromArray( witness, witnesses );
         } );
-    } );    
-    
+    } );
+
     detached_edges = [];
-    
+
     // here we detach witnesses from the existing edges accoring to what's being relayed by readings
     $.each( readings, function( node_id, reading ) {
         var edges = edges_of( get_ellipse( reading.orig_rdg ) );
@@ -789,7 +857,7 @@ function detach_node( readings ) {
                 } );
             }
         } );
-        
+
         // After detaching we still need to check if for *all* readings
         // an edge was detached. It may be that a witness was not
         // explicitly named on an edge but was part of a 'majority' edge
@@ -809,7 +877,7 @@ function detach_node( readings ) {
                 }
             } );
         }
-        
+
         // Finally multiple selected nodes may share edges
         var copy_array = [];
         $.each( detached_edges, function( index, edge ) {
@@ -822,19 +890,19 @@ function detach_node( readings ) {
             }
         } );
         detached_edges = copy_array;
-        
+
         // Lots of unabstracted knowledge down here :/
         // Clone original node/reading, rename/id it..
         duplicate_node = get_ellipse( reading.orig_rdg ).parent().clone();
         duplicate_node.attr( 'id', node_id );
         duplicate_node.children( 'title' ).text( node_id );
-        
+
         // This needs somehow to move to node or even to shapes! #repositioned
         duplicate_node_data = get_ellipse( reading.orig_rdg ).parent().data( 'repositioned' );
         if( duplicate_node_data != null ) {
             duplicate_node.children( 'ellipse' ).parent().data( 'repositioned', duplicate_node_data );
         }
-        
+
         // Add the node and all new edges into the graph
         var graph_root = $('#svgenlargement svg g.graph');
         graph_root.append( duplicate_node );
@@ -846,21 +914,21 @@ function detach_node( readings ) {
             edge_title = edge_title.replace( reading.orig_rdg, node_id );
             edge.g_elem.children( 'title' ).text( edge_title );
             edge.g_elem.children( 'path').attr( 'stroke-width', edge_weight );
-            // Reg unabstracted knowledge: isn't it more elegant to make 
+            // Reg unabstracted knowledge: isn't it more elegant to make
             // it edge.append_to( graph_root )?
             graph_root.append( edge.g_elem );
         } );
-                
+
         // Make the detached node a real node_obj
         var ellipse_elem = get_ellipse( node_id );
         var new_node = new node_obj( ellipse_elem );
         ellipse_elem.data( 'node_obj', new_node );
 
         // Move the node somewhat up for 'dramatic effect' :-p
-        new_node.reposition( 0, -70 );        
-        
+        new_node.reposition( 0, -70 );
+
     } );
-    
+
 }
 
 function merge_nodes( source_node_id, target_node_id, consequences ) {
@@ -871,18 +939,18 @@ function merge_nodes( source_node_id, target_node_id, consequences ) {
                 var temp_relation = draw_relation( node_ids[0], node_ids[1], "#89a02c" );
                 var sy = parseInt( temp_relation.children('path').attr('d').split('C')[0].split(',')[1] );
                 var ey = parseInt( temp_relation.children('path').attr('d').split(' ')[2].split(',')[1] );
-                var yC = ey + (( sy - ey )/2); 
+                var yC = ey + (( sy - ey )/2);
                 // TODO: compute xC to be always the same distance to the amplitude of the curve
                 var xC = parseInt( temp_relation.children('path').attr('d').split(' ')[1].split(',')[0] );
                 var svg = $('#svgenlargement').children('svg').svg('get');
                 parent_g = svg.group( $('#svgenlargement svg g') );
-                var ids_text = node_ids[0] + '-' + node_ids[1]; 
+                var ids_text = node_ids[0] + '-' + node_ids[1];
                 var merge_id = 'merge-' + ids_text;
                 var yes = svg.image( parent_g, xC, (yC-8), 16, 16, merge_button_yes, { id: merge_id } );
                 var no = svg.image( parent_g, (xC+20), (yC-8), 16, 16, merge_button_no, { id: 'no' + merge_id } );
                 $(yes).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
                 $(no).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
-                $(yes).click( function( evt ){ 
+                $(yes).click( function( evt ){
                     merge_node( node_ids[0], node_ids[1] );
                     temp_relation.remove();
                     $(evt.target).parent().remove();
@@ -917,7 +985,7 @@ function merge_left( source_node_id, target_node_id ) {
             edge.attach_endpoint( target_node_id );
         }
     } );
-    $( jq( source_node_id ) ).remove();    
+    $( jq( source_node_id ) ).remove();
 }
 
 // This calls merge_node, as topologically it is doing basically the same thing.
@@ -1057,9 +1125,9 @@ function compress_nodes(readings) {
 }
 
 function Marquee() {
-    
+
     var self = this;
-    
+
     this.x = 0;
     this.y = 0;
     this.dx = 0;
@@ -1080,7 +1148,7 @@ function Marquee() {
         self.dx = (event.clientX - self.x);
         self.dy = (event.clientY - self.y);
         var rect = $('#marquee');
-        if( rect.length != 0 ) {            
+        if( rect.length != 0 ) {
             var rect_w =  Math.abs( self.dx );
             var rect_h =  Math.abs( self.dy );
             var rect_x = self.x - self.enlargementOffset.left;
@@ -1090,20 +1158,20 @@ function Marquee() {
             rect.attr("x", rect_x).attr("y", rect_y).attr("width", rect_w).attr("height", rect_h);
         }
     };
-    
+
     this.select = function() {
         var rect = $('#marquee');
         if( rect.length != 0 ) {
             //unselect any possible selected first
             //TODO: unless SHIFT?
             unselect_all_readings();
-            
+
             //compute dimension of marquee
             var left = $('#marquee').offset().left;
             var top = $('#marquee').offset().top;
             var right = left + parseInt( $('#marquee').attr( 'width' ) );
             var bottom = top + parseInt( $('#marquee').attr( 'height' ) );
-            var tf = svg_root_element.getScreenCTM().inverse(); 
+            var tf = svg_root_element.getScreenCTM().inverse();
             var p = svg_root.createSVGPoint();
             p.x=left;
             p.y=top;
@@ -1117,7 +1185,7 @@ function Marquee() {
             $('#svgenlargement ellipse').each( function( index ) {
                 var cx = parseInt( $(this).attr('cx') );
                 var cy = parseInt( $(this).attr('cy') );
-                
+
                 // This needs somehow to move to node or even to shapes! #repositioned
                 // We should ask something more aling the lines of: nodes.each { |item| node.selected? }
                 var org_translate = $(this).parent().data( 'repositioned' );
@@ -1125,17 +1193,17 @@ function Marquee() {
                     cx = cx + org_translate[0];
                     cy = cy + org_translate[1];
                 }
-                
+
 	           //select any node with its center inside the marquee
                if( cx > cx_min && cx < cx_max) {
                     if( cy > cy_min && cy < cy_max) {
                         // Take note of the selected reading(s) and applicable witness(es)
-                        // so we can populate the multipleselect-form 
-                        readings_selected.push( $(this).parent().attr('id') ); 
+                        // so we can populate the multipleselect-form
+                        readings_selected.push( $(this).parent().attr('id') );
                     }
                 }
             });
-            
+
             $.each( readings_selected, function ( i, reading ) {
             	color_active( get_ellipse( reading ) );
             });
@@ -1143,11 +1211,11 @@ function Marquee() {
             self.svg_rect.remove( $('#marquee') );
         }
     };
-    
+
     this.unselect = function() {
     	unselect_all_readings();
     }
-     
+
 }
 
 function readings_equivalent( source, target ) {
@@ -1162,7 +1230,7 @@ function readings_equivalent( source, target ) {
 	var ttlc = XRegExp.replace( targettext.toLocaleLowerCase(), nonwc, "", 'all' );
 	if( stlc === ttlc ) {
 		return true;
-	}	
+	}
 	return false;
 }
 
@@ -1224,7 +1292,7 @@ var keyCommands = {
 				$('#multipleselect-form').dialog( 'open' );
 			}
 		} },
-	'108': { 
+	'108': {
 		'key': 'l',
 		'description': 'Set / unset the selected reading(s) as canonical / lemma',
 		'function': function () {
@@ -1240,7 +1308,7 @@ var keyCommands = {
 				};
 				var jqjson = $.post( ncpath, form_values, function(data) {
 					readings_selected = [];
-					$.each( data['readings'], function(i, rdgdata) { 
+					$.each( data['readings'], function(i, rdgdata) {
 						var this_rdgid = rdgdata['id'];
 						var reading_element = readingdata[this_rdgid]
 						$.each( rdgdata, function( key, value ) {
@@ -1270,12 +1338,12 @@ var keyCommands = {
 
 // Return the content of the keystroke menu.
 function keystroke_menu () {
-	var htmlstr = '<h4>Keystroke commands for selected readings</h4><p>Click the pen to enable reading ' + 
-	'selection. Readings can be selected by clicking, or by dragging across ' + 
-	'the screen in edit mode. Press any of the following keys to take the ' + 
+	var htmlstr = '<h4>Keystroke commands for selected readings</h4><p>Click the pen to enable reading ' +
+	'selection. Readings can be selected by clicking, or by dragging across ' +
+	'the screen in edit mode. Press any of the following keys to take the ' +
 	'corresponding action:</p><ul>';
 	$.each( keyCommands, function( k, v ) {
-		htmlstr += '<li><b>' + v['key'] + '</b>: ' + v['description'] + '</li>'; 
+		htmlstr += '<li><b>' + v['key'] + '</b>: ' + v['description'] + '</li>';
 	});
 	htmlstr += '</ul><p>Double-click a reading to access its properties; drag a reading to another one to create a relationship. For fuller documentation see the "About/Help" link.</p>';
 	return htmlstr;
@@ -1288,7 +1356,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	var error;
 	var errordiv;
 	// Is it an authorization error?
-	if( ajaxSettings.type == 'POST' && jqXHR.status == 403 
+	if( ajaxSettings.type == 'POST' && jqXHR.status == 403
 		&& jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
 		error = 'You are not authorized to modify this tradition. (Try logging in again?)';
 	} else {
@@ -1299,7 +1367,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			error = jqXHR.statusText;
 		}
 	}
-	
+
 	// To which box does it belong?
 	if( $('#dialog-form').dialog('isOpen') ) {
 		if( ajaxSettings.url == getTextURL('merge') ) {
@@ -1329,10 +1397,10 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		error += '<br>The action cannot be performed.</p>';
 		errordiv = '#error-display';
 	}
-	
+
 	// Populate the box with the error message
 	$(errordiv).append( '<p class="error">Error: ' + error );
-	
+
 	// Open the dialog explicitly if we need to
 	if( errordiv == '#error-display' ) {
 		$(errordiv).dialog('open');
@@ -1343,13 +1411,13 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 
 // ...then initialization.
 }).ready(function () {
-    
+
   timer = null;
   relation_manager = new relation_factory();
-  
+
   $('#update_workspace_button').data('locked', false);
-   
-  // Set up the mouse events on the SVG enlargement             
+
+  // Set up the mouse events on the SVG enlargement
   $('#enlargement').mousedown(function (event) {
     $(this)
         .data('down', true)
@@ -1364,15 +1432,15 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 
     // Activate marquee if in interaction mode
     if( $('#update_workspace_button').data('locked') == true ) { marquee.show( event ) };
-        
+
     event.returnValue = false;
     event.preventDefault();
     return false;
   }).mouseup(function (event) {
-    marquee.select(); 
+    marquee.select();
     $(this).data('down', false);
   }).mousemove(function (event) {
-    if( timer != null ) { clearTimeout(timer); } 
+    if( timer != null ) { clearTimeout(timer); }
     if ( ($(this).data('down') == true) && ($('#update_workspace_button').data('locked') == false) ) {
         var p = svg_root.createSVGPoint();
         p.x = event.clientX;
@@ -1382,7 +1450,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
         var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
         svg_root_element.setAttribute("transform", s);
     }
-    marquee.expand( event ); 
+    marquee.expand( event );
     event.returnValue = false;
     event.preventDefault();
   }).mousewheel(function (event, delta) {
@@ -1391,7 +1459,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     if ( $('#update_workspace_button').data('locked') == false ) {
         if (!delta || delta == null || delta == 0) delta = event.originalEvent.wheelDelta;
         if (!delta || delta == null || delta == 0) delta = -1 * event.originalEvent.detail;
-        if( delta < -9 ) { delta = -9 }; 
+        if( delta < -9 ) { delta = -9 };
         var z = 1 + delta/10;
         z = delta > 0 ? 1 : -1;
         var g = svg_root_element;
@@ -1420,8 +1488,8 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		collision: 'none'
 	}
   });
-  
-  
+
+
   // Set up the various dialog boxes.
   // dialog-form (relationship creation/merge) and multiselect should only be set up
   // if the tradition is editable. delete-form (relationship info) and reading-form
@@ -1451,7 +1519,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			ncpath = getTextURL( 'relationships' );
 			var jqjson = $.post( ncpath, form_values, function( data ) {
 				// Stash the new relationships.
-				$.each( data['relationships'], function( item, source_target ) { 
+				$.each( data['relationships'], function( item, source_target ) {
 					var source_found = get_ellipse( source_target[0] );
 					var target_found = get_ellipse( source_target[1] );
 					var relation_found = $.inArray( source_target[2], $( '#keymap' ).data( 'relations' ) );
@@ -1477,19 +1545,19 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			$( this ).dialog( 'close' );
 		}
 	},
-	create: function(event, ui) { 
+	create: function(event, ui) {
 		$(this).data( 'relation_drawn', false );
 		$('#rel_type').data( 'changed_after_open', false );
-		$.each( relationship_types, function(index, typedef) {   
-			 $('#rel_type').append( $('<option />').attr( "value", typedef.name ).text(typedef.name) ); 
+		$.each( relationship_types, function(index, typedef) {
+			 $('#rel_type').append( $('<option />').attr( "value", typedef.name ).text(typedef.name) );
 		});
-		$.each( relationship_scopes, function(index, value) {   
-			 $('#scope').append( $('<option />').attr( "value", value ).text(value) ); 
+		$.each( relationship_scopes, function(index, value) {
+			 $('#scope').append( $('<option />').attr( "value", value ).text(value) );
 		});
 		$.each( ternary_values, function( index, value ) {
 			$('#is_significant').append( $('<option />').attr( "value", value ).text(value) );
 		});
-		// Handler to reset fields to default, the first time the relationship 
+		// Handler to reset fields to default, the first time the relationship
 		// is changed after opening the form.
 		$('#rel_type').change( function () {
 			if( !$(this).data( 'changed_after_open' ) ) {
@@ -1500,10 +1568,10 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		});
 	},
 	open: function() {
-		relation_manager.create_temporary( 
+		relation_manager.create_temporary(
 			$('#source_node_id').val(), $('#target_node_id').val() );
 		var buttonset = $(this).parent().find( '.ui-dialog-buttonset' )
-		if( readings_equivalent( $('#source_node_id').val(), 
+		if( readings_equivalent( $('#source_node_id').val(),
 				$('#target_node_id').val() ) ) {
 			buttonset.find( "button:contains('Merge readings')" ).show();
 		} else {
@@ -1522,7 +1590,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$("#dialog_overlay").hide();
 	}
 	});
-	
+
 	$( "#multipleselect-form" ).dialog({
 		autoOpen: false,
 		height: "auto",
@@ -1624,7 +1692,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				$('#detach_btn').show();
 				$('#concat_btn').hide();
 			}
-			
+
 			// Populate the forms with the currently selected readings
 			$('#detach_collated_form').empty();
 			var witnesses = [];
@@ -1637,38 +1705,38 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 
 			});
 			$.each( witnesses, function( index, value ) {
-				$('#detach_collated_form').append( 
-				  '<input type="checkbox" name="witnesses[]" value="' + value 
-				  + '">' + value + '<br>' ); 
+				$('#detach_collated_form').append(
+				  '<input type="checkbox" name="witnesses[]" value="' + value
+				  + '">' + value + '<br>' );
 			});
-			$('#multiple_selected_readings').attr('value', readings_selected.join(',') ); 
+			$('#multiple_selected_readings').attr('value', readings_selected.join(',') );
 		},
-		close: function() { 
+		close: function() {
 			marquee.unselect();
 			$("#dialog_overlay").hide();
 		}
-	}); 
+	});
   }
-	
-  // Set up the relationship info display and deletion dialog.  
+
+  // Set up the relationship info display and deletion dialog.
   $( "#delete-form" ).dialog({
     autoOpen: false,
     height: "auto",
     width: 300,
     modal: false,
     buttons: {
-        OK: function() { 
+        OK: function() {
         	$('#delete-status').empty()
-        	$( this ).dialog( "close" ); 
+        	$( this ).dialog( "close" );
         },
-        "Delete all": function () { 
+        "Delete all": function () {
 			form_values = $('#delete_relation_form').serialize();
 			form_values += "&scopewide=true";
-        	delete_relation( form_values ); 
+        	delete_relation( form_values );
         },
-        Delete: function() { 
+        Delete: function() {
 			form_values = $('#delete_relation_form').serialize();
-	        delete_relation( form_values ); 
+	        delete_relation( form_values );
 	    }
     },
     create: function(event, ui) {
@@ -1693,13 +1761,13 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     	} else {
     		$( this ).dialog( "option", "width", 200 );
     		buttonset.find( "button:contains('Delete')" ).show();
-		}    	
+		}
     },
     close: function() {}
   });
 
 
-  // function for reading form dialog should go here; 
+  // function for reading form dialog should go here;
   // just hide the element for now if we don't have morphology
   if( can_morphologize ) {
 	  $('#reading-form').dialog({
@@ -1734,7 +1802,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				// Make the JSON call
 				ncpath = getReadingURL( reading_id );
 				var jqjson = $.post( ncpath, form_values, function(data) {
-					$.each( data['readings'], function(i, rdgdata) { 
+					$.each( data['readings'], function(i, rdgdata) {
 						var this_rdgid = rdgdata['id'];
 						var reading_element = readingdata[this_rdgid];
 						$.each( rdgdata, function( key, value ) {
@@ -1756,7 +1824,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		create: function() {
 			if( !editable ) {
 				// Get rid of the disallowed editing UI bits
-				$( this ).dialog( "option", "buttons", 
+				$( this ).dialog( "option", "buttons",
 					[{ text: "OK", click: function() { $( this ).dialog( "close" ); }}] );
 				$('#reading_relemmatize').hide();
 			}
@@ -1777,7 +1845,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	} else {
 		$('#reading-form').hide();
 	}
-  
+
 	// Set up the error message dialog, for results from keystroke commands
 	$('#error-display').dialog({
 		autoOpen: false,
@@ -1810,7 +1878,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
      } else {
          var left = $('#enlargement').offset().left;
          var right = left + $('#enlargement').width();
-         var tf = svg_root_element.getScreenCTM().inverse(); 
+         var tf = svg_root_element.getScreenCTM().inverse();
          var p = svg_root.createSVGPoint();
          p.x=left;
          p.y=100;
@@ -1819,7 +1887,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
          var cx_max = p.matrixTransform(tf).x;
          $('#svgenlargement ellipse').each( function( index ) {
              var cx = parseInt( $(this).attr('cx') );
-             if( cx > cx_min && cx < cx_max) { 
+             if( cx > cx_min && cx < cx_max) {
                  if( $(this).data( 'node_obj' ) == null ) {
                      $(this).data( 'node_obj', new node_obj( $(this) ) );
                  } else {
@@ -1833,25 +1901,25 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
      }
   });
 
-  if( !editable ) {  
+  if( !editable ) {
     // Hide the unused elements
     $('#update_workspace_button').hide();
   }
 
-  
-  $('.helptag').popupWindow({ 
-	  height:500, 
-	  width:800, 
-	  top:50, 
+
+  $('.helptag').popupWindow({
+	  height:500,
+	  width:800,
+	  top:50,
 	  left:50,
-	  scrollbars:1 
-  }); 
+	  scrollbars:1
+  });
 
   expandFillPageClients();
   $(window).resize(function() {
     expandFillPageClients();
   });
-  
+
   // Show the help menu on initial load
   $('#enlargement').tooltip("enable").tooltip("open");
   help_display = true;
