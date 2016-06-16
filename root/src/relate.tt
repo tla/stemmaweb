@@ -26,6 +26,9 @@ var ternary_values = [% ternary_values %];
 
 $(document).ready(function () {
   loadSVG('[% svg_string %]');
+	window.setTimeout( function(){
+		$('#keystroke_menu').hide();
+	}, 10000 );
 });
 </script>
 [% END %]
@@ -59,6 +62,7 @@ $(document).ready(function () {
 		</div>
 	</div>
 
+	<div id="keystroke_menu_button"></div>
 	<div id="update_workspace_button"></div>
 
 	<div id="dialog-form" title="Create relation between two nodes...">
@@ -171,6 +175,8 @@ $(document).ready(function () {
         <ul id="keymaplist">
           <li></li>
         </ul>
+    </div>
+		<div id="keystroke_menu">
     </div>
 
 [% PROCESS footer.tt %]

@@ -1,8 +1,8 @@
-body { 
-    margin: 0; 
-    padding: 0 20px; 
-    font: 1em "Trebuchet MS", verdana, arial, sans-serif; 
-    font-size: 85%; 
+body {
+    margin: 0;
+    padding: 0 20px;
+    font: 1em "Trebuchet MS", verdana, arial, sans-serif;
+    font-size: 85%;
     background: #EDF1FA;
 }
 #topbanner {
@@ -59,7 +59,7 @@ p.api {
 span.apimore {
 	font-family: Courier;
 }
-.ui-tooltip { 
+.ui-tooltip {
 	max-width: 500px;
 }
 #enlargement_container {
@@ -69,7 +69,7 @@ span.apimore {
     border: 2px solid #B0C6F7;
     background: #fff;
     padding-top: 5px;
-    padding-bottom: 5px;    
+    padding-bottom: 5px;
 }
 #loading_overlay {
 	display: none;
@@ -82,7 +82,7 @@ span.apimore {
     background-repeat: repeat;
     background-attachment: scroll;
     background-position: 50% 50%;
-    background-color: #EEEEEE; 
+    background-color: #EEEEEE;
 }
 #loading_message {
 	position: relative;
@@ -100,7 +100,7 @@ span.apimore {
     background-repeat: repeat;
     background-attachment: scroll;
     background-position: 50% 50%;
-    background-color: #EEEEEE; 
+    background-color: #EEEEEE;
     opacity: 0.5;
     padding-bottom: 5px;
     padding-top: 5px;
@@ -131,19 +131,19 @@ span.apimore {
     background: #fff;
 }
 #graph_underlay {
-    height: 100%; 
-    width: 100%; 
+    height: 100%;
+    width: 100%;
     background: #fff;
     position: relative;
     z-index: -2;
 }
 #visor {
-    height: 100px; 
-    width: 20%; 
-    background-color: #61EDAE; 
-    opacity: 0.15; 
+    height: 100px;
+    width: 20%;
+    background-color: #61EDAE;
+    opacity: 0.15;
     position: relative;
-    left: 40%; 
+    left: 40%;
     top: -104px;
     z-index: -1;
     border-left: 2px solid #3C73FA;
@@ -220,10 +220,42 @@ user-select: none;
 	text-align: right;
 	margin: 10px;
 }
+
+#keystroke_menu_button {
+    position: absolute;
+    left: 69.5%;
+    top: 126px;
+    height: 44px;
+    width: 46px;
+    margin-top: 17px;
+    border: none;
+    background-image: url('../images/keystroke_menu_icon.png');
+    background-position: 0px 0px;
+    background-color: none;
+    background-repeat: none;
+    z-index: 50;
+}
+
+#keystroke_menu {
+    position: absolute;
+    left: 39%;
+    width: 30%;
+    padding: 0% 0.8% 0.2% 0.8%;
+    top: 134px;
+    border: 2px solid #B0C6F7;
+    background: #fff;
+    background: url("cupertino/images/ui-bg_highlight-hard_100_f2f5f7_1x100.png");
+    background-repeat: repeat-x;
+    background-scroll: scroll;
+    background-position: 50% top;
+    background-color: #F2F5F7;
+    font-size: 80%;
+}
+
 .key .key_tip_container {
     visibility: hidden;
-    position:absolute; 
-    left:-150px; 
+    position:absolute;
+    left:-150px;
     width:140px;
 }
 .key:hover .key_tip {

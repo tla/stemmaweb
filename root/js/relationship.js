@@ -5,7 +5,6 @@ var start_element_height = 0;
 var reltypes = {};
 var readingdata = {};
 var readings_selected = [];
-var help_display = false;
 
 jQuery.removeFromArray = function(value, arr) {
     return jQuery.grep(arr, function(elem, index) {
@@ -1264,14 +1263,8 @@ var keyCommands = {
 		'key': 'h',
 		'description': 'Show / hide this menu',
 		'function': function () {
-			if( help_display ) {
-				$('#enlargement').tooltip("close").tooltip("disable");
-				help_display = false;
-			} else {
-				$('#enlargement').tooltip("enable").tooltip("open");
-				help_display = true;
-			}
-        } },
+			$('#keystroke_menu').toggle();
+		} },
 	'99': {
 		'key': 'c',
 		'description': 'Concatenate a sequence of readings into a single reading',
@@ -1479,14 +1472,6 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
   }).css({
     'overflow' : 'hidden',
     'cursor' : '-moz-grab'
-  }).tooltip({
-	content: keystroke_menu,
-	disabled: true,
-	position: {
-		my: 'top',
-		at: 'top',
-		collision: 'none'
-	}
   });
 
 
@@ -1901,11 +1886,15 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
      }
   });
 
+  $('#keystroke_menu_button').click( function() {
+    $('#keystroke_menu').toggle();
+  });
+
   if( !editable ) {
     // Hide the unused elements
     $('#update_workspace_button').hide();
+    $('#keystroke_menu_button').hide();
   }
-
 
   $('.helptag').popupWindow({
 	  height:500,
@@ -1920,10 +1909,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     expandFillPageClients();
   });
 
-  // Show the help menu on initial load
-  $('#enlargement').tooltip("enable").tooltip("open");
-  help_display = true;
-
+  $('#keystroke_menu').html( keystroke_menu );
 
 // Enable the keyboard shortcuts.
 }).bind( 'keypress', function( event ) {
@@ -1935,14 +1921,13 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	}
 });
 
-
-
 function expandFillPageClients() {
 	$('.fillPage').each(function () {
 		$(this).height($(window).height() - $(this).offset().top - MARGIN);
 	});
 }
 
+// Wondering what kicks it all in motion? See: relate.tt
 function loadSVG(svgData) {
 	var svgElement = $('#svgenlargement');
 
