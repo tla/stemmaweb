@@ -101,8 +101,11 @@ function Edge( g_elem ) {
             var polygon = self.g_elem.children( 'polygon' ); 
             if( polygon.size() > 0 ) {
                 var end_point_arrowhead = new svgshape( polygon );
-                var path_segments = self.g_elem.children('path')[0].pathSegList;
-                var edge_path = new svgpath( path_segments.getItem(path_segments.numberOfItems - 1), self.g_elem.children('path') );
+                // var path_segments = self.g_elem.children('path')[0].pathSegList;
+                // var edge_path = new svgpath( path_segments.getItem(path_segments.numberOfItems - 1), self.g_elem.children('path') );
+                var path = self.g_elem.children('path')[0];
+                var path_element_object = new path_element_class( path, true );
+                var edge_path = new svgpath( path_element_object, self.g_elem.children('path') );
                 var target_ellipse = get_ellipse( target_node_id );
                 var target_cx = parseFloat( target_ellipse.attr( 'cx' ) );
                 var target_cy = parseFloat( target_ellipse.attr( 'cy' ) );
@@ -135,8 +138,12 @@ function Edge( g_elem ) {
         } );
         // if not let's really move the start point towards the target node
         if( self != null ) {
-            var path_segments = self.g_elem.children('path')[0].pathSegList;                
-            var edge_path = new svgpath( path_segments.getItem(0), self.g_elem.children('path') );
+            // var path_segments = self.g_elem.children('path')[0].pathSegList;                
+            // var edge_path = new svgpath( path_segments.getItem(0), self.g_elem.children('path') );
+			var path = self.g_elem.children('path')[0];
+			var path_element_object = new path_element_class( path, true );
+			var edge_path = new svgpath( path_element_object, self.g_elem.children('path') );
+
             var target_ellipse = get_ellipse( target_node_id );
             var target_cx = parseFloat( target_ellipse.attr( 'cx' ) );
             var target_cy = parseFloat( target_ellipse.attr( 'cy' ) );
