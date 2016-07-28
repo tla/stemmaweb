@@ -1,110 +1,73 @@
 package stemmaweb::Neo4J::Directory;
 use strict;
 use warnings;
+use File::Which;
+use HTTP::Response;
 use JSON qw/ from_json to_json /;
 use LWP::UserAgent;
 use Moose;
-use stemmaweb::Neo4J::User;
-use stemmaweb::Neo4J::Tradition;
-use stemmaweb::Neo4J::Util;
+use stemmaweb::Error;
 
 has tradition_repo => (
 	is => 'ro',
 	isa => 'Str'
 );
 
-## GET /traditions
-sub traditionlist {
-	my( $self, $public ) = @_;
-	my $requesturl = $self->tradition_repo . "/traditions";
-	$requesturl .= "?public=true" if $public;
-	my $resp = LWP::UserAgent->new()->get( $requesturl );
-	my $content;
-	if( $resp->is_success ) {
-		$content = response_content( $resp );
-	} else {
-		throw_ua( $resp );
-	}
-	return @$content;
-}
-
-## PUT /tradition
-sub newtradition {
-	my( $self, $user, $req ) = @_;
-	
-	# Grab the file upload, check its name/extension, and call the
-	# appropriate parser(s).
-	my $upload = $req->upload('file');
-	my $fileargs = [ $upload->tempname, $upload->filename ];
-	if( $upload->type ) {
-		push( @$fileargs, 'Content-Type', $upload->type );
-	}
-	if( $upload->charset ) {
-		push( @$fileargs, 'Content-Encoding', $upload->charset );
-	}
-	
-	# Figure out the filetype unless it exists.
-	my $filetype = $req->param('filetype');
-	unless( $filetype ) {
-		$filetype = $upload->type;
-		$filetype =~ s/^.*\///;
-		$filetype = 'tsv' if $filetype eq 'txt';
-	}
-
-	my %newopts = (
-		'name' => $req->param('name') || 'Uploaded tradition',
-		'language' => $req->param('language') || 'Default',
-		'public' => $req->param('public') ? 'true' : 'false',
-		'direction' => $req->param('direction') || 'LR',
-		'userId' => $user->id,
-		'filetype' => $filetype,
-		'file' => $fileargs
-	);
-	
+sub ajax {
+	# Generic and simple LWP request method for our application that returns
+	# a decoded-from-JSON object.
+	# Args are the same as for LWP::UA but we will fill in the repo URL.
+	my $self = shift;
+	my $method = shift;
+	my $location = shift;
+	my @lwpargs = @_;
+	my $url = $self->tradition_repo . $location;
 	my $ua = LWP::UserAgent->new();
-	my $resp = $ua->put( $self->tradition_repo . "/tradition", \%newopts, 
-		'Content-Type' => 'form-data' );
-	if( $resp->is_success ) {
-		return response_content( $resp );
-	} else {
+	my $resp = $ua->$method($url, @lwpargs);
+	# Did it work?
+	unless( $resp->is_success ) {
 		throw_ua( $resp );
+	}
+	# If so, return the result.
+	if( $resp->content_type =~ /json/ ) {
+		return from_json( $resp->decoded_content );
+	} else {
+		return $resp->decoded_content;
 	}
 }
 
-## PUT /user
-sub create_user {
-	my( $self, $user ) = @_;
-	my $newopts = {
-		'id' => $user->id,
-		'role' => $user->is_admin ? 'admin' : 'user',
-		'email' => $user->email,
-		'active' => $user->active ? JSON::true : JSON::false,
-	};
-	
-	my $ua = LWP::UserAgent->new();
-	$DB::single = 1;
-	my %payload = (
-		'Content-Type' => 'application/json',
-		'Content' => to_json( $newopts )
-	);
-	my $resp = $ua->put( $self->tradition_repo . "/user", %payload );
-	if( $resp->is_success ) {
-		return response_content( $resp );
-	} else {
-		throw_ua( $resp );
+### Graphviz transmogrification for passed-in dot
+sub tradition_as_svg {
+  my( $self, $textid, $opts ) = @_;
+  unless (File::Which::which( 'dot' )) {
+		throw_ua( HTTP::Response->new(500,
+			"Need GraphViz installed to output SVG") );
 	}
-}	
+	# TODO implement subgraphs!
+  my $want_subgraph = exists $opts->{'from'} || exists $opts->{'to'};
 
-## GET /user/$ID
-sub find_user {
-	my( $self, $params ) = @_;
-	return stemmaweb::Neo4J::User->new($self->tradition_repo, $params);
+	# Get the dot from the DB
+	my $dotstr = $self->ajax('get', '/tradition/$textid/dot');
+
+  # Transmogrify it to SVG
+	my @cmd = qw/dot -Tsvg/;
+	my( $svg, $err );
+	my $dotfile = File::Temp->new();
+	## USE FOR DEBUGGING
+	# $dotfile->unlink_on_destroy(0);
+	binmode $dotfile, ':utf8';
+	print $dotfile $dotstr;
+	push( @cmd, $dotfile->filename );
+	run( \@cmd, ">", binary(), \$svg );
+	$svg = decode_utf8( $svg );
+	return $svg;
 }
 
-## GET /tradition/$ID
-sub tradition {
-	my( $self, $id ) = @_;
-	return stemmaweb::Neo4J::Tradition->new($self->tradition_repo, $id);
+sub throw_ua {
+	stemmaweb::Error->throw(
+		ident => 'Datastore error',
+		response => $_[0]
+		);
 }
 
 __PACKAGE__->meta->make_immutable;
