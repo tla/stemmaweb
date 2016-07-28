@@ -35,14 +35,7 @@ function loadTradition( textid, textname, editable ) {
     $('#textinfo_load_status').empty();
     $('#stemma_graph').empty();
     $('#textinfo_waitbox').show();
-    $('#textinfo_container').hide().ajaxError(
-    	function(event, jqXHR, ajaxSettings, thrownError) {
-    	if( ajaxSettings.url.indexOf( 'textinfo' ) > -1 && ajaxSettings.type == 'GET'  ) {
-			$('#textinfo_waitbox').hide();
-			$('#textinfo_container').show();
-			display_error( jqXHR, $("#textinfo_load_status") );
-    	}
-    });
+    $('#textinfo_container').hide();
 
     // Hide the functionality that is irrelevant
     if( editable ) {
@@ -325,25 +318,6 @@ function set_stemma_interactive( svg_element ) {
 	}
 }
 
-// General-purpose error-handling function.
-// TODO make sure this gets used throughout, where appropriate.
-function display_error( jqXHR, el ) {
-	var errmsg;
-	if( jqXHR.responseText == "" ) {
-		errmsg = "perhaps the server went down?"
-	} else {
-		var errobj;
-		try {
-			errobj = jQuery.parseJSON( jqXHR.responseText );
-			errmsg = errobj.error;
-		} catch ( parse_err ) {
-			errmsg = "something went wrong on the server."
-		}
-	}
-	var msghtml = $('<span>').attr('class', 'error').text( "An error occurred: " + errmsg );
-	$(el).empty().append( msghtml ).show();
-}
-
 // Event to enable the upload button when a file has been selected
 function file_selected( e ) {
 	if( e.files.length == 1 ) {
@@ -457,8 +431,58 @@ function _get_url( els ) {
 	return basepath + els.join('/');
 }
 
-// TODO Attach unified ajaxError handler to document
-$(document).ready( function() {
+// General-purpose error-handling function.
+$(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
+	var error;
+	var errordiv;
+	// Is it an authorization error?
+	if( ajaxSettings.type == 'POST' && jqXHR.status == 403
+		&& jqXHR.responseText.indexOf('do not have permission to modify') > -1 ) {
+		error = 'You are not authorized to modify this tradition. (Try logging in again?)';
+	} else if ( jqXHR.responseText === "" ) {
+		error = 'perhaps the server went down?';
+	} else {
+		try {
+			var errobj = jQuery.parseJSON( jqXHR.responseText );
+			error = errobj.error;
+		} catch(e) {
+			error = jqXHR.statusText;
+		}
+	}
+
+	// To which box does it belong?
+	if( $('#textinfo-edit-dialog').dialog('isOpen') ) {
+		// the tradition metadata box
+		error += '<br>The tradition cannot be updated.</p>';
+		errordiv = '#edit-textinfo-status';
+	} else if ( $('#stemma-edit-dialog').dialog('isOpen') ) {
+		// the delete box
+		error += '<br>The stemma cannot be saved.</p>';
+		errordiv = '#edit_stemma_status';
+	} else if ( $('#stemweb-ui-dialog').dialog('isOpen') ) {
+		errordiv = '#stemweb_run_status';
+	} else if ( $('#download-dialog').dialog('isOpen') ) {
+		// reading box
+		error += '<br>The tradition cannot be downloaded.</p>';
+		errordiv = '#download_status';
+	} else if ( $('#upload-collation-dialog').dialog('isOpen') ) {
+		errordiv = '#upload_status';
+		error += '<br>The collation cannot be uploaded.</p>';
+		file_selected( $('#new_file').get(0) );
+	} else if ( ajaxSettings.url.indexOf( 'textinfo' ) > -1 && ajaxSettings.type == 'GET'  ) {
+		$('#textinfo_waitbox').hide();
+		$('#textinfo_container').show();
+		errordiv = "#textinfo_load_status";
+	} else if( ajaxSettings.url.indexOf( 'stemmaroot' ) > -1 && ajaxSettings.type == 'POST' ) {
+		errordiv = "#stemma_load_status";
+	}
+
+	// Populate the box with the error message
+	$(errordiv).append( '<p class="error">Error: ' + error );
+	$(errordiv).parents('.ui-dialog').find('.ui-button').button("enable");
+
+// ...then initialization.
+}).ready( function() {
 	// See if we have the browser functionality we need
 	// TODO Also think of a test for SVG readiness
 	if( !!window.FileReader && !!window.File ) {
@@ -536,12 +560,6 @@ $(document).ready( function() {
 				$('#edit_public').removeAttr('checked');
 			}
 		},
-	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		$(event.target).parent().find('.ui-button').button("enable");
-    	if( ajaxSettings.url.indexOf( 'textinfo' ) > -1
-    		&& ajaxSettings.type == 'POST' ) {
-			display_error( jqXHR, $("#edit_textinfo_status") );
-    	}
 	});
 
 
@@ -601,12 +619,6 @@ $(document).ready( function() {
 				});
 			}
 		},
-	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		$(event.target).parent().find('.ui-button').button("enable");
-    	if( ajaxSettings.url.indexOf( 'stemma' ) > -1
-    		&& ajaxSettings.type == 'POST' ) {
-			display_error( jqXHR, $("#edit_stemma_status") );
-    	}
 	});
 
 	$('#stemweb-ui-dialog').dialog({
@@ -736,11 +748,6 @@ $(document).ready( function() {
 				});
 			}
 		},
-	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		$(event.target).parent().find('.ui-button').button("enable");
-    	if( ajaxSettings.url.indexOf( 'stemweb/' ) > -1 ) {
-			display_error( jqXHR, $("#stemweb_run_status") );
-    	}
 	});
 
 	// Set up the download dialog
@@ -761,12 +768,6 @@ $(document).ready( function() {
 		open: function() {
 			$('#download_tradition').attr('value', selectedTextID );
 		},
-	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		$(event.target).parent().find('.ui-button').button("enable");
-    	if( ajaxSettings.url.indexOf( 'download' ) > -1
-    		&& ajaxSettings.type == 'POST' ) {
-			display_error( jqXHR, $("#download_status") );
-    	}
 	});
 
 	$('#upload-collation-dialog').dialog({
@@ -801,15 +802,7 @@ $(document).ready( function() {
 			file_selected( $('#new_file').get(0) );
 			$('#upload_status').empty();
 		}
-	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-		// Reset button state
-		file_selected( $('#new_file').get(0) );
-		// Display error message if applicable
-    	if( ajaxSettings.url.indexOf( 'newtradition' ) > -1
-    		&& ajaxSettings.type == 'POST' ) {
-			display_error( jqXHR, $("#upload_status") );
-    	}
-	});;
+	});
 
 	$('#stemma_graph').mousedown( function(evt) {
         evt.stopPropagation();
