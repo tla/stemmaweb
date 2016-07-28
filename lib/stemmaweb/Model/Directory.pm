@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use File::Which;
 use HTTP::Response;
-use JSON qw/ from_json to_json /;
+use JSON qw/ decode_json to_json /;
 use LWP::UserAgent;
 use stemmaweb::Error;
 
@@ -34,8 +34,10 @@ sub ajax {
 	}
 	# If so, return the result.
 	if( $resp->content_type =~ /json/ ) {
-		return from_json( $resp->decoded_content );
+    # Force the content to be decoded from utf-8
+		return decode_json( $resp->content );
 	} else {
+    # Respect the stated content encoding
 		return $resp->decoded_content;
 	}
 }
