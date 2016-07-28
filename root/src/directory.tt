@@ -1,6 +1,6 @@
 [% IF usertexts.size -%]
 	<!-- User texts -->
-    <h3>[% IF is_admin %]All[% ELSE %]My[% END %] text traditions (full access)</h3>
+    <h3>My text traditions (full access)</h3>
     <div class="text_list">
       <ul>
 [% SET i = 0 -%]
@@ -13,7 +13,7 @@
 [% END -%]
 [% IF publictexts.size -%]
 	<!-- Public texts -->
-    <h3>Public text traditions (read-only)</h3>
+    <h3>[% IF is_admin %]All other text traditions (full access)[% ELSE %]Public text traditions (read-only)[% END %]</h3>
     <div class="text_list">
       <ul>
 [% SET i = 0 -%]
