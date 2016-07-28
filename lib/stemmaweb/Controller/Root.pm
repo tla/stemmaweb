@@ -187,7 +187,6 @@ Returns information about a particular text.
 
 =cut
 
-#TODO pass through
 sub textinfo :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
 	my( $textinfo, $ok ) = load_tradition( $c, $textid );
@@ -228,6 +227,33 @@ sub textinfo :Local :Args(1) {
 	$textinfo->{stemmata} = \@stemmata;
 	$c->stash->{'result'} = $textinfo;
 	$c->forward('View::JSON');
+}
+
+=head2 delete
+
+ POST /delete/$textid
+
+Deletes the tradition and all its data. Cannot be undone.
+
+=cut
+
+sub delete :Local :Args(1) {
+  my( $self, $c, $textid ) = @_;
+  my( $textinfo, $ok ) = load_tradition( $c, $textid );
+  return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
+    unless $c->req->method eq 'POST';
+  return json_error( $c, 403,
+    'You do not have permission to delete this tradition' )
+    unless $ok eq 'full';
+
+  # At this point you had better be sure.
+  try {
+    $c->model('Directory')->ajax('delete', "/tradition/$textid");
+    $c->stash->{result} = {'status' => 'ok'};
+    $c->forward('View::JSON');
+  } catch (stemmaweb::Error $e) {
+    return json_error( $c, $e->status, $e->message );
+  }
 }
 
 =head2 variantgraph

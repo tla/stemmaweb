@@ -9,7 +9,7 @@ var stemmata = [];
 function refreshDirectory () {
 	var lmesg = $('#loading_message').clone();
 	$('#directory').empty().append( lmesg.contents() );
-    $('#directory').load( _get_url(["directory"]), 
+    $('#directory').load( _get_url(["directory"]),
     	function(response, status, xhr) {
 			if (status == "error") {
 				var msg = "An error occurred: ";
@@ -35,7 +35,7 @@ function loadTradition( textid, textname, editable ) {
     $('#textinfo_load_status').empty();
     $('#stemma_graph').empty();
     $('#textinfo_waitbox').show();
-    $('#textinfo_container').hide().ajaxError( 
+    $('#textinfo_container').hide().ajaxError(
     	function(event, jqXHR, ajaxSettings, thrownError) {
     	if( ajaxSettings.url.indexOf( 'textinfo' ) > -1 && ajaxSettings.type == 'GET'  ) {
 			$('#textinfo_waitbox').hide();
@@ -43,7 +43,7 @@ function loadTradition( textid, textname, editable ) {
 			display_error( jqXHR, $("#textinfo_load_status") );
     	}
     });
-    
+
     // Hide the functionality that is irrelevant
     if( editable ) {
     	$('#open_stemma_add').show();
@@ -112,7 +112,7 @@ function load_textinfo() {
 	if( selectedTextInfo.language && selectedTextInfo.language != 'Default' ) {
 		$('#marked_language').empty().append( selectedTextInfo.language );
 	}
-}	
+}
 
 // Enable / disable the appropriate buttons for paging through the stemma.
 function show_stemmapager () {
@@ -122,7 +122,7 @@ function show_stemmapager () {
               $('.pager_left_button').click( function () {
                       load_stemma( selectedStemmaID - 1, selectedTextEditable );
               }).removeClass( 'greyed_out' );
-      }       
+      }
       if( selectedStemmaID + 1 < stemmata.length ) {
               $('.pager_right_button').click( function () {
                       load_stemma( selectedStemmaID + 1, selectedTextEditable );
@@ -180,7 +180,7 @@ function switch_stemweb_ui() {
 function query_stemweb_progress() {
 	var requrl = _get_url([ "stemweb", "query", selectedTextInfo.stemweb_jobid ]);
 	$('#stemweb-ui-dialog').dialog('open');
-	$('#stemweb_run_status').empty().append( 
+	$('#stemweb_run_status').empty().append(
 				_make_message( 'notification', 'Querying Stemweb for calculation progress...') );
 	$.getJSON( requrl, function (data) {
 		process_stemweb_result( data );
@@ -201,23 +201,23 @@ function process_stemweb_result(data) {
 				// Move to the index of the first added stemma.
 				var newIdx = stemmata.length - data.stemmata.length;
 				load_stemma( newIdx, true );
-			} 
+			}
 			// Hide the call dialog no matter how we got here
 			$('#call_stemweb').hide()
 			$('#stemweb_run_button').hide();
-			$('#stemweb_run_status').empty().append( 
+			$('#stemweb_run_status').empty().append(
 				_make_message( 'notification', 'You have one or more new stemmata!' ) );
 		} else {
-			$('#stemweb_run_status').empty().append( 
+			$('#stemweb_run_status').empty().append(
 				_make_message( 'warning', 'Stemweb run finished with no stemmata...huh?!' ) );
 		}
 	} else if( data.status === 'running' ) {
 		// Just tell the user.
-		$('#stemweb_run_status').empty().append( 
+		$('#stemweb_run_status').empty().append(
 				_make_message( 'warning', 'Your Stemweb query is still running!' ) );
 	} else if( data.status === 'notfound' ) {
 		// Ask the user to refresh, for now.
-		$('#stemweb_run_status').empty().append( 
+		$('#stemweb_run_status').empty().append(
 				_make_message( 'warning', 'Your Stemweb query probably finished and reported back. Please reload to check.' ) );
 	} else if( data.status === 'failed' ) {
 		selectedTextInfo.stemweb_jobid = 0;
@@ -227,7 +227,7 @@ function process_stemweb_result(data) {
 		} else {
 			failureMsg = failureMsg + ' without telling us why.'
 		}
-		$('#stemweb_run_status').empty().append( 
+		$('#stemweb_run_status').empty().append(
 				_make_message( 'error', failureMsg ) );
 	}
 }
@@ -275,7 +275,7 @@ function loadSVG(svgData) {
 function set_stemma_interactive( svg_element ) {
 	if( selectedTextEditable ) {
 	  // unbind is needed as this set_stemma_interactive is called each time
-	  // the stemma is re-rooted, and each time jquery adds an 
+	  // the stemma is re-rooted, and each time jquery adds an
 	  // onclick handler to the root_tree_dialog_button_ok
 	  // that all re-root the stemma, that all add an onclick, etc..
 	  $( "#root_tree_dialog_button_ok" ).unbind();
@@ -290,7 +290,7 @@ function set_stemma_interactive( svg_element ) {
 				$('#root_tree_dialog').data( 'selectedNode', null ).hide();
 			} );
 		} ).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
-			if( ajaxSettings.url.indexOf( 'stemmaroot' ) > -1 
+			if( ajaxSettings.url.indexOf( 'stemmaroot' ) > -1
 				&& ajaxSettings.type == 'POST' ) {
 				display_error( jqXHR, $("#stemma_load_status") );
 			}
@@ -316,9 +316,9 @@ function set_stemma_interactive( svg_element ) {
 					g.mouseleave( function() { ellipse.removeClass( 'stemma_node_highlight' ) } );
 				}, 3000 );
 			} );
-			g.mouseenter( function() { 
+			g.mouseenter( function() {
 				$( 'ellipse.stemma_node_highlight' ).removeClass( 'stemma_node_highlight' );
-				ellipse.addClass( 'stemma_node_highlight' ) 
+				ellipse.addClass( 'stemma_node_highlight' )
 			} );
 			g.mouseleave( function() { ellipse.removeClass( 'stemma_node_highlight' ) } );
 		} );
@@ -371,7 +371,7 @@ function post_xhr2( url, data, cb, type ) {
 		xhr.responseType = 'blob';
 	} else if( type === 'xml' ) {
 		xhr.responseType = 'document';
-	} 
+	}
 	// Post the form
 	// Gin up an AJAX settings object
 	$.ajaxSetup({ url: url, type: 'POST' });
@@ -427,7 +427,7 @@ function upload_new () {
 				refreshDirectory();
 				loadTradition( ret.tradId, ret.name, 1 );
 			} else if( ret.error ) {
-				$('#upload_status').empty().append( 
+				$('#upload_status').empty().append(
 					$('<span>').attr('class', 'error').append( ret.error ) );
 			}
 		}, 'json' );
@@ -448,7 +448,7 @@ function upload_new () {
 		display_error( jqxhr, $('#upload_status') );
 		$('#upload_button').button('disable');
 	}
-	
+
 	reader.readAsBinaryString( newfile );
 }
 
@@ -467,12 +467,12 @@ $(document).ready( function() {
 
     // hide dialog not yet in use
     $('#root_tree_dialog').hide();
-	
+
     // call out to load the directory div
     $('#textinfo_container').hide();
     $('#textinfo_waitbox').hide();
 	refreshDirectory();
-	
+
 	// Set up the textinfo edit dialog
 	$('#textinfo-edit-dialog').dialog({
 		autoOpen: false,
@@ -480,6 +480,20 @@ $(document).ready( function() {
 		width: 300,
 		modal: true,
 		buttons: {
+			'Delete tradition': function (evt) {
+				$("#edit_textinfo_status").empty();
+				var mybuttons = $(evt.target).closest('button').parent().find('button');
+				mybuttons.button('disable');
+				var requrl = _get_url(["delete", selectedTextID]);
+				// TODO have a confirmation step
+				$.post( requrl, function (data) {
+					// TODO clear the text info pane
+					$('#textinfo_container').hide();
+					refreshDirectory();
+					mybuttons.button("enable");
+					$('#textinfo-edit-dialog').dialog('close');
+				});
+			},
 			Save: function (evt) {
 				$("#edit_textinfo_status").empty();
 			  	var mybuttons = $(evt.target).closest('button').parent().find('button');
@@ -520,13 +534,13 @@ $(document).ready( function() {
 		},
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$(event.target).parent().find('.ui-button').button("enable");
-    	if( ajaxSettings.url.indexOf( 'textinfo' ) > -1 
+    	if( ajaxSettings.url.indexOf( 'textinfo' ) > -1
     		&& ajaxSettings.type == 'POST' ) {
 			display_error( jqXHR, $("#edit_textinfo_status") );
     	}
 	});
 
-	
+
 	// Set up the stemma editor dialog
 	$('#stemma-edit-dialog').dialog({
 		autoOpen: false,
@@ -545,7 +559,7 @@ $(document).ready( function() {
 				// somehow. Implement accept header on server side to decide
 				// whether to send application/json or application/xml?
 				$.post( requrl, reqparam, function (data) {
-					// We received a stemma SVG string in return. 
+					// We received a stemma SVG string in return.
 					// Update the current stemma sequence number
 					selectedStemmaID = data.stemmaid;
 					delete data.stemmaid;
@@ -578,14 +592,14 @@ $(document).ready( function() {
 				var doturl = _get_url([ "stemmadot", selectedTextID, stemmaseq ]);
 				$.getJSON( doturl, function (data) {
 					// Re-insert the line breaks
-					var dotstring = data.dot.replace(/\|n/gm, "\n");					
+					var dotstring = data.dot.replace(/\|n/gm, "\n");
 					$('#dot_field').val( dotstring );
 				});
 			}
 		},
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$(event.target).parent().find('.ui-button').button("enable");
-    	if( ajaxSettings.url.indexOf( 'stemma' ) > -1 
+    	if( ajaxSettings.url.indexOf( 'stemma' ) > -1
     		&& ajaxSettings.type == 'POST' ) {
 			display_error( jqXHR, $("#edit_stemma_status") );
     	}
@@ -614,7 +628,7 @@ $(document).ready( function() {
 					if( 'jobid' in data ) {
 						// There is a pending job.
 						selectedTextInfo.stemweb_jobid = data.jobid;
-						$('#stemweb_run_status').empty().append( 
+						$('#stemweb_run_status').empty().append(
 							_make_message( 'notification', "Your request has been submitted to Stemweb.\nThe resulting tree will appear in due course." ) );
 						// Reload the current stemma to rejigger the buttons
 						switch_stemweb_ui();
@@ -712,7 +726,7 @@ $(document).ready( function() {
 					var relation_opt = $('<option>').attr( 'value', r ).append( r );
 					$('#stemweb_merge_reltypes').append( relation_opt );
 				});
-				$('#stemweb_merge_reltypes').multiselect({ 
+				$('#stemweb_merge_reltypes').multiselect({
 					header: false,
 					selectedList: 3
 				});
@@ -724,7 +738,7 @@ $(document).ready( function() {
 			display_error( jqXHR, $("#stemweb_run_status") );
     	}
 	});
-		
+
 	// Set up the download dialog
 	$('#download-dialog').dialog({
 		autoOpen: false,
@@ -745,7 +759,7 @@ $(document).ready( function() {
 		},
 	}).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$(event.target).parent().find('.ui-button').button("enable");
-    	if( ajaxSettings.url.indexOf( 'download' ) > -1 
+    	if( ajaxSettings.url.indexOf( 'download' ) > -1
     		&& ajaxSettings.type == 'POST' ) {
 			display_error( jqXHR, $("#download_status") );
     	}
@@ -787,12 +801,12 @@ $(document).ready( function() {
 		// Reset button state
 		file_selected( $('#new_file').get(0) );
 		// Display error message if applicable
-    	if( ajaxSettings.url.indexOf( 'newtradition' ) > -1 
+    	if( ajaxSettings.url.indexOf( 'newtradition' ) > -1
     		&& ajaxSettings.type == 'POST' ) {
 			display_error( jqXHR, $("#upload_status") );
     	}
 	});;
-	
+
 	$('#stemma_graph').mousedown( function(evt) {
         evt.stopPropagation();
         $('#stemma_graph').data( 'mousedown_xy', [evt.clientX, evt.clientY] );
@@ -815,13 +829,13 @@ $(document).ready( function() {
             $('body').unbind('mouseup');
         });
 	});
-	 
+
 	$('#stemma_graph').mousewheel(function (event, delta) {
         event.returnValue = false;
         event.preventDefault();
         if (!delta || delta == null || delta == 0) delta = event.originalEvent.wheelDelta;
         if (!delta || delta == null || delta == 0) delta = -1 * event.originalEvent.detail;
-        if( delta < -9 ) { delta = -9 }; 
+        if( delta < -9 ) { delta = -9 };
         var z = 1 + delta/10;
         z = delta > 0 ? 1 : -1;
         var svg_root = $('#stemma_graph svg').svg().svg('get').root();
@@ -833,5 +847,5 @@ $(document).ready( function() {
             g.setAttribute( 'transform', new_transform );
         }
     });
-    
+
 });
