@@ -133,7 +133,7 @@ sub newtradition :Local :Args(0) {
 	my $m = $c->model('Directory');
 
   ## Convert the request that Catalyst received into one that
-  ## the database expects. This involves passing through the
+  ## the Neo4J db expects. This involves passing through the
   ## tempfile upload and filling in some defaults.
 	my $upload = $c->req->upload('file');
 	my $fileargs = [ $upload->tempname, $upload->filename ];
@@ -145,6 +145,7 @@ sub newtradition :Local :Args(0) {
 	}
 
 	# Figure out the filetype unless it exists.
+  # TODO Explicitly ask for the filetype if it is one of the XMLs
 	my $filetype = $c->req->param('filetype');
 	unless( $filetype ) {
 		$filetype = $upload->type;
@@ -200,14 +201,14 @@ sub textinfo :Local :Args(1) {
 			unless $ok eq 'full';
     my $user = $c->user->get_object;
 		my $params = $c->request->parameters;
-    if( !$user->is_admin && $params->{owner} ne $user->id ) {
+    if( !$user->is_admin && exists $params->{owner} ) {
       return json_error( $c, 403,
         "Only admin users can change tradition ownership" );
     }
     # Now pass through the request
     try {
-      $textinfo = $m->ajax('put', '/tradition/$textid',
-        'Content-Type' => 'application/json', Content => $params);
+      $textinfo = $m->ajax('put', "/tradition/$textid",
+        'Content-Type' => 'application/json', Content => JSON::to_json($params));
     } catch (stemmaweb::Error $e) {
       return json_error( $c, $e->status, $e->message );
     }
@@ -238,8 +239,8 @@ Returns the variant graph for the text specified at $textid, in SVG form.
 =cut
 
 sub variantgraph :Local :Args(1) {
-	my( $self, $c ) = @_;
-	my( $textinfo, $ok ) = load_tradition( @_ );
+	my( $self, $c, $textid ) = @_;
+	my( $textinfo, $ok ) = load_tradition( $c, $textid );
 	return unless $ok;
 
 	$c->stash->{result} = $c->model('Directory')->tradition_as_svg($textinfo->{id});

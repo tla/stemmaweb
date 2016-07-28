@@ -4,8 +4,11 @@ use namespace::autoclean;
 
 use strict;
 use warnings;
+use Encode qw/ decode_utf8 /;
 use File::Which;
+use File::Temp;
 use HTTP::Response;
+use IPC::Run qw( run binary );
 use JSON qw/ decode_json to_json /;
 use LWP::UserAgent;
 use stemmaweb::Error;
@@ -53,7 +56,7 @@ sub tradition_as_svg {
   my $want_subgraph = exists $opts->{'from'} || exists $opts->{'to'};
 
 	# Get the dot from the DB
-	my $dotstr = $self->ajax('get', '/tradition/$textid/dot');
+	my $dotstr = $self->ajax('get', "/tradition/$textid/dot");
 
   # Transmogrify it to SVG
 	my @cmd = qw/dot -Tsvg/;
