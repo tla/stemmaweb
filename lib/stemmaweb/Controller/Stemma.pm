@@ -35,6 +35,7 @@ sub stemma_info {
 sub _as_svg {
   my ($stemmadata, $nonewline) = @_;
   # Make a fully-fledged T::T::Stemma object from the info we have
+	$DB::single = 1;
   my $stemma = Text::Tradition::Stemma->new(
     dot => $stemmadata->{dot},
     is_undirected => $stemmadata->{is_undirected} == JSON::true,

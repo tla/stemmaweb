@@ -31,10 +31,10 @@ sub _check_permission {
     		( $textinfo->{userId} eq $user->id ) );
     }
 	# Text doesn't belong to us, so maybe it's public?
-	return 'readonly' if $textinfo->{public};
+	return 'readonly' if $textinfo->{is_public};
 
 	# ...nope. Forbidden!
-	return _json_error( $c, 403, 'You do not have permission to view this tradition.' );
+	return json_error( $c, 403, 'You do not have permission to view this tradition.' );
 }
 
 # Helper to load and check the permissions on a tradition
@@ -42,9 +42,9 @@ sub load_tradition {
 	my( $c, $textid ) = @_;
 	my $textinfo;
 	try {
-		$textinfo = $c->model('Directory')->ajax('get', '/tradition/$textid');
+		$textinfo = $c->model('Directory')->ajax('get', "/tradition/$textid");
 	} catch( stemmaweb::Error $e ) {
-			return _json_error( $c, $e->status, $e->message );
+			return json_error( $c, $e->status, $e->message );
 	}
 	my $ok = _check_permission( $c, $textinfo );
 	return( $textinfo, $ok );
