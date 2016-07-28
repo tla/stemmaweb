@@ -483,16 +483,20 @@ $(document).ready( function() {
 			'Delete tradition': function (evt) {
 				$("#edit_textinfo_status").empty();
 				var mybuttons = $(evt.target).closest('button').parent().find('button');
-				mybuttons.button('disable');
 				var requrl = _get_url(["delete", selectedTextID]);
-				// TODO have a confirmation step
-				$.post( requrl, function (data) {
-					// TODO clear the text info pane
-					$('#textinfo_container').hide();
-					refreshDirectory();
+				mybuttons.button('disable');
+				var really = confirm("Tradition deletion cannot be undone. Are you sure?")
+				if( really ) {
+					$.post( requrl, function (data) {
+						// TODO clear the text info pane
+						$('#textinfo_container').hide();
+						refreshDirectory();
+						mybuttons.button("enable");
+						$('#textinfo-edit-dialog').dialog('close');
+					});
+				} else {
 					mybuttons.button("enable");
-					$('#textinfo-edit-dialog').dialog('close');
-				});
+				}
 			},
 			Save: function (evt) {
 				$("#edit_textinfo_status").empty();
