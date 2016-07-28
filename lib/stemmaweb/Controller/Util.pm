@@ -28,7 +28,7 @@ sub _check_permission {
     my $user = $c->user_exists ? $c->user->get_object : undef;
     if( $user ) {
     	return 'full' if ( $user->is_admin ||
-    		( $textinfo->{userId} eq $user->id ) );
+    		( $textinfo->{owner} eq $user->id ) );
     }
 	# Text doesn't belong to us, so maybe it's public?
 	return 'readonly' if $textinfo->{is_public};

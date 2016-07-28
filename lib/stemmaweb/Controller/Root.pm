@@ -87,9 +87,9 @@ sub directory :Local :Args(0) {
   	my $user = $c->user->get_object;
   	# The Neo4J user
   	my $n4ju = $user->id;
-  	my @list = $m->ajax( 'get', '/user/$n4ju/traditions' );
-  	map { $usertexts{$_->{id}} = 1 } @list;
-		$c->stash->{usertexts} = \@list;
+  	my $list = $m->ajax( 'get', "/user/$n4ju/traditions" );
+  	map { $usertexts{$_->{id}} = 1 } @$list;
+		$c->stash->{usertexts} = $list;
 		$c->stash->{is_admin} = 1 if $user->is_admin;
 	}
   # List public (i.e. readonly) texts separately from any user (i.e.
