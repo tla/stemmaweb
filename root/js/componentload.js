@@ -154,7 +154,7 @@ function load_stemma( idx ) {
 }
 
 function switch_stemweb_ui() {
-	if( selectedTextInfo.stemweb_jobid == 0 ) {
+	if( !selectedTextInfo.stemweb_jobid ) {
 		// We want to run Stemweb.
 		$('#open_stemweb_ui').show();
 		$('#query_stemweb_ui').hide();
