@@ -16,9 +16,9 @@ var textOnLoad = "[% withtradition %]";
    </div>
     <div id="topbanner">
       <h1 class="title">Stemmaweb - a collection of tools for analysis of collated texts</h1>
-      <p id="compatibility_check"><span class="error">This browser does not support 
-      the functions necessary for Stemmaweb to work properly. We recommend use of 
-      <a href="http://mozilla.org/firefox">Mozilla Firefox</a> or 
+      <p id="compatibility_check"><span class="error">This browser does not support
+      the functions necessary for Stemmaweb to work properly. We recommend use of
+      <a href="http://mozilla.org/firefox">Mozilla Firefox</a> or
       <a href="http://www.google.com/chrome">Google Chrome</a>.</span></p>
     </div>
     <div id="directory_container">
@@ -49,7 +49,7 @@ var textOnLoad = "[% withtradition %]";
       	  <li>has <span id="marked_language"></span> as its primary language</li>
 	      <li>has <span id="witness_num"></span> witnesses: <span id="witness_list"></span></li>
       </ul>
-      
+
       <div id="textinfo_container_buttons">
           <form id="stemma_pager" action="" method="GET" name="stemma_pager">
             <div id="stemma_pager_buttons">
@@ -58,14 +58,14 @@ var textOnLoad = "[% withtradition %]";
             </div>
           </form>
           <form id="open_stemma_add" action="" method="GET" name="add_new_stemma">
-            <div class="button" id="stemma_add_button" 
+            <div class="button" id="stemma_add_button"
             	onClick="$('#stemmaseq').val('n'); $('#stemma-edit-dialog').dialog('open');">
           	  <span>Add a new stemma</span>
             </div>
           </form>
           <form id="open_stemma_edit" action="" method="GET" name="edit_current_stemma">
-            <div class="button" id="stemma_edit_button" 
-            	onClick="$('#stemmaseq').val(selectedStemmaID); $('#stemma-edit-dialog').dialog('open');">
+            <div class="button" id="stemma_edit_button"
+            	onClick="$('#stemmaseq').val(selectedStemmaSequence); $('#stemma-edit-dialog').dialog('open');">
           	  <span>Edit this stemma</span>
             </div>
           </form>
@@ -109,7 +109,7 @@ var textOnLoad = "[% withtradition %]";
     	<img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" alt="Loading tradition list..."/>
     </div>
   </div> <!-- main_page -->
-  
+
     <!-- Textinfo editor dialog -->
     <div id="textinfo-edit-dialog" title="Edit information about this tradition">
       <div id="textinfo_edit_container">
@@ -136,7 +136,7 @@ var textOnLoad = "[% withtradition %]";
 		<div id="edit_textinfo_status"></div>
 	  </div>
     </div>
-    
+
     <!-- Stemma dot editor dialog, simple textarea for now -->
     <div id="stemma-edit-dialog">
       <div id="stemma_edit_container">
@@ -147,21 +147,21 @@ var textOnLoad = "[% withtradition %]";
 			<div id="edit_instructions">
 				<p>All definitions begin with the line
 					<pre>digraph "Stemma Name" {</pre>
-				and end with the line 
+				and end with the line
 					<pre>}</pre>
 				Please do not change these lines except to edit the stemma name.</p>
 				<p>First list each witness in your stemma, whether extant or lost /
 				reconstructed / hypothetical, and assign them a class of either "extant"
-				or "hypothetical". For example:</p><pre>  
+				or "hypothetical". For example:</p><pre>
 	α [ class=hypothetical ]
 	C [ class=extant ]
 				</pre>
-				<p>Next, list the direct links between witnesses, one per line. For example, if 
+				<p>Next, list the direct links between witnesses, one per line. For example, if
 				witness C descends directly from witness α, note it as follows:</p><pre>
 	α -> C
 				</pre>
-				<p>A witness may be the exemplar for any number of other witnesses, whether 
-				extant or not; likewise, a witness may inherit from any number of other 
+				<p>A witness may be the exemplar for any number of other witnesses, whether
+				extant or not; likewise, a witness may inherit from any number of other
 				witnesses. Use as may "A -> B" pairings as necessary to describe the links.</p>
 			</div>
     	</form>
@@ -200,7 +200,7 @@ var textOnLoad = "[% withtradition %]";
     	<div id="stemweb_run_status"></div>
       </div>
     </div>
-    
+
     <!-- Data download dialog box -->
     <div id="download-dialog" title="Download tradition data">
       <div id="download_container">
@@ -211,15 +211,15 @@ var textOnLoad = "[% withtradition %]";
     			<option value="GraphML">Native XML format</option>
     			<option value="CSV">Comma-separated values (collation only)</option>
     			<option value="TSV">Tab-separated values (collation only)</option>
-    			<option value="SVG">SVG graph display (collation and relationships)</option>    			
+    			<option value="SVG">SVG graph display (collation and relationships)</option>
     			<!-- option value="tei_ps" -->
     			<!-- option value="tei_dea" -->
     		</select>
     	</form>
     	<div id="download_status"></div>
       </div>
-    </div>    
-    
+    </div>
+
     <!-- File upload dialog box -->
     <div id="upload-collation-dialog" title="Upload a collation">
       <div id="upload_container">
@@ -259,9 +259,9 @@ var textOnLoad = "[% withtradition %]";
       	</div>
       </div>
     </div>
-    
+
     <div id="root_tree_dialog">
         Use this node to root the stemma? <img id="root_tree_dialog_button_ok" src="[% c.uri_for( 'images', 'tick_circle_frame_24.png' ) %]"/>
     </div>
-    
+
 [% PROCESS footer.tt %]

@@ -4,6 +4,7 @@ use namespace::autoclean;
 
 use strict;
 use warnings;
+use Encode qw/ encode_utf8 /;
 use TryCatch;
 use stemmaweb::Controller::Util qw/ load_tradition json_error json_bool /;
 
@@ -51,7 +52,7 @@ sub _as_svg {
  POST /stemma/$textid/$stemmaid, { 'dot' => $dot_string }
 
 Returns an SVG representation of the given stemma hypothesis for the text.
-If the URL is called with POST, the stemma at $stemmaseq will be altered
+If the URL is called with POST, the stemma $stemmaid will be altered
 to reflect the definition in $dot_string. If $stemmaid is '*', a new
 stemma will be added.
 
@@ -65,7 +66,7 @@ sub index :Path :Args(2) {
   # Construct the correct URL
   my $method = 'post';
   my $location = sprintf("/tradition/%s/stemma", $textinfo->{id});
-  if( $stemmaid ne '*' ) {
+  if( $stemmaid ne '__NEW__' ) {
     $method = 'put';
     $location .= "/$stemmaid"
   }
@@ -77,7 +78,7 @@ sub index :Path :Args(2) {
 			my $dot = $c->request->body_params->{dot};
       try {
         $stemmadata = $c->model('Directory')->ajax($method, $location,
-        'Content-Type' => 'application/json', Content => $dot);
+        'Content-Type' => 'application/json', Content => encode_utf8($dot));
 			} catch( stemmaweb::Error $e ) {
 				return json_error( $c, $e->status, $e->message );
 			}

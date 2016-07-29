@@ -2,7 +2,7 @@
 var selectedTextID;
 var selectedTextInfo;
 var selectedTextEditable;
-var selectedStemmaID = -1;
+var selectedStemmaSequence = -1;
 var stemmata = [];
 
 // Load the names of the appropriate traditions into the directory div.
@@ -60,11 +60,11 @@ function loadTradition( textid, textname, editable ) {
      	// Add the stemma(ta)
     	stemmata = textdata.stemmata;
     	if( stemmata.length ) {
-    		selectedStemmaID = 0;
+    		selectedStemmaSequence = 0;
     	} else {
-    		selectedStemmaID = -1;
+    		selectedStemmaSequence = -1;
 		}
-		load_stemma( selectedStemmaID );
+		load_stemma( selectedStemmaSequence );
     	// Set up the relationship mapper button
 		$('#run_relater').attr( 'action', _get_url([ "relation", textid ]) );
 		// Set up the download button
@@ -111,14 +111,14 @@ function load_textinfo() {
 function show_stemmapager () {
       $('.pager_left_button').unbind('click').addClass( 'greyed_out' );
       $('.pager_right_button').unbind('click').addClass( 'greyed_out' );
-      if( selectedStemmaID > 0 ) {
+      if( selectedStemmaSequence > 0 ) {
               $('.pager_left_button').click( function () {
-                      load_stemma( selectedStemmaID - 1, selectedTextEditable );
+                      load_stemma( selectedStemmaSequence - 1, selectedTextEditable );
               }).removeClass( 'greyed_out' );
       }
-      if( selectedStemmaID + 1 < stemmata.length ) {
+      if( selectedStemmaSequence + 1 < stemmata.length ) {
               $('.pager_right_button').click( function () {
-                      load_stemma( selectedStemmaID + 1, selectedTextEditable );
+                      load_stemma( selectedStemmaSequence + 1, selectedTextEditable );
               }).removeClass( 'greyed_out' );
       }
 }
@@ -126,7 +126,7 @@ function show_stemmapager () {
 // Load a given stemma SVG into the stemmagraph box.
 function load_stemma( idx ) {
 	// Load the stemma at idx
-	selectedStemmaID = idx;
+	selectedStemmaSequence = idx;
 	show_stemmapager( selectedTextEditable );
 	$('#open_stemma_edit').hide();
 	$('#run_stexaminer').hide();
@@ -187,7 +187,7 @@ function process_stemweb_result(data) {
 		selectedTextInfo.stemweb_jobid = 0;
 		if( data.stemmata.length > 0 ) {
 			stemmata = stemmata.concat( data.stemmata );
-			if( selectedStemmaID == -1 ) {
+			if( selectedStemmaSequence == -1 ) {
 				// We have a stemma for the first time; load the first one.
 				load_stemma( 0, true );
 			} else {
@@ -273,12 +273,12 @@ function set_stemma_interactive( svg_element ) {
 	  // that all re-root the stemma, that all add an onclick, etc..
 	  $( "#root_tree_dialog_button_ok" ).unbind();
 		$( "#root_tree_dialog_button_ok" ).click( function() {
-			var requrl = _get_url([ "stemmaroot", selectedTextID, selectedStemmaID ]);
+			var requrl = _get_url([ "stemmaroot", selectedTextID, selectedStemmaSequence ]);
 			var targetnode = $('#root_tree_dialog').data( 'selectedNode' );
 			$.post( requrl, { root: targetnode }, function (data) {
 				// Reload the new stemma
-				stemmata[selectedStemmaID] = data;
-				load_stemma( selectedStemmaID );
+				stemmata[selectedStemmaSequence] = data;
+				load_stemma( selectedStemmaSequence );
 				// Put away the dialog
 				$('#root_tree_dialog').data( 'selectedNode', null ).hide();
 			} );
@@ -575,20 +575,25 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			  	var mybuttons = $(evt.target).closest('button').parent().find('button');
 				mybuttons.button( 'disable' );
 				var stemmaseq = $('#stemmaseq').val();
-				var requrl = _get_url([ "stemma", selectedTextID, stemmaseq ]);
+				var stemmaid = stemmaseq === 'n' ? '__NEW__'
+						: selectedTextInfo.stemmata[stemmaseq].name;
+				var requrl = _get_url([ "stemma", selectedTextID, stemmaid ]);
 				var reqparam = { 'dot': $('#dot_field').val() };
-				// TODO We need to stash the literal SVG string in stemmata
-				// somehow. Implement accept header on server side to decide
-				// whether to send application/json or application/xml?
+				// We need to stash the literal SVG string in stemmata
+				// somehow. Send an accept header to the server side so it
+				// knows whether to send application/json or application/xml.
 				$.post( requrl, reqparam, function (data) {
 					// We received a stemma SVG string in return.
-					// Update the current stemma sequence number
-					selectedStemmaID = data.stemmaid;
-					delete data.stemmaid;
 					// Stash the answer in the appropriate spot in our stemma array
-					stemmata[selectedStemmaID] = data;
+					if( stemmaid === '__NEW__') {
+						stemmata.push(data);
+						selectedStemmaSequence = stemmata.length - 1;
+					} else {
+						stemmata[stemmaseq].svg = data.svg;
+					}
+					// Update the current stemma sequence number if this is a new stemma
 					// Display the new stemma
-					load_stemma( selectedStemmaID, true );
+					load_stemma( selectedStemmaSequence, true );
 					// Reenable the button and close the form
 					mybuttons.button("enable");
 					$('#stemma-edit-dialog').dialog('close');
@@ -611,7 +616,9 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				// textarea with that.
 				$(evt.target).dialog('option', 'title', 'Edit selected stemma')
 				$('#dot_field').val( 'Loading, please wait...' );
-				var doturl = _get_url([ "stemmadot", selectedTextID, stemmaseq ]);
+				// Get the stemma identifier
+				var stemmaid = selectedTextInfo.stemmata[stemmaseq].name;
+				var doturl = _get_url([ "stemma", "dot", selectedTextID, stemmaid ]);
 				$.getJSON( doturl, function (data) {
 					// Re-insert the line breaks
 					var dotstring = data.dot.replace(/\|n/gm, "\n");
