@@ -160,6 +160,7 @@ information structure for the new stemma.
 
 sub reroot :Local :Args(2) {
 	my( $self, $c, $textid, $stemmaid ) = @_;
+	$DB::single = 1;
 	my( $textinfo, $ok ) = load_tradition( $c, $textid );
 	if( $ok eq 'full' ) {
     my $location = sprintf("/tradition/%s/stemma/%s/reorient/%s",

@@ -273,7 +273,8 @@ function set_stemma_interactive( svg_element ) {
 	  // that all re-root the stemma, that all add an onclick, etc..
 	  $( "#root_tree_dialog_button_ok" ).unbind();
 		$( "#root_tree_dialog_button_ok" ).click( function() {
-			var requrl = _get_url([ "stemmaroot", selectedTextID, selectedStemmaSequence ]);
+			var stemmaid = selectedTextInfo.stemmata[selectedStemmaSequence].name;
+			var requrl = _get_url([ "stemma", "reroot", selectedTextID, stemmaid ]);
 			var targetnode = $('#root_tree_dialog').data( 'selectedNode' );
 			$.post( requrl, { root: targetnode }, function (data) {
 				// Reload the new stemma
