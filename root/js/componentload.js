@@ -273,6 +273,7 @@ function set_stemma_interactive( svg_element ) {
 	  // that all re-root the stemma, that all add an onclick, etc..
 	  $( "#root_tree_dialog_button_ok" ).unbind();
 		$( "#root_tree_dialog_button_ok" ).click( function() {
+			$("#stemma_load_status").empty();
 			var stemmaid = selectedTextInfo.stemmata[selectedStemmaSequence].name;
 			var requrl = _get_url([ "stemma", "reroot", selectedTextID, stemmaid ]);
 			var targetnode = $('#root_tree_dialog').data( 'selectedNode' );
@@ -474,7 +475,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		$('#textinfo_waitbox').hide();
 		$('#textinfo_container').show();
 		errordiv = "#textinfo_load_status";
-	} else if( ajaxSettings.url.indexOf( 'stemmaroot' ) > -1 && ajaxSettings.type == 'POST' ) {
+	} else if( ajaxSettings.url.indexOf( 'stemma/reroot' ) > -1 && ajaxSettings.type == 'POST' ) {
 		errordiv = "#stemma_load_status";
 	}
 
