@@ -4,8 +4,10 @@ use namespace::autoclean;
 use Encode qw/ decode_utf8 /;
 use File::Temp;
 use JSON;
+use stemmaweb::Controller::Util qw/ load_old_tradition load_stemma json_error /;
 use Text::Tradition::Analysis qw/ run_analysis wit_stringify /;
 use Text::Tradition::Stemma;
+use TryCatch;
 
 BEGIN { extends 'Catalyst::Controller' }
 
@@ -34,40 +36,40 @@ The stemma analysis tool with the pretty colored table.
 =head2 index
 
  GET stexaminer/$textid/$stemmaid
- 
+
 Renders the application for the text identified by $textid, using the stemma
 graph identified by $stemmaid.
 
 =cut
 
 sub index :Path :Args(2) {
-    my( $self, $c, $textid, $stemid ) = @_;
-    my $m = $c->model('Directory');
-	$c->stash->{template} = 'stexaminer.tt'; 
-	
-	# Make sure the tradition exists and is viewable
-	my $tradition = $m->tradition( $textid );
-	unless( $tradition ) {
-		$c->response->status( 404 );
-		$c->stash->{'error'} = "No tradition with ID $textid";
-		return;
-	}	
-	my $ok = _check_permission( $c, $tradition );
+  my( $self, $c, $textid, $stemid ) = @_;
+  my $m = $c->model('Directory');
+	$c->stash->{template} = 'stexaminer.tt';
+
+ 	my( $textinfo, $ok ) = load_tradition( $c, $textid );
 	return unless $ok;
-	
+
 	if( $stemid eq 'help' ) {
 		# Just show the 'Help/About' popup.
 		$c->stash->{template} = 'stexaminer_help.tt';
 		$c->stash->{text_id} = $textid;
-	} elsif( $tradition->stemma_count ) {
-		my $stemma = $tradition->stemma( $stemid );
+	} else {
+		# Load our old-fashioned tradition object
+		my $tradition = load_old_tradition( $c, $textid );
+		my $stemmadata = $m->ajax('get', "/tradition/$textid/stemma/$stemid");
+		my $stemma = load_stemma($stemmadata);
+		$tradition->clear_stemmata;
+		$tradition->add_stemma($stemma);
+
+		# Continue as before
 		my $svgstr = $stemma->as_svg();
 		$svgstr =~ s/\n/ /g;
 		$c->stash->{svg} = $svgstr;
 		$c->stash->{graphdot} = $stemma->editable({ linesep => ' ' });
 		$c->stash->{text_id} = $textid;
 		$c->stash->{text_title} = $tradition->name;
-		
+
 		# Get the analysis options
 		my( $use_type1, $ignore_sort ) = ( 0, 'none' );
 		$use_type1 = $c->req->param( 'show_type1' ) ? 1 : 0;
@@ -75,8 +77,8 @@ sub index :Path :Args(2) {
 		$c->stash->{'show_type1'} = $use_type1;
 		$c->stash->{'ignore_variant'} = $ignore_sort;
 		# TODO Run the analysis as AJAX from the loaded page.
-		my %analysis_options = ( 
-			stemma_id => $stemid,
+		my %analysis_options = (
+			stemma_id => '0', # the selected stemma is the only stemma now
 			exclude_type1 => !$use_type1 );
 		if( $ignore_sort eq 'spelling' ) {
 			$analysis_options{'merge_types'} = [ qw/ spelling orthographic / ];
@@ -108,12 +110,9 @@ sub index :Path :Args(2) {
 		$c->stash->{variants} = $t->{'variants'};
 		$c->stash->{total} = $t->{'variant_count'};
 		$c->stash->{genealogical} = $t->{'genealogical_count'};
-		$c->stash->{conflict} = $t->{'conflict_count'};		
+		$c->stash->{conflict} = $t->{'conflict_count'};
 		# Also make a JSON stash of the data for the statistics tables
 		$c->stash->{reading_statistics} = to_json( $t->{'variants'} );
-	} else {
-		$c->stash->{error} = 'Tradition ' . $tradition->name 
-			. 'has no stemma for analysis.';
 	}
 }
 
@@ -126,29 +125,13 @@ sub _stringify_element {
 	}
 }
 
-sub _check_permission {
-	my( $c, $tradition ) = @_;
-    my $user = $c->user_exists ? $c->user->get_object : undef;
-    if( $user ) {
-    	return 'full' if ( $user->is_admin || 
-    		( $tradition->has_user && $tradition->user->id eq $user->id ) );
-    }
-	# Text doesn't belong to us, so maybe it's public?
-	return 'readonly' if $tradition->public;
-
-	# ...nope. Forbidden!
-	$c->response->status( 403 );
-	$c->stash->{'error'} = 'You do not have permission to view this tradition';
-	return 0;
-}
-
 =head2 graphsvg
 
   POST stexaminer/graphsvg
-  	dot: <stemmagraph dot string> 
-  	layerwits: [ <a.c. witnesses ] 
-  
-Returns an SVG string of the given graph, extended to include the given 
+  	dot: <stemmagraph dot string>
+  	layerwits: [ <a.c. witnesses ]
+
+Returns an SVG string of the given graph, extended to include the given
 layered witnesses.
 
 =cut

@@ -3,10 +3,12 @@ use strict;
 use warnings;
 use Exporter qw/ import /;
 use JSON;
+use Text::Tradition;
+use Text::Tradition::Stemma;
 use TryCatch;
 use vars qw/ @EXPORT /;
 
-@EXPORT = qw/ load_tradition json_error json_bool /;
+@EXPORT = qw/ load_tradition load_old_tradition load_stemma json_error json_bool /;
 
 =head1 NAME
 
@@ -48,6 +50,22 @@ sub load_tradition {
 	}
 	my $ok = _check_permission( $c, $textinfo );
 	return( $textinfo, $ok );
+}
+
+sub load_old_tradition {
+	my ($c, $textid) = @_;
+	my $graphml;
+	$graphml = $c->model('Directory')->ajax('get', "/tradition/$textid/graphml");
+	return Text::Tradition->new(input => 'self', string => $graphml);
+}
+
+sub load_stemma {
+	my( $stemmadata ) = @_;
+	return Text::Tradition::Stemma->new(
+		dot => $stemmadata->{dot},
+		is_undirected => $stemmadata->{is_undirected} == JSON::true,
+		identifier => $stemmadata->{identifier}
+	);
 }
 
 # Helper to throw a JSON exception

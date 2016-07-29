@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use Encode qw/ encode_utf8 /;
 use TryCatch;
-use stemmaweb::Controller::Util qw/ load_tradition json_error json_bool /;
+use stemmaweb::Controller::Util qw/ load_tradition load_stemma json_error json_bool /;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -36,12 +36,8 @@ sub stemma_info {
 sub _as_svg {
   my ($stemmadata, $nonewline) = @_;
   # Make a fully-fledged T::T::Stemma object from the info we have
-  my $stemma = Text::Tradition::Stemma->new(
-    dot => $stemmadata->{dot},
-    is_undirected => $stemmadata->{is_undirected} == JSON::true,
-    identifier => $stemmadata->{identifier}
-  );
-	my $ssvg = $stemma->as_svg();
+	my $ssvg;
+	$ssvg = load_stemma($stemmadata)->as_svg();
 	$ssvg =~ s/\n/ /mg if $nonewline;
   return $ssvg;
 }

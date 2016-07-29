@@ -19,12 +19,12 @@ has stemweb_url => (
 	isa => 'Str',
 	default => 'http://slinkola.users.cs.helsinki.fi',
 	);
-	
+
 has pars_path => (
 	is => 'ro',
 	isa => 'Str',
 	);
-	
+
 =head1 NAME
 
 stemmaweb::Controller::Stemweb - Client listener for Stemweb results
@@ -49,7 +49,7 @@ L<https://docs.google.com/document/d/1aNYGAo1v1WPDZi6LXZ30FJSMJwF8RQPYbOkKqHdCZE
  { jobid: <ID number>
    status: >1
    result: <error message> }
-   
+
 Used by the Stemweb server to notify us that one or more stemma graphs
 has been calculated in response to an earlier request.
 
@@ -63,7 +63,7 @@ sub result :Local :Args(0) {
 		if( ref( $c->request->body ) eq 'File::Temp' ) {
 			# Read in the file and parse that.
 			$c->log->debug( "Request body is in a temp file" );
-			open( POSTDATA, $c->request->body ) 
+			open( POSTDATA, $c->request->body )
 				or return _json_error( $c, 500, "Failed to open post data file" );
 			binmode( POSTDATA, ':utf8' );
 			# JSON should be all one line
@@ -73,7 +73,7 @@ sub result :Local :Args(0) {
 			try {
 				$answer = from_json( $pdata );
 			} catch {
-				return _json_error( $c, 400, 
+				return _json_error( $c, 400,
 					"Could not parse POST request '' $pdata '' as JSON: $@" );
 			}
 		} else {
@@ -90,8 +90,8 @@ sub result :Local :Args(0) {
 =head2 available
 
  GET algorithms/available
- 
-Queries the Stemweb server for available stemma generation algorithms and their 
+
+Queries the Stemweb server for available stemma generation algorithms and their
 parameters. Returns the JSON answer as obtained from Stemweb.
 
 =cut
@@ -101,7 +101,7 @@ sub available :Local :Args(0) {
 	my $ua = LWP::UserAgent->new();
 	my $resp = $ua->get( $self->stemweb_url . '/algorithms/available' );
 	my $parameters = [];
-	if( $resp->is_success ) {
+	if( $resp->is_success && $resp->content_type =~ /json/ ) {
 		$parameters = decode_json( $resp->content );
 	} # otherwise we have no available algorithms.
 	## Temporary HACK: run Pars too
@@ -127,7 +127,7 @@ sub available :Local :Args(0) {
  GET stemweb/query/<jobid>
 
 A backup method to query the stemweb server to check a particular job status.
-Returns a result as in /stemweb/result above, but status can also be -1 to 
+Returns a result as in /stemweb/result above, but status can also be -1 to
 indicate that the job is still running.
 
 =cut
@@ -144,7 +144,7 @@ sub query :Local :Args(1) {
 		try {
 			$answer = from_json( $response );
 		} catch {
-			return _json_error( $c, 500, 
+			return _json_error( $c, 500,
 				"Could not parse stemweb response '' $response '' as JSON: $@" );
 		}
 		return _process_stemweb_result( $c, $answer );
@@ -171,7 +171,7 @@ sub _process_stemweb_result {
 	}
 	if( $answer->{status} == 0 ) {
 		my $stemmata;
-		if( $tradition->has_stemweb_jobid 
+		if( $tradition->has_stemweb_jobid
 			&& $tradition->stemweb_jobid eq $answer->{jobid} ) {
 			try {
 				$stemmata = $tradition->record_stemweb_result( $answer );
@@ -189,12 +189,12 @@ sub _process_stemweb_result {
 		if( @$stemmata ) {
 			# If we got here, success!
 			# TODO Use helper in Root.pm to do this
-			my @steminfo = map { { 
-					name => $_->identifier, 
+			my @steminfo = map { {
+					name => $_->identifier,
 					directed => _json_bool( !$_->is_undirected ),
-					svg => $_->as_svg() } } 
+					svg => $_->as_svg() } }
 				@$stemmata;
-			$c->stash->{'result'} = { 
+			$c->stash->{'result'} = {
 				'status' => 'success',
 				'stemmata' => \@steminfo };
 		} else {
@@ -224,7 +224,7 @@ sub _process_stemweb_result {
 	tradition=<tradition ID> &
 	algorithm=<algorithm ID> &
 	[<algorithm parameters>]
-   
+
 Send a request for the given tradition with the given parameters to Stemweb.
 Processes and returns the JSON response given by the Stemweb server.
 
@@ -238,10 +238,10 @@ sub request :Local :Args(0) {
 	my $t = $c->model('Directory')->tradition( $tid );
 	my $ok = _check_permission( $c, $t );
 	return unless $ok;
-	return( _json_error( $c, 403, 
+	return( _json_error( $c, 403,
 			'You do not have permission to update stemmata for this tradition' ) )
 		unless $ok eq 'full';
-	
+
 	my $algorithm = delete $reqparams->{algorithm};
 	my $mergetypes = delete $reqparams->{merge_reltypes};
 	if( $self->_has_pars && $algorithm == 100 ) {
@@ -280,13 +280,13 @@ sub request :Local :Args(0) {
 			userid => $c->user->get_object->email,
 			textid => $tid,
 			parameters => _cast_nonstrings( $reqparams ) };
-		
+
 		# Call to the appropriate URL with the request parameters.
 		my $ua = LWP::UserAgent->new();
-		# $c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) ); 
+		# $c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) );
 		my $resp = $ua->post( $self->stemweb_url . "/algorithms/process/$algorithm/",
-			'Content-Type' => 'application/json; charset=utf-8', 
-			'Content' => encode_json( $stemweb_request ) ); 
+			'Content-Type' => 'application/json; charset=utf-8',
+			'Content' => encode_json( $stemweb_request ) );
 		if( $resp->is_success ) {
 			# Process it
 			$c->log->debug( 'Got a response from the server: '
@@ -317,7 +317,7 @@ sub _check_permission {
 	my( $c, $tradition ) = @_;
     my $user = $c->user_exists ? $c->user->get_object : undef;
     if( $user ) {
-    	return 'full' if ( $user->is_admin || 
+    	return 'full' if ( $user->is_admin ||
     		( $tradition->has_user && $tradition->user->id eq $user->id ) );
     }
 	# Text doesn't belong to us, so maybe it's public?
@@ -348,7 +348,7 @@ sub _json_error {
 	$c->stash->{'result'} = { 'error' => $errmsg };
 	$c->forward('View::JSON');
 	return 0;
-}		
+}
 
 sub _json_bool {
 	return $_[0] ? JSON::true : JSON::false;
