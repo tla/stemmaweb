@@ -56,7 +56,9 @@ sub tradition_as_svg {
   my $want_subgraph = exists $opts->{'from'} || exists $opts->{'to'};
 
 	# Get the dot from the DB
-	my $dotstr = $self->ajax('get', "/tradition/$textid/dot");
+  my $location = "/tradition/$textid/dot";
+  $location .= '?include_relations=true' if $opts->{'include_relations'};
+	my $dotstr = $self->ajax('get', $location);
 
   # Transmogrify it to SVG
 	my @cmd = qw/dot -Tsvg/;

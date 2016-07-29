@@ -287,22 +287,21 @@ sub download :Local :Args(2) {
 	my( $self, $c, $textid, $format ) = @_;
 	my( $textinfo, $ok ) = load_tradition( $c, $textid );
 	return unless $ok;
+  ## Available formats are graphml, json, csv, tsv, dot. Dot -> SVG
 
 	my $view = "View::$format";
 	$c->stash->{'name'} = $textinfo->{name};
 	$c->stash->{'download'} = 1;
-  ## Old logic for controlling SVG output
-	# my @outputargs;
-	# if( $format eq 'SVG' ) {
-	# 	# Send the list of colors through to the backend.
-	# 	# TODO Think of some way not to hard-code this.
-	# 	push( @outputargs, { 'show_relations' => 'all',
-	# 		'graphcolors' => [ "#5CCCCC", "#67E667", "#F9FE72", "#6B90D4",
-	# 			"#FF7673", "#E467B3", "#AA67D5", "#8370D8", "#FFC173" ] } );
-	# }
-  my $location = sprintf("/tradition/%s/%s", $textinfo->{id}, lc($format));
+
 	try {
-		$c->stash->{'result'} = $c->model('Directory')->ajax('get', $location);
+    if( $format eq 'SVG' ) {
+      # Get the tradition as SVG, with relationships included
+      $c->stash->{'result'} = $c->model('Directory')->tradition_as_svg(
+        $textid, {include_relations => 1});
+    } else {
+      my $location = sprintf("/tradition/%s/%s", $textinfo->{id}, lc($format));
+		  $c->stash->{'result'} = $c->model('Directory')->ajax('get', $location);
+    }
 	} catch( stemmaweb::Error $e ) {
 		return json_error( $c, $e->status, $e->message );
 	}
