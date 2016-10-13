@@ -29,6 +29,21 @@ has model_name => (
     required => 1,
     default => 'Directory',
 );
+
+sub _request {
+    my ($self, $c, $method, $path, @args) = @_;
+
+    my $base = $c->model($self->model_name)->tradition_repo;
+
+    my $ua = LWP::UserAgent->new;
+    my $res = $ua->$method($base.$path, @args);
+
+    die sprintf "Remote Neo4J returned status %s for user",
+        $res->code,
+        unless $res->is_success;
+
+    return $res->decoded_content;
+}
  
 sub get_model {
     my ( $self, $c ) = @_;
@@ -46,8 +61,9 @@ sub find_user_by_id {
     croak "No user ID specified"
         unless defined $id;
 
-    my $user_data = $self->get_model($c)->ajax(get => '/user/' . $id)
+    my $user_data = $self->_request($c, get => 'user/'.$id.'/')
         or return undef;
+    $user_data = decode_json($user_data);
 
     return $self->wrap($c, $id, $user_data);
 }
@@ -78,12 +94,12 @@ sub auto_create_user {
     $id = $userinfo->{username}
         unless defined $id;
 
-    die "TODO: Needs proper data layout for user to create";
-    $self->get_model($c)->ajax(
-        'put',
-        '/user/' . $id,
-        Content => to_json({
-            id => $id,
+    $self->_request($c, put => '/user/'.$id.'/',
+        'Content-Type' => 'application/json',
+        'Content' => to_json({
+            role => 'user',
+            email => $id,
+            passphrase => $userinfo->{password},
         }),
     );
 }

@@ -13,6 +13,14 @@ has [qw(auth_realm store)] => (
     is => 'rw',
 );
 
+# auth user object and backend user object are the same
+sub get_object { shift }
+
+sub email {
+    my ($self) = @_;
+    return $self->user_data->{email};
+}
+
 sub id {
     my ($self) = @_;
     return $self->user_id;
@@ -25,7 +33,8 @@ sub roles {
 
 sub check_password {
     my ($self, $password) = @_;
-    die "TODO: verify password against data";
+    return $self->user_data->{active}
+        && $self->user_data->{passphrase} eq $password;
 }
 
 my %supports = (

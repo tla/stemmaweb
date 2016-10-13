@@ -81,8 +81,9 @@ __PACKAGE__->config(
                 password_type => 'self_check',
             },
             store => {
-                class => 'Model::KiokuDB',
-                model_name => 'Userdir',
+                class => 'Neo4p',
+                model_name => 'Directory',
+                realm => 'default',
             },
         },
         openid => {
