@@ -18,7 +18,10 @@ use stemmaweb::Test::DB;
 
 stemmaweb::Test::DB->new_db;
 
-LWP::Protocol::PSGI->register(stemmaweb->psgi_app);
+LWP::Protocol::PSGI->register(
+    stemmaweb->psgi_app,
+    host => sub { $_[0] !~ m{^test\.} },
+);
 
 my $ua = Test::WWW::Mechanize->new;
 
