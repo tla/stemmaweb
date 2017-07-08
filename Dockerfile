@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y gcc \
 	libssl-dev \
 	libgmp-dev \
 	git
-RUN cpan App::cpanminus Module::Install::Catalyst 
+RUN cpan -T App::cpanminus Module::Install::Catalyst 
 RUN git clone https://github.com/tla/stemmaweb.git
 RUN cd stemmaweb && cpanm -n --installdeps .
 RUN git clone https://github.com/tla/stemmatology.git
