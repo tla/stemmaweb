@@ -2,8 +2,6 @@ package stemmaweb::Controller::Users;
 use Moose;
 use namespace::autoclean;
 
-use Google::JWT;
-
 use JSON::MaybeXS;
 use JSON::WebToken;
 

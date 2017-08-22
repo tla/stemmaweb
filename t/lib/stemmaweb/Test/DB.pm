@@ -28,7 +28,9 @@ sub new_db {
     }
 
     # Set up the test directory
-    symlink( "$DBNAME.$DBEXT", "$DBDIR/$DBNAME" ) or die "Could not set up testing db symlink";
+    chdir($DBDIR);
+    symlink( "$DBNAME.$DBEXT", "$DBNAME" ) or die "Could not set up testing db symlink";
+    chdir('..');
 
     my $dir = Text::Tradition::Directory->new(
         dsn => "dbi:SQLite:dbname=$DBDIR/$DBNAME",
