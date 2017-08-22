@@ -11,6 +11,7 @@ use HTTP::Response;
 use IPC::Run qw( run binary );
 use JSON qw/ decode_json to_json /;
 use LWP::UserAgent;
+use URI;
 use stemmaweb::Error;
 
 extends 'Catalyst::Model';
@@ -18,6 +19,13 @@ extends 'Catalyst::Model';
 has tradition_repo => (
 	is => 'ro',
 	isa => 'Str'
+);
+
+has basic_auth => (
+	is => 'ro',
+	traits => ['Hash'],
+	isa => 'HashRef[Str]',
+	predicate => 'has_basic_auth'	
 );
 
 sub ajax {
@@ -30,6 +38,15 @@ sub ajax {
 	my @lwpargs = @_;
 	my $url = $self->tradition_repo . $location;
 	my $ua = LWP::UserAgent->new();
+	if ($self->has_basic_auth) {
+		# Parse out the URL into the hostname / port
+		my $n4jurl = URI->new($self->tradition_repo);
+		# Now add the credentials
+		$ua->ssl_opts( 'verify_hostname' => 0 );
+		$ua->credentials( $n4jurl->host_port, $self->basic_auth->{realm}, 
+			$self->basic_auth->{user}, $self->basic_auth->{pass} );
+	}
+
 	my $resp = $ua->$method($url, @lwpargs);
 	# Did it work?
 	unless( $resp->is_success ) {

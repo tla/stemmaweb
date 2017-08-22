@@ -31,6 +31,12 @@ sub roles {
     return $self->user_data->{role};
 }
 
+sub is_admin {
+	my $self = shift;
+	return $self->user_data->{role} eq 'admin';
+}
+
+
 sub check_password {
     my ($self, $password) = @_;
     return $self->user_data->{active}

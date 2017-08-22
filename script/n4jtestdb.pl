@@ -6,6 +6,7 @@ use feature qw/say/;
 use Config::Any;
 use JSON qw/to_json from_json/;
 use LWP::UserAgent;
+use URI::URL;
 
 # Define our helpers
 
@@ -28,13 +29,28 @@ sub filejstr {
   # return JSON->new->allow_nonref->encode( $str );
 }
 
+sub errorout {
+	my ($msg, $res) = @_;
+	return sprintf("%s: %s / %s", $msg, $res->code, $res->content);
+}
+
 # Get the URL
-# TODO: change this to be passed at the command line
 my $cfg = Config::Any->load_stems({stems => ['stemmaweb'], use_ext => 1})->[0];
-my $n4jurl = $cfg->{'stemmaweb.conf'}->{Model}->{Directory}->{tradition_repo};
+my $dircfg = $cfg->{'stemmaweb.conf'}->{Model}->{Directory};
+my $n4jurl = new URI::URL $dircfg->{tradition_repo};
 
 # Add the users
 my $ua = LWP::UserAgent->new();
+# Set up the callback for HTTP auth
+if (exists $dircfg->{basic_auth}) {
+	# Parse out the URL into the hostname / port
+	my $host = $n4jurl->host;
+	$host .= ':' . $n4jurl->port unless $n4jurl->port == 80;
+	# Now add the credentials
+	$ua->ssl_opts( 'verify_hostname' => 0 );
+	$ua->credentials( $host, $dircfg->{basic_auth}->{realm}, 
+		$dircfg->{basic_auth}->{user}, $dircfg->{basic_auth}->{pass} );
+}
 my $u1info = {
   email => 'user@example.org',
   passphrase => 'UserPass',
@@ -52,12 +68,13 @@ foreach my $u (($u1info, $u2info)) {
     my $trads = djson( $tres );
     foreach my $tr ( @$trads ) {
       my $res = $ua->delete( "$n4jurl/tradition/" . $tr->{id} );
-      die "Could not delete tradition " . $tr->{id} unless $res->code == 200;
+      die errorout("Could not delete tradition " . $tr->{id}, $res) 
+      	unless $res->code == 200;
     }
   }
   my $res = $ua->delete( "$n4jurl/user/" . $u->{email});
   $res = $ua->put( "$n4jurl/user/" . $u->{email}, 'Content-Type' => 'application/json', Content => to_json($u));
-  die("User " . $u->{email} . " not created") unless $res->code == 201;
+  die errorout("User " . $u->{email} . " not created", $res) unless $res->code == 201;
 }
 
 # TODO create openid user
@@ -66,18 +83,18 @@ foreach my $u (($u1info, $u2info)) {
 # 1. Notre besoin
 my $t1data = [
   name => 'Notre besoin',
-  filetype => 'graphml',
+  filetype => 'stemmaweb',
   language => 'French',
   userId => 'user@example.org',
   file => ['t/data/besoin.xml']
 ];
 my $res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t1data);
-die("Besoin tradition could not be created") unless $res->code == 201;
+die errorout("Besoin tradition could not be created", $res) unless $res->code == 201;
 my $t1id = djson( $res )->{tradId};
 
 $res = $ua->post( "$n4jurl/tradition/$t1id/stemma", 'Content-Type' => 'application/json',
   Content => filejstr("t/data/besoin_stemweb.dot") );
-die("Besoin stemma could not be added") unless $res->code == 201;
+die errorout("Besoin stemma could not be added", $res) unless $res->code == 201;
 
 # 1a. TODO something owned by the OpenID user
 
@@ -91,36 +108,36 @@ my $t2data = [
   file => ['t/data/florilegium.csv']
 ];
 $res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t2data);
-die("Florilegium tradition could not be created") unless $res->code == 201;
+die errorout("Florilegium tradition could not be created", $res) unless $res->code == 201;
 my $t2id = djson( $res )->{tradId};
 $res = $ua->post( "$n4jurl/tradition/$t2id/stemma", 'Content-Type' => 'application/json',
   Content => filejstr("t/data/florilegium.dot") );
-die("Florilegium stemma could not be added") unless $res->code == 201;
+die errorout("Florilegium stemma could not be added", $res) unless $res->code == 201;
 
 # 3. John verse
 my $t3data = [
   name => 'John verse',
   direction => 'BI',
-  filetype => 'graphml',
+  filetype => 'stemmaweb',
   language => 'Greek',
   public => 'true',
   userId => 'user@example.org',
   file => ['t/data/john.xml']
 ];
 $res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t3data);
-die("John verse tradition could not be created") unless $res->code == 201;
+die errorout("John verse tradition could not be created", $res) unless $res->code == 201;
 
 # 4. Sapientia / collation correction
 my $t4data = [
   name => 'Sapientia',
-  filetype => 'graphml',
+  filetype => 'stemmaweb',
   language => 'Latin',
   public => 'true',
   userId => 'user@example.org',
   file => ['t/data/collatecorr.xml']
 ];
 $res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t4data);
-die("Sapientia tradition could not be created") unless $res->code == 201;
+die errorout("Sapientia tradition could not be created", $res) unless $res->code == 201;
 
 # 5. Arabic snippet
 my $t5data = [
@@ -132,5 +149,5 @@ my $t5data = [
   file => ['t/data/arabic_snippet.csv']
 ];
 $res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t5data);
-die("RTL test tradition could not be created") unless $res->code == 201;
+die errorout("RTL test tradition could not be created", $res) unless $res->code == 201;
 say("Test data setup complete.")

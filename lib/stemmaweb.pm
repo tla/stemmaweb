@@ -103,8 +103,8 @@ __PACKAGE__->config(
                     ],
             },
             store => {
-                class => 'Model::KiokuDB',
-                model_name => 'Userdir',
+                class => 'Neo4p',
+                model_name => 'Directory',
             },
             auto_create_user => 1,
         },
@@ -113,8 +113,8 @@ __PACKAGE__->config(
                 class => '+stemmaweb::Authentication::Credential::Google',
             },
             store => {
-                class => 'Model::KiokuDB',
-                model_name => 'Userdir',
+                class => 'Neo4p',
+                model_name => 'Directory',
             },
             auto_create_user => 1,
         },
