@@ -3,8 +3,6 @@ use Moose;
 use namespace::autoclean;
 use TryCatch;
 
-use Google::JWT;
-
 use JSON::MaybeXS;
 use JSON::WebToken;
 

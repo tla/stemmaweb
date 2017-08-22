@@ -53,18 +53,18 @@ sub authenticate {
     $c->req->body_params->{email};
 
     my $userinfo = $self->decode($id_token);
-    $userinfo->{email} = $authinfo->{email};
-
     my $sub = $userinfo->{sub};
-    my $openid = $userinfo->{openid_id};
-
-    $userinfo->{email} = $email if $email;
-
-    if (!$sub || !$openid) {
-        Catalyst::Exception->throw(
-            'Could not retrieve sub and openid from token! Is the token
-            correct?'
-        );
+	
+	unless (exists $userinfo->{email}) {
+		if ($email) {
+			$userinfo->{email} = $email;
+		} else {
+			Catalyst::Exception->throw('No email address associated with login request!');
+		}
+	}
+	
+    if (!$sub) {
+        Catalyst::Exception->throw('Could not retrieve sub from token! Is the token correct?');
     }
 
     return $realm->find_user($userinfo, $c);

@@ -117,7 +117,7 @@
 		</form>
 	</div>
 
-[% UNLESS c.req.param('realm') == 'openid' %]
+[% UNLESS c.req.param('realm') == 'openid' || c.req.param('realm') == 'google' %]
 	<h3><a href="#">Sign in with Stemmaweb</a></h3>
 	<div>
 		<p>If you do not have Google or another OpenID account, you may <a href="[% c.uri_for_action('/users/register') | html %]">register</a> for a user account here with its own password.  Once you are registered, you can use this form to sign in.</p>
