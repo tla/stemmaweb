@@ -132,9 +132,6 @@ sub newtradition :Local :Args(0) {
 	my( $self, $c ) = @_;
 	return json_error( $c, 403, 'Cannot save a tradition without being logged in' )
 		unless $c->user_exists;
-
-	## Get the user ID
-	my $n4ju = $c->user->id;
 	my $m = $c->model('Directory');
 
   	## Convert the request that Catalyst received into one that
@@ -153,27 +150,35 @@ sub newtradition :Local :Args(0) {
 	my $fh;
 	my $filetype = $c->req->param('filetype');
 	if( $filetype eq 'cte' ) {
-		my $t = Text::Tradition->new(
-			name => $c->req->param('name'),
-			input => 'CTE',
-			file => $upload->tempname
-		);
+		my $t;
+		try {
+			$t = Text::Tradition->new(
+				name => $c->req->param('name'),
+				input => 'CTE',
+				file => $upload->tempname
+			);
+		} catch ( Text::Tradition::Error $e ) {
+			return json_error( $c, 400, $e->message )
+		}
 		$fh = File::Temp->new();
 		print $fh $t->collation->as_graphml();
 		$fh->seek(0, SEEK_END);
 		$fileargs->[0] = $fh->filename; # Remaining fileargs should be the same.
 		$filetype = 'stemmaweb';
+	} elsif( $filetype eq 'xls' && $upload->filename =~ /xlsx$/ ) {
+		$filetype = 'xlsx';
 	}
 
 	my %newopts = (
-		'name' => $c->req->param('name') || 'Uploaded tradition',
-		'language' => $c->req->param('language') || 'Default',
-		'public' => $c->req->param('public') ? 'true' : 'false',
-		'direction' => $c->req->param('direction') || 'LR',
-		'userId' => $n4ju,
-		'filetype' => $c->req->param('filetype'),
+		'userId' => $c->user->id,
+		'filetype' => $filetype,
 		'file' => $fileargs
   	);
+	foreach my $opt (qw/ name language direction public /) {
+		if( $c->req->param($opt) ) {
+			$newopts{$opt} = $c->req->param($opt);
+		}
+	}
 
   	my $result;
 	try {
