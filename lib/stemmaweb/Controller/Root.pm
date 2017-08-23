@@ -209,38 +209,38 @@ sub textinfo :Local :Args(1) {
 	my( $textinfo, $ok ) = load_tradition( $c, $textid );
 	return unless $ok;
 
-  my $m = $c->model('Directory');
-  # Update information if we have been asked to
+	my $m = $c->model('Directory');
+	# Update information if we have been asked to
 	if( $c->req->method eq 'POST' ) {
 		return json_error( $c, 403,
 			'You do not have permission to update this tradition' )
 			unless $ok eq 'full';
-    my $user = $c->user->get_object;
-		my $params = $c->request->parameters;
-    if( !$user->is_admin && exists $params->{owner} ) {
-      return json_error( $c, 403,
-        "Only admin users can change tradition ownership" );
-    }
-    # Now pass through the request
-    try {
-      $textinfo = $m->ajax('put', "/tradition/$textid",
-        'Content-Type' => 'application/json', Content => JSON::to_json($params));
-    } catch (stemmaweb::Error $e) {
-      return json_error( $c, $e->status, $e->message );
-    }
-  } elsif ($c->req->method ne 'GET') {
-    return json_error($c, 400, "Disallowed HTTP method " . $c->req->method);
-  }
-  # Add the witness information
-  my @witnesses = map { $_->{sigil} }
-    @{$m->ajax('get', "/tradition/$textid/witnesses")};
-  $textinfo->{witnesses} = \@witnesses;
+	    my $user = $c->user->get_object;
+			my $params = $c->request->parameters;
+	    if( !$user->is_admin && exists $params->{owner} ) {
+	      return json_error( $c, 403,
+	        "Only admin users can change tradition ownership" );
+	    }
+	    # Now pass through the request
+	    try {
+	      $textinfo = $m->ajax('put', "/tradition/$textid",
+	        'Content-Type' => 'application/json', Content => JSON::to_json($params));
+	    } catch (stemmaweb::Error $e) {
+	      return json_error( $c, $e->status, $e->message );
+	    }
+  	} elsif ($c->req->method ne 'GET') {
+    	return json_error($c, 400, "Disallowed HTTP method " . $c->req->method);
+  	}
+	# Add the witness information
+	my @witnesses = map { $_->{sigil} }
+		@{$m->ajax('get', "/tradition/$textid/witnesses")};
+	$textinfo->{witnesses} = \@witnesses;
 
 	# Add the stemma information that exists, if any
-  my @stemmata;
-  foreach my $stemma ( @{$m->ajax('get', "/tradition/$textid/stemmata")} ) {
-    push( @stemmata, stemmaweb::Controller::Stemma::stemma_info($stemma));
-  }
+	my @stemmata;
+	foreach my $stemma ( @{$m->ajax('get', "/tradition/$textid/stemmata")} ) {
+		push( @stemmata, stemmaweb::Controller::Stemma::stemma_info($stemma));
+	}
 	$textinfo->{stemmata} = \@stemmata;
 	$c->stash->{'result'} = $textinfo;
 	$c->forward('View::JSON');

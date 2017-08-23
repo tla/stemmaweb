@@ -4,7 +4,7 @@ use Moose;
 use Moose::Util::TypeConstraints qw/ find_type_constraint /;
 use Module::Load;
 use namespace::autoclean;
-use Text::Tradition::Datatypes;
+use stemmaweb::Util qw/ load_tradition json_error generate_svg /;
 use TryCatch;
 
 BEGIN { extends 'Catalyst::Controller' }
@@ -36,114 +36,56 @@ sub index :Path :Args(0) {
 # ...and here is the tradition lookup and ACL check...
 sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	my( $self, $c, $textid ) = @_;
-	my $tradition = $c->model('Directory')->tradition( $textid );
-	unless( $tradition ) {
-		$c->response->status('404');
-		$c->response->body("No such tradition with ID $textid");
-		$c->detach('View::Plain');
-		return;
-	}
+	my ($textinfo, $ok) = load_tradition( $c, $textid );
 	
-    # Account for a bad interaction between FastCGI and KiokuDB
-    unless( $tradition->collation->tradition ) {
-        $c->log->warn( "Fixing broken tradition link" );
-        $tradition->collation->_set_tradition( $tradition );
-        $c->model('Directory')->save( $tradition );
-    }
-    # Check permissions. Will return 403 if denied, otherwise will
-    # put the appropriate value in the stash.
-    my $ok = _check_permission( $c, $tradition );
-    return unless $ok;
-
 	$c->stash->{'textid'} = $textid;
-	$c->stash->{'tradition'} = $tradition;
+	$c->stash->{'tradition'} = $textinfo;
+	$c->stash->{'permission'} = $ok;
 }
 
 # ...and here is the page variable initialization.
 sub main :Chained('text') :PathPart('') :Args(0) {
 	my( $self, $c ) = @_;
+	my $m = $c->model('Directory');
 	my $tradition = delete $c->stash->{'tradition'};
-	my $collation = $tradition->collation;
 
 	# Stash text direction to use in JS.
-	$c->stash->{'direction'} = $collation->direction || 'BI';
+	$c->stash->{'direction'} = $tradition->{direction} || 'BI';
 
-	# Stash the relationship definitions
-	$c->stash->{'relationship_scopes'} = 
-		to_json( find_type_constraint( 'RelationshipScope' )->values );
-	$c->stash->{'ternary_values'} = 
-		to_json( find_type_constraint( 'Ternary' )->values );
-	my @reltypeinfo;
-	foreach my $type ( sort { _typesort( $a, $b ) } $collation->relations->types ) {
-		next if $type->is_weak;
-		my $struct = { name => $type->name, description => $type->description };
-		push( @reltypeinfo, $struct );
-	}
-	$c->stash->{'relationship_types'} = to_json( \@reltypeinfo );
+	# Stash the relationship definitions. TODO make these configurable.
+	$c->stash->{'relationship_scopes'} = to_json([ qw(local document) ]);
+	$c->stash->{'ternary_values'} = to_json([ qw(yes maybe no) ]);
+	my $reltypeinfo = [
+		{ 'orthographic' => 'These are the same reading, neither unusually spelled.' },
+		{ 'punctuation' => 'These are the same reading apart from punctuation.' },
+		{ 'spelling' => 'These are the same reading, spelled differently.' },
+		{ 'grammatical' => 'These readings share a root (lemma), but have different parts of speech (morphologies).' },
+		{ 'lexical' => 'These readings share a part of speech (morphology), but have different roots (lemmata).' },
+		{ 'uncertain' => 'These readings are related, but a clear category cannot be assigned.' },
+		{ 'other' => 'These readings are related in a way not covered by the existing types.' },
+		{ 'transposition' => 'This is the same (or nearly the same) reading in a different location.' },
+		{ 'repetition' => 'This is a reading that was repeated in one or more witnesses.' },
+	];
+	$c->stash->{'relationship_types'} = to_json( $reltypeinfo );
 	
-	# See how big the tradition is. Edges are more important than nodes
-	# when it comes to rendering difficulty.
-	my $numnodes = scalar $collation->readings;
-	my $numedges = scalar $collation->paths;
-	my $length = $collation->end->rank;
-	# We should display no more than roughly 500 nodes, or roughly 700
-	# edges, at a time.
-	my $segments = $numnodes / 500;
-	if( $numedges / 700 > $segments ) {
-		$segments = $numedges / 700;
+	# Get the list of segments that this text contains.
+	# TODO give a box here to rename individual sections.
+	my $sections = $m->ajax('get', sprintf('/tradition/%s/sections', $tradition->{'id'})); 
+	$c->stash->{'textsegments'} = [];
+	foreach my $s ( @$sections ) {
+		my $seg = { 'start' => $s->{id}, 'display' => $s->{name} };
+		push( @{$c->stash->{'textsegments'}}, $seg );
 	}
-	my $segsize = sprintf( "%.0f", $length / $segments );
-	my $margin = sprintf( "%.0f", $segsize / 10 );
-	if( $segments > 1 ) {
-		# Segment the tradition in order not to overload the browser.
-		my @divs;
-		my $r = 0;
-		while( $r + $margin < $length ) {
-			push( @divs, $r );
-			$r += $segsize;
-		}
-		$c->stash->{'textsegments'} = [];
-		foreach my $i ( 0..$#divs ) {
-			my $seg = { 'start' => $divs[$i] };
-			$seg->{'display'} = "Segment " . ($i+1);
-			push( @{$c->stash->{'textsegments'}}, $seg );
-		}
-	}
-	my $startseg = $c->req->param('start');
-	my $svgopts;
-	if( $startseg ) {
-		# Only render the subgraph from startseg to endseg or to END,
-		# whichever is less.
-		my $endseg = $startseg + $segsize + $margin;
-		$svgopts = { 'from' => $startseg };
-		$svgopts->{'to'} = $endseg if $endseg < $collation->end->rank;
-	} elsif( exists $c->stash->{'textsegments'} ) {
-		# This is the unqualified load of a long tradition. We implicitly start 
-		# at zero, but go only as far as our segment size.
-		my $endseg = $segsize + $margin;
-		$startseg = 0;
-		$svgopts = { 'to' => $endseg };
-	}
-	# Spit out the SVG
-	my $svg_str = $collation->as_svg( $svgopts );
-	$svg_str =~ s/\n//gs;
-	$c->stash->{'startseg'} = $startseg if defined $startseg;
-	$c->stash->{'svg_string'} = $svg_str;
-	$c->stash->{'text_title'} = $tradition->name;
-	if( $tradition->can('language') && $tradition->language ) {
-		$c->stash->{'text_lang'} = $tradition->language;
-		$c->stash->{'can_morphologize'} = 1;
-	} else {
-		$c->stash->{'text_lang'} = 'Default';
-	}
-	$c->stash->{'template'} = 'relate.tt';
-}
+	my $startseg = $c->req->param('start') || $sections->[0]->{id};
 
-sub _typesort {
-	my( $a, $b ) = @_;
-	my $blsort = $a->bindlevel <=> $b->bindlevel;
-	return $blsort if $blsort;
-	return $a->name cmp $b->name;
+	# Spit out the SVG
+	
+	$c->stash->{'startseg'} = $startseg if defined $startseg;
+	$c->stash->{'svg_string'} = generate_svg( $c, $tradition->{id})
+	$c->stash->{'text_title'} = $tradition->{name};
+	$c->stash->{'text_lang'} = $tradition->{language} || 'Default';
+	$c->stash->{'can_morphologize'} = $tradition->{language} ne 'Default';
+	$c->stash->{'template'} = 'relate.tt';
 }
 
 =head2 help

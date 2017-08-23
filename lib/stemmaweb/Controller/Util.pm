@@ -55,7 +55,7 @@ sub load_tradition {
 sub load_old_tradition {
 	my ($c, $textid) = @_;
 	my $graphml;
-	$graphml = $c->model('Directory')->ajax('get', "/tradition/$textid/graphml");
+	$graphml = $c->model('Directory')->ajax('get', "/tradition/$textid/stemmaweb");
 	return Text::Tradition->new(input => 'self', string => $graphml);
 }
 
@@ -66,6 +66,13 @@ sub load_stemma {
 		is_undirected => $stemmadata->{is_undirected} == JSON::true,
 		identifier => $stemmadata->{identifier}
 	);
+}
+
+# Get (and parse) the GraphML directly, to turn it into the sort of graph we need.
+sub generate_svg {
+	my( $c, $textid ) = @_;
+	my $graphml = $c->model('Directory')->ajax('get', "/tradition/$textid/graphml");
+	
 }
 
 # Helper to throw a JSON exception
