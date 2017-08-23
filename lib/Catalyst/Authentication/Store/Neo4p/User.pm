@@ -3,7 +3,7 @@ use strictures 2;
 package Catalyst::Authentication::Store::Neo4p::User;
 use Moose;
 use Carp qw( croak );
-use Digest::SHA256;
+use Digest;
 use URI::Escape;
 
 use namespace::clean;
@@ -43,7 +43,16 @@ around BUILDARGS => sub {
 			$args->{user_data}->{email} = $udata->{display};
 		}
 	} elsif( exists $udata->{username} && !exists $args->{user_id} ) {
-		$args->{user_id} = delete $udata->{username};
+		# It's a username (and maybe password) from the registration form. Shift 
+		# them around appropriately and encrypt the password.
+		my $email = delete $udata->{username};
+		$args->{user_id} = $email;
+		$udata->{email} = $email;
+		if (exists $udata->{password}) {
+			my $ctx = Digest->new('SHA-256');
+			$ctx->add(delete $udata->{password});
+			$udata->{passphrase} = $ctx->b64digest();
+		}
 	}
 	# The user data will look somewhat different if it comes from Google or OpenID.
 	$class->$orig( $args );
@@ -87,7 +96,7 @@ sub to_hash {
 	my $ret = {
 		id => $self->id,
 		email => $self->email,
-		role => $self->roles,
+		role => $self->roles || 'user',
 	};
 	$ret->{active} = JSON::false 
 		if exists $self->user_data->{'active'} && !$self->user_data->{'active'};
