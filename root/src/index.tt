@@ -208,9 +208,11 @@ var textOnLoad = "[% withtradition %]";
     		<input id="download_tradition" type="hidden" name="tradition"/><br/>
     		<label for="download_format">Choose a format for download: </label>
     		<select id="download_format" name="format">
-    			<option value="GraphML">Native XML format</option>
+    			<option value="GraphML">Native GraphML XML format</option>
+    			<option value="JSON">JSON table (collation only)</option>
     			<option value="CSV">Comma-separated values (collation only)</option>
     			<option value="TSV">Tab-separated values (collation only)</option>
+    			<option value="dot">Graphviz dot format (collation and relationships)</option>
     			<option value="SVG">SVG graph display (collation and relationships)</option>
     			<!-- option value="tei_ps" -->
     			<!-- option value="tei_dea" -->
@@ -219,7 +221,7 @@ var textOnLoad = "[% withtradition %]";
     	<div id="download_status"></div>
       </div>
     </div>
-
+	
     <!-- File upload dialog box -->
     <div id="upload-collation-dialog" title="Upload a collation">
       <div id="upload_container">
@@ -229,6 +231,16 @@ var textOnLoad = "[% withtradition %]";
         <form id="new_tradition">
             <label for="new_name">Name of this text / tradition: </label>
             <input id="new_name" type="text" name="name" size="40"/><br/>
+			<label for="new_filestype">Data format: </label>
+			<select name="filetype" id="new_filetype">
+				<option value="csv">Comma-separated values (spreadsheet collation)</option>
+				<option value="tsv">Tab-separated values (spreadhseet collation)</option>
+				<option value="xls">Microsoft Excel (spreadsheet values)</option>
+				<option value="teips">TEI parallel segmentation</option>
+				<option value="cte">CTE export (TEI double-endpoint attachment)</option>
+				<option value="collatex">CollateX XML</option>
+				<option value="json">CollateX JSON</option>
+			</select><br>
             <label for="new_lang">Primary language of the text: </label>
             <input id="new_lang" type="text" name="language" size="20"/><br/>
 
