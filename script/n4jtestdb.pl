@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use feature qw/say/;
 use Config::Any;
+use Digest;
 use JSON qw/to_json from_json/;
 use LWP::UserAgent;
 use URI::URL;
@@ -63,6 +64,9 @@ my $u2info = {
 };
 # Delete the users if they don't exist already
 foreach my $u (($u1info, $u2info)) {
+  my $ctx = Digest->new('SHA-256');
+  $ctx->add($u->{passphrase});
+  $u->{passphrase} = $ctx->b64digest();
   my $tres = $ua->get( "$n4jurl/user/" . $u->{email} . "/traditions");
   if( $tres->code == 200 ) {
     my $trads = djson( $tres );

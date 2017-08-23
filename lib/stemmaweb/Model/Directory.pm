@@ -52,6 +52,9 @@ sub ajax {
 	unless( $resp->is_success ) {
 		throw_ua( $resp );
 	}
+	if( $resp->code == 204 ) {
+		return undef;
+	}
 	# If so, return the result.
 	if( $resp->content_type =~ /json/ ) {
     # Force the content to be decoded from utf-8

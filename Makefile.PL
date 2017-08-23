@@ -39,7 +39,9 @@ requires 'Catalyst::TraitFor::Controller::reCAPTCHA';
 requires 'LWP::Protocol::https';
 ##
 requires 'Date::Parse';
+requires 'Digest::SHA256';
 requires 'LWP::Protocol::https';
+requires 'URI::Escape';
 requires 'strictures';
 requires 'Crypt::OpenSSL::X509';
 requires 'Crypt::OpenSSL::RSA';

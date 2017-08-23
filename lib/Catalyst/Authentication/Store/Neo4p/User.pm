@@ -3,6 +3,8 @@ use strictures 2;
 package Catalyst::Authentication::Store::Neo4p::User;
 use Moose;
 use Carp qw( croak );
+use Digest::SHA256;
+use URI::Escape;
 
 use namespace::clean;
 
@@ -12,6 +14,40 @@ has user_data => (is => 'ro');
 has [qw(auth_realm store)] => (
     is => 'rw',
 );
+
+around BUILDARGS => sub {
+	my $orig = shift;
+	my $class = shift;
+	my $args;
+	if( @_ == 1 ) {
+		$args = shift;
+	} else {
+		$args = { @_ };
+	}
+	
+	my $udata = $args->{user_data};
+	if( exists $udata->{sub} ) {
+		# It's a Google login. Extract id and email from the passed info.
+		$args->{user_id} = $udata->{sub};
+		$args->{user_data} = {
+			email => $udata->{email},
+			role => 'user'
+		};
+	} elsif( exists $udata->{url} ) {
+		# It's an OpenID login. Extract id; there is no email.
+		$args->{user_id} = uri_escape($udata->{url});
+		$args->{user_data} = {
+			role => 'user'
+		};
+		if( exists $udata->{display} ) {
+			$args->{user_data}->{email} = $udata->{display};
+		}
+	} elsif( exists $udata->{username} && !exists $args->{user_id} ) {
+		$args->{user_id} = delete $udata->{username};
+	}
+	# The user data will look somewhat different if it comes from Google or OpenID.
+	$class->$orig( $args );
+};
 
 # auth user object and backend user object are the same
 sub get_object { shift }
@@ -36,15 +72,32 @@ sub is_admin {
 	return $self->user_data->{role} eq 'admin';
 }
 
+sub get {
+	my ($self, $arg) = @_;
+	if ($self->can($arg)) {
+		return $self->$arg;
+	} elsif ($arg eq 'password') {
+		return $self->user_data->{passphrase};
+	} 
+	return undef;
+}
 
-sub check_password {
-    my ($self, $password) = @_;
-    return $self->user_data->{active}
-        && $self->user_data->{passphrase} eq $password;
+sub to_hash {
+	my $self = shift;
+	my $ret = {
+		id => $self->id,
+		email => $self->email,
+		role => $self->roles,
+	};
+	$ret->{active} = JSON::false 
+		if exists $self->user_data->{'active'} && !$self->user_data->{'active'};
+	$ret->{passphrase} = $self->user_data->{passphrase} 
+		if exists $self->user_data->{passphrase};
+	return $ret;
 }
 
 my %supports = (
-    password => 'self_check',
+    password => 'hashed',
     roles   => ["roles"],
     session => 1,
 );

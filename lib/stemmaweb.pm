@@ -78,7 +78,8 @@ __PACKAGE__->config(
             credential => {
                 class => 'Password',
                 password_field => 'password',
-                password_type => 'self_check',
+                password_type => 'hashed',
+				password_hash_type => 'SHA-256'
             },
             store => {
                 class => 'Neo4p',

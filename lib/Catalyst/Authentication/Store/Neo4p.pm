@@ -36,18 +36,21 @@ sub get_model {
     $c->model($self->model_name);
 }
 
-sub find_user_by_id {
+sub find_user {
     my ($self, $userinfo, $c) = @_;
+	my $user = User->new(user_data => $userinfo);
+    return $self->find_user_by_id($user->id, $c);
+}
 
-    my $id = $userinfo->{id};
-    $id = $userinfo->{username}
-        unless defined $id;
+sub find_user_by_id {
+    my ($self, $userid, $c) = @_;
 
+	# TODO return Catalyst error, don't croak
     croak "No user ID specified"
-        unless defined $id;
+        unless defined $userid;
 
-	my $user_data = $c->model($self->model_name)->ajax('get', '/user/'.$id.'/');
-    return $self->wrap($c, $id, $user_data);
+	my $user_data = $c->model($self->model_name)->ajax('get', '/user/'.$userid.'/');
+	return $user_data ? $self->wrap($c, $userid, $user_data) : undef;
 }
 
 sub wrap {
@@ -58,31 +61,21 @@ sub wrap {
     );
 }
 
-sub find_user {
-    my ($self, $userinfo, $c) = @_;
-    my $user = $self->find_user_by_id($userinfo, $c);
-    return $user;
-}
-
 sub from_session {
     my ( $self, $c, $id ) = @_;
-    return $self->find_user({ id => $id }, $c);
+    return $self->find_user_by_id($id, $c);
 }
 
 sub auto_create_user {
     my ($self, $userinfo, $c) = @_;
-
-    my $id = $userinfo->{id};
-    $id = $userinfo->{username}
-        unless defined $id;
 	
-	$c->model($self->model_name)->ajax('put', '/user/'.$id.'/',
+	my $new_user = User->new(
+		user_data => $userinfo
+	);
+
+	$c->model($self->model_name)->ajax('put', '/user/' . $new_user->id . '/',
         'Content-Type' => 'application/json',
-        'Content' => to_json({
-            role => 'user',
-            email => $id,
-            passphrase => $userinfo->{password},
-        }),
+        'Content' => to_json($new_user->to_hash)
     );
 }
 
