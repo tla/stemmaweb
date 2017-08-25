@@ -81,7 +81,7 @@ sub main :Chained('text') :PathPart('') :Args(0) {
 	# Spit out the SVG
 	
 	$c->stash->{'startseg'} = $startseg if defined $startseg;
-	$c->stash->{'svg_string'} = generate_svg( $c, $tradition->{id})
+	$c->stash->{'svg_string'} = generate_svg( $c, $tradition->{id}, $startseg )
 	$c->stash->{'text_title'} = $tradition->{name};
 	$c->stash->{'text_lang'} = $tradition->{language} || 'Default';
 	$c->stash->{'can_morphologize'} = $tradition->{language} ne 'Default';

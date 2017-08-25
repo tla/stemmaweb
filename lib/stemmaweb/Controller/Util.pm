@@ -6,6 +6,8 @@ use JSON;
 use Text::Tradition;
 use Text::Tradition::Stemma;
 use TryCatch;
+use XML::LibXML;
+use XML::LibXML::XPathContext;
 use vars qw/ @EXPORT /;
 
 @EXPORT = qw/ load_tradition load_old_tradition load_stemma json_error json_bool /;
@@ -68,11 +70,145 @@ sub load_stemma {
 	);
 }
 
-# Get (and parse) the GraphML directly, to turn it into the sort of graph we need.
+# Get (and parse) the GraphML directly, to turn it into the sort of graph we need for the
+# relationship mapper.
 sub generate_svg {
-	my( $c, $textid ) = @_;
-	my $graphml = $c->model('Directory')->ajax('get', "/tradition/$textid/graphml");
+	my( $c, $textid, $sectionid ) = @_;
+	my( $graph, $textinfo );
+	try {
+		my $graphml = $c->model('Directory')->ajax('get', "/tradition/$textid/section/$sectionid/graphml");
+		my $parser = XML::LibXML->new();
+		$graph = $parser->parse_string( $graphml )->documentElement();
+		$textinfo = $c->model('Directory')->ajax('get', "/tradition/$textid");
+	} catch (stemmaweb::Error $e) {
+		return json_error( $c, $e->status, $e->message );
+	} catch {
+		return json_error( $c, 500, "Error on parse of tradition XML");
+	}
 	
+	my $xpc = XML::LibXML::XPathContext->new( $graphml );
+	$xpc->registerNs( 'g', 'http://graphml.graphdrawing.org/xmlns' );
+	
+    # First get the key mappings for node/edge properties
+    foreach my $k ( $xpc->findnodes( '//g:key' ) ) {
+        # Each key has a 'for' attribute to say whether it is for graph,
+        # node, or edge.
+        my $keyid = $k->getAttribute( 'id' );
+        my $keyname = $k->getAttribute( 'attr.name' );
+
+		# Keep track of the XML identifiers for the data carried
+		# in each node element.
+		my $dtype = $k->getAttribute( 'for' );
+		if( $dtype eq 'node' ) {
+            $nodedata->{$keyid} = $keyname; 
+        } else {
+            $edgedata->{$keyid} = $keyname;
+        }
+    }
+		
+    my $graph_name = $textinfo->{name};
+    $graph_name =~ s/[^\w\s]//g;
+    $graph_name = join( '_', split( /\s+/, $graph_name ) );
+
+    my %graph_attrs = (
+        'bgcolor' => 'none',
+    );
+    unless( $textinfo->{direction} eq 'BI' ) {
+        $graph_attrs{rankdir} = $self->direction;
+    }
+    my %node_attrs = (
+        'fontsize' => 14,
+        'fillcolor' => 'white',
+        'style' => 'filled',
+        'shape' => 'ellipse'
+        );
+    my %edge_attrs = ( 
+        'arrowhead' => 'open',
+        'color' => '#000000',
+        'fontcolor' => '#000000',
+        );
+
+    my $dot = sprintf( "digraph %s {\n", $graph_name );
+    $dot .= "\tgraph " . _dot_attr_string( \%graph_attrs ) . ";\n";
+    $dot .= "\tnode " . _dot_attr_string( \%node_attrs ) . ";\n";
+
+    # Output substitute start/end readings if necessary
+	if( $STRAIGHTENHACK ) {
+		## HACK part 1
+		$dot .= "\tsubgraph { rank=same \"__START__\" \"#SILENT#\" }\n";  
+		$dot .= "\t\"#SILENT#\" [ shape=diamond,color=white,penwidth=0,label=\"\" ];"
+	}
+	
+	# Now collect the reading nodes.
+	my %used;  # Keep track of the readings that actually appear in the graph
+	# Sort the readings by rank if we have ranks; this speeds layout.
+	my @all_readings = $self->end->has_rank 
+		? sort { $a->rank <=> $b->rank } $self->readings
+		: $self->readings;
+	# TODO Refrain from outputting lacuna nodes - just grey out the edges.
+    foreach my $reading ( @all_readings ) {
+    	# Only output readings within our rank range.
+    	next if $startrank && $reading->rank < $startrank;
+    	next if $endrank && $reading->rank > $endrank;
+        $used{$reading->id} = 1;
+        # Need not output nodes without separate labels
+        next if $reading->id eq $reading->text;
+        my $rattrs;
+        my $label = $reading->text;
+        unless( $label =~ /^[[:punct:]]+$/ ) {
+	        $label .= '-' if $reading->join_next;
+    	    $label = "-$label" if $reading->join_prior;
+    	}
+        $label =~ s/\"/\\\"/g;
+		$rattrs->{'label'} = $label;
+		$rattrs->{'id'} = $reading->id;
+		$rattrs->{'fillcolor'} = '#b3f36d' if $reading->is_common && $color_common;
+        $dot .= sprintf( "\t\"%s\" %s;\n", $reading->id, _dot_attr_string( $rattrs ) );
+    }
+    
+	# Add the real edges. 
+    my @edges = $self->paths;
+	my( %substart, %subend );
+    foreach my $edge ( @edges ) {
+    	# Do we need to output this edge?
+    	if( $used{$edge->[0]} && $used{$edge->[1]} ) {
+    		my $label = $self->_path_display_label( $opts,
+    			$self->path_witnesses( $edge ) );
+			my $variables = { %edge_attrs, 'label' => $label };
+			
+			# Account for the rank gap if necessary
+			my $rank0 = $self->reading( $edge->[0] )->rank
+				if $self->reading( $edge->[0] )->has_rank;
+			my $rank1 = $self->reading( $edge->[1] )->rank
+				if $self->reading( $edge->[1] )->has_rank;
+			if( defined $rank0 && defined $rank1 && $rank1 - $rank0 > 1 ) {
+				$variables->{'minlen'} = $rank1 - $rank0;
+			}
+			
+			# EXPERIMENTAL: make edge width reflect no. of witnesses
+			my $extrawidth = scalar( $self->path_witnesses( $edge ) ) * 0.2;
+			$variables->{'penwidth'} = $extrawidth + 0.8; # gives 1 for a single wit
+
+			my $varopts = _dot_attr_string( $variables );
+			$dot .= sprintf( "\t\"%s\" -> \"%s\" %s;\n", 
+				$edge->[0], $edge->[1], $varopts );
+        } elsif( $used{$edge->[0]} ) {
+        	$subend{$edge->[0]} = $edge->[1];
+        } elsif( $used{$edge->[1]} ) {
+        	$substart{$edge->[1]} = $edge->[0];
+        }
+    }
+    
+	# HACK part 2
+	if( $STRAIGHTENHACK ) {
+		my $endlabel = $endrank ? '__SUBEND__' : '__END__';
+		$dot .= "\t\"$endlabel\" -> \"#SILENT#\" [ color=white,penwidth=0 ];\n";
+	}       
+
+    $dot .= "}\n";
+    return $dot;
+		
+
 }
 
 # Helper to throw a JSON exception
