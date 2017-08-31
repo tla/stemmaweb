@@ -68,18 +68,22 @@ sub ajax {
 ### Graphviz transmogrification for passed-in dot
 sub tradition_as_svg {
 	my( $self, $textid, $opts ) = @_;
+	# Get the dot from the DB
+	my $location = exists $opts->{'section'} 
+		? sprintf("/tradition/$textid/section/%s/dot", $opts->{'section'})
+		: "/tradition/$textid/dot";
+	$location .= '?include_relations=true' if $opts->{'include_relations'};
+	my $dotstr = $self->ajax('get', $location);
+	return dot_to_svg($dotstr);
+}
+
+# Really a generic utility, but this is as good a place as any for that.
+sub dot_to_svg {
+	my( $self, $dotstr ) = @_;
 	unless (File::Which::which( 'dot' )) {
 		throw_ua( HTTP::Response->new(500,
 			"Need GraphViz installed to output SVG") );
 	}
-	# TODO implement subgraphs!
- 	my $want_subgraph = exists $opts->{'from'} || exists $opts->{'to'};
-
-	# Get the dot from the DB
-	my $location = "/tradition/$textid/dot";
-	$location .= '?include_relations=true' if $opts->{'include_relations'};
-	my $dotstr = $self->ajax('get', $location);
-
   	# Transmogrify it to SVG
 	my @cmd = qw/dot -Tsvg/;
 	my( $svg, $err );
@@ -91,7 +95,7 @@ sub tradition_as_svg {
 	push( @cmd, $dotfile->filename );
 	run( \@cmd, ">", binary(), \$svg );
 	$svg = decode_utf8( $svg );
-	return $svg;
+	return $svg;	
 }
 
 sub throw_ua {

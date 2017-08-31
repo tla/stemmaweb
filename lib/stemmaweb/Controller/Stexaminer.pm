@@ -4,7 +4,7 @@ use namespace::autoclean;
 use Encode qw/ decode_utf8 /;
 use File::Temp;
 use JSON;
-use stemmaweb::Controller::Util qw/ load_old_tradition load_stemma json_error /;
+use stemmaweb::Controller::Util qw/ load_stemma json_error /;
 use Text::Tradition::Analysis qw/ run_analysis wit_stringify /;
 use Text::Tradition::Stemma;
 use TryCatch;
@@ -56,7 +56,7 @@ sub index :Path :Args(2) {
 		$c->stash->{text_id} = $textid;
 	} else {
 		# Load our old-fashioned tradition object
-		my $tradition = load_old_tradition( $c, $textid );
+		my $tradition = load_tradition( $c, $textid );
 		my $stemmadata = $m->ajax('get', "/tradition/$textid/stemma/$stemid");
 		my $stemma = load_stemma($stemmadata);
 		$tradition->clear_stemmata;
