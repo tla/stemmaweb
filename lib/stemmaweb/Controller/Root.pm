@@ -206,9 +206,8 @@ Returns information about a particular text.
 
 sub textinfo :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
-	my( $textinfo, $ok ) = load_tradition( $c, $textid );
-	return unless $ok;
-
+	my $textinfo = load_tradition( $c, $textid );
+	my $ok = $textinfo->{permission};
 	my $m = $c->model('Directory');
 	# Update information if we have been asked to
 	if( $c->req->method eq 'POST' ) {
@@ -229,7 +228,7 @@ sub textinfo :Local :Args(1) {
 	      return json_error( $c, $e->status, $e->message );
 	    }
   	} elsif ($c->req->method ne 'GET') {
-    	return json_error($c, 400, "Disallowed HTTP method " . $c->req->method);
+    	return json_error($c, 405, "Disallowed HTTP method " . $c->req->method);
   	}
 	# Add the witness information
 	my @witnesses = map { $_->{sigil} }
@@ -256,12 +255,12 @@ Deletes the tradition and all its data. Cannot be undone.
 
 sub delete :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
-	my( $textinfo, $ok ) = load_tradition( $c, $textid );
+	my $textinfo = load_tradition( $c, $textid );
 	return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
 		unless $c->req->method eq 'POST';
 	return json_error( $c, 403,
 		'You do not have permission to delete this tradition' )
-		unless $ok eq 'full';
+		unless $textinfo->{permission} eq 'full';
 
 	# At this point you had better be sure.
 	try {
@@ -283,9 +282,7 @@ Returns the variant graph for the text specified at $textid, in SVG form.
 
 sub variantgraph :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
-	my( $textinfo, $ok ) = load_tradition( $c, $textid );
-	return unless $ok;
-
+	my $textinfo = load_tradition( $c, $textid );
 	$c->stash->{result} = $c->model('Directory')->tradition_as_svg($textinfo->{id});
 	$c->forward('View::SVG');
 }
@@ -301,8 +298,7 @@ Returns a file for download of the tradition in the requested format.
 
 sub download :Local :Args(2) {
 	my( $self, $c, $textid, $format ) = @_;
-	my( $textinfo, $ok ) = load_tradition( $c, $textid );
-	return unless $ok;
+	my $textinfo = load_tradition( $c, $textid );
   	## Available formats are graphml, json, csv, tsv, dot. Dot -> SVG
 
 	my $view = $format eq 'dot' ? 'View::Plain' : "View::$format";
