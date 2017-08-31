@@ -154,4 +154,24 @@ my $t5data = [
 ];
 $res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t5data);
 die errorout("RTL test tradition could not be created", $res) unless $res->code == 201;
+
+# 6. A multi-section tradition
+my $t6data = [
+  name => 'section test',
+  direction => 'LR',
+  filetype => 'stemmaweb',
+  language => 'Latin',
+  userId => 'user@example.org',
+  file => ['t/data/legendfrag.xml']
+];
+$res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t6data);
+die errorout("First half of multi-section tradition could not be created", $res) unless $res->code == 201;
+my $t6id = from_json($res->decoded_content)->{'tradid'};
+$t6data = [
+  name => 'section test',
+  filetype => 'stemmaweb',
+  file => ['t/data/lf2.xml']
+];
+$res = $ua->post( "$n4jurl/tradition/$t6id/section", 'Content-Type' => 'form-data', Content => $t6data);
+die errorout("Second half of multi-section tradition could not be created", $res) unless $res->code == 201;
 say("Test data setup complete.")
