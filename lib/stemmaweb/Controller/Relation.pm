@@ -4,7 +4,7 @@ use Moose;
 use Moose::Util::TypeConstraints qw/ find_type_constraint /;
 use Module::Load;
 use namespace::autoclean;
-use stemmaweb::Util qw/ load_tradition json_error generate_svg /;
+use stemmaweb::Controller::Util qw/ load_tradition json_error generate_svg /;
 use TryCatch;
 
 BEGIN { extends 'Catalyst::Controller' }
@@ -36,41 +36,45 @@ sub index :Path :Args(0) {
 # ...and here is the tradition lookup and ACL check...
 sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	my( $self, $c, $textid ) = @_;
-	my ($textinfo, $ok) = load_tradition( $c, $textid );
+	my $textinfo = load_tradition( $c, $textid );
 	
 	$c->stash->{'textid'} = $textid;
 	$c->stash->{'tradition'} = $textinfo;
-	$c->stash->{'permission'} = $ok;
 }
 
-# ...and here is the determination of which section we are loading...
+# Redirect a request for the text itself into a request for the first section.
 sub getsections :Chained('text') :PathPart('') :Args(0) {
-	my( $self, $c )  @_;
-	my $textid = $c->stash->{textid};
-	
-	my $sections;
+	my( $self, $c ) = @_;
+	my $textid = $c->stash->{textid};	
+	# Redirect this to the first section.
+	my $first = $c->stash->{tradition}->{textsections}->[0]->{id};
+	$c->res->redirect($c->url_for(sprintf("/relation/%s/%s", $textid, $first)));
+}
+
+# Here is the action for when a section has been explicitly specified.
+sub section :Chained('text') :PathPart('') :CaptureArgs(1) {
+	my( $self, $c, $sectionid ) = @_;
+	my $section;
 	try {
-		$sections = $m->ajax('get', sprintf('/tradition/%s/sections', 
-		$c->stash->{textid}));
+		$section = $c->model('Directory')->ajax('get', sprintf('/tradition/%s/section/%s',
+			$c->stash->{textid}, $sectionid));
 	} catch( stemmaweb::Error $e ) {
 		return json_error( $c, $e->status, $e->message );
 	}
-	$c->stash->{'textsections'} = [];
-	foreach my $s ( @$sections ) {
-		my $seg = { 'start' => $s->{id}, 'display' => $s->{name} };
-		push( @{$c->stash->{'textsections'}}, $seg );
-	}
-	# Send the request on to main, loading the first section.
-	my $first = $sections->[0]->{id};
-	return main( $self, $c, $first );
+
+	$c->stash->{sectid} = $sectionid;
+	$c->stash->{section} = $section;
 }
 
 # ...and here is the page variable initialisation with whichever section
 # was requested.
-sub main :Chained('text') :PathPart('section') :Args(1) {
+sub main :Chained('section') :Args(0) {
 	my( $self, $c, $sectid ) = @_;
 	my $m = $c->model('Directory');
 	my $tradition = delete $c->stash->{'tradition'};
+	if( $c->request->method ne 'GET' ) {
+		json_error( $c, 405, "Use GET instead");
+	}
 
 	# Stash text direction to use in JS.
 	$c->stash->{'direction'} = $tradition->{direction} || 'BI';
@@ -92,7 +96,7 @@ sub main :Chained('text') :PathPart('section') :Args(1) {
 	$c->stash->{'relationship_types'} = to_json( $reltypeinfo );
 	
 	# Spit out the SVG
-	$c->stash->{'svg_string'} = generate_svg( $c, $tradition->{id}, $sectid )
+	$c->stash->{'svg_string'} = generate_svg( $c ); # $c contains text & section info
 	# and the rest of the bits of info we need.	
 	$c->stash->{'text_title'} = $tradition->{name};
 	$c->stash->{'text_lang'} = $tradition->{language} || 'Default';
@@ -147,6 +151,7 @@ should be removed in [source_id, target_id] tuple form.
 sub relationships :Chained('text') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $textid = $c->stash->{textid};
+	my $sectid = $c->stash->{sectid};
 	my $m = $c->model('Directory');
 	if( $c->request->method eq 'GET' ) {
 # 		my @pairs = $collation->relationships; # returns the edges
@@ -169,13 +174,13 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 # 		}
 		try {
 			$c->stash->{'result'} = 
-				$m->ajax('get', "/tradition/$textid/relationships");
+				$m->ajax('get', "/tradition/$textid/section/$sectid/relationships");
 		} catch (stemmaweb::Error $e ) {
 				return json_error( $c, $e->status, $e->message );
 		}
 	} else {
 		# Check write permissions first of all
-		if( $c->stash->{'permission'} ne 'full' ) {
+		if( $c->stash->{tradition}->{permission} ne 'full' ) {
 			json_error( $c, 403, 
 				'You do not have permission to modify this tradition.' );
 		} elsif( $c->request->method eq 'POST' ) {
@@ -197,9 +202,9 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 			
 			try {
 				$c->stash->{'result'} = $m->ajax('post', 
-					"/tradition/$textid/relation", 
+					"/tradition/$textid/section/$sectid/relation", 
 					'Content-Type' => 'application/json',
-					'Content' => to_json( $opts );
+					'Content' => to_json( $opts ));
 			} catch (stemmaweb::Error $e ) {
 				return json_error( $c, $e->status, $e->message );
 			}
@@ -222,17 +227,19 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 				my $opts = {
 					source => $c->request->param('source_id'),
 					target => $c->request->param('target_id'),
-					scope => $scopewide : 'document' : 'local'
+					scope => $scopewide ? 'document' : 'local'
 				};
 				try {
-					$c->stash->{result} = $m->ajax( 'delete,
-						"/tradition/$textid/relation', 
+					$c->stash->{result} = $m->ajax( 'delete',
+						"/tradition/$textid/section/$sectid/relation", 
 						'Content-Type' => 'application/json',
 						'Content' => to_json( $opts ) );
 				} catch (stemmaweb::Error $e ) {
 					return json_error( $c, $e->status, $e->message );
 				}
 			}
+		} else {
+			json_error( $c, 405, "You can GET, POST, or DELETE");			
 		}
 	}
 	$c->forward('View::JSON');
@@ -301,10 +308,14 @@ sub _reading_struct {
 
 sub readings :Chained('text') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
+	if( $c->request->method ne 'GET' ) {
+		json_error( $c, 405, "Use GET instead");
+	}
 	my $textid = $c->stash->{'textid'};
+	my $sectid = $c->stash->{'sectid'};
 	my $m = $c->model('Directory');
 	try {
-		$c->stash->{'result'} = $m->ajax('get', "/tradition/$textid/readings");
+		$c->stash->{'result'} = $m->ajax('get', "/tradition/$textid/section/$sectid/readings");
 	} catch (stemmaweb::Error $e ) {
 			return json_error( $c, $e->status, $e->message );
 	}
@@ -341,11 +352,13 @@ sub reading :Chained('text') :PathPart :Args(1) {
 		return json_error( $c, $e->status, $e->message );
 	}
 	if( $c->request->method eq 'GET' ) {
-	} elsif ( $c->request->method eq 'POST' ) {
+		$c->stash->{'result'} = $orig_reading;
+	} elsif ( $c->request->method eq 'PUT' ) {
 		# Auth check
-		if( $c->stash->{'permission'} ne 'full' ) {
+		if( $c->stash->{'tradition'}->{'permission'} ne 'full' ) {
 			json_error( $c, 403, 
 				'You do not have permission to modify this tradition.' );
+		}
 				
 		# Assemble the properties
 		my $changed_props = [];
@@ -359,9 +372,9 @@ sub reading :Chained('text') :PathPart :Args(1) {
 		# Change the reading
 		my $reading;
 		try {
-			$reading = ( 'put', '/reading/$reading_id',
+			$reading = { 'put', "/reading/$reading_id",
 				'Content-Type' => 'application/json',
-				'Content' => to_json( $changed_props ) );
+				'Content' => to_json( $changed_props ) };
 		} catch (stemmaweb::Error $e ) {
 			return json_error( $c, $e->status, $e->message );
 		}	
@@ -370,11 +383,13 @@ sub reading :Chained('text') :PathPart :Args(1) {
 		# Check for side effects from the changes
 		foreach my $k (keys %has_side_effect) {
 			if( $reading->{$k} ne $orig_reading->{$k} ) {
-				my $handler = $has_side_effect{$k}
-				\$handler($reading, $changed);
+				my $handler = $has_side_effect{$k};
+				&$handler($reading, $changed);
 			}
 		}
 		$c->stash->{result} = [ values( %$changed ) ];
+	} else {
+		json_error( $c, 405, "You can GET or PUT");		
 	}
 	$c->forward('View::JSON');
 }
@@ -399,9 +414,10 @@ sub compress :Chained('text') :PathPart :Args(0) {
 	my $m = $c->model('Directory');
 	if( $c->request->method eq 'POST' ) {
 		# Auth check
-		if( $c->stash->{'permission'} ne 'full' ) {
+		if( $c->stash->{'tradition'}->{'permission'} ne 'full' ) {
 			json_error( $c, 403, 
 				'You do not have permission to modify this tradition.' );
+		}
 		
 		my @rids = $c->request->param('readings[]');
 		my $first = shift @rids;
@@ -417,14 +433,16 @@ sub compress :Chained('text') :PathPart :Args(0) {
 		} catch (stemmaweb::Error $e ) {
 			# If we have merged anything we should say so in the
 			# response, but note a warning too.
-			if( scalar(@nodes) == 1 ) {
-				return json_error( $c, $e->status, $e->message );
+			return json_error( $c, $e->status, $e->message )
+				if scalar(@nodes) == 1;
 			$result->{success} = 0;
 			$result->{warning} = $e->message;
 		}
 		
 		$result->{nodes} = \@nodes;
 		$c->forward('View::JSON');
+	} else {
+		json_error( $c, 405, "Use POST instead");		
 	}
 }
 
@@ -435,9 +453,9 @@ sub compress :Chained('text') :PathPart :Args(0) {
 Accepts form data identical to the ../relationships POST call, with one extra
 Boolean parameter 'single'.
 Merges the requested readings, combining the witnesses of both readings into
-the target reading. All relationships of the source reading must be transferred
-to the target reading; this is the responsibility of the client. On success
-returns a JSON object that looks like this:
+the target reading. All relationships of the source reading will be transferred
+to the target reading; visualising this is the responsibility of the client. On 
+success returns a JSON object that looks like this:
 
   {"status":"ok",
    "checkalign":[["n135","n130"],
@@ -454,73 +472,52 @@ sub merge :Chained('text') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $m = $c->model('Directory');
 	my $textid = $c->stash->{textid};
+	my $sectid = $c->stash->{sectid};
 	if( $c->request->method eq 'POST' ) {
 		# Auth check
-		if( $c->stash->{'permission'} ne 'full' ) {
+		if( $c->stash->{'tradition'}->{'permission'} ne 'full' ) {
 			json_error( $c, 403, 
 				'You do not have permission to modify this tradition.' );
+		}
 		
 		my $errmsg;
 		my $response;
 		
 		my $main = $c->request->param('target_id');
 		my $second = $c->request->param('source_id');
-		my $section_info;
+		my $endrank = $c->stash->{section}->{'endRank'};
 		my $rdg_rank;
 		try {
-			my $main_info = $m->ajax('get', '/reading/$main');
-			my $second_info = $m->ajax('get', '/reading/$second');
-			$rdg_rank = $main_info->{rank} > $second_info->{$rank}
-				? $main_info->{rank} : $second_info->{$rank};
-			$section_info = $m->ajax('get', '/tradition/$textid/
-			$m->ajax('/reading/$main/merge/$second')
-		} catch (stemmaweb::Error $e ) {
+			my $main_info = $m->ajax('get', "/reading/$main");
+			my $second_info = $m->ajax('get', "/reading/$second");
+			$rdg_rank = $main_info->{rank} > $second_info->{rank}
+				? $main_info->{rank} : $second_info->{rank};
+			$m->ajax("/reading/$main/merge/$second");
+		} catch (stemmaweb::Error $e) {
 			return json_error( $c, $e->status, $e->message );
 		}
 		
 		my $result = { status => 'ok' };
 		
 		# Now look for any mergeable readings on the tradition.
+		my $mergeable;
 		try {
-			my $mergeable = $m->ajax('/tradition/$textid/mergeablereadings/
-		
-		# Find the common successor of these, so that we can detect other
-		# potentially identical readings.
-		my $csucc = $collation->common_successor( $main, $second );
-
-		# Try the merge if these are parallel readings.
-		if( $csucc->id eq $main || $csucc->id eq $second ) {
-			$errmsg = "Cannot merge readings in the same path";
-		} else {
-			try {
-				$collation->merge_readings( $main, $second );
-			} catch( Text::Tradition::Error $e ) {
-				$c->response->status( '403' );
-				$errmsg = $e->message;
-			} catch {
-				# Something else went wrong, probably a Moose error
-				$c->response->status( '403' );
-				$errmsg = 'Something went wrong with the request';	
-			}
+			$mergeable = $m->ajax("/tradition/$textid/section/$sectid/mergeablereadings/$rdg_rank/$endrank");
+		} catch (stemmaweb::Error $e ) {
+			return json_error( $c, $e->status, $e->message );
 		}
 		
 		# Look for readings that are now identical.
-		if( $errmsg ) {
-			$response = { status => 'error', error => $errmsg };
-		} else {
-			$response = { status => 'ok' };
-			unless( $c->request->param('single') ) {
-				my @identical = $collation->identical_readings(
-					start => $main, end => $csucc->id );
-				if( @identical ) {
-					$response->{'checkalign'} = [ 
-						map { [ $_->[0]->id, $_->[1]->id ] } @identical ];
-				}
+		$response = { status => 'ok' };
+		unless( $c->request->param('single') ) {
+			if( @$mergeable ) {
+				$response->{'checkalign'} = $mergeable;
 			}
-			$m->save( $collation );
 		}
 		$c->stash->{'result'} = $response;
 		$c->forward('View::JSON');			
+	} else {
+		json_error( $c, 405, "Use POST instead");		
 	}
 }
 
@@ -549,129 +546,95 @@ should be removed from the graph. For example:
 
 sub duplicate :Chained('text') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
-	my $tradition = delete $c->stash->{'tradition'};
-	my $collation = $tradition->collation;
 	my $m = $c->model('Directory');
+	my $textid = $c->stash->{textid};
 	if( $c->request->method eq 'POST' ) {
-		if( $c->stash->{'permission'} ne 'full' ) {
-			$c->response->status( '403' );
-			$c->stash->{'result'} = { 
-				'error' => 'You do not have permission to modify this tradition.' };
-			$c->detach('View::JSON');
-			return;
+		# Auth check
+		if( $c->stash->{'tradition'}->{'permission'} ne 'full' ) {
+			json_error( $c, 403, 
+				'You do not have permission to modify this tradition.' );
 		}
-		my $errmsg;
-		my $response = {};
+		
 		# Sort out which readings need to be duplicated from the set given, and
 		# ensure that all the given wits bear each relevant reading.
+		my @readings;
+		foreach my $rid ($c->request->param('readings[]')) {
+			try {
+				my $rdginfo = $m->ajax('get', "/reading/$rid");
+				$rdginfo->{witnesses} = $m->ajax('get', "/reading/$rid/witnesses");
+				push( @readings, $rdginfo );
+			} catch (stemmaweb::Error $e ) {
+				return json_error( $c, $e->status, $e->message );
+			}
+		}
 		
 		my %wits = ();
 		map { $wits{$_} = 1 } $c->request->param('witnesses[]');
 		my %rdgranks = ();
-		foreach my $rid ( $c->request->param('readings[]') ) {
+		foreach my $rdg ( @readings ) {
+			my $rid = $rdg->{id};
 			my $numwits = 0;
-			my $rdg = $collation->reading( $rid );
-			foreach my $rwit ( $rdg->witnesses( $rid ) ) {
+			foreach my $rwit ( @{$rdg->{witnesses}} ) {
 				$numwits++ if exists $wits{$rwit};
 			}
 			next unless $numwits; # Disregard readings with none of our witnesses
 			if( $numwits < keys( %wits ) ) {
-				$errmsg = "Reading $rid contains some but not all of the specified witnesses.";
-				last;
-			} elsif( exists $rdgranks{ $rdg->rank } ) {
-				$errmsg = "More than one reading would be detached along with $rid at rank " . $rdg->rank;
-				last;
+				# TODO decide if this should really be an error
+				json_error( $c, 400, "Reading $rid contains some but not all of the specified witnesses." );
+			} elsif( exists $rdgranks{ $rdg->{rank} } ) {
+				json_error( $c, 400, "More than one reading would be detached along with $rid at rank " . $rdg->{rank} );
 			} else {
-				$rdgranks{ $rdg->rank } = $rid;
+				$rdgranks{ $rdg->{rank} } = $rid;
 			}
 		}
 		
 		# Now check that the readings make a single sequence.
-		unless( $errmsg ) {
-			my $prior;
-			foreach my $rank ( sort { $a <=> $b } keys %rdgranks ) {
-				my $rid = $rdgranks{$rank};
-				if( $prior ) {
-					# Check that there is only one path between $prior and $rdg.
-					foreach my $wit ( keys %wits ) {
-						unless( $collation->prior_reading( $rid, $wit ) eq $prior ) {
-							$errmsg = "Diverging witness paths from $prior to $rid at $wit";
-							last;
-						}
-					}
-				}
-				$prior = $rid;
-			}
-		}
-		
-		# Abort if we've run into a problem.
-		if( $errmsg ) {
-			$c->stash->{'result'} = { 'error' => $errmsg };
-			$c->response->status( '403' );
-			$c->forward('View::JSON');
-			return;
-		}
-		
-		# Otherwise, do the dirty work.
-		my @witlist = keys %wits;
-		my @deleted_relations;
+		my $prior;
 		foreach my $rank ( sort { $a <=> $b } keys %rdgranks ) {
-			my $newrdg;
-			my $reading_id = $rdgranks{$rank};
-			my @delrels;
-			try {
-				( $newrdg, @delrels ) = 
-					$collation->duplicate_reading( $reading_id, @witlist );
-			} catch( Text::Tradition::Error $e ) {
-				$c->response->status( '403' );
-				$errmsg = $e->message;
-			} catch {
-				# Something else went wrong, probably a Moose error
-				$c->response->status( '500' );
-				$errmsg = 'Something went wrong with the request';	
+			my $rid = $rdgranks{$rank};
+			if( $prior ) {
+				# Check that there is only one path between $prior and $rdg.
+				foreach my $wit ( keys %wits ) {
+					my $prdg;
+					try {
+						$prdg = $m->ajax('get', "/reading/$rid/prior/$wit");
+					} catch (stemmaweb::Error $e) {
+						json_error( $c, $e->status, $e->message );
+					}
+					json_error( $c, 400, "Diverging witness paths from $prior to $rid at $wit")
+						unless $prdg->{id} eq $prior;
+				}
 			}
-			if( $newrdg ) {
-				my $data = _reading_struct( $newrdg );
-				$data->{'orig_rdg'} = $reading_id;
-				$response->{"$newrdg"} = $data;
-				push( @deleted_relations, @delrels );
-			}
-		} 
-		if( $errmsg ) {
-			$c->stash->{'result'} = { 'error' => $errmsg };
-		} else {
-			$m->save( $collation );
-			$response->{'DELETED'} = \@deleted_relations;
-			$c->stash->{'result'} = $response;
+			$prior = $rid;
 		}
+				
+		# If we got this far, do the deed.
+		my $url = sprintf("/reading/%s/duplicate", $readings[0]->{id});
+		my $req = {
+			readings => $c->request->param('readings[]'),
+			witnesses => $c->request->param('witnesses[]')
+		};
+		my $response;
+		try {
+			$response = $m->ajax('post', $url, 
+				'Content-Type' => 'application/json', 
+				'Content' => to_json($req));
+		} catch (stemmaweb::Error $e) {
+			json_error( $c, $e->status, $e->message );
+		}
+		
+		# Massage the response into the expected form.
+		$c->stash->{result} = {DELETED => $response->{relationships}};
+		foreach my $r (@{$response->{readings}}) {
+			$c->stash->{result}->{$r->{id}} = $r;
+		}
+	} else {
+		json_error( $c, 405, "Use POST instead");		
 	}
 	$c->forward('View::JSON');
 }
 
 
-
-sub _check_permission {
-	my( $c, $tradition ) = @_;
-    my $user = $c->user_exists ? $c->user->get_object : undef;
-    # Does this user have access?
-    if( $user ) {
-   		if( $user->is_admin || 
-    			( $tradition->has_user && $tradition->user->id eq $user->id ) ) {
-			$c->stash->{'permission'} = 'full';
-			return 1;
-		}
-    } 
-    # Is it public?
-    if( $tradition->public ) {
-    	$c->stash->{'permission'} = 'readonly';
-    	return 1;
-    } 
-	# Forbidden!
-	$c->response->status( 403 );
-	$c->response->body( 'You do not have permission to view this tradition.' );
-	$c->detach( 'View::Plain' );
-	return 0;
-}
 
 sub _clean_booleans {
 	my( $obj, $param, $val ) = @_;

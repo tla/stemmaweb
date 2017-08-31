@@ -44,14 +44,21 @@ sub _check_permission {
 # Helper to load and check the permissions on a tradition
 sub load_tradition {
 	my( $c, $textid ) = @_;
+	my $m = $c->model('Directory');
 	my $textinfo;
+	my $sections;
 	try {
-		$textinfo = $c->model('Directory')->ajax('get', "/tradition/$textid");
+		$textinfo = $m->ajax('get', "/tradition/$textid");
+		$sections = $m->ajax('get', "/tradition/$textid/sections");
 	} catch( stemmaweb::Error $e ) {
 			return json_error( $c, $e->status, $e->message );
 	}
-	my $ok = _check_permission( $c, $textinfo );
-	return( $textinfo, $ok );
+	foreach my $s ( @$sections ) {
+		my $sect = { 'start' => $s->{id}, 'display' => $s->{name} };
+		push( @{$c->stash->{'textsections'}}, $sect );
+	}
+	$textinfo->{permission} = _check_permission( $c, $textinfo );
+	return $textinfo;
 }
 
 sub load_stemma {
@@ -109,12 +116,15 @@ sub _dot_attr_string {
 # Get (and parse) the GraphML directly, to turn it into the sort of graph we need for the
 # relationship mapper.
 sub generate_svg {
-	my( $c, $textid, $sectionid ) = @_;
+	my $c = shift;
 	my $m = $c->model('Directory');
-	my( $graph, $textinfo );
+	my $textid = $c->stash->{textid};
+	my $sectid = $c->stash->{sectid};
+	my $textinfo = $c->stash->{tradition};
+	my $sectinfo = $c->stash->{section};
+	my $graph;
 	try {
-		$textinfo = $m->ajax('get', "/tradition/$textid");
-		my $graphml = $m->ajax('get', "/tradition/$textid/section/$sectionid/graphml?include_witnesses=true");
+		my $graphml = $m->ajax('get', "/tradition/$textid/section/$sectid/graphml?include_witnesses=true");
 		my $parser = XML::LibXML->new();
 		$graph = $parser->parse_string( $graphml )->documentElement();
 	} catch (stemmaweb::Error $e) {
@@ -145,8 +155,8 @@ sub generate_svg {
         }
     }
 	
-	# Name the graph
-    my $graph_name = $textinfo->{name};
+	# Name the graph - use section name if it exists.
+    my $graph_name = $sectinfo->{name} || $textinfo->{name}; 
     $graph_name =~ s/[^\w\s]//g;
     $graph_name = join( '_', split( /\s+/, $graph_name ) );
 
@@ -173,12 +183,8 @@ sub generate_svg {
     $dot .= "\tgraph " . _dot_attr_string( \%graph_attrs ) . ";\n";
     $dot .= "\tnode " . _dot_attr_string( \%node_attrs ) . ";\n";
 
-    # Output substitute start/end readings if necessary
-	my $xpendrank = sprintf('//g:data[@key="%s"]/../g:data[@key="%s"]/text()', 
-		$nodedata->{is_end}, $nodedata->{rank});
-	my $endrank = $xpc->findvalue($xpendrank);
-	my $STRAIGHTENHACK = $endrank > 50;
-	
+    # Horrible hack to render long graphs relatively straight
+	my $STRAIGHTENHACK = $sectinfo->{endRank} > 50;
 	if( $STRAIGHTENHACK ) {
 		## HACK part 1
 		$dot .= "\tsubgraph { rank=same \"__START__\" \"#SILENT#\" }\n";  
@@ -200,7 +206,7 @@ sub generate_svg {
     	}
         $label =~ s/\"/\\\"/g;
 		my $rattrs = { label => $label, id => $rid };
-		$rattrs->{'fillcolor'} = '#b3f36d' if _nodeprop($nodedata, $xpc, $reading, 'is_common');
+		$rattrs->{'fillcolor'} = '#b3f36d' if _nodeprop($nodedata, $xpc, $reading, 'is_common') ne 'false';
         $dot .= sprintf( "\t\"%s\" %s;\n", $rid, _dot_attr_string( $rattrs ) );
     }
     
@@ -239,8 +245,7 @@ sub generate_svg {
     
 	# HACK part 2
 	if( $STRAIGHTENHACK ) {
-		my $endlabel = $endrank ? '__SUBEND__' : '__END__';
-		$dot .= "\t\"$endlabel\" -> \"#SILENT#\" [ color=white,penwidth=0 ];\n";
+		$dot .= "\t\"__END__\" -> \"#SILENT#\" [ color=white,penwidth=0 ];\n";
 	}       
 
     $dot .= "}\n";
