@@ -41,9 +41,9 @@ $(document).ready(function () {
 		<h1>Relationship mapper</h1>
 		<h2>[% text_title %]</h2>
 		<div id="segmentation">
-[% FOREACH section IN tradition.sections -%]
+[% FOREACH section IN sections -%]
 [% IF section.id != sectid -%]
-			<a href="[% c.uri_for( "/relation/$textid" ) %]?start=[% segment.start %]">
+			<a href="[% c.uri_for( "/relation/$textid" ) %]/[% section.id %]">
 				<span class="segment_guide">[% section.name %]</span>
 			</a>
 [% ELSE -%]

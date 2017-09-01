@@ -41,7 +41,6 @@ sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 sub firstsection :Chained('text') :PathPart('') :Args(0) {
 	my( $self, $c ) = @_;
 	my $textid = $c->stash->{textid};	
-	$DB::single = 1;
 	# Redirect this to the first section.
 	my $first = $c->stash->{tradition}->{sections}->[0]->{id};
 	$c->res->redirect($c->uri_for(sprintf("/relation/%s/%s", $textid, $first)));
@@ -79,21 +78,22 @@ sub main :Chained('section') :PathPart('') :Args(0) {
 	$c->stash->{'relationship_scopes'} = to_json([ qw(local document) ]);
 	$c->stash->{'ternary_values'} = to_json([ qw(yes maybe no) ]);
 	my $reltypeinfo = [
-		{ 'orthographic' => 'These are the same reading, neither unusually spelled.' },
-		{ 'punctuation' => 'These are the same reading apart from punctuation.' },
-		{ 'spelling' => 'These are the same reading, spelled differently.' },
-		{ 'grammatical' => 'These readings share a root (lemma), but have different parts of speech (morphologies).' },
-		{ 'lexical' => 'These readings share a part of speech (morphology), but have different roots (lemmata).' },
-		{ 'uncertain' => 'These readings are related, but a clear category cannot be assigned.' },
-		{ 'other' => 'These readings are related in a way not covered by the existing types.' },
-		{ 'transposition' => 'This is the same (or nearly the same) reading in a different location.' },
-		{ 'repetition' => 'This is a reading that was repeated in one or more witnesses.' },
+		{ name => 'orthographic', description => 'These are the same reading, neither unusually spelled.' },
+		{ name => 'punctuation', description  => 'These are the same reading apart from punctuation.' },
+		{ name => 'spelling', description  => 'These are the same reading, spelled differently.' },
+		{ name => 'grammatical', description  => 'These readings share a root (lemma), but have different parts of speech (morphologies).' },
+		{ name => 'lexical', description  => 'These readings share a part of speech (morphology), but have different roots (lemmata).' },
+		{ name => 'uncertain', description  => 'These readings are related, but a clear category cannot be assigned.' },
+		{ name => 'other', description  => 'These readings are related in a way not covered by the existing types.' },
+		{ name => 'transposition', description  => 'This is the same (or nearly the same) reading in a different location.' },
+		{ name => 'repetition', description => 'This is a reading that was repeated in one or more witnesses.' },
 	];
 	$c->stash->{'relationship_types'} = to_json( $reltypeinfo );
 	
 	# Get the basic info we need
 	$c->stash->{'text_title'} = $tradition->{name};
 	$c->stash->{'text_lang'} = $tradition->{language} || 'Default';
+	$c->stash->{'sections'} = $tradition->{sections};
 	# Spit out the SVG
 	my $svgstr = generate_svg( $c ); # $c contains text & section info
 	$svgstr =~ s/\n//gs;
@@ -296,7 +296,6 @@ sub _reading_struct {
 	my $m = $c->model('Directory');
 	my $rid = $reading->{id};
 	my $struct = {};
-	$DB::single = 1;
 	map { $struct->{$_} = $reading->{$_} } keys %read_write_keys;
 	
 	# Set known IDs on start/end nodes, that match what will be in the SVG

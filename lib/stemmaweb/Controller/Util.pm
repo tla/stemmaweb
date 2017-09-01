@@ -161,7 +161,6 @@ sub generate_svg {
     my %graph_attrs = (
         'bgcolor' => 'none',
     );
-	$DB::single = 1;
     unless( $c->stash->{direction} eq 'BI' ) {
         $graph_attrs{rankdir} = $c->stash->{direction};
     }
@@ -235,6 +234,8 @@ sub generate_svg {
 		# Account for the rank gap if necessary
 		my $rank0 = _nodeprop($nodedata, $xpc, $source, 'rank');
 		my $rank1 = _nodeprop($nodedata, $xpc, $target, 'rank');
+		$rank0 = 0 if $sourceid eq '__START__';
+		$rank1 = $sectinfo->{endRank} if $targetid eq '__END__';
 		if( defined $rank0 && defined $rank1 && $rank1 - $rank0 > 1 ) {
 			$variables->{'minlen'} = $rank1 - $rank0;
 		}
