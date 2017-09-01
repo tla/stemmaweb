@@ -7,6 +7,7 @@
 // Load the text ID and the base path
 var basepath = "[% c.uri_for( '/relation/' ) %]";
 var textid = "[% textid %]";
+var sectid = "[% sectid %]";
 var can_morphologize = "[% can_morphologize %]";
 var editable = "[% permission %]" === "full";
 var text_direction = "[% direction %]";
@@ -34,19 +35,19 @@ $(document).ready(function () {
 [% END %]
 
   <div class="mainnav">
-	<span>[% IF c.user_exists %]Hello [% c.user.get_object.email %]! &nbsp; <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% END %]<a href="help/[% text_lang %]" title="Relationship mapper help" class="helptag navlink">Help / About</a> | <a href="[% c.uri_for( '/' ) %]?withtradition=[% textid %]" class="navlink">Return to index</a> </span>
+	<span>[% IF c.user_exists %]Hello [% c.user.get_object.email %]! &nbsp; <a class="navlink" href="[% c.uri_for( '/logout' ) %]">Sign out</a> | [% END %]<a href="help" title="Relationship mapper help" class="helptag navlink">Help / About</a> | <a href="[% c.uri_for( '/' ) %]?withtradition=[% textid %]" class="navlink">Return to index</a> </span>
    </div>
     <div id="topbanner">
 		<h1>Relationship mapper</h1>
 		<h2>[% text_title %]</h2>
 		<div id="segmentation">
-[% FOREACH segment IN textsegments -%]
-[% IF segment.start != startseg -%]
+[% FOREACH section IN tradition.sections -%]
+[% IF section.id != sectid -%]
 			<a href="[% c.uri_for( "/relation/$textid" ) %]?start=[% segment.start %]">
-				<span class="segment_guide">[% segment.display %]</span>
+				<span class="segment_guide">[% section.name %]</span>
 			</a>
 [% ELSE -%]
-			<span class="segment_guide selected">[% segment.display %]</span>
+			<span class="segment_guide selected">[% section.name %]</span>
 [% END -%]
 [% END -%]
 		</div>

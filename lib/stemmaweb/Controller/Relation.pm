@@ -27,28 +27,24 @@ Renders the application for the text identified by $textid.
 
 =cut
 
-# Here is the template...
-sub index :Path :Args(0) {
-	my( $self, $c ) = @_;
-	$c->stash->{'template'} = 'relate.tt';
-}
-
-# ...and here is the tradition lookup and ACL check...
+# Here is the tradition lookup and ACL check...
 sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	my( $self, $c, $textid ) = @_;
 	my $textinfo = load_tradition( $c, $textid );
 	
 	$c->stash->{'textid'} = $textid;
 	$c->stash->{'tradition'} = $textinfo;
+	$c->stash->{'permission'} = $textinfo->{permission};
 }
 
 # Redirect a request for the text itself into a request for the first section.
-sub getsections :Chained('text') :PathPart('') :Args(0) {
+sub firstsection :Chained('text') :PathPart('') :Args(0) {
 	my( $self, $c ) = @_;
 	my $textid = $c->stash->{textid};	
+	$DB::single = 1;
 	# Redirect this to the first section.
-	my $first = $c->stash->{tradition}->{textsections}->[0]->{id};
-	$c->res->redirect($c->url_for(sprintf("/relation/%s/%s", $textid, $first)));
+	my $first = $c->stash->{tradition}->{sections}->[0]->{id};
+	$c->res->redirect($c->uri_for(sprintf("/relation/%s/%s", $textid, $first)));
 }
 
 # Here is the action for when a section has been explicitly specified.
@@ -68,7 +64,7 @@ sub section :Chained('text') :PathPart('') :CaptureArgs(1) {
 
 # ...and here is the page variable initialisation with whichever section
 # was requested.
-sub main :Chained('section') :Args(0) {
+sub main :Chained('section') :PathPart('') :Args(0) {
 	my( $self, $c, $sectid ) = @_;
 	my $m = $c->model('Directory');
 	my $tradition = delete $c->stash->{'tradition'};
@@ -95,12 +91,16 @@ sub main :Chained('section') :Args(0) {
 	];
 	$c->stash->{'relationship_types'} = to_json( $reltypeinfo );
 	
-	# Spit out the SVG
-	$c->stash->{'svg_string'} = generate_svg( $c ); # $c contains text & section info
-	# and the rest of the bits of info we need.	
+	# Get the basic info we need
 	$c->stash->{'text_title'} = $tradition->{name};
 	$c->stash->{'text_lang'} = $tradition->{language} || 'Default';
+	# Spit out the SVG
+	my $svgstr = generate_svg( $c ); # $c contains text & section info
+	$svgstr =~ s/\n//gs;
+	$c->stash->{'svg_string'} = $svgstr;
 	# $c->stash->{'can_morphologize'} = $tradition->{language} ne 'Default';
+	# Set the template for the page load
+	$c->stash->{'template'} = 'relate.tt';
 }
 
 =head2 help
@@ -148,7 +148,7 @@ should be removed in [source_id, target_id] tuple form.
 
 =cut
 
-sub relationships :Chained('text') :PathPart :Args(0) {
+sub relationships :Chained('section') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $textid = $c->stash->{textid};
 	my $sectid = $c->stash->{sectid};
@@ -180,7 +180,7 @@ sub relationships :Chained('text') :PathPart :Args(0) {
 		}
 	} else {
 		# Check write permissions first of all
-		if( $c->stash->{tradition}->{permission} ne 'full' ) {
+		if( $c->stash->{permission} ne 'full' ) {
 			json_error( $c, 403, 
 				'You do not have permission to modify this tradition.' );
 		} elsif( $c->request->method eq 'POST' ) {
@@ -268,45 +268,65 @@ my %read_write_keys = (
 	'grammar_invalid' => 1,
 	'is_lemma' => 1,
 	'is_nonsense' => 1,
+	'lexemes' => 1,
 	'normal_form' => 1,
 );
 
 sub _lemma_change {
 	my( $reading, $changed ) = @_;
+	# No other reading at this rank should be a lemma now.
 }
 
 sub _normal_form_change {
 	my( $reading, $changed ) = @_;
+	# All spelling- or orthographic-related readings should have the same normal form.
+	# TODO generalise this somehow
 }
 
 my %has_side_effect = (
-	'is_lemma' => &_lemma_change,
-	'normal_form' => &_normal_form_change,
+	'is_lemma' => \&_lemma_change,
+	'normal_form' => \&_normal_form_change,
 );
 
 
-
+# Return a JSONable struct of the useful keys.  Keys meant to be writable
+# have a true value; read-only keys have a false value.
 sub _reading_struct {
-	my( $reading ) = @_;
-	# Return a JSONable struct of the useful keys.  Keys meant to be writable
-	# have a true value; read-only keys have a false value.
+	my( $c, $reading ) = @_;
+	my $m = $c->model('Directory');
+	my $rid = $reading->{id};
 	my $struct = {};
-	map { $struct->{$_} = _clean_booleans( $reading, $_, $reading->$_ )
-		if $reading->can( $_ ) } keys( %read_write_keys );
-	# Special case
-	$struct->{'lexemes'} = $reading->can( 'lexemes' ) ? [ $reading->lexemes ] : [];
-	# Look up any words related via spelling or orthography
-	my $sameword = sub { 
-		my $t = $_[0]->type;
-		return $t eq 'spelling' || $t eq 'orthographic';
-	};
+	$DB::single = 1;
+	map { $struct->{$_} = $reading->{$_} } keys %read_write_keys;
+	
+	# Set known IDs on start/end nodes, that match what will be in the SVG
+	$struct->{id} = '__START__' if $reading->{is_start} == JSON::true;
+	$struct->{id} = '__END__' if $reading->{is_end} == JSON::true;
+	
+	# Calculate is_meta
+	$struct->{is_meta} = $reading->{is_start} || $reading->{is_end} 
+		|| $reading->{is_lacuna} || $reading->{is_ph};
+	# Set the normal form if necessary
+	$struct->{normal_form} = $reading->{normal_form} || $reading->{text};
+	# Initialise the lexemes if necessary
+	$struct->{lexemes} = $reading->{lexemes} || [];
+	
 	# Now add the list data
-	$struct->{'variants'} = [ map { $_->text } $reading->related_readings( $sameword ) ];
-	$struct->{'witnesses'} = [ $reading->witnesses ];
+	my $variants;
+	my $witnesses;
+	try {
+		$variants = $m->ajax('get', "/reading/$rid/related?types=orthographic&types=spelling");
+		$witnesses = $m->ajax('get', "/reading/$rid/witnesses");
+	} catch (stemmaweb::Error $e ) {
+		return json_error( $c, $e->status, $e->message );
+	}
+	
+	$struct->{'variants'} = [ map { $_->{text} } @$variants ];
+	$struct->{'witnesses'} = $witnesses;
 	return $struct;
 }
 
-sub readings :Chained('text') :PathPart :Args(0) {
+sub readings :Chained('section') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	if( $c->request->method ne 'GET' ) {
 		json_error( $c, 405, "Use GET instead");
@@ -314,11 +334,19 @@ sub readings :Chained('text') :PathPart :Args(0) {
 	my $textid = $c->stash->{'textid'};
 	my $sectid = $c->stash->{'sectid'};
 	my $m = $c->model('Directory');
+	my $rdglist;
 	try {
-		$c->stash->{'result'} = $m->ajax('get', "/tradition/$textid/section/$sectid/readings");
+		$rdglist = $m->ajax('get', "/tradition/$textid/section/$sectid/readings");
 	} catch (stemmaweb::Error $e ) {
 			return json_error( $c, $e->status, $e->message );
 	}
+	# Get the extra information we need
+	my $ret = {};
+	foreach my $rdg (@$rdglist) {
+		my $struct = _reading_struct( $c, $rdg );
+		$ret->{$struct->{id}} = $struct;
+	}
+	$c->stash->{result} = $ret;
 	$c->forward('View::JSON');
 }
 
@@ -342,7 +370,7 @@ and updates the reading attributes as indicated.
 
 =cut
 
-sub reading :Chained('text') :PathPart :Args(1) {
+sub reading :Chained('section') :PathPart :Args(1) {
 	my( $self, $c, $reading_id ) = @_;
 	my $m = $c->model('Directory');
 	my $orig_reading;
@@ -355,7 +383,7 @@ sub reading :Chained('text') :PathPart :Args(1) {
 		$c->stash->{'result'} = $orig_reading;
 	} elsif ( $c->request->method eq 'PUT' ) {
 		# Auth check
-		if( $c->stash->{'tradition'}->{'permission'} ne 'full' ) {
+		if( $c->stash->{'permission'} ne 'full' ) {
 			json_error( $c, 403, 
 				'You do not have permission to modify this tradition.' );
 		}
@@ -384,7 +412,7 @@ sub reading :Chained('text') :PathPart :Args(1) {
 		foreach my $k (keys %has_side_effect) {
 			if( $reading->{$k} ne $orig_reading->{$k} ) {
 				my $handler = $has_side_effect{$k};
-				&$handler($reading, $changed);
+				$handler->($reading, $changed);
 			}
 		}
 		$c->stash->{result} = [ values( %$changed ) ];
@@ -409,12 +437,12 @@ On success returns a JSON object that looks like this:
 
 =cut
 
-sub compress :Chained('text') :PathPart :Args(0) {
+sub compress :Chained('section') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $m = $c->model('Directory');
 	if( $c->request->method eq 'POST' ) {
 		# Auth check
-		if( $c->stash->{'tradition'}->{'permission'} ne 'full' ) {
+		if( $c->stash->{'permission'} ne 'full' ) {
 			json_error( $c, 403, 
 				'You do not have permission to modify this tradition.' );
 		}
@@ -468,14 +496,14 @@ and that the user may want to merge in addition.
 
 =cut
 
-sub merge :Chained('text') :PathPart :Args(0) {
+sub merge :Chained('section') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $m = $c->model('Directory');
 	my $textid = $c->stash->{textid};
 	my $sectid = $c->stash->{sectid};
 	if( $c->request->method eq 'POST' ) {
 		# Auth check
-		if( $c->stash->{'tradition'}->{'permission'} ne 'full' ) {
+		if( $c->stash->{'permission'} ne 'full' ) {
 			json_error( $c, 403, 
 				'You do not have permission to modify this tradition.' );
 		}
@@ -544,13 +572,13 @@ should be removed from the graph. For example:
 
 =cut
 
-sub duplicate :Chained('text') :PathPart :Args(0) {
+sub duplicate :Chained('section') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $m = $c->model('Directory');
 	my $textid = $c->stash->{textid};
 	if( $c->request->method eq 'POST' ) {
 		# Auth check
-		if( $c->stash->{'tradition'}->{'permission'} ne 'full' ) {
+		if( $c->stash->{'permission'} ne 'full' ) {
 			json_error( $c, 403, 
 				'You do not have permission to modify this tradition.' );
 		}
@@ -634,18 +662,7 @@ sub duplicate :Chained('text') :PathPart :Args(0) {
 	$c->forward('View::JSON');
 }
 
-
-
-sub _clean_booleans {
-	my( $obj, $param, $val ) = @_;
-	return $val unless $obj->meta->get_attribute( $param );
-	if( $obj->meta->get_attribute( $param )->type_constraint->name eq 'Bool'
-		&& defined( $val ) ) {
-		$val = 1 if $val eq 'true';
-		$val = undef if $val eq 'false' || $val eq '0';
-	} 
-	return $val;
-}
+# TODO implement reading split in the UI
 
 =head2 end
 

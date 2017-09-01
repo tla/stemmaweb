@@ -24,11 +24,11 @@ function arrayUnique(array) {
 };
 
 function getTextURL( which ) {
-	return basepath + textid + '/' + which;
+	return basepath + textid + '/' + sectid + '/' + which;
 }
 
 function getReadingURL( reading_id ) {
-	return basepath + textid + '/reading/' + reading_id;
+	return basepath + textid + '/' + sectid + '/reading/' + reading_id;
 }
 
 // Make an XML ID into a valid selector
@@ -142,12 +142,6 @@ function color_inactive ( el ) {
 	if( reading_info ) {
 		if( reading_info['is_lemma'] ) {
 			$(el).attr( {stroke:'red', fill:'#f36d6f'} );
-		} else {
-			$.each( reading_info['lexemes'], function ( idx, lex ) {
-				if( !lex['is_disambiguated'] || lex['is_disambiguated'] == 0 ) {
-					$(el).attr( {stroke:'orange', fill:'#fee233'} );
-				}
-			});
 		}
 	}
 }
@@ -301,20 +295,20 @@ function add_relations( callback_fn ) {
 	$.getJSON( textrelpath, function(data) {
 		$.each(data, function( index, rel_info ) {
 			var type_index = $.inArray(rel_info.type, rel_types);
-			var source_found = get_ellipse( rel_info.source_id );
-			var target_found = get_ellipse( rel_info.target_id );
+			var source_found = get_ellipse( rel_info.source );
+			var target_found = get_ellipse( rel_info.target );
 			var emphasis = rel_info.is_significant;
 			if( type_index != -1 && source_found.size() && target_found.size() ) {
-				var relation = relation_manager.create( rel_info.source_id, rel_info.target_id, type_index, emphasis );
+				var relation = relation_manager.create( rel_info.source, rel_info.target, type_index, emphasis );
 				// Save the relationship data too.
 				$.each( rel_info, function( k, v ) {
 					relation.data( k, v );
 				});
 				if( editable ) {
-					var node_obj = get_node_obj(rel_info.source_id);
+					var node_obj = get_node_obj(rel_info.source);
 					node_obj.set_selectable( false );
 					node_obj.ellipse.data( 'node_obj', null );
-					node_obj = get_node_obj(rel_info.target_id);
+					node_obj = get_node_obj(rel_info.target);
 					node_obj.set_selectable( false );
 					node_obj.ellipse.data( 'node_obj', null );
 				}

@@ -49,13 +49,9 @@ sub load_tradition {
 	my $sections;
 	try {
 		$textinfo = $m->ajax('get', "/tradition/$textid");
-		$sections = $m->ajax('get', "/tradition/$textid/sections");
+		$textinfo->{sections} = $m->ajax('get', "/tradition/$textid/sections");
 	} catch( stemmaweb::Error $e ) {
 			return json_error( $c, $e->status, $e->message );
-	}
-	foreach my $s ( @$sections ) {
-		my $sect = { 'start' => $s->{id}, 'display' => $s->{name} };
-		push( @{$c->stash->{'textsections'}}, $sect );
 	}
 	$textinfo->{permission} = _check_permission( $c, $textinfo );
 	return $textinfo;
@@ -156,7 +152,8 @@ sub generate_svg {
     }
 	
 	# Name the graph - use section name if it exists.
-    my $graph_name = $sectinfo->{name} || $textinfo->{name}; 
+    my $graph_name = $sectinfo->{name} eq 'DEFAULT' 
+		? $c->stash->{text_title} : $sectinfo->{name}; 
     $graph_name =~ s/[^\w\s]//g;
     $graph_name = join( '_', split( /\s+/, $graph_name ) );
 
@@ -164,8 +161,9 @@ sub generate_svg {
     my %graph_attrs = (
         'bgcolor' => 'none',
     );
-    unless( $textinfo->{direction} eq 'BI' ) {
-        $graph_attrs{rankdir} = $textinfo->{direction};
+	$DB::single = 1;
+    unless( $c->stash->{direction} eq 'BI' ) {
+        $graph_attrs{rankdir} = $c->stash->{direction};
     }
     my %node_attrs = (
         'fontsize' => 14,
@@ -190,24 +188,29 @@ sub generate_svg {
 		$dot .= "\tsubgraph { rank=same \"__START__\" \"#SILENT#\" }\n";  
 		$dot .= "\t\"#SILENT#\" [ shape=diamond,color=white,penwidth=0,label=\"\" ];"
 	}
+
+	# We can't pass node metadata into the SVG beyond node ID. So we need to set a
+	# recognizable ID on the start and end nodes, so that we can identify them in the
+	# Javascript.
+	my %rlookup;  # Keep track of the readings whose IDs need to be recognisable
 	
 	# Now collect the reading nodes.
-	my %used;  # Keep track of the readings that actually appear in the graph
-	# Sort the readings by rank if we have ranks; this speeds layout.
 	my $xpreading = sprintf('//g:node[contains(./g:data[@key="%s"]/text(), "READING")]', 
 		$nodedata->{neolabel});
     foreach my $reading ( $xpc->findnodes($xpreading) ) {
 		my $rid = $reading->getAttribute('id');
-        $used{$rid} = 1;
         my $label = _nodeprop($nodedata, $xpc, $reading, 'text');
         unless( $label =~ /^[[:punct:]]+$/ ) {
 	        $label .= '-' if _nodeprop($nodedata, $xpc, $reading, 'join_next');
     	    $label = "-$label" if _nodeprop($nodedata, $xpc, $reading, 'join_prior');
     	}
+		$rlookup{$rid} = '__START__' if (_nodeprop($nodedata, $xpc, $reading, 'is_start'));
+		$rlookup{$rid} = '__END__' if (_nodeprop($nodedata, $xpc, $reading, 'is_end'));
         $label =~ s/\"/\\\"/g;
-		my $rattrs = { label => $label, id => $rid };
+		my $nid = $rlookup{$rid} || $rid;
+		my $rattrs = { label => $label, id => $nid };
 		$rattrs->{'fillcolor'} = '#b3f36d' if _nodeprop($nodedata, $xpc, $reading, 'is_common') ne 'false';
-        $dot .= sprintf( "\t\"%s\" %s;\n", $rid, _dot_attr_string( $rattrs ) );
+        $dot .= sprintf( "\t\"%s\" %s;\n", $nid, _dot_attr_string( $rattrs ) );
     }
     
 	# See how many witnesses we have, for edge labeling purposes.
@@ -221,6 +224,8 @@ sub generate_svg {
     foreach my $edge ( $xpc->findnodes($xprelation) ) {
 		my $sourceid = $edge->getAttribute('source');
 		my $targetid = $edge->getAttribute('target');
+		$sourceid = $rlookup{$sourceid} || $sourceid;
+		$targetid = $rlookup{$targetid} || $targetid;
 		my $source = $xpc->findnodes(sprintf('//g:node[@id="%s"]', $sourceid))->[0];
 		my $target = $xpc->findnodes(sprintf('//g:node[@id="%s"]', $targetid))->[0];
 		my ($count, @pathwits) = _path_witnesses( $edgedata, $xpc, $edge, $majority );
