@@ -200,14 +200,21 @@ sub relationships :Chained('section') :PathPart :Args(0) {
 			delete $opts->{is_significant} unless $opts->{is_significant};
 			# $opts->{propagate} = 1;
 			
+			my $result;
 			try {
-				$c->stash->{'result'} = $m->ajax('post', 
-					"/tradition/$textid/section/$sectid/relation", 
+				$result = $m->ajax('post', 
+					"/tradition/$textid/relation", 
 					'Content-Type' => 'application/json',
 					'Content' => to_json( $opts ));
 			} catch (stemmaweb::Error $e ) {
 				return json_error( $c, $e->status, $e->message );
 			}
+			
+			# TODO should any propagation be done?
+			# TODO should any normal forms be propagated?
+			# Massage the server result into what the JS expects
+			my @relpairs = map { [$_->{source}, $_->{target}, $_->{type}] } @{$result->{relationships}};
+			$c->stash->{result} = { relationships => \@relpairs, readings => $result->{readings}};
 			
 		} elsif( $c->request->method eq 'DELETE' ) {
 			# We can delete either by specifying the relationship or by
@@ -229,14 +236,17 @@ sub relationships :Chained('section') :PathPart :Args(0) {
 					target => $c->request->param('target_id'),
 					scope => $scopewide ? 'document' : 'local'
 				};
+				my $result;
 				try {
-					$c->stash->{result} = $m->ajax( 'delete',
-						"/tradition/$textid/section/$sectid/relation", 
+					$result = $m->ajax( 'delete',
+						"/tradition/$textid/relation", 
 						'Content-Type' => 'application/json',
 						'Content' => to_json( $opts ) );
 				} catch (stemmaweb::Error $e ) {
 					return json_error( $c, $e->status, $e->message );
 				}
+				my @relpairs = map { [$_->{source}, $_->{target}, $_->{type}] } @$result;
+				$c->stash->{result} = { relationships => \@relpairs };
 			}
 		} else {
 			json_error( $c, 405, "You can GET, POST, or DELETE");			

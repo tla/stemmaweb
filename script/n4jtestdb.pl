@@ -166,7 +166,7 @@ my $t6data = [
 ];
 $res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t6data);
 die errorout("First half of multi-section tradition could not be created", $res) unless $res->code == 201;
-my $t6id = from_json($res->decoded_content)->{'tradid'};
+my $t6id = from_json($res->decoded_content)->{'tradId'};
 $t6data = [
   name => 'section test',
   filetype => 'stemmaweb',

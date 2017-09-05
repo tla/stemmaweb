@@ -553,7 +553,7 @@ function path_element_class( svgpath_for_edge, out_edge ) {
       }
     },
     set: function(value_for_x) {
-      console.log( value_for_x );
+      // console.log( value_for_x );
       var path_data = svgpath_for_edge.getPathData();
       if( out_edge == true ) {
         var m_path = path_data[0];
@@ -577,7 +577,7 @@ function path_element_class( svgpath_for_edge, out_edge ) {
       }
     },
     set: function (value_for_y) {
-      console.log( value_for_y );
+      // console.log( value_for_y );
       var path_data = svgpath_for_edge.getPathData();
       if( out_edge == true ) {
         var m_path = path_data[0];
