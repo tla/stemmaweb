@@ -8,7 +8,6 @@
 var basepath = "[% c.uri_for( '/relation/' ) %]";
 var textid = "[% textid %]";
 var sectid = "[% sectid %]";
-var can_morphologize = "[% can_morphologize %]";
 var editable = "[% permission %]" === "full";
 var text_direction = "[% direction %]";
 // URLs for images referenced in Javascript
@@ -153,17 +152,8 @@ $(document).ready(function () {
 			<div id="normalization" class="morph">
 				<label for="reading_normal_form">Normalized form: </label>
 				<input type="text" name="reading_normal_form" id="reading_normal_form"></input>
-				<button id="reading_relemmatize" onclick="relemmatize(); return false;">Re-lemmatize</button>
 			</div>
-			<div id="relemmatize_pending">
-				<img src="[% c.uri_for('/images/ajax-loader.gif') %]"/>
-			</div>
-			<br/><br/>
-			<div id="morph_outer" class="morph">
-				<label>Lemma / part of speech:</label><br/>
-				<div id="morphology"></div>
-			</div>
-			</select>
+		</select>
 		</form>
 		<div id="reading-form-status"></div>
     </div>

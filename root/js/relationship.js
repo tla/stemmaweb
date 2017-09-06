@@ -62,8 +62,6 @@ function node_dblclick_listener( evt ) {
   	}
   	$('#reading_normal_form').attr( 'size', nfboxsize )
   	$('#reading_normal_form').val( normal_form );
-  	// Now do the morphological properties.
-  	morphology_form( reading_info['lexemes'] );
   	// and then open the dialog.
   	$('#reading-form').dialog(opt).dialog("open");
   	return false;
@@ -76,61 +74,12 @@ function toggle_checkbox( box, value ) {
 	box.attr('checked', value );
 }
 
-function morphology_form ( lexlist ) {
-  	if( lexlist.length ) {
-  		$('#morph_outer').show();
-		$('#morphology').empty();
-		$.each( lexlist, function( idx, lex ) {
-			var morphoptions = [];
-			if( 'wordform_matchlist' in lex ) {
-				$.each( lex['wordform_matchlist'], function( tdx, tag ) {
-					var tagstr = stringify_wordform( tag );
-					morphoptions.push( tagstr );
-				});
-			}
-			var formtag = 'morphology_' + idx;
-			var formstr = '';
-			if( 'form' in lex ) {
-				formstr = stringify_wordform( lex['form'] );
-			}
-			var form_morph_elements = morph_elements(
-				formtag, lex['string'], formstr, morphoptions );
-			$.each( form_morph_elements, function( idx, el ) {
-				$('#morphology').append( el );
-			});
-		});
-	} else {
-		$('#morph_outer').hide();
-	}
-}
-
 function stringify_wordform ( tag ) {
 	if( tag ) {
 		var elements = tag.split(' // ');
 		return elements[1] + ' // ' + elements[2];
 	}
 	return ''
-}
-
-function morph_elements ( formtag, formtxt, currform, morphoptions ) {
-	var clicktag = '(Click to select)';
-	if ( !currform ) {
-		currform = clicktag;
-	}
-	var formlabel = $('<label/>').attr( 'id', 'label_' + formtag ).attr(
-		'for', 'reading_' + formtag ).text( formtxt + ': ' );
-	var forminput = $('<input/>').attr( 'id', 'reading_' + formtag ).attr(
-		'name', 'reading_' + formtag ).attr( 'size', '50' ).attr(
-		'class', 'reading_morphology' ).val( currform );
-	forminput.autocomplete({ source: morphoptions, minLength: 0	});
-	forminput.focus( function() {
-		if( $(this).val() == clicktag ) {
-			$(this).val('');
-		}
-		$(this).autocomplete('search', '')
-	});
-	var morphel = [ formlabel, forminput, $('<br/>') ];
-	return morphel;
 }
 
 function color_inactive ( el ) {
@@ -158,31 +107,6 @@ function color_active ( el ) {
 	} else {
 		$(el).attr( {stroke:'black', fill:'#fff'} );
 	}
-}
-
-function relemmatize () {
-	// Send the reading for a new lemmatization and reopen the form.
-	$('#relemmatize_pending').show();
-	var reading_id = $('#reading_id').val()
-	ncpath = getReadingURL( reading_id );
-	form_values = {
-		'normal_form': $('#reading_normal_form').val(),
-		'relemmatize': 1 };
-	var jqjson = $.post( ncpath, form_values, function( data ) {
-		// Update the form with the return
-		if( 'readings' in data ) {
-			// We got back a good answer. Stash the info for the readings
-			// that have changed
-			$.each( data['readings'], function( i, new_data ) {
-				readingdata[new_data['id']] = new_data;
-			});
-			// and regenerate the morphology form.
-			morphology_form( data['readings'][reading_id]['lexemes'] );
-		} else {
-			alert("Could not relemmatize as requested: " + data['error']);
-		}
-		$('#relemmatize_pending').hide();
-	});
 }
 
 // Initialize the SVG once it exists
@@ -1747,83 +1671,69 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 
 
   // function for reading form dialog should go here;
-  // just hide the element for now if we don't have morphology
-  if( can_morphologize ) {
-	  $('#reading-form').dialog({
-		autoOpen: false,
-		// height: 400,
-		width: 450,
-		modal: true,
-		buttons: {
-			Cancel: function() {
-				$( this ).dialog( "close" );
-			},
-			Update: function( evt ) {
-				// Disable the button
-	  			var mybuttons = $(evt.target).closest('button').parent().find('button');
-				mybuttons.button( 'disable' );
-				$('#reading_status').empty();
-				var reading_id = $('#reading_id').val()
-				form_values = {
-					'id' : reading_id,
-					'is_lemma': $('#reading_is_lemma').is(':checked'),
-					'is_nonsense': $('#reading_is_nonsense').is(':checked'),
-					'grammar_invalid': $('#reading_grammar_invalid').is(':checked'),
-					'normal_form': $('#reading_normal_form').val() };
-				// Add the morphology values
-				$('.reading_morphology').each( function() {
-					if( $(this).val() != '(Click to select)' ) {
-						var rmid = $(this).attr('id');
-						rmid = rmid.substring(8);
-						form_values[rmid] = $(this).val();
+  $('#reading-form').dialog({
+	autoOpen: false,
+	// height: 400,
+	width: 450,
+	modal: true,
+	buttons: {
+		Cancel: function() {
+			$( this ).dialog( "close" );
+		},
+		Update: function( evt ) {
+			// Disable the button
+  			var mybuttons = $(evt.target).closest('button').parent().find('button');
+			mybuttons.button( 'disable' );
+			$('#reading_status').empty();
+			var reading_id = $('#reading_id').val()
+			form_values = {
+				'id' : reading_id,
+				'is_lemma': $('#reading_is_lemma').is(':checked'),
+				'is_nonsense': $('#reading_is_nonsense').is(':checked'),
+				'grammar_invalid': $('#reading_grammar_invalid').is(':checked'),
+				'normal_form': $('#reading_normal_form').val() };
+			// Make the JSON call
+			ncpath = getReadingURL( reading_id );
+			var jqjson = $.post( ncpath, form_values, function(data) {
+				$.each( data['readings'], function(i, rdgdata) {
+					var this_rdgid = rdgdata['id'];
+					var reading_element = readingdata[this_rdgid];
+					$.each( rdgdata, function( key, value ) {
+						reading_element[key] = value;
+					});
+					if( $('#update_workspace_button').data('locked') == false ) {
+						// Re-color the node if necessary
+						color_inactive( get_ellipse( this_rdgid ) );
+					} else {
+						color_active( get_ellipse( this_rdgid ) );
 					}
 				});
-				// Make the JSON call
-				ncpath = getReadingURL( reading_id );
-				var jqjson = $.post( ncpath, form_values, function(data) {
-					$.each( data['readings'], function(i, rdgdata) {
-						var this_rdgid = rdgdata['id'];
-						var reading_element = readingdata[this_rdgid];
-						$.each( rdgdata, function( key, value ) {
-							reading_element[key] = value;
-						});
-						if( $('#update_workspace_button').data('locked') == false ) {
-							// Re-color the node if necessary
-							color_inactive( get_ellipse( this_rdgid ) );
-						} else {
-							color_active( get_ellipse( this_rdgid ) );
-						}
-					});
-					mybuttons.button("enable");
-					$( "#reading-form" ).dialog( "close" );
-				});
-				return false;
-			}
-		},
-		create: function() {
-			if( !editable ) {
-				// Get rid of the disallowed editing UI bits
-				$( this ).dialog( "option", "buttons",
-					[{ text: "OK", click: function() { $( this ).dialog( "close" ); }}] );
-				$('#reading_relemmatize').hide();
-			}
-		},
-		open: function() {
-			$(".ui-widget-overlay").css("background", "none");
-			$("#dialog_overlay").show();
-			$('#reading-form-status').empty();
-			$("#dialog_overlay").height( $("#enlargement_container").height() );
-			$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
-			$("#dialog_overlay").offset( $("#enlargement_container").offset() );
-			$("#reading-form").parent().find('.ui-button').button("enable");
-		},
-		close: function() {
-			$("#dialog_overlay").hide();
+				mybuttons.button("enable");
+				$( "#reading-form" ).dialog( "close" );
+			});
+			return false;
 		}
-	  });
-	} else {
-		$('#reading-form').hide();
+	},
+	create: function() {
+		if( !editable ) {
+			// Get rid of the disallowed editing UI bits
+			$( this ).dialog( "option", "buttons",
+				[{ text: "OK", click: function() { $( this ).dialog( "close" ); }}] );
+		}
+	},
+	open: function() {
+		$(".ui-widget-overlay").css("background", "none");
+		$("#dialog_overlay").show();
+		$('#reading-form-status').empty();
+		$("#dialog_overlay").height( $("#enlargement_container").height() );
+		$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
+		$("#dialog_overlay").offset( $("#enlargement_container").offset() );
+		$("#reading-form").parent().find('.ui-button').button("enable");
+	},
+	close: function() {
+		$("#dialog_overlay").hide();
 	}
+  });
 
 	// Set up the error message dialog, for results from keystroke commands
 	$('#error-display').dialog({

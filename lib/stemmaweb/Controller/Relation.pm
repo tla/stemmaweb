@@ -187,11 +187,11 @@ sub relationships :Chained('section') :PathPart :Args(0) {
 			my $opts = $c->request->params; 
 			
 			# TODO validate relationship type
-			# Keep the data clean, TODO is this necessary?
+			# Keep the data clean
 			my @booleans = qw/ a_derivable_from_b b_derivable_from_a non_independent /;
 			foreach my $k ( keys %$opts ) {
 				if( $opts->{$k} && grep { $_ eq $k } @booleans ) {
-					$opts->{$k} = JSON::true;
+					$opts->{$k} = $k eq 'false' ? JSON::false : JSON::true;
 				}
 			}
 		
@@ -384,34 +384,38 @@ sub reading :Chained('section') :PathPart :Args(1) {
 	my $m = $c->model('Directory');
 	my $orig_reading;
 	try {
-		$orig_reading = $m->ajax('get', '/reading/$reading_id');
+		$orig_reading = $m->ajax('get', "/reading/$reading_id");
 	} catch (stemmaweb::Error $e ) {
 		return json_error( $c, $e->status, $e->message );
 	}
 	if( $c->request->method eq 'GET' ) {
 		$c->stash->{'result'} = $orig_reading;
-	} elsif ( $c->request->method eq 'PUT' ) {
+	} elsif ( $c->request->method eq 'POST' ) {
 		# Auth check
 		if( $c->stash->{'permission'} ne 'full' ) {
 			json_error( $c, 403, 
 				'You do not have permission to modify this tradition.' );
 		}
-				
-		# Assemble the properties
+		# Assemble the properties, being careful of data types
+		my @booleans = qw/ is_lemma is_nonsense grammar_invalid /;
 		my $changed_props = [];
 		foreach my $k ( keys %{$c->request->params} ) {
-			# TODO careful of data types!
+			# Be careful of data types!
+			my $prop = $c->request->param($k);
+			if ($prop && grep { $_ eq $k } @booleans) {
+				$prop = $prop eq 'false' ? JSON::false : JSON::true;
+			}
 			push( @$changed_props, 
-				{ key => $k, property => $c->request->param($k) } )
+				{ key => $k, property => $prop } )
 				if $read_write_keys{$k};
 		}
 		
 		# Change the reading
 		my $reading;
 		try {
-			$reading = { 'put', "/reading/$reading_id",
+			$reading = $m->ajax('put', "/reading/$reading_id",
 				'Content-Type' => 'application/json',
-				'Content' => to_json( $changed_props ) };
+				'Content' => to_json( { properties => $changed_props } ) );
 		} catch (stemmaweb::Error $e ) {
 			return json_error( $c, $e->status, $e->message );
 		}	
@@ -419,14 +423,15 @@ sub reading :Chained('section') :PathPart :Args(1) {
 		my $changed = { $reading->{id} => $reading };
 		# Check for side effects from the changes
 		foreach my $k (keys %has_side_effect) {
-			if( $reading->{$k} ne $orig_reading->{$k} ) {
+			next unless exists $reading->{$k};
+			if( !defined($orig_reading->{$k}) || $reading->{$k} ne $orig_reading->{$k} ) {
 				my $handler = $has_side_effect{$k};
 				$handler->($reading, $changed);
 			}
 		}
-		$c->stash->{result} = [ values( %$changed ) ];
+		$c->stash->{result} = { readings => [ values( %$changed ) ] };
 	} else {
-		json_error( $c, 405, "You can GET or PUT");		
+		json_error( $c, 405, "You can GET or POST");		
 	}
 	$c->forward('View::JSON');
 }
