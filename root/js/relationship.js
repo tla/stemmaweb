@@ -1534,17 +1534,18 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 
 					var ncpath = getTextURL('compress');
 					var form_values = $('#detach_collated_form').serialize();
+					// $.each($('#detach_collated_form input').filter(function() {return this.getAttribute("name") === "readings[]"}), function( i, v ) {vals.push(i)}); vals
 
 					var jqjson = $.post(ncpath, form_values, function(data) {
 						mybuttons.button('enable');
-						if (data.success) {
-							if (data.nodes) {
-								compress_nodes(data.nodes);
-							}
-							self.dialog('close');
-						} else if (data.error_msg) {
-							var dataerror = $('<p>').attr('class', 'error').text(data.error_msg);
+						if (data.nodes) {
+							compress_nodes(data.nodes);
+						}
+						if (!data.success) {
+							var dataerror = $('<p>').attr('class', 'error').text(data.warning);
 							$('#multipleselect-form-status').append(dataerror);
+						} else {
+							self.dialog('close');
 						}
 					});
 				}
@@ -1599,6 +1600,11 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			// Populate the forms with the currently selected readings
 			$('#detach_collated_form').empty();
 			var witnesses = [];
+			function sortByRank (a, b) {
+				if (readingdata[a]["rank"] === readingdata[b]["rank"]) return 0;
+				return readingdata[a]["rank"] < readingdata[b]["rank"] ? -1 : 1;
+			};
+			readings_selected.sort(sortByRank);
 			$.each( readings_selected, function( index, value ) {
 			  	$('#detach_collated_form').append( $('<input>').attr(
 					"type", "hidden").attr("name", "readings[]").attr(

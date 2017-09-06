@@ -274,6 +274,7 @@ text along with their metadata. A typical object in this dictionary will look li
 my %read_write_keys = (
 	'id' => 0,
 	'text' => 0,
+	'rank' => 0,
 	'is_meta' => 0,
 	'grammar_invalid' => 1,
 	'is_lemma' => 1,
@@ -469,7 +470,10 @@ sub compress :Chained('section') :PathPart :Args(0) {
 		try {
 			while( scalar @rids ) {
 				my $rid = shift @rids;
-				$m->ajax('get', '/reading/$first/compress/$rid/1');
+				$DB::single = 1;
+				$m->ajax('post', "/reading/$first/concatenate/$rid/1",
+					'Content-Type' => 'application/json',
+					'Content' => to_json( {character => " "} ));
 				push( @nodes, $rid );
 			} 
 		} catch (stemmaweb::Error $e ) {
@@ -480,8 +484,10 @@ sub compress :Chained('section') :PathPart :Args(0) {
 			$result->{success} = 0;
 			$result->{warning} = $e->message;
 		}
-		
 		$result->{nodes} = \@nodes;
+		
+		# Return what we have.
+		$c->stash->{result} = $result;
 		$c->forward('View::JSON');
 	} else {
 		json_error( $c, 405, "Use POST instead");		
