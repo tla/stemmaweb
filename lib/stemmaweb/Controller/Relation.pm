@@ -223,8 +223,9 @@ sub relationships :Chained('section') :PathPart :Args(0) {
 			my $rdg_id = $c->request->param('from_reading');
 			if( $rdg_id ) {
 				try {
-					$c->stash->{result} = $m->ajax('delete', 
-						'/reading/$rdg_id/relations');
+					my $deleted = $m->ajax('delete', "/reading/$rdg_id/relations");
+					my @relpairs = map { [$_->{source}, $_->{target}, $_->{type}] } @$deleted;
+					$c->stash->{result} = { relationships => \@relpairs };
 				} catch (stemmaweb::Error $e ) {
 					return json_error( $c, $e->status, $e->message );
 				}
@@ -470,7 +471,6 @@ sub compress :Chained('section') :PathPart :Args(0) {
 		try {
 			while( scalar @rids ) {
 				my $rid = shift @rids;
-				$DB::single = 1;
 				$m->ajax('post', "/reading/$first/concatenate/$rid/1",
 					'Content-Type' => 'application/json',
 					'Content' => to_json( {character => " "} ));
