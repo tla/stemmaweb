@@ -745,8 +745,8 @@ function detach_node( readings ) {
     // remove from existing readings the witnesses for the new nodes/readings
     $.each( readings, function( node_id, reading ) {
         $.each( reading.witnesses, function( index, witness ) {
-            var witnesses = readingdata[ reading.orig_rdg ].witnesses;
-            readingdata[ reading.orig_rdg ].witnesses = $.removeFromArray( witness, witnesses );
+            var witnesses = readingdata[ reading.orig_reading ].witnesses;
+            readingdata[ reading.orig_reading ].witnesses = $.removeFromArray( witness, witnesses );
         } );
     } );
 
@@ -754,7 +754,7 @@ function detach_node( readings ) {
 
     // here we detach witnesses from the existing edges accoring to what's being relayed by readings
     $.each( readings, function( node_id, reading ) {
-        var edges = edges_of( get_ellipse( reading.orig_rdg ) );
+        var edges = edges_of( get_ellipse( reading.orig_reading ) );
         incoming_remaining = [];
         outgoing_remaining = [];
         $.each( reading.witnesses, function( index, witness ) {
@@ -810,12 +810,12 @@ function detach_node( readings ) {
 
         // Lots of unabstracted knowledge down here :/
         // Clone original node/reading, rename/id it..
-        duplicate_node = get_ellipse( reading.orig_rdg ).parent().clone();
+        duplicate_node = get_ellipse( reading.orig_reading ).parent().clone();
         duplicate_node.attr( 'id', node_id );
         duplicate_node.children( 'title' ).text( node_id );
 
         // This needs somehow to move to node or even to shapes! #repositioned
-        duplicate_node_data = get_ellipse( reading.orig_rdg ).parent().data( 'repositioned' );
+        duplicate_node_data = get_ellipse( reading.orig_reading ).parent().data( 'repositioned' );
         if( duplicate_node_data != null ) {
             duplicate_node.children( 'ellipse' ).parent().data( 'repositioned', duplicate_node_data );
         }
@@ -828,7 +828,7 @@ function detach_node( readings ) {
             edge.g_elem.attr( 'id', ( edge.g_elem.attr( 'id' ) + id_suffix ) );
             edge_title = edge.g_elem.children( 'title' ).text();
             edge_weight = 0.8 + ( 0.2 * edge.witnesses.length );
-            edge_title = edge_title.replace( reading.orig_rdg, node_id );
+            edge_title = edge_title.replace( reading.orig_reading, node_id );
             edge.g_elem.children( 'title' ).text( edge_title );
             edge.g_elem.children( 'path').attr( 'stroke-width', edge_weight );
             // Reg unabstracted knowledge: isn't it more elegant to make
@@ -873,7 +873,7 @@ function merge_nodes( source_node_id, target_node_id, consequences ) {
                     $(evt.target).parent().remove();
                     //notify backend
                     var ncpath = getTextURL( 'merge' );
-                    var form_values = "source_id=" + node_ids[0] + "&target_id=" + node_ids[1] + "&single=true";
+                    var form_values = "source=" + node_ids[0] + "&target=" + node_ids[1] + "&single=true";
                     $.post( ncpath, form_values );
                 } );
                 $(no).click( function( evt ) {
@@ -893,6 +893,14 @@ function merge_node( source_node_id, target_node_id, compressing ) {
             edge.attach_startpoint( target_node_id, compressing );
         }
     } );
+	if (!compressing) {
+		// Add source node witnesses to target node
+		// NOTE: this may need to be more complex to account for witness layers
+		$.each(readingdata[source_node_id].witnesses, function( i, d ) { 
+			readingdata[target_node_id].witnesses.push(d) 
+		});
+	}
+	delete readingdata[source_node_id];
     $( jq( source_node_id ) ).remove();
 }
 

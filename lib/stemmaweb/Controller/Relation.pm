@@ -528,38 +528,36 @@ sub merge :Chained('section') :PathPart :Args(0) {
 				'You do not have permission to modify this tradition.' );
 		}
 		
-		my $errmsg;
-		my $response;
-		
-		my $main = $c->request->param('target_id');
-		my $second = $c->request->param('source_id');
+		my $main = $c->request->param('target');
+		my $second = $c->request->param('source');
 		my $endrank = $c->stash->{section}->{'endRank'};
 		my $rdg_rank;
 		try {
 			my $main_info = $m->ajax('get', "/reading/$main");
 			my $second_info = $m->ajax('get', "/reading/$second");
-			$rdg_rank = $main_info->{rank} > $second_info->{rank}
+			$rdg_rank = $main_info->{rank} < $second_info->{rank}
 				? $main_info->{rank} : $second_info->{rank};
-			$m->ajax("/reading/$main/merge/$second");
+			$m->ajax('post', "/reading/$main/merge/$second");
 		} catch (stemmaweb::Error $e) {
 			return json_error( $c, $e->status, $e->message );
 		}
 		
-		my $result = { status => 'ok' };
+		my $response = { status => 'ok' };
 		
 		# Now look for any mergeable readings on the tradition.
-		my $mergeable;
-		try {
-			$mergeable = $m->ajax("/tradition/$textid/section/$sectid/mergeablereadings/$rdg_rank/$endrank");
-		} catch (stemmaweb::Error $e ) {
-			return json_error( $c, $e->status, $e->message );
-		}
-		
-		# Look for readings that are now identical.
-		$response = { status => 'ok' };
 		unless( $c->request->param('single') ) {
+			my $mergeable;
+			try {
+				$mergeable = $m->ajax('get', "/tradition/$textid/section/$sectid/mergeablereadings/$rdg_rank/$endrank");
+			} catch (stemmaweb::Error $e ) {
+				$response->{status} = 'warn';
+				$response->{warning} = 'Could not check for mergeable readings: ' . $e->message;
+			}
+		
+			# Look for readings that are now identical.
 			if( @$mergeable ) {
-				$response->{'checkalign'} = $mergeable;
+				my @pairs = map { [$_->[0]->{id}, $_->[1]->{id}] } @$mergeable;
+				$response->{checkalign} = \@pairs;
 			}
 		}
 		$c->stash->{'result'} = $response;
@@ -596,6 +594,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $m = $c->model('Directory');
 	my $textid = $c->stash->{textid};
+	$DB::single = 1;
 	if( $c->request->method eq 'POST' ) {
 		# Auth check
 		if( $c->stash->{'permission'} ne 'full' ) {
@@ -659,8 +658,8 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
 		# If we got this far, do the deed.
 		my $url = sprintf("/reading/%s/duplicate", $readings[0]->{id});
 		my $req = {
-			readings => $c->request->param('readings[]'),
-			witnesses => $c->request->param('witnesses[]')
+			readings => [ values %rdgranks ],
+			witnesses => [ keys %wits ]
 		};
 		my $response;
 		try {
@@ -672,9 +671,13 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
 		}
 		
 		# Massage the response into the expected form.
-		$c->stash->{result} = {DELETED => $response->{relationships}};
+		my @deleted_rels = map { [$_->{source}, $_->{target}, $_->{type}] } @{$response->{relationships}};
+		$c->stash->{result} = {DELETED => \@deleted_rels};
 		foreach my $r (@{$response->{readings}}) {
-			$c->stash->{result}->{$r->{id}} = $r;
+			my $rinfo = _reading_struct($c, $r);
+			# Add in the orig_reading information that was passed back
+			$rinfo->{orig_reading} = $r->{orig_reading};
+			$c->stash->{result}->{$r->{id}} = $rinfo;
 		}
 	} else {
 		json_error( $c, 405, "Use POST instead");		
