@@ -68,10 +68,12 @@ sub load_stemma {
 
 # Given a GraphML node or edge element, return one of its labeled properties.
 sub _nodeprop {
-	my( $map, $xpc, $nodexml, $property ) = @_;
+	my( $map, $xpc, $nodexml, $property, $boolean ) = @_;
 	return undef if !exists($map->{$property});
 	my $xp = sprintf('./g:data[@key="%s"]/text()', $map->{$property});
-	return $xpc->findvalue($xp, $nodexml);
+	my $result = $xpc->findvalue($xp, $nodexml);
+	$result = $result && $result ne 'false' if $boolean;
+	return $result;
 }
 # Return the witness list, and an absolute count of witnesses, for a particular edge element.
 sub _path_witnesses {
@@ -112,6 +114,7 @@ sub _dot_attr_string {
 # Get (and parse) the GraphML directly, to turn it into the sort of graph we need for the
 # relationship mapper.
 sub generate_svg {
+	$DB::single = 1;
 	my $c = shift;
 	my $m = $c->model('Directory');
 	my $textid = $c->stash->{textid};
@@ -200,15 +203,15 @@ sub generate_svg {
 		my $rid = $reading->getAttribute('id');
         my $label = _nodeprop($nodedata, $xpc, $reading, 'text');
         unless( $label =~ /^[[:punct:]]+$/ ) {
-	        $label .= '-' if _nodeprop($nodedata, $xpc, $reading, 'join_next');
-    	    $label = "-$label" if _nodeprop($nodedata, $xpc, $reading, 'join_prior');
+	        $label .= '-' if _nodeprop($nodedata, $xpc, $reading, 'join_next', 1);
+    	    $label = "-$label" if _nodeprop($nodedata, $xpc, $reading, 'join_prior', 1);
     	}
-		$rlookup{$rid} = '__START__' if (_nodeprop($nodedata, $xpc, $reading, 'is_start'));
-		$rlookup{$rid} = '__END__' if (_nodeprop($nodedata, $xpc, $reading, 'is_end'));
+		$rlookup{$rid} = '__START__' if (_nodeprop($nodedata, $xpc, $reading, 'is_start', 1));
+		$rlookup{$rid} = '__END__' if (_nodeprop($nodedata, $xpc, $reading, 'is_end', 1));
         $label =~ s/\"/\\\"/g;
 		my $nid = $rlookup{$rid} || $rid;
 		my $rattrs = { label => $label, id => $nid };
-		$rattrs->{'fillcolor'} = '#b3f36d' if _nodeprop($nodedata, $xpc, $reading, 'is_common') ne 'false';
+		$rattrs->{'fillcolor'} = '#b3f36d' if _nodeprop($nodedata, $xpc, $reading, 'is_common', 1);
         $dot .= sprintf( "\t\"%s\" %s;\n", $nid, _dot_attr_string( $rattrs ) );
     }
     
