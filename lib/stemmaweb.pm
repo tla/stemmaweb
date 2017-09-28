@@ -31,6 +31,7 @@ use Catalyst qw/
     StackTrace
     Cache
 /;
+use CatalystX::RoleApplicator;
 
 extends 'Catalyst';
 
@@ -47,7 +48,9 @@ our $VERSION = '0.01';
 # details given here can function as a default configuration,
 # with an external configuration file acting as an override for
 # local deployment.
-
+__PACKAGE__->apply_request_class_roles(qw/
+    Catalyst::TraitFor::Request::ProxyBase
+/);
 __PACKAGE__->config(
     name => 'stemmaweb',
     # Disable deprecated behavior needed by old applications
