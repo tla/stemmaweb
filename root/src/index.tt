@@ -239,7 +239,7 @@ var textOnLoad = "[% withtradition %]";
 				<option value="teips">TEI parallel segmentation</option>
 				<option value="cte">CTE export (TEI double-endpoint attachment)</option>
 				<option value="collatex">CollateX XML</option>
-				<option value="json">CollateX JSON</option>
+				<option value="cxjson">CollateX JSON</option>
 			</select><br>
             <label for="new_lang">Primary language of the text: </label>
             <input id="new_lang" type="text" name="language" size="20"/><br/>
