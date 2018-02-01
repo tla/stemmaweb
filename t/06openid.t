@@ -4,27 +4,22 @@ use strict;
 use FindBin;
 use lib ("$FindBin::Bin/lib");
 
-use stemmaweb::Test::Common;
-
 use stemmaweb;
 use LWP::Protocol::PSGI;
 use Test::WWW::Mechanize;
 
-use Test::More;
+use Test::More skip_all => "openid not re-implemented yet";
 use HTML::TreeBuilder;
 use Data::Dumper;
 
 use stemmaweb::Test::DB;
+stemmaweb::Test::DB::new_db("$FindBin::Bin/data");
 
-my $dir = stemmaweb::Test::DB->new_db;
-
-# NOTE: this test uses Text::Tradition::Directory
-# to check user accounts really have been created.
-# It'll need to be changed once that is replaced...
-
-my $scope = $dir->new_scope;
-
-LWP::Protocol::PSGI->register(stemmaweb->psgi_app);
+my $n4jurl = stemmaweb->config->{'Model::Directory'}->{tradition_repo};
+LWP::Protocol::PSGI->register(
+    stemmaweb->psgi_app,
+    uri => sub { $_[0] !~ m/$n4jurl/ },
+);
 
 my $ua = Test::WWW::Mechanize->new;
 
@@ -62,7 +57,7 @@ local *Catalyst::Authentication::Credential::OpenID::authenticate = sub {
 };
 
 
-ok !$dir->find_user({ url => 'http://example.org/' }), 'No such user, yet.';
+# ok !$dir->find_user({ url => 'http://example.org/' }), 'No such user, yet.';
 
 $ua->get_ok('http://localhost/login');
 
@@ -79,7 +74,7 @@ $ua->get('/');
 
 $ua->content_contains('Hello! http://example.org/!', 'We are logged in.');
 
-ok $dir->find_user({ url => 'http://example.org/' }), 'User now exists.';
+# ok $dir->find_user({ url => 'http://example.org/' }), 'User now exists.';
 
 $ua->get('/logout');
 

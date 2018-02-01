@@ -10,20 +10,23 @@ use stemmaweb;
 use LWP::Protocol::PSGI;
 use Test::WWW::Mechanize;
 
-use Test::More;
+use Test::More skip_all => "Google login has changed massively";
 use HTML::TreeBuilder;
 use Data::Dumper;
 use IO::All;
 
 use stemmaweb::Test::DB;
-
-my $dir = stemmaweb::Test::DB->new_db;
+stemmaweb::Test::DB::new_db("$FindBin::Bin/data");
 
 # NOTE: this test uses Text::Tradition::Directory
 # to check user accounts really have been created.
 # It'll need to be changed once that is replaced...
 
-LWP::Protocol::PSGI->register(stemmaweb->psgi_app);
+my $n4jurl = stemmaweb->config->{'Model::Directory'}->{tradition_repo};
+LWP::Protocol::PSGI->register(
+    stemmaweb->psgi_app,
+    uri => sub { $_[0] !~ m/$n4jurl/ },
+);
 
 my $ua = Test::WWW::Mechanize->new;
 

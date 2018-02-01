@@ -54,21 +54,24 @@ sub new_db {
 		$ua->credentials( $host, $dircfg->{basic_auth}->{realm}, 
 			$dircfg->{basic_auth}->{user}, $dircfg->{basic_auth}->{pass} );
 	}
-	my $u1info = {
-	  email => 'user@example.org',
-	  passphrase => 'UserPass',
-	  role => 'user'
-	};
-	my $u2info = {
-	  email => 'admin@example.org',
-	  passphrase => 'AdminPass',
-	  role => 'admin'
-	};
+	## Users that should exist in the beginning
+	my $users = [
+		{
+		  email => 'user@example.org',
+		  passphrase => 'UserPass',
+		  role => 'user'
+		},
+		{
+		  email => 'admin@example.org',
+		  passphrase => 'AdminPass',
+		  role => 'admin'
+		},
+		{
+		  email => 'user2@example.org'
+		}
+	];
 	# Delete the users if they don't exist already
-	foreach my $u (($u1info, $u2info)) {
-	  my $ctx = Digest->new('SHA-256');
-	  $ctx->add($u->{passphrase});
-	  $u->{passphrase} = $ctx->b64digest();
+	foreach my $u (@$users) {
 	  my $tres = $ua->get( "$n4jurl/user/" . $u->{email} . "/traditions");
 	  if( $tres->code == 200 ) {
 	    my $trads = djson( $tres );
@@ -79,11 +82,19 @@ sub new_db {
 	    }
 	  }
 	  my $res = $ua->delete( "$n4jurl/user/" . $u->{email});
-	  $res = $ua->put( "$n4jurl/user/" . $u->{email}, 'Content-Type' => 'application/json', Content => to_json($u));
-	  die errorout("User " . $u->{email} . " not created", $res) unless $res->code == 201;
+	  # Only create users that have a passphrase set above
+	  if (exists $u->{passphrase}) {
+		  my $ctx = Digest->new('SHA-256');
+		  $ctx->add($u->{passphrase});
+		  $u->{passphrase} = $ctx->b64digest();
+		  $res = $ua->put( "$n4jurl/user/" . $u->{email}, 'Content-Type' => 'application/json', Content => to_json($u));
+		  die errorout("User " . $u->{email} . " not created", $res) unless $res->code == 201;
+	  }
 	}
 
 	# TODO create openid user
+	
+	my $created = {public => [], private => []};
 
 	# Add the traditions
 	# 1. Notre besoin
@@ -97,6 +108,7 @@ sub new_db {
 	my $res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t1data);
 	die errorout("Besoin tradition could not be created", $res) unless $res->code == 201;
 	my $t1id = djson( $res )->{tradId};
+	push(@{$created->{private}}, $t1id);
 
 	$res = $ua->post( "$n4jurl/tradition/$t1id/stemma", 'Content-Type' => 'application/json',
 	  Content => filejstr("$datadir/besoin_stemweb.dot") );
@@ -116,6 +128,7 @@ sub new_db {
 	$res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t2data);
 	die errorout("Florilegium tradition could not be created", $res) unless $res->code == 201;
 	my $t2id = djson( $res )->{tradId};
+	push(@{$created->{public}}, $t2id);
 	$res = $ua->post( "$n4jurl/tradition/$t2id/stemma", 'Content-Type' => 'application/json',
 	  Content => filejstr("$datadir/florilegium.dot") );
 	die errorout("Florilegium stemma could not be added", $res) unless $res->code == 201;
@@ -132,6 +145,8 @@ sub new_db {
 	];
 	$res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t3data);
 	die errorout("John verse tradition could not be created", $res) unless $res->code == 201;
+	push(@{$created->{public}}, djson( $res )->{tradId});
+	
 
 	# 4. Sapientia / collation correction
 	my $t4data = [
@@ -144,6 +159,7 @@ sub new_db {
 	];
 	$res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t4data);
 	die errorout("Sapientia tradition could not be created", $res) unless $res->code == 201;
+	push(@{$created->{public}}, djson( $res )->{tradId});
 
 	# 5. Arabic snippet
 	my $t5data = [
@@ -156,6 +172,7 @@ sub new_db {
 	];
 	$res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t5data);
 	die errorout("RTL test tradition could not be created", $res) unless $res->code == 201;
+	push(@{$created->{private}}, djson( $res )->{tradId});
 
 	# 6. A multi-section tradition
 	my $t6data = [
@@ -168,7 +185,8 @@ sub new_db {
 	];
 	$res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t6data);
 	die errorout("First half of multi-section tradition could not be created", $res) unless $res->code == 201;
-	my $t6id = from_json($res->decoded_content)->{'tradId'};
+	my $t6id = djson( $res )->{tradId};
+	push(@{$created->{private}}, $t6id);
 	$t6data = [
 	  name => 'section test',
 	  filetype => 'stemmaweb',
@@ -176,7 +194,8 @@ sub new_db {
 	];
 	$res = $ua->post( "$n4jurl/tradition/$t6id/section", 'Content-Type' => 'form-data', Content => $t6data);
 	die errorout("Second half of multi-section tradition could not be created", $res) unless $res->code == 201;
-	say("Test data setup complete.")
+	say("Test data setup complete.");
+	return $created;
 }
 
 1;

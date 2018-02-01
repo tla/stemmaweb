@@ -207,6 +207,7 @@ Returns information about a particular text.
 sub textinfo :Local :Args(1) {
 	my( $self, $c, $textid ) = @_;
 	my $textinfo = load_tradition( $c, $textid );
+	return unless $textinfo;
 	my $ok = $textinfo->{permission};
 	my $m = $c->model('Directory');
 	# Update information if we have been asked to

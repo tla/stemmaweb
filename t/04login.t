@@ -13,18 +13,20 @@ use FindBin;
 use lib ("$FindBin::Bin/lib");
 
 use stemmaweb::Test::DB;
+stemmaweb::Test::DB::new_db("$FindBin::Bin/data");
 
-stemmaweb::Test::DB->new_db;
-
+# Hijack LWP requests, but not if they should go to the datastore server
+my $n4jurl = stemmaweb->config->{'Model::Directory'}->{tradition_repo};
 LWP::Protocol::PSGI->register(
     stemmaweb->psgi_app,
-    host => sub { $_[0] !~ m{^test\.} },
+    uri => sub { $_[0] !~ m/$n4jurl/ },
 );
 
 my $ua = Test::WWW::Mechanize->new;
 
 $ua->get_ok('http://localhost/login');
 my $response = $ua->submit_form(
+	form_id => 'login_local_form',
     fields => {
         username    => 'user@example.org',
         password    => 'UserPass'

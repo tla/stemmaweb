@@ -16,11 +16,12 @@ use Data::Dumper;
 
 use stemmaweb::Test::DB;
 
-stemmaweb::Test::DB->new_db;
+stemmaweb::Test::DB::new_db("$FindBin::Bin/data");
 
+my $n4jurl = stemmaweb->config->{'Model::Directory'}->{tradition_repo};
 LWP::Protocol::PSGI->register(
     stemmaweb->psgi_app,
-    host => sub { $_[0] !~ m{^test\.} },
+    uri => sub { $_[0] !~ m/$n4jurl/ },
 );
 
 my $ua = Test::WWW::Mechanize->new;
