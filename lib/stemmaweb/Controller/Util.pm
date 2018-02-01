@@ -114,7 +114,6 @@ sub _dot_attr_string {
 # Get (and parse) the GraphML directly, to turn it into the sort of graph we need for the
 # relationship mapper.
 sub generate_svg {
-	$DB::single = 1;
 	my $c = shift;
 	my $m = $c->model('Directory');
 	my $textid = $c->stash->{textid};
