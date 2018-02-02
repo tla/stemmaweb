@@ -4,7 +4,7 @@ use Moose;
 use Moose::Util::TypeConstraints qw/ find_type_constraint /;
 use Module::Load;
 use namespace::autoclean;
-use stemmaweb::Controller::Util qw/ load_tradition json_error generate_svg /;
+use stemmaweb::Controller::Util qw/ load_tradition json_error json_bool generate_svg /;
 use TryCatch;
 
 BEGIN { extends 'Catalyst::Controller' }
@@ -447,9 +447,9 @@ sub reading :Chained('section') :PathPart :Args(1) {
  POST relation/$textid/compress { data }
  
 Accepts form data containing a list of 'readings[]'.
-Concatenates the requested readings into a single reading, All relationships of 
-the affected readings must be removed in visual display; this is the 
-responsibility of the client. 
+Concatenates the requested readings into a single reading, All sequence 
+relationships between the affected readings must be removed in visual display; 
+this is the responsibility of the client. 
 On success returns a JSON object that looks like this:
 
   {"nodes":["n158","n159","n160","n161","n162","n163"],
@@ -475,7 +475,7 @@ sub compress :Chained('section') :PathPart :Args(0) {
 		try {
 			while( scalar @rids ) {
 				my $rid = shift @rids;
-				$m->ajax('post', "/reading/$first/concatenate/$rid/1",
+				$m->ajax('post', "/reading/$first/concatenate/$rid",
 					'Content-Type' => 'application/json',
 					'Content' => to_json( {character => " "} ));
 				push( @nodes, $rid );
@@ -689,6 +689,103 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
 }
 
 # TODO implement reading split in the UI
+
+=head2 split
+
+ POST relation/$textid/split { data }
+ 
+Accepts form data with a reading ID, its text (for sanity checking; this should
+be a hidden field on the web form), a character index at which to split the
+text of the given reading, and (if the character index is zero) a regex on
+which to split the text. 
+Splits the requested reading into multiple sequential ones. All relationships
+on the reading must be removed first. 
+Returns a JSON structure of new or modified readings or relationships, whose
+structure should be reflected in the updated visual display of the client.
+
+  {"relationships":[{"source":"n131","target":"n131_0","id":"51", ...},
+					{"source":"n131_0","target":"n135","id":"52", ...}],
+   "n131":{"id":"n131",
+             "variants":[],
+             "is_meta":null,
+             "lexemes":[],
+             "witnesses":["Ba96"],
+             "text":"et", 
+			 ...},
+   "n131_0":{"id":"n131_0",
+             "variants":[],
+             "orig_rdg":"n131",
+             "is_meta":null,
+             "lexemes":[],
+             "witnesses":["Ba96"],
+             "text":"cetera",
+			 ...}}
+
+
+=cut
+
+sub split :Chained('section') :PathPart :Args(0) {
+	my( $self, $c ) = @_;
+	my $m = $c->model('Directory');
+	my $textid = $c->stash->{textid};
+	$DB::single = 1;
+	if( $c->request->method eq 'POST' ) {
+		# Auth check
+		if( $c->stash->{'permission'} ne 'full' ) {
+			json_error( $c, 403, 
+				'You do not have permission to modify this tradition.' );
+		}
+		
+		# Get and check the parameters
+		my $rid = $c->request->param('reading');
+		my $rtext = $c->request->param('rtext');
+		my $index = $c->request->param('index');
+		my $regex = $c->request->param('regex');
+		my $separate = $c->request->param('separate');
+		
+		# If index is nonzero, we ignore regex and split on zero or more
+		# whitespace characters at the index location.
+		my $model = {character => '\\s*', 
+			separate => json_bool($separate),
+			isRegex => JSON::true};
+		
+		# If index is zero, we need to check that the match is zero-length,
+		# i.e. that we will have the same string when we put the split pieces
+		# back together.
+		if ($index == 0) {
+			my @test = split($regex, $rtext);
+			if (join('', @test) ne $rtext) {
+				json_error( $c, 400,
+					'The specified regular expression must be zero-length');
+			}
+			$model->{character} = $regex;
+		} 
+		
+		# Do the deed
+		my $url = "/reading/$rid/split/$index";
+		my $response;
+		try {
+			$response = $m->ajax('post', $url, 
+				'Content-Type' => 'application/json', 
+				'Content' => to_json($model));
+		} catch (stemmaweb::Error $e) {
+			json_error( $c, $e->status, $e->message );
+		}
+		
+		# Fill out the readings and return the result
+		$c->stash->{result}->{relationships} = $response->{relationships};
+		foreach my $r (@{$response->{readings}}) {
+			my $rinfo = _reading_struct($c, $r);
+			# Add in the orig_reading information that was passed back
+			$rinfo->{orig_reading} = $r->{orig_reading};
+			$c->stash->{result}->{$r->{id}} = $rinfo;
+		}
+		
+	} else {
+		json_error( $c, 405, "Use POST instead");		
+	}
+	$c->forward('View::JSON');
+}
 
 =head2 end
 
