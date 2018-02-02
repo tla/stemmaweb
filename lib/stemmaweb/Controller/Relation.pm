@@ -31,6 +31,10 @@ Renders the application for the text identified by $textid.
 sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
 	my( $self, $c, $textid ) = @_;
 	my $textinfo = load_tradition( $c, $textid );
+	unless($textinfo->{permission}) {
+		json_error( $c, 403, "You do not have permission to view this text");
+		$c->detach();
+	}
 	
 	$c->stash->{'textid'} = $textid;
 	$c->stash->{'tradition'} = $textinfo;
@@ -594,7 +598,6 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
 	my( $self, $c ) = @_;
 	my $m = $c->model('Directory');
 	my $textid = $c->stash->{textid};
-	$DB::single = 1;
 	if( $c->request->method eq 'POST' ) {
 		# Auth check
 		if( $c->stash->{'permission'} ne 'full' ) {
