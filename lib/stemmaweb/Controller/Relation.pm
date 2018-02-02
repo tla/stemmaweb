@@ -1,5 +1,5 @@
 package stemmaweb::Controller::Relation;
-use JSON qw/ to_json from_json /;
+use JSON qw/ to_json from_json encode_json /;
 use Moose;
 use Moose::Util::TypeConstraints qw/ find_type_constraint /;
 use Module::Load;
@@ -209,7 +209,7 @@ sub relationships :Chained('section') :PathPart :Args(0) {
 				$result = $m->ajax('post', 
 					"/tradition/$textid/relation", 
 					'Content-Type' => 'application/json',
-					'Content' => to_json( $opts ));
+					'Content' => encode_json( $opts ));
 			} catch (stemmaweb::Error $e ) {
 				return json_error( $c, $e->status, $e->message );
 			}
@@ -395,7 +395,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
 		return json_error( $c, $e->status, $e->message );
 	}
 	if( $c->request->method eq 'GET' ) {
-		$c->stash->{'result'} = $orig_reading;
+		$c->stash->{'result'} = _reading_struct($c, $orig_reading);
 	} elsif ( $c->request->method eq 'POST' ) {
 		# Auth check
 		if( $c->stash->{'permission'} ne 'full' ) {
