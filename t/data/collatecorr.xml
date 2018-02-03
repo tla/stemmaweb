@@ -613,6 +613,7 @@
     <node id="n82">
       <data key="dn10">Latin</data>
       <data key="dn14">et</data>
+      <data key="dn0">1</data>
       <data key="dn1">n124</data>
       <data key="dn2">0</data>
       <data key="dn13">103</data>
@@ -671,6 +672,7 @@
       <data key="dn14">et</data>
       <data key="dn1">n131</data>
       <data key="dn2">0</data>
+      <data key="dn5">1</data>
       <data key="dn13">108</data>
     </node>
     <node id="n91">

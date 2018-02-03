@@ -44,7 +44,7 @@ $attempt = request POST $pubrelurl . "/relationships",
 	[source_id => $rels->[0]->{source}, target_id => $rels->[0]->{target}];
 is($attempt->code, 403, "Permission denied for relationship push");
 
-$attempt = request DELETE $pubrelurl . "/relationships", 
+$attempt = request DELETE $pubrelurl . "/relationships",
 	[ source_id => $rels->[0]->{source}, target_id => $rels->[0]->{target} ];
 is($attempt->code, 403, "Permission denied for relationship deletion");
 
@@ -52,11 +52,11 @@ is($attempt->code, 403, "Permission denied for relationship deletion");
 $attempt = request GET $pubrelurl . "/readings";
 ok($attempt->is_success, "Requested reading list for public tradition section");
 like( $attempt->header('Content-Type'), qr/application\/json/, "Got a JSON response");
-my $rdgs = from_json($attempt->decoded_content);
-is(scalar keys %$rdgs, 990, "Found the correct number of readings");
+my $pubrdgs = from_json($attempt->decoded_content);
+is(scalar keys %$pubrdgs, 990, "Found the correct number of readings");
 
 # test GET, POST reading
-my @rdgsearch = grep { $_->{rank} == 7 && $_->{text} eq 'uirginem'} values %$rdgs;
+my @rdgsearch = grep { $_->{rank} == 7 && $_->{text} eq 'uirginem'} values %$pubrdgs;
 my $virginem = shift(@rdgsearch);
 ok($virginem, "Found test reading in list");
 $attempt = request GET $pubrelurl . "/reading/" . $virginem->{id};
@@ -90,37 +90,116 @@ $privrelurl = $mech->uri;
 
 $attempt = $mech->follow_link(text => 'section test');
 ok($attempt->is_success, "Loaded second section of the text");
-my $privsection2 = $attempt->header('content-base');
+my $privsection2 = $mech->uri;
 
 # test GET, DELETE, POST relationships
 
 $attempt = $mech->get($privrelurl . "/relationships");
-ok($attempt->is_success, "Requested relationships on public tradition section");
+ok($attempt->is_success, "Requested relationships on private tradition section");
 like($mech->ct, qr/application\/json/, "Got a JSON response");
-my $rels = from_json($attempt->decoded_content);
+$rels = from_json($attempt->decoded_content);
 is(scalar @$rels, 13, "Found the correct number of relationships");
 
-$attempt = $mech->delete()
+my $testrel = $rels->[0];
+## Horrible hackish way to construct a DELETE request
+my $del = POST $privrelurl . "/relationships",
+    [source_id => $testrel->{source}, target_id => $testrel->{target}];
+$del->method('DELETE');
+$attempt = $mech->request($del);
+ok($attempt->is_success, "Deleted a relationship");
 
-$DB::single = 1;
+$attempt = $mech->get($privrelurl . "/relationships");
+$rels = from_json($attempt->decoded_content);
+is(scalar @$rels, 12, "Relationship is gone");
 
-# test GET, POST reading
+my $replace = POST $privrelurl . "/relationships",
+    [source => $testrel->{source},
+     target => $testrel->{target},
+     scope => $testrel->{scope},
+     type => $testrel->{type}];
+$attempt = $mech->request($replace);
+ok($attempt->is_success, "Replaced the relationship");
+$attempt = $mech->get($privrelurl . "/relationships");
+$rels = from_json($attempt->decoded_content);
+is(scalar @$rels, 13, "Relationship has been restored");
 
-# test POST compress
+# test GET, POST reading(s)
+$attempt = $mech->get($privrelurl . "/readings");
+ok($attempt->is_success, "Requested reading list for private tradition section");
+like( $attempt->header('Content-Type'), qr/application\/json/, "Got a JSON response");
+my $rdgs = from_json($attempt->decoded_content);
+is(scalar keys %$rdgs, 30, "Found the correct number of readings");
+
+@rdgsearch = grep { $_->{text} eq 'uenerabilis' } values %$rdgs;
+my $ven = shift @rdgsearch;
+ok($ven, "Got a test reading");
+$attempt = $mech->request(POST($privrelurl . "/reading/" . $ven->{id},
+    [normal_form => 'venerabilis', is_lemma => 'true']));
+ok($attempt->is_success, "Altered data of a reading");
+
+$attempt = $mech->get($privrelurl . "/reading/" . $ven->{id});
+my $newven = from_json($attempt->decoded_content);
+isnt($newven->{normal_form}, $ven->{normal_form}, "Normal form changed");
+isnt($newven->{is_lemma}, $ven->{is_lemma}, "is_lemma setting changed");
+
+# Get our marked readings from the public tradition for duplicate/merge
+# operations
+my( $wrong, $right );
+@rdgsearch = grep { $_->{text} eq 'et' } values %$pubrdgs;
+foreach my $r (@rdgsearch) {
+    $wrong = $r if $r->{is_nonsense};
+    $right = $r if $r->{grammar_invalid};
+}
+ok($right, "Found our marked target reading");
+ok($wrong, "Found our marked target reading");
+
+# test POST duplicate, now with the public tradition
+$attempt = $mech->request(POST($pubrelurl . "/duplicate",
+    ['readings[]' => $wrong->{id},
+     'witnesses[]' => 'Ba96']));
+ok($attempt->is_success, "Duplicated target reading");
+my $resp = from_json($attempt->decoded_content);
+is(scalar keys %$resp, 2, "Response has two keys");
+ok(exists $resp->{DELETED}, "A relationship was deleted during duplicate");
+is($resp->{DELETED}->[0]->[2], 'transposition', "It was a transposition relationship");
+is($pubrdgs->{$resp->{DELETED}->[0]->[0]}->{text}, 'asserendo', '...between the expected readings');
+delete($resp->{DELETED});
+my $fixed = (values %$resp)[0];
+ok(!exists $pubrdgs->{$fixed->{id}}, "Resulting reading is new");
 
 # test POST merge
+$attempt = $mech->request(POST($pubrelurl . "/merge",
+    [source => $right->{id},
+     target => $fixed->{id}]));
+ok($attempt->is_success, "Merged a pair of 'et' readings");
+$resp = from_json($attempt->decoded_content);
+is($resp->{status}, "ok", "Merge succeeded");
+ok($resp->{checkalign}, "Found more mergeable readings");
 
-# test POST duplicate
+$attempt = $mech->get($pubrelurl . "/readings");
+ok($attempt->is_success, "Re-requested reading list for public tradition section");
+$pubrdgs = from_json($attempt->decoded_content);
+is(scalar keys(from_json($attempt->decoded_content)), 990, "Number of readings unchanged");
+
+# test POST compress
 
 # test POST split
 
 ### Log out and try a few things with known data
 
+$mech->get_ok('/logout', "Logged out successfully");
+
 # test GET second section (403)
+$attempt = $mech->get($privsection2);
+is($attempt->code, 403, "Attempt to get known section of private text fails");
 
 # test GET private relationships (403)
+$attempt = $mech->get($privrelurl . "/relationships");
+is($attempt->code, 403, "Attempt to get relationships of known private text fails");
 
 # test GET private reading(s) (403)
+$attempt = $mech->get($privrelurl . "/readings");
+is($attempt->code, 403, "Attempt to get readings of known private text fails");
 
 
 done_testing();
