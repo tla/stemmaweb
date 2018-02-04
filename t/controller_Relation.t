@@ -176,12 +176,67 @@ $resp = from_json($attempt->decoded_content);
 is($resp->{status}, "ok", "Merge succeeded");
 ok($resp->{checkalign}, "Found more mergeable readings");
 
+my $singletest;
+foreach my $pair (@{$resp->{checkalign}}) {
+    if ($pubrdgs->{$pair->[0]}->{text} eq 'asserendo') {
+        $singletest = $pair;
+        last;
+    }
+}
+$attempt = $mech->request(POST($pubrelurl . "/merge",
+    [source => $singletest->[0],
+     target => $singletest->[1],
+     single => 1]));
+ok($attempt->is_success, "Merged a pair of 'asserendo' readings");
+$resp = from_json($attempt->decoded_content);
+is($resp->{status}, "ok", "Merge succeeded");
+ok(!exists $resp->{checkalign}, "Did not return any more mergeable readings");
+
 $attempt = $mech->get($pubrelurl . "/readings");
 ok($attempt->is_success, "Re-requested reading list for public tradition section");
 $pubrdgs = from_json($attempt->decoded_content);
-is(scalar keys(from_json($attempt->decoded_content)), 990, "Number of readings unchanged");
+is(scalar keys %$pubrdgs, 989, "New number of readings correct");
 
 # test POST compress
+my @cnodes = sort { $a->{rank} <=> $b->{rank} }
+    grep { $_->{rank} > 7 && $_->{rank} < 11}
+    values %$pubrdgs;
+my $query = [];
+map {push(@$query, 'readings[]', $_->{id})} @cnodes;
+$attempt = $mech->request(POST($pubrelurl . "/compress", $query));
+ok($attempt->is_success, "Compressed some readings");
+$resp = from_json($attempt->decoded_content);
+is($resp->{success}, 1, "Compress succeeded");
+is(scalar @{$resp->{nodes}}, 3, "Returned the right list of nodes");
+my $firstmerge = $cnodes[0]->{id};
+
+# now try it with a query that should only partially succeed
+@cnodes = sort { $a->{rank} <=> $b->{rank} }
+    grep { $_->{rank} > 0 && $_->{rank} < 5}
+    values %$pubrdgs;
+pop @cnodes;
+$query = [];
+map {push(@$query, 'readings[]', $_->{id})} @cnodes;
+$attempt = $mech->request(POST($pubrelurl . "/compress", $query));
+ok($attempt->is_success, "Compressed some readings");
+$resp = from_json($attempt->decoded_content);
+is($resp->{success}, 0, "Compress flagged as erroneous");
+is($resp->{warning}, "graph forks between these readings. could not compress",
+    "Compress has expected warning message");
+is(scalar @{$resp->{nodes}}, 3, "Only the first three nodes returned");
+
+# check the resulting graph
+$attempt = $mech->get($pubrelurl . "/readings");
+ok($attempt->is_success, "Re-requested reading list for public tradition section");
+$pubrdgs = from_json($attempt->decoded_content);
+is(scalar keys %$pubrdgs, 985, "New number of readings correct");
+$attempt = $mech->get($pubrelurl . '/reading/' . $cnodes[0]->{id});
+$resp = from_json($attempt->decoded_content);
+is($resp->{text}, 'Verbum Ista sequencia', "Second new node has right reading text");
+$attempt = $mech->get($pubrelurl . '/reading/' . $firstmerge);
+$resp = from_json($attempt->decoded_content);
+is($resp->{text}, 'canitur diuiditur in', "First new node has right reading text");
+is($resp->{rank}, 6, "First new node has correct rank");
 
 # test POST split
 
