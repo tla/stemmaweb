@@ -5,7 +5,7 @@ use warnings;
 use feature 'say';
 use HTTP::Request::Common;
 use JSON qw/ decode_json /;
-use Test::More;
+use Test::More skip_all => "Stemweb is currently out of commission";
 use Test::WWW::Mechanize::Catalyst;
 use Text::Tradition::Directory;
 

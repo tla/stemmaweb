@@ -14,15 +14,12 @@ use stemmaweb::Test::DB;
 my $textids = stemmaweb::Test::DB::new_db("$FindBin::Bin/data");
 
 # Test /stemma GET, POST/0, POST/n
-my $dnestemma = request( '/stemma/' . $textids->{public}->[0] . 'doesnotexist' );
-$DB::single = 1;
+my $dnestemma = request('/stemma/' . $textids->{public}->[0] . '/doesnotexist');
 is( $dnestemma->code, 404, "Returned 404 on nonexistent stemma" );
-TODO: {
-    local $TODO = "Need to investigate";
-    like( $dnestemma->header('Content-Type'), qr/application\/json/,
-        "Returned JSON answer for newtradition" );
-}
-is( request( '/stemma/' . $textids->{private}->[0] . '/2' )->code, 403,
+like( $dnestemma->header('Content-Type'), qr/application\/json/,
+    "Returned JSON answer for missing stemma" );
+
+is( request( '/stemma/' . $textids->{private}->[0] . '/stemma' )->code, 403,
     "Permission denied to view stemma on private tradition" );
 my $pubstemurl = '/stemma/' . $textids->{public}->[0];
 my $psreq = request( "$pubstemurl/0" );

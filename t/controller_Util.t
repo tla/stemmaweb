@@ -3,8 +3,5 @@ use warnings;
 use Test::More;
 
 
-use Catalyst::Test 'stemmaweb';
-use stemmaweb::Controller::Util;
-
-ok( request('/util')->is_success, 'Request should succeed' );
+BEGIN { use_ok 'stemmaweb::Controller::Util' }
 done_testing();
