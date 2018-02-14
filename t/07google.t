@@ -211,23 +211,23 @@ my %tradition_names;
     $gplus_uid = $gplus_u->kiokudb_object_id;
 
     foreach my $trad_id (0..$#{ $openid_u->traditions }) {
-    	my $trad = $gplus_u->traditions->[$trad_id];
-    	$tradition_names{$trad->name} = 1;
+        my $trad = $gplus_u->traditions->[$trad_id];
+        $tradition_names{$trad->name} = 1;
         is($trad->name, $openid_u->traditions->[$trad_id]->name, 'Traditions were copied over to G+ user');
     }
 
     $ua->get('/logout');
 }
 
-{ 
-	diag("Check that the user traditions were removed from the old user");
-	my $scope = $dir->new_scope;
-	my $openid_u = $dir->lookup( $openid_uid );
-	my $gplus_u = $dir->lookup( $gplus_uid );
-	is( scalar @{$openid_u->traditions}, 0, "Traditions were removed from old user" );
-	foreach my $tradition ( @{$gplus_u->traditions} ) {
-		ok( $tradition_names{ $tradition->name }, "Tradition has remained with new user" );
-	}
+{
+    diag("Check that the user traditions were removed from the old user");
+    my $scope = $dir->new_scope;
+    my $openid_u = $dir->lookup( $openid_uid );
+    my $gplus_u = $dir->lookup( $gplus_uid );
+    is( scalar @{$openid_u->traditions}, 0, "Traditions were removed from old user" );
+    foreach my $tradition ( @{$gplus_u->traditions} ) {
+        ok( $tradition_names{ $tradition->name }, "Tradition has remained with new user" );
+    }
 }
 
 {

@@ -58,14 +58,14 @@ __PACKAGE__->config(
     # Set Unicode as the default
     encoding => 'UTF-8',
     default_view => 'TT',
-	'View::JSON' => {
-		expose_stash => 'result',
-	},
-	'View::TT' => {
-		INCLUDE_PATH => [
-			stemmaweb->path_to( 'root', 'src' ),
-		],
-	},
+    'View::JSON' => {
+        expose_stash => 'result',
+    },
+    'View::TT' => {
+        INCLUDE_PATH => [
+            stemmaweb->path_to( 'root', 'src' ),
+        ],
+    },
 
     'Plugin::Cache' => {
         backend => {
@@ -82,7 +82,7 @@ __PACKAGE__->config(
                 class => 'Password',
                 password_field => 'password',
                 password_type => 'hashed',
-				password_hash_type => 'SHA-256'
+                password_hash_type => 'SHA-256'
             },
             store => {
                 class => 'Neo4p',
@@ -93,7 +93,7 @@ __PACKAGE__->config(
         openid => {
             credential => {
                 class => 'OpenID',
-                extensions => ['http://openid.net/srv/ax/1.0' => 
+                extensions => ['http://openid.net/srv/ax/1.0' =>
                     {
                         ns          => 'ax',
                         uri         => 'http://openid.net/srv/ax/1.0',
@@ -130,7 +130,7 @@ __PACKAGE__->config(
         login_id_field => 'username',
         login_db_field => 'username',
         action_after_login => '/users/success',
-        action_after_register => '/users/success', 
+        action_after_register => '/users/success',
         enable_sending_register_email => 0,
         register_email_from  => '"Stemmaweb" <stemmaweb@byzantini.st>',
         register_email_subject => 'Registration to stemmaweb',

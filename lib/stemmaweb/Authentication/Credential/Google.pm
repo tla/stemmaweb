@@ -54,15 +54,15 @@ sub authenticate {
 
     my $userinfo = $self->decode($id_token);
     my $sub = $userinfo->{sub};
-	
-	unless (exists $userinfo->{email}) {
-		if ($email) {
-			$userinfo->{email} = $email;
-		} else {
-			Catalyst::Exception->throw('No email address associated with login request!');
-		}
-	}
-	
+
+    unless (exists $userinfo->{email}) {
+        if ($email) {
+            $userinfo->{email} = $email;
+        } else {
+            Catalyst::Exception->throw('No email address associated with login request!');
+        }
+    }
+
     if (!$sub) {
         Catalyst::Exception->throw('Could not retrieve sub from token! Is the token correct?');
     }

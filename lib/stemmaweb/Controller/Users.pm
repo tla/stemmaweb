@@ -108,7 +108,7 @@ A stub page returned on login / registration success.
 sub success :Local :Args(0) {
     my ( $self, $c ) = @_;
 
-	$c->load_status_msgs;
+    $c->load_status_msgs;
     $c->stash->{template} = 'auth/success.tt';
 }
 
@@ -119,9 +119,9 @@ Return to the index page, not to the login page.
 =cut
 
 sub post_logout {
-	my( $self, $c ) = @_;
-	$c->response->redirect( $c->uri_for_action( '/index' ) );
-	$c->detach;
+    my( $self, $c ) = @_;
+    $c->response->redirect( $c->uri_for_action( '/index' ) );
+    $c->detach;
 }
 
 =head1 AUTHOR

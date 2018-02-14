@@ -11,14 +11,14 @@ use namespace::clean;
 
 sub BUILDARGS {
     my ($class, $conf, $app, $realm) = @_;
- 
+
     return {
         app => $app,
         realm => $realm,
         %$conf,
     }
 }
- 
+
 has realm => (
     is => "ro",
 );
@@ -32,25 +32,25 @@ has model_name => (
 
 sub get_model {
     my ( $self, $c ) = @_;
- 
+
     $c->model($self->model_name);
 }
 
 sub find_user {
     my ($self, $userinfo, $c) = @_;
-	my $user = User->new(user_data => $userinfo);
+    my $user = User->new(user_data => $userinfo);
     return $self->find_user_by_id($user->id, $c);
 }
 
 sub find_user_by_id {
     my ($self, $userid, $c) = @_;
 
-	# TODO return Catalyst error, don't croak
+    # TODO return Catalyst error, don't croak
     croak "No user ID specified"
         unless defined $userid;
 
-	my $user_data = $c->model($self->model_name)->ajax('get', '/user/'.$userid.'/');
-	return $user_data ? $self->wrap($c, $userid, $user_data) : undef;
+    my $user_data = $c->model($self->model_name)->ajax('get', '/user/'.$userid.'/');
+    return $user_data ? $self->wrap($c, $userid, $user_data) : undef;
 }
 
 sub wrap {
@@ -68,12 +68,12 @@ sub from_session {
 
 sub auto_create_user {
     my ($self, $userinfo, $c) = @_;
-	
-	my $new_user = User->new(
-		user_data => $userinfo
-	);
 
-	$c->model($self->model_name)->ajax('put', '/user/' . $new_user->id . '/',
+    my $new_user = User->new(
+        user_data => $userinfo
+    );
+
+    $c->model($self->model_name)->ajax('put', '/user/' . $new_user->id . '/',
         'Content-Type' => 'application/json',
         'Content' => to_json($new_user->to_hash)
     );

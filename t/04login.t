@@ -26,7 +26,7 @@ my $ua = Test::WWW::Mechanize->new;
 
 $ua->get_ok('http://localhost/login');
 my $response = $ua->submit_form(
-	form_id => 'login_local_form',
+    form_id => 'login_local_form',
     fields => {
         username    => 'user@example.org',
         password    => 'UserPass'

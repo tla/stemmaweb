@@ -6,9 +6,9 @@ use base 'Catalyst::View::JSON';
 use JSON::XS ();
 
 sub encode_json {
-	my( $self, $c, $data ) = @_;
-	my $json = JSON::XS->new->utf8->convert_blessed(1);
-	$json->encode( $data );
+    my( $self, $c, $data ) = @_;
+    my $json = JSON::XS->new->utf8->convert_blessed(1);
+    $json->encode( $data );
 }
 
 1;

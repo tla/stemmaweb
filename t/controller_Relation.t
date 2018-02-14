@@ -41,11 +41,11 @@ my $rels = from_json($attempt->decoded_content);
 is(scalar @$rels, 96, "Found the correct number of relationships");
 
 $attempt = request POST $pubrelurl . "/relationships",
-	[source_id => $rels->[0]->{source}, target_id => $rels->[0]->{target}];
+    [source_id => $rels->[0]->{source}, target_id => $rels->[0]->{target}];
 is($attempt->code, 403, "Permission denied for relationship push");
 
 $attempt = request DELETE $pubrelurl . "/relationships",
-	[ source_id => $rels->[0]->{source}, target_id => $rels->[0]->{target} ];
+    [ source_id => $rels->[0]->{source}, target_id => $rels->[0]->{target} ];
 is($attempt->code, 403, "Permission denied for relationship deletion");
 
 # test GET readings
@@ -65,7 +65,7 @@ my $rdgdata = from_json($attempt->decoded_content);
 is($rdgdata->{normal_form}, 'uirginem', "Reading information look right");
 
 $attempt = request POST $pubrelurl . "/reading/" . $virginem->{id},
-	[id => $virginem->{id}, normal_form => 'wirginem'];
+    [id => $virginem->{id}, normal_form => 'wirginem'];
 is($attempt->code, 403, "Permission denied trying to change reading");
 
 # test POST compress/merge/duplicate/split (403)
@@ -75,8 +75,8 @@ is($attempt->code, 403, "Permission denied trying to change reading");
 my $mech = Test::WWW::Mechanize::Catalyst->new( catalyst_app => 'stemmaweb' );
 $mech->get_ok( '/login', "Requested the login page successfully" );
 $mech->submit_form(
-	form_id => 'login_local_form',
-	fields => {  username => 'user@example.org', password => 'UserPass' } );
+    form_id => 'login_local_form',
+    fields => {  username => 'user@example.org', password => 'UserPass' } );
 $mech->get_ok( '/' );
 $mech->content_contains( 'Hello! user@example.org', "Successfully logged in" );
 
