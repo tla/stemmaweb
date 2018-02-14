@@ -239,6 +239,63 @@ is($resp->{text}, 'canitur diuiditur in', "First new node has right reading text
 is($resp->{rank}, 6, "First new node has correct rank");
 
 # test POST split
+$attempt = $mech->get($privsection2 . "/readings");
+ok($attempt->is_success, "Requested reading list for private tradition section 2");
+my $privrdgs = from_json($attempt->decoded_content);
+is(scalar keys %$privrdgs, 47, "New number of readings correct");
+@cnodes = grep { $_->{text} eq 'ac magis' } values %$privrdgs;
+is(scalar @cnodes, 1, "Found our target reading");
+
+# Simple whitespace split
+$query = [reading => $cnodes[0]->{id},
+          rtext => 'ac magis',
+          separate => 'on'];
+$attempt = $mech->request(POST($privsection2 . "/split", $query));
+ok($attempt->is_success, "Split a multi-word reading");
+$resp = from_json($attempt->decoded_content);
+$rels = delete $resp->{relationships};
+is(scalar @$rels, 2, "Returned graph model has two relationships in");
+is(scalar keys %$resp, 2, "Returned graph model has two new readings");
+foreach my $id (keys %$resp) {
+    my $rdg = $resp->{$id};
+    if ($id == $cnodes[0]->{id}) {
+        is($rdg->{text}, "ac", "First reading has correct text");
+    } else {
+        is($rdg->{text}, "magis", "Second reading has correct text");
+    }
+}
+
+# Split of compound word
+@cnodes = grep { $_->{text} eq 'magisque' } values %$privrdgs;
+is(scalar @cnodes, 1, "Found our target reading");
+$query = [reading => $cnodes[0]->{id},
+          rtext => 'magisque',
+          index => 5];
+$attempt = $mech->request(POST($privsection2 . "/split", $query));
+ok($attempt->is_success, "Split a compound-word reading");
+$resp = from_json($attempt->decoded_content);
+$DB::single = 1;
+$rels = delete $resp->{relationships};
+is(scalar @$rels, 3, "Returned graph model has three relationships in");
+is(scalar keys %$resp, 2, "Returned graph model has two new readings");
+foreach my $id (keys %$resp) {
+    my $rdg = $resp->{$id};
+    if ($id == $cnodes[0]->{id}) {
+        is($rdg->{text}, "magis", "First reading has correct text");
+    } else {
+        is($rdg->{text}, "que", "Second reading has correct text");
+        ok($rdg->{join_prior}, "Second reading is marked as joined");
+    }
+}
+# Check re-ranking
+foreach my $r (@$rels) {
+    if ($r->{source} != $cnodes[0]->{id}) {
+        $attempt = $mech->get($privrelurl . "/reading/" . $r->{target});
+        $resp = from_json($attempt->decoded_content);
+        is($resp->{rank}, $cnodes[0]->{rank} + 2,
+            "Following reading " . $resp->{text} . " correctly re-ranked");
+    }
+}
 
 ### Log out and try a few things with known data
 

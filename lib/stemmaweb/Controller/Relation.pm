@@ -292,6 +292,9 @@ my %read_write_keys = (
     'is_nonsense' => 1,
     'lexemes' => 1,
     'normal_form' => 1,
+    'join_prior' => 0,
+    'join_next' => 0,
+    'annotation' => 1,
 );
 
 sub _lemma_change {
@@ -734,7 +737,6 @@ sub split :Chained('section') :PathPart :Args(0) {
     my( $self, $c ) = @_;
     my $m = $c->model('Directory');
     my $textid = $c->stash->{textid};
-    $DB::single = 1;
     if( $c->request->method eq 'POST' ) {
         # Auth check
         if( $c->stash->{'permission'} ne 'full' ) {
@@ -745,28 +747,29 @@ sub split :Chained('section') :PathPart :Args(0) {
         # Get and check the parameters
         my $rid = $c->request->param('reading');
         my $rtext = $c->request->param('rtext');
-        my $index = $c->request->param('index');
-        my $regex = $c->request->param('regex');
+        my $index = $c->request->param('index') || 0;
+        my $regex = $c->request->param('regex') || '\\s+';
         my $separate = $c->request->param('separate');
 
-        # If index is nonzero, we ignore regex and split on zero or more
-        # whitespace characters at the index location.
-        my $model = {character => '\\s*',
+        # If index is nonzero, we ignore regex and split at the index location.
+        my $model = {character => '',
             separate => json_bool($separate),
-            isRegex => JSON::true};
+            isRegex => JSON::false};
 
         # If index is zero, we need to check that the match is zero-length,
         # i.e. that we will have the same string when we put the split pieces
-        # back together.
+        # back together. Our defaults are to split on whitespace.
         if ($index == 0) {
             my @test = split($regex, $rtext);
-            if (join('', @test) ne $rtext) {
+            my $joinchar = $separate ? ' ' : '';
+            if (join($joinchar, @test) ne $rtext) {
                 json_error( $c, 400,
                     'The specified regular expression must be zero-length');
             }
             $model->{character} = $regex;
+            $model->{isRegex} = JSON::true;
         }
-
+        $DB::single = 1;
         # Do the deed
         my $url = "/reading/$rid/split/$index";
         my $response;

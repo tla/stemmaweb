@@ -2574,12 +2574,6 @@
       <data key="de8">orthographic</data>
       <data key="de7">global</data>
     </edge>
-    <edge source="n29" target="n30" id="e4">
-      <data key="de5">magisque</data>
-      <data key="de6">continue</data>
-      <data key="de8">collated</data>
-      <data key="de7">local</data>
-    </edge>
     <edge source="n34" target="n35" id="e5">
       <data key="de5">iugiter</data>
       <data key="de6">jugiter</data>
