@@ -2,7 +2,6 @@ package stemmaweb::View::SVG;
 
 use strict;
 use base 'Catalyst::View';
-use Encode qw/ encode /;
 
 sub process {
 	my( $self, $c ) = @_;
@@ -12,7 +11,7 @@ sub process {
 		$c->res->header( 'Content-Disposition', 
 			sprintf( "attachment; filename=\"%s.svg\"", $c->stash->{name} ) );
 	}
-    $c->res->output( encode( 'UTF-8', $c->stash->{result} ) );
+	$c->res->output( $c->stash->{result} );
 }
 
 1;
