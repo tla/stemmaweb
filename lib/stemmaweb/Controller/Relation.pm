@@ -184,7 +184,7 @@ sub relationships :Chained('section') :PathPart :Args(0) {
 #         }
         try {
             $c->stash->{'result'} =
-                $m->ajax('get', "/tradition/$textid/section/$sectid/relationships");
+                $m->ajax('get', "/tradition/$textid/section/$sectid/relations");
         } catch (stemmaweb::Error $e ) {
                 return json_error( $c, $e->status, $e->message );
         }
@@ -769,7 +769,6 @@ sub split :Chained('section') :PathPart :Args(0) {
             $model->{character} = $regex;
             $model->{isRegex} = JSON::true;
         }
-        $DB::single = 1;
         # Do the deed
         my $url = "/reading/$rid/split/$index";
         my $response;
