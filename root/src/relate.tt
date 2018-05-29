@@ -133,6 +133,23 @@ $(document).ready(function () {
 		<form id="detach_collated_form" action="#">
 		</form>
 	</div>
+	
+	<div id="split-form" title="Split a reading">
+		<div id="split-form-status"></div>
+		
+		Split a reading:<br/>
+		<form id="split_reading_form" action="#">
+			<input type="hidden" name="reading" id="split_reading_id"/>
+			<input type="hidden" name="rtext" id="split_reading_text"/>
+			<label for="split_reading_index">Character index to split at (0 for regex split)</label> <input type="text" name="index" id="split_reading_index" size="2"/><br/>
+			<div id="split_regex_input">
+				<label for="split_reading_regex">Regular expression for split operation</label><br/>
+				<input type="text" name="regex" id="split_reading_regex"/><br/>
+			</div>
+			<label for="split_reading_separate">These should be separate words?</label> <input type="checkbox" name="separate" id="split_reading_separate">
+		</form>
+	</div>
+			
 
 	<div id="reading-form" title="Reading info...">
 		<form id="reading_data_form" action="#">
