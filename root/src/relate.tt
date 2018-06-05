@@ -70,9 +70,7 @@ $(document).ready(function () {
 		<form id="merge_node_form" action="#">
 		<fieldset>
 			<input type="hidden" name="source" id="source_node_id"/>
-			<input type="hidden" name="reading_a" id="source_node_text"/>
 			<input type="hidden" name="target" id="target_node_id"/>
-			<input type="hidden" name="reading_b" id="target_node_text"/>
 			<label for="rel_type">Relation type&nbsp;</label>
 			<select name="type" id="rel_type" class=".ui-widget select">
 			</select>

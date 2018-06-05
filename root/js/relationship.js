@@ -346,10 +346,8 @@ function node_obj(ellipse) {
         var target_node_id = $('ellipse[fill="#ffccff"]').parent().attr('id');
         var target_node_text = $('ellipse[fill="#ffccff"]').siblings("text").text();
         $('#source_node_id').val( source_node_id );
-        $('#source_node_text').val( source_node_text );
         $('.rel_rdg_a').text( "'" + source_node_text + "'" );
         $('#target_node_id').val( target_node_id );
-        $('#target_node_text').val( target_node_text );
         $('.rel_rdg_b').text( "'" + target_node_text + "'" );
         $('#dialog-form').dialog( 'open' );
     };
@@ -896,8 +894,8 @@ function merge_node( source_node_id, target_node_id, compressing ) {
 	if (!compressing) {
 		// Add source node witnesses to target node
 		// NOTE: this may need to be more complex to account for witness layers
-		$.each(readingdata[source_node_id].witnesses, function( i, d ) { 
-			readingdata[target_node_id].witnesses.push(d) 
+		$.each(readingdata[source_node_id].witnesses, function( i, d ) {
+			readingdata[target_node_id].witnesses.push(d)
 		});
 	}
 	delete readingdata[source_node_id];
