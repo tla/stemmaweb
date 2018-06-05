@@ -122,7 +122,7 @@ sub help :Local :Args(1) {
 
 =head2 relationships
 
- GET relation/$textid/relationships
+ GET relation/$textid/$sectid/relationships
 
 Returns a JSON list of relationships defined for this text. Each relationship
 is an object that looks like this:
@@ -136,21 +136,19 @@ is an object that looks like this:
    'id' => 90778,
    'is_significant' => 'no',
    'non_independent' => JSON::False,
-   'reading_a' => 'swetia',
-   'reading_b' => 'swecia',
    'scope' => 'local',
    'source' => 66220,
    'target' => 66221,
    'type' => 'orthographic'}
 
- POST relation/$textid/section/$sectid/relationships { request }
+ POST relation/$textid/$sectid/relationships { request }
 
 Accepts a form data post with keys as above, and attempts to create the requested
 relationship. Required keys are source, target, type, and scope; others are
 only necessary if they are non-default. On success, returns a JSON list of
 relationships that should be created in [source_id, target_id, type] tuple form.
 
- DELETE relation/$textid/section/$sectid/relationships { request }
+ DELETE relation/$textid/$sectid/relationships { request }
 
 Accepts a form data post with a source_id and a target_id to indicate the
 relationship to delete. On success, returns a JSON list of relationships that
@@ -164,24 +162,6 @@ sub relationships :Chained('section') :PathPart :Args(0) {
     my $sectid = $c->stash->{sectid};
     my $m = $c->model('Directory');
     if( $c->request->method eq 'GET' ) {
-#         my @pairs = $collation->relationships; # returns the edges
-#         my @all_relations;
-#         foreach my $p ( @pairs ) {
-#             my $relobj = $collation->relations->get_relationship( @$p );
-#             next if $relobj->type eq 'collated'; # Don't show these
-#             next if $p->[0] eq $p->[1]; # HACK until bugfix
-#             my $relhash = { source_id => $p->[0], target_id => $p->[1],
-#                   source_text => $collation->reading( $p->[0] )->text,
-#                   target_text => $collation->reading( $p->[1] )->text,
-#                   type => $relobj->type, scope => $relobj->scope,
-#                   a_derivable_from_b => $relobj->a_derivable_from_b,
-#                   b_derivable_from_a => $relobj->b_derivable_from_a,
-#                   non_independent => $relobj->non_independent,
-#                   is_significant => $relobj->is_significant
-#                   };
-#             $relhash->{'note'} = $relobj->annotation if $relobj->has_annotation;
-#             push( @all_relations, $relhash );
-#         }
         try {
             $c->stash->{'result'} =
                 $m->ajax('get', "/tradition/$textid/section/$sectid/relations");
@@ -223,7 +203,7 @@ sub relationships :Chained('section') :PathPart :Args(0) {
             # TODO should any propagation be done?
             # TODO should any normal forms be propagated?
             # Massage the server result into what the JS expects
-            my @relpairs = map { [$_->{source}, $_->{target}, $_->{type}] } @{$result->{relationships}};
+            my @relpairs = map { [$_->{source}, $_->{target}, $_->{type}] } @{$result->{relations}};
             $c->stash->{result} = { relationships => \@relpairs, readings => $result->{readings}};
 
         } elsif( $c->request->method eq 'DELETE' ) {
@@ -683,7 +663,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
         }
 
         # Massage the response into the expected form.
-        my @deleted_rels = map { [$_->{source}, $_->{target}, $_->{type}] } @{$response->{relationships}};
+        my @deleted_rels = map { [$_->{source}, $_->{target}, $_->{type}] } @{$response->{relations}};
         $c->stash->{result} = {DELETED => \@deleted_rels};
         foreach my $r (@{$response->{readings}}) {
             my $rinfo = _reading_struct($c, $r);
@@ -781,7 +761,7 @@ sub split :Chained('section') :PathPart :Args(0) {
         }
 
         # Fill out the readings and return the result
-        $c->stash->{result}->{relationships} = $response->{relationships};
+        $c->stash->{result}->{relationships} = $response->{relations};
         foreach my $r (@{$response->{readings}}) {
             my $rinfo = _reading_struct($c, $r);
             # Add in the orig_reading information that was passed back
