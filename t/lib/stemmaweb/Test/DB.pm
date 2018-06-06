@@ -38,7 +38,7 @@ sub errorout {
 	return sprintf("%s: %s / %s", $msg, $res->code, $res->content);
 }
 
-sub new_db {
+sub test_data {
 	my $datadir = shift;
 	# Get the URL
 	my $cfg = Config::Any->load_stems({stems => ['stemmaweb'], use_ext => 1})->[0];
@@ -203,20 +203,43 @@ sub new_db {
 
 sub test_db {
     my $httpd = Test::Fake::HTTPD->new( port => 8082 );
+    my $state = {};
     $httpd->run(sub {
         my $request = shift;
         my $uri = $request->uri;
-        print STDERR "Processing request for $uri\n";
+        my $method = $request->method;
+        print STDERR "Processing $method request for $uri\n";
+        my $resp = HTTP::Response->new(500);
+        $resp->header('Content-Type', 'application/json;charset=utf-8');
+
+        ## User testing
         if ($uri->path eq '/user/user@example.org/') {
-            my $resp = HTTP::Response->new(200);
-            $resp->header('Content-Type', 'application/json;charset=utf-8');
+            $resp->code(200);
             $resp->content('{"id":"user@example.org","passphrase":"0NT3bCujDh6wvf5UTfXsjmlRhyEG6xvT1/kgiZPyjGk","role":"user","active":true,"email":"user@example.org"}');
             return $resp;
+        } elsif ($uri->path eq '/user/user2@example.org/') {
+            if ($method eq 'PUT' || $state->{user2_reg}) {
+                $state->{user2_reg} = 1;
+                $resp->code($method eq 'PUT' ? 201 : 200);
+                $resp->content('{"id":"user2@example.org","passphrase":"0NT3bCujDh6wvf5UTfXsjmlRhyEG6xvT1/kgiZPyjGk","role":"user","active":true,"email":"user2@example.org"}');
+            } else {
+                $resp->code(204);
+            }
         } elsif ($uri->path =~ m!^/user/!) {
-            return HTTP::Response->new(204, "No Content");
+            $resp->code(204);
         }
 
-        return HTTP::Response->new(500, "I have no idea");
+        ## Public tradition done_testing
+
+
+        ## Private tradition testing
+
+        # Fallback generic error
+        if ($resp->code == 500 && !$resp->content) {
+            $resp->content('{"error": "Test database says what?"}');
+        }
+
+        return $resp;
     });
     return $httpd;
 }

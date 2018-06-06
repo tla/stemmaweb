@@ -16,7 +16,7 @@ use Data::Dumper;
 
 use stemmaweb::Test::DB;
 
-stemmaweb::Test::DB::new_db("$FindBin::Bin/data");
+my $httpd = stemmaweb::Test::DB::test_db();
 
 my $n4jurl = stemmaweb->config->{'Model::Directory'}->{tradition_repo};
 LWP::Protocol::PSGI->register(

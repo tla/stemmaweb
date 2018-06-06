@@ -12,11 +12,11 @@ use FindBin;
 use lib ("$FindBin::Bin/lib");
 
 use stemmaweb::Test::DB;
-my $textids = stemmaweb::Test::DB::new_db("$FindBin::Bin/data");
+my $httpd = stemmaweb::Test::DB::test_db();
 
 # Traditions used to test
-my $pubrelurl = '/relation/' . $textids->{public}->[2];
-my $privrelurl = '/relation/' . $textids->{private}->[2];
+my $pubrelurl = '/relation/tradition-id-public';
+my $privrelurl = '/relation/tradition-id-private';
 
 ### While not logged in:
 
