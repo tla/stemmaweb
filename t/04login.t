@@ -13,7 +13,8 @@ use FindBin;
 use lib ("$FindBin::Bin/lib");
 
 use stemmaweb::Test::DB;
-stemmaweb::Test::DB::new_db("$FindBin::Bin/data");
+my $httpd = stemmaweb::Test::DB::test_db();
+ok(defined $httpd, "Webserver should be running");
 
 # Hijack LWP requests, but not if they should go to the datastore server
 my $n4jurl = stemmaweb->config->{'Model::Directory'}->{tradition_repo};

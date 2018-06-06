@@ -4,9 +4,12 @@ use strict;
 use warnings;
 use feature qw/say/;
 use Config::Any;
+use Data::Dumper;
 use Digest;
+use HTTP::Response;
 use JSON qw/to_json from_json/;
 use LWP::UserAgent;
+use Test::Fake::HTTPD;
 use URI::URL;
 
 # Define our helpers
@@ -51,7 +54,7 @@ sub new_db {
 		$host .= ':' . $n4jurl->port unless $n4jurl->port == 80;
 		# Now add the credentials
 		$ua->ssl_opts( 'verify_hostname' => 0 );
-		$ua->credentials( $host, $dircfg->{basic_auth}->{realm}, 
+		$ua->credentials( $host, $dircfg->{basic_auth}->{realm},
 			$dircfg->{basic_auth}->{user}, $dircfg->{basic_auth}->{pass} );
 	}
 	## Users that should exist in the beginning
@@ -77,7 +80,7 @@ sub new_db {
 	    my $trads = djson( $tres );
 	    foreach my $tr ( @$trads ) {
 	      my $res = $ua->delete( "$n4jurl/tradition/" . $tr->{id} );
-	      die errorout("Could not delete tradition " . $tr->{id}, $res) 
+	      die errorout("Could not delete tradition " . $tr->{id}, $res)
 	      	unless $res->code == 200;
 	    }
 	  }
@@ -93,7 +96,7 @@ sub new_db {
 	}
 
 	# TODO create openid user
-	
+
 	my $created = {public => [], private => []};
 
 	# Add the traditions
@@ -146,7 +149,7 @@ sub new_db {
 	$res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t3data);
 	die errorout("John verse tradition could not be created", $res) unless $res->code == 201;
 	push(@{$created->{public}}, djson( $res )->{tradId});
-	
+
 
 	# 4. Sapientia / collation correction
 	my $t4data = [
@@ -196,6 +199,26 @@ sub new_db {
 	die errorout("Second half of multi-section tradition could not be created", $res) unless $res->code == 201;
 	say("Test data setup complete.");
 	return $created;
+}
+
+sub test_db {
+    my $httpd = Test::Fake::HTTPD->new( port => 8082 );
+    $httpd->run(sub {
+        my $request = shift;
+        my $uri = $request->uri;
+        print STDERR "Processing request for $uri\n";
+        if ($uri->path eq '/user/user@example.org/') {
+            my $resp = HTTP::Response->new(200);
+            $resp->header('Content-Type', 'application/json;charset=utf-8');
+            $resp->content('{"id":"user@example.org","passphrase":"0NT3bCujDh6wvf5UTfXsjmlRhyEG6xvT1/kgiZPyjGk","role":"user","active":true,"email":"user@example.org"}');
+            return $resp;
+        } elsif ($uri->path =~ m!^/user/!) {
+            return HTTP::Response->new(204, "No Content");
+        }
+
+        return HTTP::Response->new(500, "I have no idea");
+    });
+    return $httpd;
 }
 
 1;
