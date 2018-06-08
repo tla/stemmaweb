@@ -275,6 +275,7 @@ my %read_write_keys = (
     'join_prior' => 0,
     'join_next' => 0,
     'annotation' => 1,
+    'witnesses' => 0
 );
 
 sub _lemma_change {
@@ -314,19 +315,7 @@ sub _reading_struct {
     $struct->{normal_form} = $reading->{normal_form} || $reading->{text};
     # Initialise the lexemes if necessary
     $struct->{lexemes} = $reading->{lexemes} || [];
-
     # Now add the list data
-    my $variants;
-    my $witnesses;
-    try {
-        $variants = $m->ajax('get', "/reading/$rid/related?types=orthographic&types=spelling");
-        $witnesses = $m->ajax('get', "/reading/$rid/witnesses");
-    } catch (stemmaweb::Error $e ) {
-        return json_error( $c, $e->status, $e->message );
-    }
-
-    $struct->{'variants'} = [ map { $_->{text} } @$variants ];
-    $struct->{'witnesses'} = $witnesses;
     return $struct;
 }
 
@@ -600,7 +589,6 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
         foreach my $rid ($c->request->param('readings[]')) {
             try {
                 my $rdginfo = $m->ajax('get', "/reading/$rid");
-                $rdginfo->{witnesses} = $m->ajax('get', "/reading/$rid/witnesses");
                 push( @readings, $rdginfo );
             } catch (stemmaweb::Error $e ) {
                 return json_error( $c, $e->status, $e->message );
