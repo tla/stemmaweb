@@ -121,7 +121,8 @@ $attempt = $mech->request($replace);
 ok($attempt->is_success, "Replaced the relationship");
 $attempt = $mech->get($privrelurl . "/relationships");
 $rels = from_json($attempt->decoded_content);
-is(scalar @$rels, 13, "Relationship has been restored");
+ok(grep{$_->{source} eq $testrel->{source} && $_->{target} eq $testrel->{target}} @$rels);
+is(scalar @$rels, 23, "Transitive relationships were created too");
 
 # test GET, POST reading(s)
 $attempt = $mech->get($privrelurl . "/readings");
@@ -274,7 +275,6 @@ $query = [reading => $cnodes[0]->{id},
 $attempt = $mech->request(POST($privsection2 . "/split", $query));
 ok($attempt->is_success, "Split a compound-word reading");
 $resp = from_json($attempt->decoded_content);
-$DB::single = 1;
 $rels = delete $resp->{relationships};
 is(scalar @$rels, 3, "Returned graph model has three relationships in");
 is(scalar keys %$resp, 2, "Returned graph model has two new readings");
