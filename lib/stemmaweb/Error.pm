@@ -29,7 +29,8 @@ around 'throw' => sub {
     if( exists $args->{'response'} ) {
         my $resp = delete $args->{'response'};
         $args->{'status'} = $resp->code;
-        if ($resp->header('content-type') =~ /application\/json/) {
+        if ($resp->header('content-type') 
+            && $resp->header('content-type') =~ /application\/json/) {
             my $r = from_json($resp->decoded_content);
             $args->{'message'} = $r->{error} if exists $r->{error};
         }
