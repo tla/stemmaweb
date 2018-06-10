@@ -1308,7 +1308,11 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	} else if ( $('#reading-form').dialog('isOpen') ) {
 		// reading box
 		error += '<br>The reading cannot be altered.</p>';
-		errordiv = '#reading_status';
+        errordiv = '#reading_status';
+    } else if ( $('#section-info').dialog('isOpen') ) {
+        // section box
+        error += '<br>The section cannot be updated.</p>';
+        errordiv = '#section-form-status';
 	} else {
 		// Probably a keystroke action
 		error += '<br>The action cannot be performed.</p>';
@@ -1696,7 +1700,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			// Disable the button
   			var mybuttons = $(evt.target).closest('button').parent().find('button');
 			mybuttons.button( 'disable' );
-			$('#reading_status').empty();
+			$('#reading-form-status').empty();
 			var reading_id = $('#reading_id').val()
 			form_values = {
 				'id' : reading_id,
@@ -1745,6 +1749,39 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	close: function() {
 		$("#dialog_overlay").hide();
 	}
+  });
+
+  $('#section-info').dialog({
+    autoOpen: false,
+    modal: true,
+    buttons: {
+        Cancel: function() {
+			$( this ).dialog( "close" );
+		},
+		Update: function( evt ) {
+            // Disable the button
+  			var mybuttons = $(evt.target).closest('button').parent().find('button');
+            mybuttons.button( 'disable' );
+            // Remove any prior error message
+            $('#section-form-status').empty();
+            // Serialise and send the form
+            ncpath = getTextURL('metadata');
+            var jqjson = $.post(ncpath, $('#section_info_form').serialize(), function(data) {
+                // Update the section name in the display
+                sect_metadata = data;
+                $('#text_title').empty().append(data['name']);
+                $('#section_select option:selected').empty().append(data['name']);
+                // Re-enable the buttons and get out of here
+                mybuttons.button("enable");
+				$( "#section-info" ).dialog( "close" );
+            });
+            return false;
+        },
+    },
+    open: function() {
+        $("#section_name").val(sect_metadata['name']);
+        $("#section_language").val(sect_metadata['language']);
+    }
   });
 
 	// Set up the error message dialog, for results from keystroke commands

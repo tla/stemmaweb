@@ -99,6 +99,7 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     # Get the basic info we need
     $c->stash->{'text_title'} = $tradition->{name};
     $c->stash->{'text_lang'} = $tradition->{language} || 'Default';
+    $c->stash->{'sect_metadata'} = to_json($c->stash->{section});
     $c->stash->{'sections'} = $tradition->{sections};
     # Spit out the SVG
     my $svgstr = generate_svg( $c ); # $c contains text & section info
@@ -120,6 +121,47 @@ Returns the help window HTML.
 sub help :Local :Args(1) {
     my( $self, $c, $lang ) = @_;
     $c->stash->{'template'} = 'relatehelp.tt';
+}
+
+
+=head2 metadata
+
+ POST relation/$textid/$sectid/info
+
+ Update the metadata for a section. At present, this means changing its name.
+
+ Accepts a form data post with the new section info, and attempts to change 
+ the name on the server. Returns a JSON structure with the updated info.
+
+  { 'id' => $sectid, 'name' => $new_name }
+
+=cut
+
+sub metadata :Chained('section') :PathPart :Args(0) {
+    my( $self, $c ) = @_;
+    my $textid = $c->stash->{textid};
+    my $sectid = $c->stash->{sectid};
+    my $m = $c->model('Directory');
+
+    if ($c->request->method eq 'POST') {
+        if( $c->stash->{permission} ne 'full' ) {
+            json_error( $c, 403, 'You do not have permission to modify this tradition.' );
+        } else {
+            # Take the old section, update its values, and PUT the result.
+            my $request = $c->req->params();
+            my $struct = $c->stash->{section};
+            map { $struct->{$_} = $request->{$_} } keys %$request;
+            try {
+                $c->stash->{result} = $m->ajax('put', "/tradition/$textid/section/$sectid",
+                    'Content-Type' => 'application/json',
+                    'Content' => encode_json( $request ));
+            } catch (stemmaweb::Error $e ) {
+                return json_error( $c, $e->status, $e->message );
+            }
+
+        }
+    }
+    $c->forward('View::JSON');
 }
 
 =head2 relationships
@@ -339,7 +381,7 @@ sub readings :Chained('section') :PathPart :Args(0) {
     my $ret = {};
     foreach my $rdg (@$rdglist) {
         my $struct = _reading_struct( $c, $rdg );
-        $ret->{$struct->{id}} = $struct;
+        $ret->{'n' . $struct->{id}} = $struct;
     }
     $c->stash->{result} = $ret;
     $c->forward('View::JSON');
