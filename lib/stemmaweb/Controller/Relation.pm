@@ -31,6 +31,8 @@ Renders the application for the text identified by $textid.
 sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
     my( $self, $c, $textid ) = @_;
     my $textinfo = load_tradition( $c, $textid );
+    # Did something go wrong? An error message will be in the stash
+    $c->detach() if (exists $c->stash->{'result'});
     unless($textinfo->{permission}) {
         json_error( $c, 403, "You do not have permission to view this text");
         $c->detach();
