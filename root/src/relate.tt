@@ -8,6 +8,7 @@
 var basepath = "[% c.uri_for( '/relation/' ) %]";
 var textid = "[% textid %]";
 var sectid = "[% sectid %]";
+var sect_metadata = [% sect_metadata %];
 var editable = "[% permission %]" === "full";
 var text_direction = "[% direction %]";
 // URLs for images referenced in Javascript
@@ -38,16 +39,16 @@ $(document).ready(function () {
    </div>
     <div id="topbanner">
 		<h1>Relationship mapper</h1>
-		<h2>[% text_title %]</h2>
+		<h2 id="text_title">[% section.name %]</h2>
 		<div id="segmentation">
-[% FOREACH section IN sections -%]
-[% IF section.id != sectid -%]
-			<a href="[% c.uri_for( "/relation/$textid" ) %]/[% section.id %]">
-				<span class="segment_guide">[% section.name %]</span>
-			</a>
-[% ELSE -%]
-			<span class="segment_guide selected">[% section.name %]</span>
+		    <span class="section">Section 
+		    <select id="section_select" name="section_select" onchange="window.location.href=this.value">
+[% FOREACH s IN sections -%]
+				<option value=[% s.id %][% IF s.id == sectid -%] selected[% END -%]>[% s.name %]</option>
 [% END -%]
+			</select>
+[% IF permission == "full" -%]
+			<a href="#" onclick="$('#section-info').dialog('open');">Edit section metadata</a></span>
 [% END -%]
 		</div>
 	</div>
@@ -70,9 +71,7 @@ $(document).ready(function () {
 		<form id="merge_node_form" action="#">
 		<fieldset>
 			<input type="hidden" name="source" id="source_node_id"/>
-			<input type="hidden" name="reading_a" id="source_node_text"/>
 			<input type="hidden" name="target" id="target_node_id"/>
-			<input type="hidden" name="reading_b" id="target_node_text"/>
 			<label for="rel_type">Relation type&nbsp;</label>
 			<select name="type" id="rel_type" class=".ui-widget select">
 			</select>
@@ -151,7 +150,7 @@ $(document).ready(function () {
 	</div>
 			
 
-	<div id="reading-form" title="Reading info...">
+	<div id="reading-form" title="Reading information">
 		<form id="reading_data_form" action="#">
 			<input type="hidden" name="reading_id" id="reading_id"/>
 			<div class="morph">
@@ -170,10 +169,19 @@ $(document).ready(function () {
 				<label for="reading_normal_form">Normalized form: </label>
 				<input type="text" name="reading_normal_form" id="reading_normal_form"></input>
 			</div>
-		</select>
 		</form>
 		<div id="reading-form-status"></div>
     </div>
+
+	<div id="section-info" title="Edit section information">
+		<form id="section_info_form" action="#">
+			<label for="section_name">Title: </label>
+			<input type="text" name="name" id="section_name"></input><br>
+			<label for="section_language">Language: </label>
+			<input type="text" name="language" id="section_language"></input>
+		</form>
+		<div id="section-form-status"></div>
+	</div>
 
     <div id="error-display" title="Error">
     </div>

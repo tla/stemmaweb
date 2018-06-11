@@ -31,6 +31,8 @@ Renders the application for the text identified by $textid.
 sub text :Chained('/') :PathPart('relation') :CaptureArgs(1) {
     my( $self, $c, $textid ) = @_;
     my $textinfo = load_tradition( $c, $textid );
+    # Did something go wrong? An error message will be in the stash
+    $c->detach() if (exists $c->stash->{'result'});
     unless($textinfo->{permission}) {
         json_error( $c, 403, "You do not have permission to view this text");
         $c->detach();
@@ -97,6 +99,7 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     # Get the basic info we need
     $c->stash->{'text_title'} = $tradition->{name};
     $c->stash->{'text_lang'} = $tradition->{language} || 'Default';
+    $c->stash->{'sect_metadata'} = to_json($c->stash->{section});
     $c->stash->{'sections'} = $tradition->{sections};
     # Spit out the SVG
     my $svgstr = generate_svg( $c ); # $c contains text & section info
@@ -120,9 +123,50 @@ sub help :Local :Args(1) {
     $c->stash->{'template'} = 'relatehelp.tt';
 }
 
+
+=head2 metadata
+
+ POST relation/$textid/$sectid/info
+
+ Update the metadata for a section. At present, this means changing its name.
+
+ Accepts a form data post with the new section info, and attempts to change 
+ the name on the server. Returns a JSON structure with the updated info.
+
+  { 'id' => $sectid, 'name' => $new_name }
+
+=cut
+
+sub metadata :Chained('section') :PathPart :Args(0) {
+    my( $self, $c ) = @_;
+    my $textid = $c->stash->{textid};
+    my $sectid = $c->stash->{sectid};
+    my $m = $c->model('Directory');
+
+    if ($c->request->method eq 'POST') {
+        if( $c->stash->{permission} ne 'full' ) {
+            json_error( $c, 403, 'You do not have permission to modify this tradition.' );
+        } else {
+            # Take the old section, update its values, and PUT the result.
+            my $request = $c->req->params();
+            my $struct = $c->stash->{section};
+            map { $struct->{$_} = $request->{$_} } keys %$request;
+            try {
+                $c->stash->{result} = $m->ajax('put', "/tradition/$textid/section/$sectid",
+                    'Content-Type' => 'application/json',
+                    'Content' => encode_json( $request ));
+            } catch (stemmaweb::Error $e ) {
+                return json_error( $c, $e->status, $e->message );
+            }
+
+        }
+    }
+    $c->forward('View::JSON');
+}
+
 =head2 relationships
 
- GET relation/$textid/relationships
+ GET relation/$textid/$sectid/relationships
 
 Returns a JSON list of relationships defined for this text. Each relationship
 is an object that looks like this:
@@ -136,21 +180,19 @@ is an object that looks like this:
    'id' => 90778,
    'is_significant' => 'no',
    'non_independent' => JSON::False,
-   'reading_a' => 'swetia',
-   'reading_b' => 'swecia',
    'scope' => 'local',
    'source' => 66220,
    'target' => 66221,
    'type' => 'orthographic'}
 
- POST relation/$textid/section/$sectid/relationships { request }
+ POST relation/$textid/$sectid/relationships { request }
 
 Accepts a form data post with keys as above, and attempts to create the requested
 relationship. Required keys are source, target, type, and scope; others are
 only necessary if they are non-default. On success, returns a JSON list of
 relationships that should be created in [source_id, target_id, type] tuple form.
 
- DELETE relation/$textid/section/$sectid/relationships { request }
+ DELETE relation/$textid/$sectid/relationships { request }
 
 Accepts a form data post with a source_id and a target_id to indicate the
 relationship to delete. On success, returns a JSON list of relationships that
@@ -164,24 +206,6 @@ sub relationships :Chained('section') :PathPart :Args(0) {
     my $sectid = $c->stash->{sectid};
     my $m = $c->model('Directory');
     if( $c->request->method eq 'GET' ) {
-#         my @pairs = $collation->relationships; # returns the edges
-#         my @all_relations;
-#         foreach my $p ( @pairs ) {
-#             my $relobj = $collation->relations->get_relationship( @$p );
-#             next if $relobj->type eq 'collated'; # Don't show these
-#             next if $p->[0] eq $p->[1]; # HACK until bugfix
-#             my $relhash = { source_id => $p->[0], target_id => $p->[1],
-#                   source_text => $collation->reading( $p->[0] )->text,
-#                   target_text => $collation->reading( $p->[1] )->text,
-#                   type => $relobj->type, scope => $relobj->scope,
-#                   a_derivable_from_b => $relobj->a_derivable_from_b,
-#                   b_derivable_from_a => $relobj->b_derivable_from_a,
-#                   non_independent => $relobj->non_independent,
-#                   is_significant => $relobj->is_significant
-#                   };
-#             $relhash->{'note'} = $relobj->annotation if $relobj->has_annotation;
-#             push( @all_relations, $relhash );
-#         }
         try {
             $c->stash->{'result'} =
                 $m->ajax('get', "/tradition/$textid/section/$sectid/relations");
@@ -223,7 +247,7 @@ sub relationships :Chained('section') :PathPart :Args(0) {
             # TODO should any propagation be done?
             # TODO should any normal forms be propagated?
             # Massage the server result into what the JS expects
-            my @relpairs = map { [$_->{source}, $_->{target}, $_->{type}] } @{$result->{relationships}};
+            my @relpairs = map { [$_->{source}, $_->{target}, $_->{type}] } @{$result->{relations}};
             $c->stash->{result} = { relationships => \@relpairs, readings => $result->{readings}};
 
         } elsif( $c->request->method eq 'DELETE' ) {
@@ -295,6 +319,7 @@ my %read_write_keys = (
     'join_prior' => 0,
     'join_next' => 0,
     'annotation' => 1,
+    'witnesses' => 0
 );
 
 sub _lemma_change {
@@ -334,19 +359,7 @@ sub _reading_struct {
     $struct->{normal_form} = $reading->{normal_form} || $reading->{text};
     # Initialise the lexemes if necessary
     $struct->{lexemes} = $reading->{lexemes} || [];
-
     # Now add the list data
-    my $variants;
-    my $witnesses;
-    try {
-        $variants = $m->ajax('get', "/reading/$rid/related?types=orthographic&types=spelling");
-        $witnesses = $m->ajax('get', "/reading/$rid/witnesses");
-    } catch (stemmaweb::Error $e ) {
-        return json_error( $c, $e->status, $e->message );
-    }
-
-    $struct->{'variants'} = [ map { $_->{text} } @$variants ];
-    $struct->{'witnesses'} = $witnesses;
     return $struct;
 }
 
@@ -368,7 +381,7 @@ sub readings :Chained('section') :PathPart :Args(0) {
     my $ret = {};
     foreach my $rdg (@$rdglist) {
         my $struct = _reading_struct( $c, $rdg );
-        $ret->{$struct->{id}} = $struct;
+        $ret->{'n' . $struct->{id}} = $struct;
     }
     $c->stash->{result} = $ret;
     $c->forward('View::JSON');
@@ -620,7 +633,6 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
         foreach my $rid ($c->request->param('readings[]')) {
             try {
                 my $rdginfo = $m->ajax('get', "/reading/$rid");
-                $rdginfo->{witnesses} = $m->ajax('get', "/reading/$rid/witnesses");
                 push( @readings, $rdginfo );
             } catch (stemmaweb::Error $e ) {
                 return json_error( $c, $e->status, $e->message );
@@ -683,7 +695,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
         }
 
         # Massage the response into the expected form.
-        my @deleted_rels = map { [$_->{source}, $_->{target}, $_->{type}] } @{$response->{relationships}};
+        my @deleted_rels = map { [$_->{source}, $_->{target}, $_->{type}] } @{$response->{relations}};
         $c->stash->{result} = {DELETED => \@deleted_rels};
         foreach my $r (@{$response->{readings}}) {
             my $rinfo = _reading_struct($c, $r);
@@ -781,7 +793,7 @@ sub split :Chained('section') :PathPart :Args(0) {
         }
 
         # Fill out the readings and return the result
-        $c->stash->{result}->{relationships} = $response->{relationships};
+        $c->stash->{result}->{relationships} = $response->{relations};
         foreach my $r (@{$response->{readings}}) {
             my $rinfo = _reading_struct($c, $r);
             # Add in the orig_reading information that was passed back

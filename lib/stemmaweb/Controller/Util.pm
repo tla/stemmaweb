@@ -111,9 +111,26 @@ sub _dot_attr_string {
         return( '[ ' . join( ', ', @attrs ) . ' ]' );
 }
 
-# Get (and parse) the GraphML directly, to turn it into the sort of graph we need for the
-# relationship mapper.
+# Get a dot representation of the graph and run it through Graphviz
 sub generate_svg {
+    my $c = shift;
+    my $m = $c->model('Directory');
+    my $textid = $c->stash->{textid};
+    my $sectid = $c->stash->{sectid};
+    my $dotstr = $m->ajax('get', "/tradition/$textid/section/$sectid/dot");
+    unless ($dotstr =~ /^digraph/) {
+        # Do we have an error message already?
+        unless (exists $c->stash->{result}) {
+            json_error( $c, 500, "Bad dot string: $dotstr");
+        }
+        $c->detach();
+    }
+    return $m->dot_to_svg($dotstr);
+}
+
+# Get (and parse) the GraphML directly, to turn it into the sort of graph we
+# need for the relationship mapper.
+sub generate_svg_old {
     my $c = shift;
     my $m = $c->model('Directory');
     my $textid = $c->stash->{textid};
