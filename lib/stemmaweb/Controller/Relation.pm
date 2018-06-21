@@ -294,13 +294,14 @@ sub relationships :Chained('section') :PathPart :Args(0) {
 
  GET relation/$textid/readings
 
-Returns a JSON dictionary, keyed on reading ID, of all readings defined for this
-text along with their metadata. A typical object in this dictionary will look like:
+Returns a JSON dictionary, keyed on the SVG node ID of the reading, of all readings 
+defined for this section along with their metadata. A typical object in this dictionary 
+will look like:
 
-  {"witnesses":["Gr314","Kf133","Mu11475","Kr299","MuU151","Er16","Ba96","Wi3818","Mu28315"],
+  "n1051" => {"id":"1051",
+   "witnesses":["Gr314","Kf133","Mu11475","Kr299","MuU151","Er16","Ba96","Wi3818","Mu28315"],
    "lexemes":[],
    "text":"dicens.",
-   "id":"n1051",
    "is_meta":null,
    "variants":[]}
 
