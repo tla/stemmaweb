@@ -2,6 +2,9 @@ var MARGIN=30;
 var svg_root = null;
 var svg_root_element = null;
 var start_element_height = 0;
+var global_graph_scale = 26;
+var global_graph_min = 10;
+var global_graph_max = 50;
 var reltypes = {};
 var readingdata = {};
 var readings_selected = [];
@@ -109,6 +112,175 @@ function color_active ( el ) {
 	}
 }
 
+
+// New marquee code attempt JMB
+
+var d3svg = 1;
+var d3svg2 = 1;
+var svg_g = 1;
+var view_wide = 0;
+var view_high = 0;
+var tfm = -1;
+
+var selectionRect = {
+	element			: null,
+	previousElement : null,
+	currentY		: 0,
+	currentX		: 0,
+	originX			: 0,
+	originY			: 0,
+	setElement: function(ele) {
+		this.previousElement = this.element;
+		this.element = ele;
+	},
+	getNewAttributes: function() {
+		var x = this.currentX<this.originX?this.currentX:this.originX;
+		var y = this.currentY<this.originY?this.currentY:this.originY;
+		var width = Math.abs(this.currentX - this.originX);
+		var height = Math.abs(this.currentY - this.originY);
+		return {
+	        x       : x,
+	        y       : y,
+	        width  	: width,
+	        height  : height
+		};
+	},
+	getCurrentAttributes: function() {
+		// use plus sign to convert string into number
+		var x = +this.element.attr("x");
+		var y = +this.element.attr("y");
+		var width = +this.element.attr("width");
+		var height = +this.element.attr("height");
+		return {
+			x1  : x,
+	        y1	: y,
+	        x2  : x + width,
+	        y2  : y + height
+		};
+	},
+	getCurrentAttributesAsText: function() {
+		var attrs = this.getCurrentAttributes();
+		return "x1: " + attrs.x1 + " x2: " + attrs.x2 + " y1: " + attrs.y1 + " y2: " + attrs.y2;
+	},
+	init: function(newX, newY) {
+		d3svg = d3.select("svg");
+		//d3svg3.style("background-color", "red");
+		var rectElement = d3svg.append("rect")
+		    .attrs({
+		        rx      : 4,
+		        ry      : 4,
+		        x       : 0,
+		        y       : 0,
+		        width   : 0,
+		        height  : 0
+		    })
+		    .classed("selection", true);
+	    this.setElement(rectElement);
+		this.originX = newX;
+		this.originY = newY;
+		this.update(newX, newY);
+	},
+	update: function(newX, newY) {
+		this.currentX = newX;
+		this.currentY = newY;
+		this.element.attrs(this.getNewAttributes());
+	},
+	focus: function() {
+        this.element
+            .style("stroke", "#DE695B")
+            .style("stroke-width", "2.5");
+    },
+    remove: function() {
+    	this.element.remove();
+    	this.element = null;
+    },
+    removePrevious: function() {
+    	if(this.previousElement) {
+    		this.previousElement.remove();
+    	}
+    }
+};
+
+function dragStart() {
+	console.log("dragStart");
+    var p = d3.mouse(this);
+    selectionRect.init(p[0], p[1]);
+	selectionRect.removePrevious();
+}
+
+function dragMove() {
+	console.log("dragMove");
+	var p = d3.mouse(this);
+    selectionRect.update(p[0], p[1]);
+//    attributesText
+//    	.text(selectionRect.getCurrentAttributesAsText());
+}
+
+function dragEnd() {
+	console.log("dragEnd");
+	var finalAttributes = selectionRect.getCurrentAttributes();
+	console.dir(finalAttributes);
+	if(finalAttributes.x2 - finalAttributes.x1 > 1 && finalAttributes.y2 - finalAttributes.y1 > 1){
+		console.log("range selected");
+		// range selected
+		d3.event.sourceEvent.preventDefault();
+		selectionRect.focus();
+	// GET SELECTIONS WITH MARQUEE
+            unselect_all_readings();
+    		ghigh = document.getElementsByClassName('graph')[0].getBBox().height;
+		negys1 = (0 - finalAttributes.y1) + ghigh;
+		negys2 = (0 - finalAttributes.y2) + ghigh;
+		//Y coordinates of nodes count upwards 
+            $('#svgenlargement ellipse').each( function( index ) {
+                var cx = parseInt( $(this).attr('cx') );
+                var cy = parseInt( $(this).attr('cy') );
+		var transf_cy = 0 - cy
+
+                // This needs somehow to move to node or even to shapes! #repositioned
+                // We should ask something more aling the lines of: nodes.each { |item| node.selected? }
+		//JMB: I have no idea what this bit does
+                var org_translate = $(this).parent().data( 'repositioned' );
+                if( org_translate != null ) {
+                    cx = cx + org_translate[0];
+                    cy = cy + org_translate[1];
+                }
+
+	           //select any node with its center inside the marquee
+               if( cx > finalAttributes.x1 && cx < finalAttributes.x2) {
+                    if( transf_cy > negys2 && transf_cy < negys1) {
+			console.log("Ellipse at " + cx + ", " + transf_cy + ". Testing on y between " + negys1 + " and "+ negys2 + ".");
+			console.log("Testing on x between " + finalAttributes.x1 + " and "+ finalAttributes.x2 + ".");
+                        // Take note of the selected reading(s) and applicable witness(es)
+                        // so we can populate the multipleselect-form
+                        readings_selected.push( $(this).parent().attr('id') );
+                    }
+                }
+            });
+
+            $.each( readings_selected, function ( i, reading ) {
+            	color_active( get_ellipse( reading ) );
+            });
+
+	// END OF SELECTION GRABBER
+        selectionRect.remove();
+	} else {
+		console.log("single point");
+        // single point selected
+        selectionRect.remove();
+        // trigger click event manually
+        //clicked();
+    }
+}
+
+var dragBehavior = d3.drag()
+    .on("drag", dragMove)
+    .on("start", dragStart)
+    .on("end", dragEnd);
+
+
+
+
+// MAIN INITIALISATION FUNCTION
 // Initialize the SVG once it exists
 function svgEnlargementLoaded() {
 	//Give some visual evidence that we are working
@@ -143,49 +315,125 @@ function svgEnlargementLoaded() {
 		break;
 	   }
     }
+    //JMB - BBox gets us the real (internal coords) size of the graph, as opposed to getBoundingClientRect which would show the on-screen value
+    ghigh = document.getElementsByClassName('graph')[0].getBBox().height;
+    gwit = document.getElementsByClassName('graph')[0].getBBox().width;
+    // This section mainly calculates the starting zoom. Transform origin, unlike in earlier versions, always remains as "top left". -JMB
+	if (text_direction == 'RL') {//For Right to Left
+        	document.getElementsByClassName('hasSVG')[1].style.transformOrigin = 'top left';
+		var graph_ratio = gwit/ghigh;
+		global_graph_scale = 650/(1600/graph_ratio);
+		global_graph_max = global_graph_scale + 30;
+		global_graph_min = global_graph_scale - 20;
+		if (global_graph_min <= 1){
+			global_graph_min = 2 ;
+			}
+	}
+	else if (text_direction == 'BI') {//Top to bottom
+        	document.getElementsByClassName('hasSVG')[1].style.transformOrigin = 'top left';
+		var graph_ratio = ghigh/gwit;
+		global_graph_scale = 1600/(650/graph_ratio);
+		global_graph_max = global_graph_scale + 30;
+		global_graph_min = global_graph_scale - 20;
+		if (global_graph_min <= 1){
+			global_graph_min = 2 ;
+			}
+	}
+	else {//Left to Right
+        	document.getElementsByClassName('hasSVG')[1].style.transformOrigin = 'top left';
+		var graph_ratio = gwit/ghigh;
+		global_graph_scale = 650/(1600/graph_ratio);
+		global_graph_max = global_graph_scale + 30;
+		global_graph_min = global_graph_scale - 20;
+		if (global_graph_min <= 1){
+			global_graph_min = 2 ;
+			}
+	}
+    // Set the viewbox to the height of the "real" graph
+    svg_root.viewBox.baseVal.height = ghigh;
+    svg_root.viewBox.baseVal.width = gwit;
+    //document.getElementsByClassName('hasSVG')[1].style.transform-origin = "left center";
+    //THen this gives us our startsing zoom;
+    $(window).bind("mousewheel DOMMouseScroll", function(event){return false});//Turn off native mousewheel scroll
+    d3svg = d3.select("svg"),
+    	dwidth = +d3svg.attr("width"),
+    	dheight = +d3svg.attr("height");
+    d3svg.style("background-color", "white");
+    d3svg.attr("transform", "scale(" + global_graph_scale + ")");
+    
 
+    d3svg.call(d3.zoom()
+	.scaleExtent([2, global_graph_max])
+	.on("zoom", zoomer));// JMB turn zoom function on
+
+	// This bit deals with scrollbars - JMB
+	if (text_direction == 'RL') {//For Right to Left
+
+		var grwit = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().width;
+		$( "div #svgenlargement" ).scrollLeft(grwit  - 800);
+		var grhigh = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().height;
+		$( "div #svgenlargement" ).scrollTop(grhigh/2  - 400);
+	}
+	else if (text_direction == 'BI') {//Top to bottom
+
+		var grwit = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().width;
+		$( "div #svgenlargement" ).scrollLeft(grwit/2  - 800);
+	}
+	else {//Left to Right
+
+		var grhigh = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().height;
+		$( "div #svgenlargement" ).scrollTop(grhigh/2  - 400);
+	}
+
+    //document.getElementsByClassName('hasSVG')[1].style.transform = "scale(" + global_graph_scale + ")";
+    //$('#svgenlargement').scrollTop(ghigh*(global_graph_scale/2));
+
+    //$('#svgenlargement svg').setAttribute("width", "800px");
+    //('#svgenlargement svg').setAttribute("height", "500px");
+
+// BIG BLOCK OF DEPRECATED CODE (Not deleting yet just in case - JMB)
     //Set viewbox width and height to width and height of $('#svgenlargement svg').
     //This is essential to make sure zooming and panning works properly.
-    svg_root.viewBox.baseVal.width = graph_svg.attr( 'width' );
-    svg_root.viewBox.baseVal.height = graph_svg.attr( 'height' );
-
     //Now set scale and translate so svg height is about 150px and vertically centered in viewbox.
     //This is just to create a nice starting enlargement.
-    var initial_svg_height = 250;
-    var scale = initial_svg_height/graph_svg.attr( 'height' );
-    var additional_translate = (graph_svg.attr( 'height' ) - initial_svg_height)/(2*scale);
-    var transform = svg_g.getAttribute('transform');
-
-	var x = 4;
-
-	var y = parseFloat( transform.match( /translate\([^\)]*\)/ )[0].split('(')[1].split(' ')[1].split(')')[0] );
-	y += additional_translate;
-
-	var transform = 'rotate(0) scale(' + scale + ')';
-	svg_g.setAttribute('transform', transform);
-
-	var keymap = document.getElementById("keymap");
-
-	var keymap_right = keymap.getBoundingClientRect().right;
-	keymap_right = svg_root.viewBox.baseVal.width -  keymap_right;
-
-	var keymap_left = keymap.getBoundingClientRect().width;
-
-	if (text_direction == 'RL') {
+    //var initial_svg_height = 250;
+    //var scale = initial_svg_height/graph_svg.attr( 'height' );
+    //var additional_translate = (graph_svg.attr( 'height' ) - initial_svg_height)/(2*scale);
+    //var transform = svg_g.getAttribute('graph_svg.attr( 'height' )transform');
+//
+//	var x = 4;
+//
+//	var y = parseFloat( transform.match( /translate\([^\)]*\)/ )[0].split('(')[1].split(' ')[1].split(')')[0] );
+//	y += additional_translate;
+//
+//	var transform = 'rotate(0) scale(' + scale + ')';
+//	svg_g.setAttribute('transform', transform);
+//
+//	var keymap = document.getElementById("keymap");
+//
+//	var keymap_right = keymap.getBoundingClientRect().right;
+//	keymap_right = svg_root.viewBox.baseVal.width -  keymap_right;
+//
+//	var keymap_left = keymap.getBoundingClientRect().width;
+//
+//	if (text_direction == 'RL') {
 		// Edge of screen minus the width of the svg minus the width of the
 		// keymap minus the margin
-
-		x = (scrollToEnd()  - keymap_right  - keymap_left  - 40) / scale;
-	}
-	else if (text_direction == 'BI') {
-		x = placeMiddle() / scale;
-		y = (svg_g.getBoundingClientRect().height + 50) / scale;
-	}
-
-	svg_g.setAttribute('transform', transform + ' translate(' + x + ' ' + y + ')');
+//
+//		x = (scrollToEnd()  - keymap_right  - keymap_left  - 40) / scale;
+//	}
+//	else if (text_direction == 'BI') {
+//		x = placeMiddle() / scale;
+//		y = (svg_g.getBoundingClientRect().height + 50) / scale;
+//	}
+//
+//	svg_g.setAttribute('transform', transform + ' translate(' + x + ' ' + y + ')');
 
     //used to calculate min and max zoom level:
-    start_element_height = $('#__START__').children('ellipse')[0].getBBox().height;
+    //start_element_height = $('#__START__').children('ellipse')[0].getBBox().height;
+
+
+// END OF DEPRECATED CODE
     //some use of call backs to ensure succesive execution
     add_relations( function() {
         var rdgpath = getTextURL( 'readings' );
@@ -196,9 +444,59 @@ function svgEnlargementLoaded() {
             $('#loading_overlay').hide();
         });
     });
-
     //initialize marquee
-    marquee = new Marquee();
+    //marquee = new Marquee();
+
+}
+
+
+// JMB: d3 zoom function
+function zoomer(){
+if ( $('#update_workspace_button').data('locked') == false ) {
+//document.getElementsByClassName('hasSVG')[1].style.transformOrigin = 'center top';
+var d3graph = d3.select("#graph0");
+//d3svg.style("background-color", "green");
+tfm = d3.event.transform;
+
+var coords = d3.mouse(this);
+d3svg.attr("transform", "scale(" + tfm.k + ")");
+
+if (text_direction == 'BI') {
+// Locked pan to centre of X Axis
+var gwit = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().width;
+$( "div #svgenlargement" ).scrollLeft(gwit/2  - 800);
+// Panning zoom in Y Axis
+console.log("Mouse coords at " + coords[1]);
+var ghighA = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().height;// Real height
+var ghighB = document.getElementsByClassName('hasSVG')[1].getBBox().height;// Internal height
+var yval = coords[1]//This gives us INTERNAL Y coord
+var percy = yval/ghighB//This gives us the % of the way along the Y axis
+var realy = percy * ghighA
+console.log("True graph height is " + ghighA + ", internal height is " + ghighB);
+console.log("Internal Y is " + yval + ", percent is " + percy + ", real point to scroll to is " + realy);
+$( "div #svgenlargement" ).scrollTop(realy - 400);
+}
+else{
+// Locked pan to centre of Y Axis
+var ghigh = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().height;
+console.log("Total real height: " + ghigh);
+$( "div #svgenlargement" ).scrollTop(ghigh/2  - 400);
+// Panning zoom in X Axis
+console.log("Mouse coords at " + coords[0]);
+var gwitA = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().width;// Real width
+var gwitB = document.getElementsByClassName('hasSVG')[1].getBBox().width;// Internal width
+var xval = coords[0]//This gives us INTERNAL X coord
+var percx = xval/gwitB//This gives us the % of the way along the X axis
+var realx = percx * gwitA
+console.log("True graph width is " + gwitA + ", internal width is " + gwitB);
+console.log("Internal X is " + xval + ", percent is " + percx + ", real point to scroll to is " + realx);
+$( "div #svgenlargement" ).scrollLeft(realx - 800);
+}
+
+}
+else{
+d3svg.style("background-color", "orange");
+}
 }
 
 function add_relations( callback_fn ) {
@@ -724,6 +1022,10 @@ function delete_relation( form_values ) {
 	}, dataType: 'json', type: 'DELETE' });
 }
 
+function split_detach_node( readings ) {
+window.alert("It's a split!");
+}
+
 function detach_node( readings ) {
     // separate out the deleted relationships, discard for now
     if( 'DELETED' in readings ) {
@@ -840,8 +1142,16 @@ function detach_node( readings ) {
         ellipse_elem.data( 'node_obj', new_node );
 
         // Move the node somewhat up for 'dramatic effect' :-p
-        new_node.reposition( 0, -70 );
-
+	//JMB: Edited this to vary according to text direction
+	if (text_direction == 'RL') {
+        	new_node.reposition( 0, 70 );
+	}
+	else if (text_direction == 'BI') {
+        	new_node.reposition( -120, 0 );
+	}
+	else {
+        	new_node.reposition( 0, 70 );
+	}
     } );
 
 }
@@ -1157,27 +1467,27 @@ function readings_equivalent( source, target ) {
 	return false;
 }
 
-function scrollToEnd() {
-	var stateTf = svg_root_element.getCTM().inverse();
+//function scrollToEnd() {
+//	var stateTf = svg_root_element.getCTM().inverse();
+//
+//	var elem_width = Math.floor(svg_root_element.getBoundingClientRect().width);
+//	var vbdim = svg_root.viewBox.baseVal;
+//
+//	var x =  vbdim.width -  elem_width;
+//
+//	return x;
+//}
 
-	var elem_width = Math.floor(svg_root_element.getBoundingClientRect().width);
-	var vbdim = svg_root.viewBox.baseVal;
-
-	var x =  vbdim.width -  elem_width;
-
-	return x;
-}
-
-function placeMiddle() {
-	var stateTf = svg_root_element.getCTM().inverse();
-
-	var elem_width = Math.floor(svg_root_element.getBoundingClientRect().width);
-	var vbdim = svg_root.viewBox.baseVal;
-
-	var x = Math.floor((vbdim.width - elem_width) /2);
-
-	return x;
-}
+//function placeMiddle() {
+//	var stateTf = svg_root_element.getCTM().inverse();
+//
+//	var elem_width = Math.floor(svg_root_element.getBoundingClientRect().width);
+//	var vbdim = svg_root.viewBox.baseVal;
+//
+//	var x = Math.floor((vbdim.width - elem_width) /2);
+//
+//	return x;
+//}
 
 // Set up keypress commands:
 
@@ -1362,10 +1672,10 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     var p = svg_root.createSVGPoint();
     p.x = event.clientX;
     p.y = event.clientY;
-    stateOrigin = p.matrixTransform(stateTf);
+    //stateOrigin = p.matrixTransform(stateTf);
 
     // Activate marquee if in interaction mode
-    if( $('#update_workspace_button').data('locked') == true ) { marquee.show( event ) };
+/*    if( $('#update_workspace_button').data('locked') == true ) { marquee.show( event ) };
 
     event.returnValue = false;
     event.preventDefault();
@@ -1379,37 +1689,60 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
         var p = svg_root.createSVGPoint();
         p.x = event.clientX;
         p.y = event.clientY;
-        p = p.matrixTransform(stateTf);
-        var matrix = stateTf.inverse().translate(p.x - stateOrigin.x, p.y - stateOrigin.y);
-        var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
-        svg_root_element.setAttribute("transform", s);
+        //p = p.matrixTransform(stateTf);
+        //var matrix = stateTf.inverse().translate(p.x - stateOrigin.x, p.y - stateOrigin.y);
+        //var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
+        //svg_root_element.setAttribute("transform", s);
     }
     marquee.expand( event );
     event.returnValue = false;
-    event.preventDefault();
-  }).mousewheel(function (event, delta) {
-    event.returnValue = false;
-    event.preventDefault();
-    if ( $('#update_workspace_button').data('locked') == false ) {
-        if (!delta || delta == null || delta == 0) delta = event.originalEvent.wheelDelta;
-        if (!delta || delta == null || delta == 0) delta = -1 * event.originalEvent.detail;
-        if( delta < -9 ) { delta = -9 };
-        var z = 1 + delta/10;
-        z = delta > 0 ? 1 : -1;
-        var g = svg_root_element;
-        if (g && ((z<1 && (g.getScreenCTM().a * start_element_height) > 4.0) || (z>=1 && (g.getScreenCTM().a * start_element_height) < 100))) {
-            var root = svg_root;
-            var p = root.createSVGPoint();
-            p.x = event.originalEvent.clientX;
-            p.y = event.originalEvent.clientY;
-            p = p.matrixTransform(g.getCTM().inverse());
-            var scaleLevel = 1+(z/20);
-            var k = root.createSVGMatrix().translate(p.x, p.y).scale(scaleLevel).translate(-p.x, -p.y);
-            var matrix = g.getCTM().multiply(k);
-            var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
-            g.setAttribute("transform", s);
-        }
-    }
+    event.preventDefault();*/
+//  }).mousewheel(function (event, delta) {
+//    event.returnValue = false;
+//    event.preventDefault();
+//    event.stopImmediatePropagation();
+//    if ( $('#update_workspace_button').data('locked') == false ) {
+	//window.alert("You're rolling a mousewheel at me. How rude.")
+        //evt_obj.preventDefault();
+        //evt_obj.stopImmediatePropagation();
+	//window.alert(document.getElementsByClassName('hasSVG')[1])
+        //var scale = Number( document.getElementsByClassName('hasSVG')[1].style.transform.match( /\d+, \d+/ )[0].split( ',' )[0] );
+//	var scale = global_graph_scale
+//        var scale_delta = -1;
+//        if( event.deltaY > 0 ) {
+//          scale_delta = 1
+//        }
+//        scale = scale + scale_delta;
+	//window.alert(scale)
+//        global_graph_scale = global_graph_scale + scale_delta;
+//        if( scale < global_graph_min ) {
+//          scale = global_graph_min
+//          global_graph_scale = global_graph_min
+//        };
+//        if( scale > global_graph_max ) {
+//          scale = global_graph_max
+//          global_graph_scale = global_graph_max
+//        };
+//        document.getElementsByClassName('hasSVG')[1].style.transform = 'scale(' + scale + ')';
+//        if (!delta || delta == null || delta == 0) delta = event.originalEvent.wheelDelta;
+//        if (!delta || delta == null || delta == 0) delta = -1 * event.originalEvent.detail;
+//        if( delta < -9 ) { delta = -9 };
+//        var z = 1 + delta/10;
+//        z = delta > 0 ? 1 : -1;
+//        var g = svg_root_element;
+//        if (g && ((z<1 && (g.getScreenCTM().a * start_element_height) > 4.0) || (z>=1 && (g.getScreenCTM().a * start_element_height) < 100))) {
+//            var root = svg_root;
+//            var p = root.createSVGPoint();
+//            p.x = event.originalEvent.clientX;
+//            p.y = event.originalEvent.clientY;
+//            p = p.matrixTransform(g.getCTM().inverse());
+//            var scaleLevel = 1+(z/20);
+//            var k = root.createSVGMatrix().translate(p.x, p.y).scale(scaleLevel).translate(-p.x, -p.y);
+//            var matrix = g.getCTM().multiply(k);
+//            var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
+//            g.setAttribute("transform", s);
+//        }
+//    }
   }).css({
     'overflow' : 'hidden',
     'cursor' : '-moz-grab'
@@ -1548,6 +1881,23 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				}
 			},
 			{
+				text: "Split",//Currently a duplicate of detach, but will turn into split somehow.
+				id: "split_btn",
+				click: function ( evt ) {
+					var self = $(this);
+					var mybuttons = $(evt.target).closest('button').parent().find('button');
+					mybuttons.button( 'disable' );
+					var form_values = $('#detach_collated_form').serialize();
+					ncpath = getTextURL( 'duplicate' );
+					var jqjson = $.post( ncpath, form_values, function(data) {
+						readings_selected = [];
+						split_detach_node( data );
+						mybuttons.button("enable");
+						self.dialog( "close" );
+					} );
+				}
+			},
+			{
 				text: "Concatenate",
 				id: "concat_btn",
 				click: function (evt) {
@@ -1642,12 +1992,135 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				  + '">' + value + '<br>' );
 			});
 			$('#multiple_selected_readings').attr('value', readings_selected.join(',') );
+			// JMB - section to hide the split button if we've selected more than 1 reading
+			if( readings_selected.length > 1 ) {
+				$( "#split_btn" ).hide();
+			}
+			else {
+				$( "#split_btn" ).show();
+			}
+			//End section
 		},
 		close: function() {
 			marquee.unselect();
 			$("#dialog_overlay").hide();
 		}
 	});
+
+	$( "#splitselect-form" ).dialog({
+		autoOpen: false,
+		height: "auto",
+		width: 250,
+		modal: true,
+		buttons: [
+			{
+				text: "Cancel",
+				click: function() {
+					$('#splitselect-form-status').empty();
+					$( this ).dialog( "close" );
+				}
+			},
+			{
+				text: "Split",//Currently a duplicate of detach, but will turn into split somehow.
+				id: "split_btn",
+				click: function ( evt ) {
+					var self = $(this);
+					var mybuttons = $(evt.target).closest('button').parent().find('button');
+					mybuttons.button( 'disable' );
+					var form_values = $('#split_collated_form').serialize();
+					ncpath = getTextURL( 'duplicate' );
+					var jqjson = $.post( ncpath, form_values, function(data) {
+						readings_selected = [];
+						split_detach_node( data );
+						mybuttons.button("enable");
+						self.dialog( "close" );
+					} );
+				}
+			},
+		],
+		create: function(event, ui) {
+			var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
+			buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
+			$('#action-detach').change(function() {
+				if ($('#action-detach')[0].checked) {
+					$('#split_collated_form').show();
+					$('#multipleselect-form-text').show();
+
+					$('#detach_btn').show();
+					$('#concat_btn').hide();
+				}
+			});
+
+			$('#action-concat').change(function() {
+				if ($('#action-concat')[0].checked) {
+					$('#split_collated_form').hide();
+					$('#multipleselect-form-text').hide();
+
+					$('#detach_btn').hide();
+					$('#concat_btn').show();
+				}
+			});
+		},
+		open: function() {
+			$( this ).dialog( "option", "width", 200 );
+			$(".ui-widget-overlay").css("background", "none");
+			$('#multipleselect-form-status').empty();
+			$("#dialog_overlay").show();
+			$("#dialog_overlay").height( $("#enlargement_container").height() );
+			$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
+			$("#dialog_overlay").offset( $("#enlargement_container").offset() );
+
+			if ($('#action-concat')[0].checked) {
+				$('#split_collated_form').hide();
+				$('#multipleselect-form-text').hide();
+
+				$('#detach_btn').hide();
+				$('#concat_btn').show();
+			} else {
+				$('#split_collated_form').show();
+				$('#multipleselect-form-text').show();
+
+				$('#detach_btn').show();
+				$('#concat_btn').hide();
+			}
+
+			// Populate the forms with the currently selected readings
+			$('#split_collated_form').empty();
+			var witnesses = [];
+			function sortByRank (a, b) {
+				if (readingdata[a]["rank"] === readingdata[b]["rank"]) return 0;
+				return readingdata[a]["rank"] < readingdata[b]["rank"] ? -1 : 1;
+			};
+			readings_selected.sort(sortByRank);
+			$.each( readings_selected, function( index, value ) {
+			  	$('#split_collated_form').append( $('<input>').attr(
+					"type", "hidden").attr("name", "readings[]").attr(
+					"value", value ) );
+				var this_witnesses = readingdata[value]['witnesses'];
+                witnesses = arrayUnique( witnesses.concat( this_witnesses ) );
+
+			});
+			$.each( witnesses, function( index, value ) {
+				$('#split_collated_form').append(
+				  '<input type="checkbox" name="witnesses[]" value="' + value
+				  + '">' + value + '<br>' );
+			});
+			$('#multiple_selected_readings').attr('value', readings_selected.join(',') );
+			// JMB - section to hide the split button if we've selected more than 1 reading
+			if( readings_selected.length > 1 ) {
+				$( "#split_btn" ).hide();
+			}
+			else {
+				$( "#split_btn" ).show();
+			}
+			//End section
+		},
+		close: function() {
+			marquee.unselect();
+			$("#dialog_overlay").hide();
+		}
+	});
+
     // Set up the reading split dialog.
     $( '#split-form').dialog({
   	  autoOpen: false,
@@ -1658,7 +2131,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
   			  $(this).dialog("close");
   		  },
   		  Split: function() {
-  			  form_values = $('$split-form').serialize();
+  			  form_values = $('#split-form').serialize();
   			  split_readings( form_values );
   		  }
   	  },
@@ -1677,7 +2150,6 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		  $("#dialog_overlay").hide();
 	  }
     });
-
   }
   
   // Set up the relationship info display and deletion dialog.
@@ -1846,6 +2318,10 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
      var svg_enlargement = $('#svgenlargement').svg().svg('get').root();
      mouse_scale = svg_root_element.getScreenCTM().a;
      if( $(this).data('locked') == true ) {
+         d3svg.on(".drag", null);
+	 d3svg.call(d3.zoom()
+		.scaleExtent([2, global_graph_max])
+		.on("zoom", zoomer));// JMB turn zoom function on
          $('#svgenlargement ellipse' ).each( function( index ) {
              if( $(this).data( 'node_obj' ) != null ) {
                  $(this).data( 'node_obj' ).ungreyout_edges();
@@ -1857,6 +2333,9 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
          $(this).data('locked', false);
          $(this).css('background-position', '0px 44px');
      } else {
+	 d3svg.on(".zoom", null);// JMB turn zoom function off
+    	 d3svg.call(dragBehavior);
+        document.getElementsByClassName('hasSVG')[1].style.transformOrigin = 'top left';
          var left = $('#enlargement').offset().left;
          var right = left + $('#enlargement').width();
          var tf = svg_root_element.getScreenCTM().inverse();
@@ -1867,6 +2346,13 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
          p.x=right;
          var cx_max = p.matrixTransform(tf).x;
          $('#svgenlargement ellipse').each( function( index ) {
+                 if( $(this).data( 'node_obj' ) == null ) {
+                     $(this).data( 'node_obj', new node_obj( $(this) ) );
+                 } else {
+                     $(this).data( 'node_obj' ).set_selectable( true );
+                 }
+                 $(this).data( 'node_obj' ).greyout_edges();
+         /*$('#svgenlargement ellipse').each( function( index ) {
              var cx = parseInt( $(this).attr('cx') );
              if( cx > cx_min && cx < cx_max) {
                  if( $(this).data( 'node_obj' ) == null ) {
@@ -1875,7 +2361,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
                      $(this).data( 'node_obj' ).set_selectable( true );
                  }
                  $(this).data( 'node_obj' ).greyout_edges();
-             }
+             }*/
          });
          $(this).css('background-position', '0px 0px');
          $(this).data('locked', true );

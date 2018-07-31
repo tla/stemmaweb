@@ -20,6 +20,8 @@
     <script type="text/javascript" src="[% c.uri_for('/js/jquery.svg.min.js') %]"></script>
     <script type="text/javascript" src="[% c.uri_for('/js/jquery.svgdom.min.js') %]"></script>
     <script type="text/javascript" src="[% c.uri_for('/js/xregexp-all-min.js') %]"></script>
+    <script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
+    <script type="text/javascript" src="https://d3js.org/d3-selection-multi.v1.min.js"></script>
 [% IF applicationjs -%]
     <script type="text/javascript" src="[% applicationjs %]?v=[% vstr %]"></script>
 [% END -%]
