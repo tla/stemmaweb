@@ -130,7 +130,7 @@ sub help :Local :Args(1) {
 
  Update the metadata for a section. At present, this means changing its name.
 
- Accepts a form data post with the new section info, and attempts to change 
+ Accepts a form data post with the new section info, and attempts to change
  the name on the server. Returns a JSON structure with the updated info.
 
   { 'id' => $sectid, 'name' => $new_name }
@@ -294,13 +294,14 @@ sub relationships :Chained('section') :PathPart :Args(0) {
 
  GET relation/$textid/readings
 
-Returns a JSON dictionary, keyed on reading ID, of all readings defined for this
-text along with their metadata. A typical object in this dictionary will look like:
+Returns a JSON dictionary, keyed on the SVG node ID of the reading, of all readings
+defined for this section along with their metadata. A typical object in this dictionary
+will look like:
 
-  {"witnesses":["Gr314","Kf133","Mu11475","Kr299","MuU151","Er16","Ba96","Wi3818","Mu28315"],
+  "n1051" => {"id":"1051",
+   "witnesses":["Gr314","Kf133","Mu11475","Kr299","MuU151","Er16","Ba96","Wi3818","Mu28315"],
    "lexemes":[],
    "text":"dicens.",
-   "id":"n1051",
    "is_meta":null,
    "variants":[]}
 
@@ -340,17 +341,24 @@ my %has_side_effect = (
 
 
 # Return a JSONable struct of the useful keys.  Keys meant to be writable
-# have a true value; read-only keys have a false value.
+# have a true value; read-only keys have a false value. If the SVG ID for
+# the reading differs from the database ID, an additional key 'svg_id' will
+# be put in the hash; this can be used or removed before return to the client.
+#   { 'n123' => {id => '123', text => 'foo', is_lemma => JSON::False, ... }}
 sub _reading_struct {
     my( $c, $reading ) = @_;
     my $m = $c->model('Directory');
-    my $rid = $reading->{id};
     my $struct = {};
     map { $struct->{$_} = $reading->{$_} } keys %read_write_keys;
 
     # Set known IDs on start/end nodes, that match what will be in the SVG
-    $struct->{id} = '__START__' if $reading->{is_start} == JSON::true;
-    $struct->{id} = '__END__' if $reading->{is_end} == JSON::true;
+    if ($reading->{is_start} == JSON::true) {
+        $struct->{id} = '__START__';
+    } elsif ($reading->{is_end} == JSON::true) {
+        $struct->{id} = '__END__';
+    } else {
+        $struct->{svg_id} = 'n' . $reading->{id};
+    }
 
     # Calculate is_meta
     $struct->{is_meta} = $reading->{is_start} || $reading->{is_end}
@@ -381,7 +389,9 @@ sub readings :Chained('section') :PathPart :Args(0) {
     my $ret = {};
     foreach my $rdg (@$rdglist) {
         my $struct = _reading_struct( $c, $rdg );
-        $ret->{'n' . $struct->{id}} = $struct;
+        # The struct we return needs to be keyed on SVG node ID.
+        my $nid = delete $struct->{svg_id};
+        $ret->{$nid ? $nid : $struct->{id}} = $struct;
     }
     $c->stash->{result} = $ret;
     $c->forward('View::JSON');
@@ -417,7 +427,9 @@ sub reading :Chained('section') :PathPart :Args(1) {
         return json_error( $c, $e->status, $e->message );
     }
     if( $c->request->method eq 'GET' ) {
-        $c->stash->{'result'} = _reading_struct($c, $orig_reading);
+        my $result = _reading_struct($c, $orig_reading);
+        delete $result->{svg_id};
+        $c->stash->{'result'} = $result;
     } elsif ( $c->request->method eq 'POST' ) {
         # Auth check
         if( $c->stash->{'permission'} ne 'full' ) {
@@ -694,11 +706,13 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
             json_error( $c, $e->status, $e->message );
         }
 
-        # Massage the response into the expected form.
+        # Massage the response into the expected form. For this response
+        # we use database IDs, for consistency.
         my @deleted_rels = map { [$_->{source}, $_->{target}, $_->{type}] } @{$response->{relations}};
         $c->stash->{result} = {DELETED => \@deleted_rels};
         foreach my $r (@{$response->{readings}}) {
             my $rinfo = _reading_struct($c, $r);
+            my $nid = delete $rinfo->{svg_id};
             # Add in the orig_reading information that was passed back
             $rinfo->{orig_reading} = $r->{orig_reading};
             $c->stash->{result}->{$r->{id}} = $rinfo;
@@ -792,10 +806,12 @@ sub split :Chained('section') :PathPart :Args(0) {
             json_error( $c, $e->status, $e->message );
         }
 
-        # Fill out the readings and return the result
+        # Fill out the readings and return the result. This response
+        # uses database IDs.
         $c->stash->{result}->{relationships} = $response->{relations};
         foreach my $r (@{$response->{readings}}) {
             my $rinfo = _reading_struct($c, $r);
+            delete $rinfo->{svg_id};
             # Add in the orig_reading information that was passed back
             $rinfo->{orig_reading} = $r->{orig_reading};
             $c->stash->{result}->{$r->{id}} = $rinfo;

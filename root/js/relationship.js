@@ -7,6 +7,7 @@ var global_graph_min = 10;
 var global_graph_max = 50;
 var reltypes = {};
 var readingdata = {};
+var rid2node = {};
 var readings_selected = [];
 
 jQuery.removeFromArray = function(value, arr) {
@@ -43,14 +44,14 @@ function jq(myid) {
 function node_dblclick_listener( evt ) {
   	// Open the reading dialogue for the given node.
   	// First get the reading info
-  	var reading_id = $(this).attr('id');
-  	var reading_info = readingdata[reading_id];
+  	var svg_id = $(this).attr('id');
+  	var reading_info = readingdata[svg_id];
   	// and then populate the dialog box with it.
   	// Set the easy properties first
     var opt = {
         title: 'Reading information for "' + reading_info['text'] + '"'
     };
-  	$('#reading_id').val( reading_id );
+  	$('#reading_id').val( reading_info['id'] );
   	toggle_checkbox( $('#reading_is_lemma'), reading_info['is_lemma'] );
   	toggle_checkbox( $('#reading_is_nonsense'), reading_info['is_nonsense'] );
   	toggle_checkbox( $('#reading_grammar_invalid'), reading_info['grammar_invalid'] );
@@ -86,8 +87,8 @@ function stringify_wordform ( tag ) {
 }
 
 function color_inactive ( el ) {
-	var reading_id = $(el).parent().attr('id');
-	var reading_info = readingdata[reading_id];
+	var svg_id = $(el).parent().attr('id');
+	var reading_info = readingdata[svg_id];
 	// If the reading info has any non-disambiguated lexemes, color it yellow;
 	// otherwise color it green.
 	$(el).attr( {stroke:'green', fill:'#b3f36d'} );
@@ -99,11 +100,11 @@ function color_inactive ( el ) {
 }
 
 function color_active ( el ) {
-	var reading_id = $(el).parent().attr('id');
-	var reading_info = readingdata[reading_id];
+	var svg_id = $(el).parent().attr('id');
+	var reading_info = readingdata[svg_id];
 	// If the reading is currently selected, color it accordingly; otherwise
 	// red for lemma and white for not.
-	if( readings_selected.indexOf(reading_id) > -1 ) {
+	if( readings_selected.indexOf(svg_id) > -1 ) {
 		$(el).attr( {stroke:'black', fill:'#9999ff'} );
 	} else if( reading_info && reading_info['is_lemma'] ) {
 		$(el).attr( {stroke:'red', fill:'#ffdddd'} );
@@ -230,7 +231,7 @@ function dragEnd() {
     		ghigh = document.getElementsByClassName('graph')[0].getBBox().height;
 		negys1 = (0 - finalAttributes.y1) + ghigh;
 		negys2 = (0 - finalAttributes.y2) + ghigh;
-		//Y coordinates of nodes count upwards 
+		//Y coordinates of nodes count upwards
             $('#svgenlargement ellipse').each( function( index ) {
                 var cx = parseInt( $(this).attr('cx') );
                 var cy = parseInt( $(this).attr('cy') );
@@ -360,7 +361,7 @@ function svgEnlargementLoaded() {
     	dheight = +d3svg.attr("height");
     d3svg.style("background-color", "white");
     d3svg.attr("transform", "scale(" + global_graph_scale + ")");
-    
+
 
     d3svg.call(d3.zoom()
 	.scaleExtent([2, global_graph_max])
@@ -434,11 +435,16 @@ function svgEnlargementLoaded() {
 
 
 // END OF DEPRECATED CODE
-    //some use of call backs to ensure succesive execution
-    add_relations( function() {
-        var rdgpath = getTextURL( 'readings' );
-        $.getJSON( rdgpath, function( data ) {
-            readingdata = data;
+    //some use of call backs to ensure successive execution
+    $.getJSON( getTextURL('readings'), function( data ) {
+        // Our controller returns a map of SVG node ID -> reading data,
+        // including database ID.
+        readingdata = data;
+        // But we also need to keep a map of database ID -> node ID.
+        $.each(readingdata, function(k, v) {
+            rid2node[v['id']] = k;
+        });
+        add_relations(function() {
             $('#svgenlargement ellipse').parent().dblclick(node_dblclick_listener);
             $('#svgenlargement ellipse').each( function( i, el ) { color_inactive( el ) });
             $('#loading_overlay').hide();
@@ -500,48 +506,56 @@ d3svg.style("background-color", "orange");
 }
 
 function add_relations( callback_fn ) {
-	// Add the relationship types to the keymap list
-	$.each( relationship_types, function(index, typedef) {
-		 li_elm = $('<li class="key">').css( "border-color",
-		 	relation_manager.relation_colors[index] ).text(typedef.name);
-		 li_elm.append( $('<div>').attr('class', 'key_tip_container').append(
-		 	$('<div>').attr('class', 'key_tip').text(typedef.description) ) );
-		 $('#keymaplist').append( li_elm );
-	});
-	// Now fetch the relationships themselves and add them to the graph
-	var rel_types = $.map( relationship_types, function(t) { return t.name });
-	// Save this list of names to the outer element data so that the relationship
-	// factory can access it
-	$('#keymap').data('relations', rel_types);
-	var textrelpath = getTextURL( 'relationships' );
-	$.getJSON( textrelpath, function(data) {
-		$.each(data, function( index, rel_info ) {
-			var type_index = $.inArray(rel_info.type, rel_types);
-			var source_found = get_ellipse( rel_info.source );
-			var target_found = get_ellipse( rel_info.target );
-			var emphasis = rel_info.is_significant;
-			if( type_index != -1 && source_found.size() && target_found.size() ) {
-				var relation = relation_manager.create( rel_info.source, rel_info.target, type_index, emphasis );
-				// Save the relationship data too.
-				$.each( rel_info, function( k, v ) {
-					relation.data( k, v );
-				});
-				if( editable ) {
-					var node_obj = get_node_obj(rel_info.source);
-					node_obj.set_selectable( false );
-					node_obj.ellipse.data( 'node_obj', null );
-					node_obj = get_node_obj(rel_info.target);
-					node_obj.set_selectable( false );
-					node_obj.ellipse.data( 'node_obj', null );
-				}
-			}
-		});
-		callback_fn.call();
-	});
-}
+    // Add the relationship types to the keymap list
+    $.each( relationship_types, function(index, typedef) {
+        li_elm = $('<li class="key">').css( "border-color",
+        relation_manager.relation_colors[index] ).text(typedef.name);
+        li_elm.append( $('<div>').attr('class', 'key_tip_container').append(
+            $('<div>').attr('class', 'key_tip').text(typedef.description) ) );
+            $('#keymaplist').append( li_elm );
+        });
+        // Save this list of names to the outer element data so that the relationship
+        // factory can access it
+        var rel_types = $.map( relationship_types, function(t) { return t.name });
+        $('#keymap').data('relations', rel_types);
+        // Now fetch the relationships themselves and add them to the graph
+        var textrelpath = getTextURL( 'relationships' );
+        $.getJSON( textrelpath, function(data) {
+            $.each(data, function( index, rel_info ) {
+                var type_index = $.inArray(rel_info.type, rel_types);
+                var source_svg = rid2node[rel_info.source];
+                var target_svg = rid2node[rel_info.target];
+                var source_found = get_ellipse( source_svg );
+                var target_found = get_ellipse( target_svg );
+                var emphasis = rel_info.is_significant;
+                if( type_index != -1 && source_found.size() && target_found.size() ) {
+                    var relation = relation_manager.create( source_svg, target_svg, type_index, emphasis );
+                    // Save the relationship data too.
+                    $.each( rel_info, function( k, v ) {
+                        relation.data( k, v );
+                    });
+                    if( editable ) {
+                        var node_obj = get_node_obj(rel_info.source);
+                        node_obj.set_selectable( false );
+                        node_obj.ellipse.data( 'node_obj', null );
+                        node_obj = get_node_obj(rel_info.target);
+                        node_obj.set_selectable( false );
+                        node_obj.ellipse.data( 'node_obj', null );
+                    }
+                }
+            });
+            callback_fn.call();
+        });
+    }
 
 function get_ellipse( node_id ) {
-	return $( jq( node_id ) + ' ellipse');
+    // See if the ID exists in readingdata; otherwise see if it exists
+    // in rid2node
+    var nid = node_id;
+    if (node_id in rid2node) {
+        nid = rid2node[node_id];
+    }
+    return $( jq( nid ) + ' ellipse');
 }
 
 function get_node_obj( node_id ) {
@@ -643,9 +657,9 @@ function node_obj(ellipse) {
         var source_node_text = self.ellipse.siblings('text').text();
         var target_node_id = $('ellipse[fill="#ffccff"]').parent().attr('id');
         var target_node_text = $('ellipse[fill="#ffccff"]').siblings("text").text();
-        $('#source_node_id').val( source_node_id );
+        $('#source_node_id').val( readingdata[source_node_id]['id'] );
         $('.rel_rdg_a').text( "'" + source_node_text + "'" );
-        $('#target_node_id').val( target_node_id );
+        $('#target_node_id').val( readingdata[target_node_id]['id'] );
         $('.rel_rdg_b').text( "'" + target_node_text + "'" );
         $('#dialog-form').dialog( 'open' );
     };
@@ -851,21 +865,23 @@ function svgpath( path_element, svg_element ) {
 }
 
 function node_elements_for( ellipse ) {
-  node_elements = get_edge_elements_for( ellipse );
+  var node_elements = get_edge_elements_for( ellipse );
   node_elements.push( new svgshape( ellipse.siblings('text') ) );
   node_elements.push( new svgshape( ellipse ) );
   return node_elements;
 }
 
 function get_edge_elements_for( ellipse ) {
-  edge_elements = new Array();
-  node_id = ellipse.parent().attr('id');
-  edge_in_pattern = new RegExp( node_id + '$' );
-  edge_out_pattern = new RegExp( '^' + node_id + '-' );
+  var edge_elements = new Array();
+  var node_id = ellipse.parent().attr('id');
+  if (!node_id) return edge_elements;
+  var reading_id = readingdata[node_id]['id'];
+  var edge_in_pattern = new RegExp( reading_id + '$' );
+  var edge_out_pattern = new RegExp( '^' + reading_id + '-' );
   $.each( $('#svgenlargement .edge,#svgenlargement .relation').children('title'), function(index) {
-    title = $(this).text();
+    var title = $(this).text();
     if( edge_in_pattern.test(title) ) {
-        polygon = $(this).siblings('polygon');
+        var polygon = $(this).siblings('polygon');
         if( polygon.size() > 0 ) {
             edge_elements.push( new svgshape( polygon ) );
         }
@@ -920,8 +936,9 @@ function relation_factory() {
         relation.children('path').css( {'cursor':'pointer'} );
         relation.children('path').click( function(event) {
             var related_nodes = get_related_nodes( relation.attr('id') );
-            var source_node_id = related_nodes[0];
-            var target_node_id = related_nodes[1];
+            // Form values need to be database IDs
+            var source_node_id = readingdata[related_nodes[0]]['id'];
+            var target_node_id = readingdata[related_nodes[1]]['id'];
             $('#delete_source_node_id').val( source_node_id );
             $('#delete_target_node_id').val( target_node_id );
             self.showinfo(relation);
@@ -982,14 +999,21 @@ function relation_factory() {
 // Utility function to create/return the ID of a relation link between
 // a source and target.
 function get_relation_id( source_id, target_id ) {
+    // Make sure we are dealing with SVG node IDs
+    if (!(source_id in readingdata)) {
+        source_id = rid2node[source_id]
+    }
+    if (!(target_id in readingdata)) {
+        target_id = rid2node[target_id]
+    }
 	var idlist = [ source_id, target_id ];
 	idlist.sort();
-	return 'relation-' + idlist[0] + '-...-' + idlist[1];
+	return 'relation-' + idlist[0] + '-___-' + idlist[1];
 }
 
 function get_related_nodes( relation_id ) {
 	var srctotarg = relation_id.substr( 9 );
-	return srctotarg.split('-...-');
+	return srctotarg.split('-___-');
 }
 
 function draw_relation( source_id, target_id, relation_color, emphasis ) {
@@ -1031,12 +1055,7 @@ function detach_node( readings ) {
     if( 'DELETED' in readings ) {
     	// Remove each of the deleted relationship links.
     	$.each( readings['DELETED'], function( idx, pair ) {
-    		var relation_id = get_relation_id( pair[0], pair[1] );
-			var relation = $( jq( relation_id ) );
-			if( relation.size() == 0 ) {
-    			relation_id = get_relation_id( pair[1], pair[0] );
-    		}
-    		relation_manager.remove( relation_id );
+    		relation_manager.remove( get_relation_id( pair[0], pair[1] ) );
     	});
     	delete readings['DELETED'];
     }
@@ -1045,8 +1064,9 @@ function detach_node( readings ) {
     // remove from existing readings the witnesses for the new nodes/readings
     $.each( readings, function( node_id, reading ) {
         $.each( reading.witnesses, function( index, witness ) {
-            var witnesses = readingdata[ reading.orig_reading ].witnesses;
-            readingdata[ reading.orig_reading ].witnesses = $.removeFromArray( witness, witnesses );
+            var orig_svg_id = rid2node[reading.orig_reading];
+            var witnesses = readingdata[ orig_svg_id ].witnesses;
+            readingdata[ orig_svg_id ].witnesses = $.removeFromArray( witness, witnesses );
         } );
     } );
 
@@ -1156,6 +1176,7 @@ function detach_node( readings ) {
 
 }
 
+// This takes SVG node IDs
 function merge_nodes( source_node_id, target_node_id, consequences ) {
     if( consequences.status != null && consequences.status == 'ok' ) {
         merge_node( source_node_id, target_node_id );
@@ -1176,7 +1197,7 @@ function merge_nodes( source_node_id, target_node_id, consequences ) {
                 $(yes).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
                 $(no).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
                 $(yes).click( function( evt ){
-                    merge_node( node_ids[0], node_ids[1] );
+                    merge_node( rid2node[node_ids[0]], rid2node[node_ids[1]] );
                     temp_relation.remove();
                     $(evt.target).parent().remove();
                     //notify backend
@@ -1193,6 +1214,7 @@ function merge_nodes( source_node_id, target_node_id, consequences ) {
     }
 }
 
+// This takes SVG node IDs
 function merge_node( source_node_id, target_node_id, compressing ) {
     $.each( edges_of( get_ellipse( source_node_id ) ), function( index, edge ) {
         if( edge.is_incoming == true ) {
@@ -1212,6 +1234,7 @@ function merge_node( source_node_id, target_node_id, compressing ) {
     $( jq( source_node_id ) ).remove();
 }
 
+// This takes SVG node IDs
 function merge_left( source_node_id, target_node_id ) {
     $.each( edges_of( get_ellipse( source_node_id ) ), function( index, edge ) {
         if( edge.is_incoming == true ) {
@@ -1225,7 +1248,6 @@ function merge_left( source_node_id, target_node_id ) {
 function compress_nodes(readings) {
     //add text of other readings to 1st reading
 
-    var first = get_ellipse(readings[0]);
     var first = get_ellipse(readings[0]);
     var first_title = first.parent().find('text')[0];
     var last_edges = edges_of(get_ellipse(readings[readings.length-1]));
@@ -1279,9 +1301,9 @@ function compress_nodes(readings) {
 
         // only merge start on the last one, else, we get ourselves confused!
         if(readings[i] == readings[readings.length-1]) {
-            merge_node(readings[i], readings[0], true);
+            merge_node(rid2node[readings[i]], rid2node[readings[0]], true);
         } else {
-            merge_left(readings[i], readings[0]);
+            merge_left(rid2node[readings[i]], rid2node[readings[0]]);
         }
 
         if (title && title.parentNode) {
@@ -1451,9 +1473,10 @@ function Marquee() {
 
 }
 
+// This is called with reading database IDs, using form values.
 function readings_equivalent( source, target ) {
-	var sourcetext = readingdata[source].text;
-	var targettext = readingdata[target].text;
+	var sourcetext = readingdata[rid2node[source]].text;
+	var targettext = readingdata[rid2node[target]].text;
 	if( sourcetext === targettext ) {
 		return true;
 	}
@@ -1536,16 +1559,14 @@ var keyCommands = {
 				var jqjson = $.post( ncpath, form_values, function(data) {
 					readings_selected = [];
 					$.each( data['readings'], function(i, rdgdata) {
-						var this_rdgid = rdgdata['id'];
-						var reading_element = readingdata[this_rdgid]
-						$.each( rdgdata, function( key, value ) {
-							reading_element[key] = value;
-						});
+                        var this_nodeid = rid2node[rdgdata['id']];
+                        // Replace the reading data wholesale
+						readingdata[this_nodeid] = rdgdata;
 						if( $('#update_workspace_button').data('locked') ) {
-							color_active( get_ellipse( this_rdgid ) );
+							color_active( get_ellipse( this_nodeid ) );
 						} else {
 							// Re-color the node if necessary
-							color_inactive( get_ellipse( this_rdgid ) );
+							color_inactive( get_ellipse( this_nodeid ) );
 						}
 					});
 				});
@@ -1566,7 +1587,7 @@ var keyCommands = {
 		'function': function () {
 			// X for eXpunge relationships
 			$.each( readings_selected, function( i, reading_id ) {
-				var form_values = 'from_reading=' + reading_id;
+				var form_values = 'from_reading=' + readingdata[reading_id]['id'];
 				delete_relation( form_values );
 			});
 		} },
@@ -1766,7 +1787,8 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			form_values = $( '#merge_node_form' ).serialize();
 			ncpath = getTextURL( 'merge' );
 			var jqjson = $.post( ncpath, form_values, function( data ) {
-				merge_nodes( $( '#source_node_id' ).val(), $( '#target_node_id' ).val(), data );
+				merge_nodes( rid2node[$( '#source_node_id' ).val()],
+                             rid2node[$( '#target_node_id' ).val()], data );
 				mybuttons.button( 'enable' );
 				$( '#dialog-form' ).dialog( 'close' );
 			} );
@@ -1793,7 +1815,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				// Stash any changed readings.
 				$.each( data['readings'], function( i, rdgdata ) {
 					rid = rdgdata['id'];
-					readingdata[rid] = rdgdata;
+					readingdata[rid2node[rid]] = rdgdata;
 				});
 				mybuttons.button( 'enable' );
 				$( '#dialog-form' ).dialog( 'close' );
@@ -1981,7 +2003,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			$.each( readings_selected, function( index, value ) {
 			  	$('#detach_collated_form').append( $('<input>').attr(
 					"type", "hidden").attr("name", "readings[]").attr(
-					"value", value ) );
+					"value", readingdata[value]['id'] ) );
 				var this_witnesses = readingdata[value]['witnesses'];
                 witnesses = arrayUnique( witnesses.concat( this_witnesses ) );
 
@@ -2002,7 +2024,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			//End section
 		},
 		close: function() {
-			marquee.unselect();
+			// marquee.unselect();
 			$("#dialog_overlay").hide();
 		}
 	});
@@ -2116,7 +2138,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			//End section
 		},
 		close: function() {
-			marquee.unselect();
+			// marquee.unselect();
 			$("#dialog_overlay").hide();
 		}
 	});
@@ -2146,12 +2168,12 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		  $('#split_reading_text').empty().append(readingdata[rdg]["text"]);
   	  },
 	  close: function() {
-		  marquee.unselect();
+		  // marquee.unselect();
 		  $("#dialog_overlay").hide();
 	  }
     });
   }
-  
+
   // Set up the relationship info display and deletion dialog.
   $( "#delete-form" ).dialog({
     autoOpen: false,
@@ -2227,16 +2249,13 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			ncpath = getReadingURL( reading_id );
 			var jqjson = $.post( ncpath, form_values, function(data) {
 				$.each( data['readings'], function(i, rdgdata) {
-					var this_rdgid = rdgdata['id'];
-					var reading_element = readingdata[this_rdgid];
-					$.each( rdgdata, function( key, value ) {
-						reading_element[key] = value;
-					});
+					var this_nodeid = rid2node[rdgdata['id']];
+					readingdata[this_nodeid] = rdgdata;
 					if( $('#update_workspace_button').data('locked') == false ) {
 						// Re-color the node if necessary
-						color_inactive( get_ellipse( this_rdgid ) );
+						color_inactive( get_ellipse( this_nodeid ) );
 					} else {
-						color_active( get_ellipse( this_rdgid ) );
+						color_active( get_ellipse( this_nodeid ) );
 					}
 				});
 				mybuttons.button("enable");
