@@ -37,6 +37,45 @@ function jq(myid) {
 	return '#' + myid.replace(/(:|\.)/g,'\\$1');
 }
 
+// Our controller often returns a map of SVG node ID -> reading data,
+// including database ID. This is a set of helper functions to keep
+// the list of keys in readingdata in sync with the DB -> SVG ID map.
+function update_readingdata(rdata) {
+    $.each(rdata, function(k, v) {
+        readingdata[k] = v;
+        rid2node[v['id']] = k;
+    });
+}
+
+function update_reading(rdata) {
+    var rid = rdata['id'];
+    var nid = rid2node[rid];
+    if ('svg_id' in rdata) {
+        // Account for a possible change in SVG ID
+        if (nid) {
+            delete rid2node[rid];
+            delete readingdata[nid];
+        }
+        nid = delete rdata['svg_id'];
+    }
+    readingdata[nid] = rdata;
+    rid2node[rid] = nid;
+    return nid;
+}
+
+function delete_reading(nodeid) {
+    if (nodeid in readingdata) {
+        var rid = readingdata[nodeid]['id'];
+        delete rid2node[rid];
+        delete readingdata[nodeid];
+    } else if (nodeid in rid2node) {
+        var nid = delete rid2node[nodeid];
+        delete readingdata[nid];
+    } else {
+        alert("Node or reading ID " + nodeid + " not found");
+    }
+}
+
 // Actions for opening the reading panel
 function node_dblclick_listener( evt ) {
   	// Open the reading dialogue for the given node.
@@ -189,13 +228,7 @@ function svgEnlargementLoaded() {
     start_element_height = $('#__START__').children('ellipse')[0].getBBox().height;
     //some use of call backs to ensure successive execution
     $.getJSON( getTextURL('readings'), function( data ) {
-        // Our controller returns a map of SVG node ID -> reading data,
-        // including database ID.
-        readingdata = data;
-        // But we also need to keep a map of database ID -> node ID.
-        $.each(readingdata, function(k, v) {
-            rid2node[v['id']] = k;
-        });
+        update_readingdata(data);
         add_relations(function() {
             $('#svgenlargement ellipse').parent().dblclick(node_dblclick_listener);
             $('#svgenlargement ellipse').each( function( i, el ) { color_inactive( el ) });
@@ -567,23 +600,23 @@ function svgpath( path_element, svg_element ) {
 }
 
 function node_elements_for( ellipse ) {
-  node_elements = get_edge_elements_for( ellipse );
+  var node_elements = get_edge_elements_for( ellipse );
   node_elements.push( new svgshape( ellipse.siblings('text') ) );
   node_elements.push( new svgshape( ellipse ) );
   return node_elements;
 }
 
 function get_edge_elements_for( ellipse ) {
-  edge_elements = new Array();
-  node_id = ellipse.parent().attr('id');
+  var edge_elements = new Array();
+  var node_id = ellipse.parent().attr('id');
   if (!node_id) return edge_elements;
-  reading_id = readingdata[node_id]['id'];
-  edge_in_pattern = new RegExp( reading_id + '$' );
-  edge_out_pattern = new RegExp( '^' + reading_id + '-' );
+  var reading_id = readingdata[node_id]['id'];
+  var edge_in_pattern = new RegExp( reading_id + '$' );
+  var edge_out_pattern = new RegExp( '^' + reading_id + '-' );
   $.each( $('#svgenlargement .edge,#svgenlargement .relation').children('title'), function(index) {
-    title = $(this).text();
+    var title = $(this).text();
     if( edge_in_pattern.test(title) ) {
-        polygon = $(this).siblings('polygon');
+        var polygon = $(this).siblings('polygon');
         if( polygon.size() > 0 ) {
             edge_elements.push( new svgshape( polygon ) );
         }
@@ -638,8 +671,9 @@ function relation_factory() {
         relation.children('path').css( {'cursor':'pointer'} );
         relation.children('path').click( function(event) {
             var related_nodes = get_related_nodes( relation.attr('id') );
-            var source_node_id = related_nodes[0];
-            var target_node_id = related_nodes[1];
+            // Form values need to be database IDs
+            var source_node_id = readingdata[related_nodes[0]]['id'];
+            var target_node_id = readingdata[related_nodes[1]]['id'];
             $('#delete_source_node_id').val( source_node_id );
             $('#delete_target_node_id').val( target_node_id );
             self.showinfo(relation);
@@ -700,14 +734,21 @@ function relation_factory() {
 // Utility function to create/return the ID of a relation link between
 // a source and target.
 function get_relation_id( source_id, target_id ) {
+    // Make sure we are dealing with SVG node IDs
+    if (!(source_id in readingdata)) {
+        source_id = rid2node[source_id]
+    }
+    if (!(target_id in readingdata)) {
+        target_id = rid2node[target_id]
+    }
 	var idlist = [ source_id, target_id ];
 	idlist.sort();
-	return 'relation-' + idlist[0] + '-...-' + idlist[1];
+	return 'relation-' + idlist[0] + '-___-' + idlist[1];
 }
 
 function get_related_nodes( relation_id ) {
 	var srctotarg = relation_id.substr( 9 );
-	return srctotarg.split('-...-');
+	return srctotarg.split('-___-');
 }
 
 function draw_relation( source_id, target_id, relation_color, emphasis ) {
@@ -745,17 +786,12 @@ function detach_node( readings ) {
     if( 'DELETED' in readings ) {
     	// Remove each of the deleted relationship links.
     	$.each( readings['DELETED'], function( idx, pair ) {
-    		var relation_id = get_relation_id( pair[0], pair[1] );
-			var relation = $( jq( relation_id ) );
-			if( relation.size() == 0 ) {
-    			relation_id = get_relation_id( pair[1], pair[0] );
-    		}
-    		relation_manager.remove( relation_id );
+    		relation_manager.remove( get_relation_id( pair[0], pair[1] ) );
     	});
     	delete readings['DELETED'];
     }
     // add new node(s)
-    $.extend( readingdata, readings );
+    update_readingdata(readings);
     // remove from existing readings the witnesses for the new nodes/readings
     $.each( readings, function( node_id, reading ) {
         $.each( reading.witnesses, function( index, witness ) {
@@ -912,12 +948,13 @@ function merge_node( source_node_id, target_node_id, compressing ) {
     } );
 	if (!compressing) {
 		// Add source node witnesses to target node
+        // TODO see if we can get this info from the server
 		// NOTE: this may need to be more complex to account for witness layers
 		$.each(readingdata[source_node_id].witnesses, function( i, d ) {
 			readingdata[target_node_id].witnesses.push(d)
 		});
 	}
-	delete readingdata[source_node_id];
+	delete_reading(source_node_id);
     $( jq( source_node_id ) ).remove();
 }
 
@@ -1246,9 +1283,9 @@ var keyCommands = {
 				var jqjson = $.post( ncpath, form_values, function(data) {
 					readings_selected = [];
 					$.each( data['readings'], function(i, rdgdata) {
-                        var this_nodeid = rid2node[rdgdata['id']];
-                        // Replace the reading data wholesale
-						readingdata[this_nodeid] = rdgdata;
+                        // The reading data already exists; we assume that the
+                        // database ID hasn't changed, and replace it wholesale.
+                        var this_nodeid = update_reading(rdgdata);
 						if( $('#update_workspace_button').data('locked') ) {
 							color_active( get_ellipse( this_nodeid ) );
 						} else {
@@ -1265,7 +1302,7 @@ var keyCommands = {
 		'function': function () {
 			// X for eXpunge relationships
 			$.each( readings_selected, function( i, reading_id ) {
-				var form_values = 'from_reading=' + reading_id;
+				var form_values = 'from_reading=' + readingdata[reading_id]['id'];
 				delete_relation( form_values );
 			});
 		} },
@@ -1465,8 +1502,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				});
 				// Stash any changed readings.
 				$.each( data['readings'], function( i, rdgdata ) {
-					rid = rdgdata['id'];
-					readingdata[rid2node[rid]] = rdgdata;
+					update_reading(rdgdata);
 				});
 				mybuttons.button( 'enable' );
 				$( '#dialog-form' ).dialog( 'close' );
@@ -1731,16 +1767,12 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			ncpath = getReadingURL( reading_id );
 			var jqjson = $.post( ncpath, form_values, function(data) {
 				$.each( data['readings'], function(i, rdgdata) {
-					var this_rdgid = rdgdata['id'];
-					var reading_element = readingdata[this_rdgid];
-					$.each( rdgdata, function( key, value ) {
-						reading_element[key] = value;
-					});
+					var this_nodeid = update_reading(rdgdata);
 					if( $('#update_workspace_button').data('locked') == false ) {
 						// Re-color the node if necessary
-						color_inactive( get_ellipse( this_rdgid ) );
+						color_inactive( get_ellipse( this_nodeid ) );
 					} else {
-						color_active( get_ellipse( this_rdgid ) );
+						color_active( get_ellipse( this_nodeid ) );
 					}
 				});
 				mybuttons.button("enable");
