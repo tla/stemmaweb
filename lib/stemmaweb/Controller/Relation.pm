@@ -276,7 +276,7 @@ sub relationships :Chained('section') :PathPart :Args(0) {
                     $result = $m->ajax( 'delete',
                         "/tradition/$textid/relation",
                         'Content-Type' => 'application/json',
-                        'Content' => to_json( $opts ) );
+                        'Content' => encode_json( $opts ) );
                 } catch (stemmaweb::Error $e ) {
                     return json_error( $c, $e->status, $e->message );
                 }
@@ -455,7 +455,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
         try {
             $reading = $m->ajax('put', "/reading/$reading_id",
                 'Content-Type' => 'application/json',
-                'Content' => to_json( { properties => $changed_props } ) );
+                'Content' => encode_json( { properties => $changed_props } ) );
         } catch (stemmaweb::Error $e ) {
             return json_error( $c, $e->status, $e->message );
         }
@@ -511,7 +511,7 @@ sub compress :Chained('section') :PathPart :Args(0) {
                 my $rid = shift @rids;
                 $m->ajax('post', "/reading/$first/concatenate/$rid",
                     'Content-Type' => 'application/json',
-                    'Content' => to_json( {character => " "} ));
+                    'Content' => encode_json( {character => " "} ));
                 push( @nodes, $rid );
             }
         } catch (stemmaweb::Error $e ) {
@@ -568,13 +568,19 @@ sub merge :Chained('section') :PathPart :Args(0) {
 
         my $main = $c->request->param('target');
         my $second = $c->request->param('source');
-        my $endrank = $c->stash->{section}->{'endRank'};
+        my $extent;
         my $rdg_rank;
         try {
+            ## Figure out the range of ranks we are dealing with
             my $main_info = $m->ajax('get', "/reading/$main");
             my $second_info = $m->ajax('get', "/reading/$second");
-            $rdg_rank = $main_info->{rank} < $second_info->{rank}
-                ? $main_info->{rank} : $second_info->{rank};
+            my @ordered = sort { $a->{rank} <=> $b->{rank} } ($main_info, $second_info);
+            $rdg_rank = $ordered[0]->{rank};
+            $extent = $rdg_rank + (2 * ($ordered[1]->{rank} - $rdg_rank));
+            if ($extent > $c->stash->{section}->{'endRank'}) {
+                $extent = $c->stash->{section}->{'endRank'};
+            }
+            ## Do the merge
             $m->ajax('post', "/reading/$main/merge/$second");
         } catch (stemmaweb::Error $e) {
             return json_error( $c, $e->status, $e->message );
@@ -586,7 +592,7 @@ sub merge :Chained('section') :PathPart :Args(0) {
         unless( $c->request->param('single') ) {
             my $mergeable;
             try {
-                $mergeable = $m->ajax('get', "/tradition/$textid/section/$sectid/mergeablereadings/$rdg_rank/$endrank");
+                $mergeable = $m->ajax('get', "/tradition/$textid/section/$sectid/mergeablereadings/$rdg_rank/$extent");
             } catch (stemmaweb::Error $e ) {
                 $response->{status} = 'warn';
                 $response->{warning} = 'Could not check for mergeable readings: ' . $e->message;
@@ -612,18 +618,18 @@ sub merge :Chained('section') :PathPart :Args(0) {
 Accepts form data with a list of 'readings[]' and a list of 'witnesses[]'.
 Duplicates the requested readings, detaching the witnesses specified in
 the list to use the new reading(s) instead of the old. Returns a JSON object
-that contains a key for each new reading thus created, as well as a key
-'DELETED' that contains a list of tuples indicating the relationships that
-should be removed from the graph. For example:
+that contains a key for each new reading thus created (which is its SVG ID),
+as well as a key 'DELETED' that contains a list of tuples indicating the
+relationships that should be removed from the graph. For example:
 
-  {"DELETED":[["n135","n130"]],
-   "n131_0":{"id":"n131_0",
-             "variants":[],
-             "orig_rdg":"n131",
-             "is_meta":null,
-             "lexemes":[],
-             "witnesses":["Ba96"],
-             "text":"et "}}
+  {"DELETED":[["135","130","transposition"]],
+   "n476":{"id":"476",
+          "variants":[],
+          "orig_rdg":"130",
+          "is_meta":null,
+          "lexemes":[],
+          "witnesses":["Ba96"],
+          "text":"et "}}
 
 
 =cut
@@ -701,7 +707,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
         try {
             $response = $m->ajax('post', $url,
                 'Content-Type' => 'application/json',
-                'Content' => to_json($req));
+                'Content' => encode_json($req));
         } catch (stemmaweb::Error $e) {
             json_error( $c, $e->status, $e->message );
         }
@@ -715,7 +721,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
             my $nid = delete $rinfo->{svg_id};
             # Add in the orig_reading information that was passed back
             $rinfo->{orig_reading} = $r->{orig_reading};
-            $c->stash->{result}->{$r->{id}} = $rinfo;
+            $c->stash->{result}->{$nid} = $rinfo;
         }
     } else {
         json_error( $c, 405, "Use POST instead");
@@ -801,7 +807,7 @@ sub split :Chained('section') :PathPart :Args(0) {
         try {
             $response = $m->ajax('post', $url,
                 'Content-Type' => 'application/json',
-                'Content' => to_json($model));
+                'Content' => encode_json($model));
         } catch (stemmaweb::Error $e) {
             json_error( $c, $e->status, $e->message );
         }

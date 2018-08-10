@@ -40,6 +40,45 @@ function jq(myid) {
 	return '#' + myid.replace(/(:|\.)/g,'\\$1');
 }
 
+// Our controller often returns a map of SVG node ID -> reading data,
+// including database ID. This is a set of helper functions to keep
+// the list of keys in readingdata in sync with the DB -> SVG ID map.
+function update_readingdata(rdata) {
+    $.each(rdata, function(k, v) {
+        readingdata[k] = v;
+        rid2node[v['id']] = k;
+    });
+}
+
+function update_reading(rdata) {
+    var rid = rdata['id'];
+    var nid = rid2node[rid];
+    if ('svg_id' in rdata) {
+        // Account for a possible change in SVG ID
+        if (nid) {
+            delete rid2node[rid];
+            delete readingdata[nid];
+        }
+        nid = delete rdata['svg_id'];
+    }
+    readingdata[nid] = rdata;
+    rid2node[rid] = nid;
+    return nid;
+}
+
+function delete_reading(nodeid) {
+    if (nodeid in readingdata) {
+        var rid = readingdata[nodeid]['id'];
+        delete rid2node[rid];
+        delete readingdata[nodeid];
+    } else if (nodeid in rid2node) {
+        var nid = delete rid2node[nodeid];
+        delete readingdata[nid];
+    } else {
+        alert("Node or reading ID " + nodeid + " not found");
+    }
+}
+
 // Actions for opening the reading panel
 function node_dblclick_listener( evt ) {
   	// Open the reading dialogue for the given node.
@@ -437,13 +476,7 @@ function svgEnlargementLoaded() {
 // END OF DEPRECATED CODE
     //some use of call backs to ensure successive execution
     $.getJSON( getTextURL('readings'), function( data ) {
-        // Our controller returns a map of SVG node ID -> reading data,
-        // including database ID.
-        readingdata = data;
-        // But we also need to keep a map of database ID -> node ID.
-        $.each(readingdata, function(k, v) {
-            rid2node[v['id']] = k;
-        });
+        update_readingdata(data);
         add_relations(function() {
             $('#svgenlargement ellipse').parent().dblclick(node_dblclick_listener);
             $('#svgenlargement ellipse').each( function( i, el ) { color_inactive( el ) });
@@ -1060,7 +1093,7 @@ function detach_node( readings ) {
     	delete readings['DELETED'];
     }
     // add new node(s)
-    $.extend( readingdata, readings );
+    update_readingdata(readings);
     // remove from existing readings the witnesses for the new nodes/readings
     $.each( readings, function( node_id, reading ) {
         $.each( reading.witnesses, function( index, witness ) {
@@ -1225,12 +1258,13 @@ function merge_node( source_node_id, target_node_id, compressing ) {
     } );
 	if (!compressing) {
 		// Add source node witnesses to target node
+        // TODO see if we can get this info from the server
 		// NOTE: this may need to be more complex to account for witness layers
 		$.each(readingdata[source_node_id].witnesses, function( i, d ) {
 			readingdata[target_node_id].witnesses.push(d)
 		});
 	}
-	delete readingdata[source_node_id];
+	delete_reading(source_node_id);
     $( jq( source_node_id ) ).remove();
 }
 
@@ -1559,9 +1593,9 @@ var keyCommands = {
 				var jqjson = $.post( ncpath, form_values, function(data) {
 					readings_selected = [];
 					$.each( data['readings'], function(i, rdgdata) {
-                        var this_nodeid = rid2node[rdgdata['id']];
-                        // Replace the reading data wholesale
-						readingdata[this_nodeid] = rdgdata;
+                        // The reading data already exists; we assume that the
+                        // database ID hasn't changed, and replace it wholesale.
+                        var this_nodeid = update_reading(rdgdata);
 						if( $('#update_workspace_button').data('locked') ) {
 							color_active( get_ellipse( this_nodeid ) );
 						} else {
@@ -1814,8 +1848,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				});
 				// Stash any changed readings.
 				$.each( data['readings'], function( i, rdgdata ) {
-					rid = rdgdata['id'];
-					readingdata[rid2node[rid]] = rdgdata;
+					update_reading(rdgdata);
 				});
 				mybuttons.button( 'enable' );
 				$( '#dialog-form' ).dialog( 'close' );
@@ -2249,8 +2282,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			ncpath = getReadingURL( reading_id );
 			var jqjson = $.post( ncpath, form_values, function(data) {
 				$.each( data['readings'], function(i, rdgdata) {
-					var this_nodeid = rid2node[rdgdata['id']];
-					readingdata[this_nodeid] = rdgdata;
+					var this_nodeid = update_reading(rdgdata);
 					if( $('#update_workspace_button').data('locked') == false ) {
 						// Re-color the node if necessary
 						color_inactive( get_ellipse( this_nodeid ) );
