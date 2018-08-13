@@ -43,14 +43,14 @@ function jq(myid) {
 function node_dblclick_listener( evt ) {
   	// Open the reading dialogue for the given node.
   	// First get the reading info
-  	var reading_id = $(this).attr('id');
-  	var reading_info = readingdata[reading_id];
+  	var svg_id = $(this).attr('id');
+  	var reading_info = readingdata[svg_id];
   	// and then populate the dialog box with it.
   	// Set the easy properties first
     var opt = {
         title: 'Reading information for "' + reading_info['text'] + '"'
     };
-  	$('#reading_id').val( reading_id );
+  	$('#reading_id').val( reading_info['id'] );
   	toggle_checkbox( $('#reading_is_lemma'), reading_info['is_lemma'] );
   	toggle_checkbox( $('#reading_is_nonsense'), reading_info['is_nonsense'] );
   	toggle_checkbox( $('#reading_grammar_invalid'), reading_info['grammar_invalid'] );
@@ -86,8 +86,8 @@ function stringify_wordform ( tag ) {
 }
 
 function color_inactive ( el ) {
-	var reading_id = $(el).parent().attr('id');
-	var reading_info = readingdata[reading_id];
+	var svg_id = $(el).parent().attr('id');
+	var reading_info = readingdata[svg_id];
 	// If the reading info has any non-disambiguated lexemes, color it yellow;
 	// otherwise color it green.
 	$(el).attr( {stroke:'green', fill:'#b3f36d'} );
@@ -99,11 +99,11 @@ function color_inactive ( el ) {
 }
 
 function color_active ( el ) {
-	var reading_id = $(el).parent().attr('id');
-	var reading_info = readingdata[reading_id];
+	var svg_id = $(el).parent().attr('id');
+	var reading_info = readingdata[svg_id];
 	// If the reading is currently selected, color it accordingly; otherwise
 	// red for lemma and white for not.
-	if( readings_selected.indexOf(reading_id) > -1 ) {
+	if( readings_selected.indexOf(svg_id) > -1 ) {
 		$(el).attr( {stroke:'black', fill:'#9999ff'} );
 	} else if( reading_info && reading_info['is_lemma'] ) {
 		$(el).attr( {stroke:'red', fill:'#ffdddd'} );
@@ -508,20 +508,22 @@ function add_relations( callback_fn ) {
 		 	$('<div>').attr('class', 'key_tip').text(typedef.description) ) );
 		 $('#keymaplist').append( li_elm );
 	});
-	// Now fetch the relationships themselves and add them to the graph
-	var rel_types = $.map( relationship_types, function(t) { return t.name });
 	// Save this list of names to the outer element data so that the relationship
 	// factory can access it
+	var rel_types = $.map( relationship_types, function(t) { return t.name });
 	$('#keymap').data('relations', rel_types);
+	// Now fetch the relationships themselves and add them to the graph
 	var textrelpath = getTextURL( 'relationships' );
 	$.getJSON( textrelpath, function(data) {
 		$.each(data, function( index, rel_info ) {
 			var type_index = $.inArray(rel_info.type, rel_types);
-			var source_found = get_ellipse( rel_info.source );
-			var target_found = get_ellipse( rel_info.target );
+            var source_svg = 'n' + rel_info.source;
+            var target_svg = 'n' + rel_info.target;
+ 			var source_found = get_ellipse( source_svg );
+			var target_found = get_ellipse( target_svg );
 			var emphasis = rel_info.is_significant;
 			if( type_index != -1 && source_found.size() && target_found.size() ) {
-				var relation = relation_manager.create( rel_info.source, rel_info.target, type_index, emphasis );
+				var relation = relation_manager.create( source_svg, target_svg, type_index, emphasis );
 				// Save the relationship data too.
 				$.each( rel_info, function( k, v ) {
 					relation.data( k, v );
@@ -541,6 +543,7 @@ function add_relations( callback_fn ) {
 }
 
 function get_ellipse( node_id ) {
+    if (!node_id.startsWith('n')) node_id = 'n' + node_id;
 	return $( jq( node_id ) + ' ellipse');
 }
 
@@ -643,9 +646,9 @@ function node_obj(ellipse) {
         var source_node_text = self.ellipse.siblings('text').text();
         var target_node_id = $('ellipse[fill="#ffccff"]').parent().attr('id');
         var target_node_text = $('ellipse[fill="#ffccff"]').siblings("text").text();
-        $('#source_node_id').val( source_node_id );
+        $('#source_node_id').val( readingdata[source_node_id]['id'] );
         $('.rel_rdg_a').text( "'" + source_node_text + "'" );
-        $('#target_node_id').val( target_node_id );
+        $('#target_node_id').val( readingdata[target_node_id]['id'] );
         $('.rel_rdg_b').text( "'" + target_node_text + "'" );
         $('#dialog-form').dialog( 'open' );
     };
@@ -860,8 +863,11 @@ function node_elements_for( ellipse ) {
 function get_edge_elements_for( ellipse ) {
   edge_elements = new Array();
   node_id = ellipse.parent().attr('id');
-  edge_in_pattern = new RegExp( node_id + '$' );
-  edge_out_pattern = new RegExp( '^' + node_id + '-' );
+  if (!node_id) return edge_elements;
+  // This is a nasty hack, manually correlating SVG ID to DB ID
+  reading_id = node_id.replace('n', '');  
+  edge_in_pattern = new RegExp( reading_id + '$' );
+  edge_out_pattern = new RegExp( '^' + reading_id + '-' );
   $.each( $('#svgenlargement .edge,#svgenlargement .relation').children('title'), function(index) {
     title = $(this).text();
     if( edge_in_pattern.test(title) ) {
@@ -1045,8 +1051,9 @@ function detach_node( readings ) {
     // remove from existing readings the witnesses for the new nodes/readings
     $.each( readings, function( node_id, reading ) {
         $.each( reading.witnesses, function( index, witness ) {
-            var witnesses = readingdata[ reading.orig_reading ].witnesses;
-            readingdata[ reading.orig_reading ].witnesses = $.removeFromArray( witness, witnesses );
+            var orig_svg_id = 'n' + reading.orig_reading;
+            var witnesses = readingdata[ orig_svg_id ].witnesses;
+            readingdata[ orig_svg_id ].witnesses = $.removeFromArray( witness, witnesses );
         } );
     } );
 
@@ -1156,6 +1163,7 @@ function detach_node( readings ) {
 
 }
 
+// This takes SVG node IDs
 function merge_nodes( source_node_id, target_node_id, consequences ) {
     if( consequences.status != null && consequences.status == 'ok' ) {
         merge_node( source_node_id, target_node_id );
@@ -1176,7 +1184,7 @@ function merge_nodes( source_node_id, target_node_id, consequences ) {
                 $(yes).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
                 $(no).hover( function(){ $(this).addClass( 'draggable' ) }, function(){ $(this).removeClass( 'draggable' ) } );
                 $(yes).click( function( evt ){
-                    merge_node( node_ids[0], node_ids[1] );
+                    merge_node( 'n' + node_ids[0], 'n' + node_ids[1] );
                     temp_relation.remove();
                     $(evt.target).parent().remove();
                     //notify backend
@@ -1193,6 +1201,7 @@ function merge_nodes( source_node_id, target_node_id, consequences ) {
     }
 }
 
+// This takes SVG node IDs
 function merge_node( source_node_id, target_node_id, compressing ) {
     $.each( edges_of( get_ellipse( source_node_id ) ), function( index, edge ) {
         if( edge.is_incoming == true ) {
@@ -1212,6 +1221,7 @@ function merge_node( source_node_id, target_node_id, compressing ) {
     $( jq( source_node_id ) ).remove();
 }
 
+// This takes SVG node IDs
 function merge_left( source_node_id, target_node_id ) {
     $.each( edges_of( get_ellipse( source_node_id ) ), function( index, edge ) {
         if( edge.is_incoming == true ) {
@@ -1225,7 +1235,6 @@ function merge_left( source_node_id, target_node_id ) {
 function compress_nodes(readings) {
     //add text of other readings to 1st reading
 
-    var first = get_ellipse(readings[0]);
     var first = get_ellipse(readings[0]);
     var first_title = first.parent().find('text')[0];
     var last_edges = edges_of(get_ellipse(readings[readings.length-1]));
@@ -1279,9 +1288,9 @@ function compress_nodes(readings) {
 
         // only merge start on the last one, else, we get ourselves confused!
         if(readings[i] == readings[readings.length-1]) {
-            merge_node(readings[i], readings[0], true);
+            merge_node('n' + readings[i], 'n' + readings[0], true);
         } else {
-            merge_left(readings[i], readings[0]);
+            merge_left('n' + readings[i], 'n' + readings[0]);
         }
 
         if (title && title.parentNode) {
@@ -1452,8 +1461,8 @@ function Marquee() {
 }
 
 function readings_equivalent( source, target ) {
-	var sourcetext = readingdata[source].text;
-	var targettext = readingdata[target].text;
+	var sourcetext = readingdata['n'+source].text;
+	var targettext = readingdata['n'+target].text;
 	if( sourcetext === targettext ) {
 		return true;
 	}
@@ -1766,7 +1775,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			form_values = $( '#merge_node_form' ).serialize();
 			ncpath = getTextURL( 'merge' );
 			var jqjson = $.post( ncpath, form_values, function( data ) {
-				merge_nodes( $( '#source_node_id' ).val(), $( '#target_node_id' ).val(), data );
+				merge_nodes( 'n' + $( '#source_node_id' ).val(), 'n' + $( '#target_node_id' ).val(), data );
 				mybuttons.button( 'enable' );
 				$( '#dialog-form' ).dialog( 'close' );
 			} );
@@ -1793,7 +1802,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				// Stash any changed readings.
 				$.each( data['readings'], function( i, rdgdata ) {
 					rid = rdgdata['id'];
-					readingdata[rid] = rdgdata;
+					readingdata['n' + rid] = rdgdata;
 				});
 				mybuttons.button( 'enable' );
 				$( '#dialog-form' ).dialog( 'close' );
@@ -1981,7 +1990,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			$.each( readings_selected, function( index, value ) {
 			  	$('#detach_collated_form').append( $('<input>').attr(
 					"type", "hidden").attr("name", "readings[]").attr(
-					"value", value ) );
+					"value", readingdata[value]['id'] ) );
 				var this_witnesses = readingdata[value]['witnesses'];
                 witnesses = arrayUnique( witnesses.concat( this_witnesses ) );
 

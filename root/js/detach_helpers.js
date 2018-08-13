@@ -1,8 +1,10 @@
 function edges_of( ellipse ) {
   var edges = new Array();
   var node_id = ellipse.parent().attr('id');
-  var edge_outgoing_pattern = new RegExp( '^' + node_id + '-' );
-  var edge_incoming_pattern = new RegExp( node_id + '$' );
+  // This is a nasty hack, manually correlating SVG ID to DB ID
+  var reading_id = node_id.replace('n', '');
+  var edge_outgoing_pattern = new RegExp( '^' + reading_id + '-' );
+  var edge_incoming_pattern = new RegExp( reading_id + '$' );
   $.each( $('#svgenlargement .edge'), function(index) {
       title = $(this).children('title').text();
       if( edge_outgoing_pattern.test(title) || edge_incoming_pattern.test(title) ) {
@@ -24,8 +26,9 @@ function Edge( g_elem ) {
     this.g_elem = g_elem;
     this.witnesses = g_elem.children('text').text().split( /,\s*/ );
     this.is_incoming = false;
-    this.start_node_id = g_elem.children('title').text().split('-')[0];
-    this.end_node_id = g_elem.children('title').text().split('>')[1];
+    // This is a nasty hack, manually correlating SVG ID to DB ID
+    this.start_node_id = 'n' + g_elem.children('title').text().split('-')[0];
+    this.end_node_id = 'n' + g_elem.children('title').text().split('>')[1];
     
     this.detach_witnesses = function( witnesses_to_detach ) {
         var detached = [];
