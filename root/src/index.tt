@@ -115,21 +115,21 @@ var textOnLoad = "[% withtradition %]";
       <div id="textinfo_edit_container">
     	<form id="edit_textinfo">
     		<label for="edit_name">Tradition name: </label>
-    		<input id="edit_name" type="text" size="30" name="name"/><br/>
+    		<input id="edit_name" type="text" size="30" name="name"/><br>
     		<label for="edit_language">Language: </label>
     		<input id="edit_language" type="text" size="12" name="language"/>
     		<label for="edit_public">Publicly viewable: </label>
-    		<input id="edit_public" type="checkbox" name="public"/><br/>
+    		<input id="edit_public" type="checkbox" name="public"/><br>
     		<label for="edit_direction">Text direction: </label>
     		<select id="edit_direction" name="direction">
     			<option value="LR" selected>Left-to-right</option>
     			<option value="RL">Right-to-left</option>
     			<option value="BI">Bidirectional</option>
-    		</select><br/>
+    		</select><br>
 [% IF c.user_exists -%]
 [% IF c.user.get_object.is_admin -%]
     		<label for="edit_owner">Tradition owner: </label>
-    		<input id="edit_owner" type="text" size="30" name="owner"/><br/>
+    		<input id="edit_owner" type="text" size="30" name="owner"/><br>
 [% END -%]
 [% END -%]
 		</form>
@@ -141,7 +141,7 @@ var textOnLoad = "[% withtradition %]";
     <div id="stemma-edit-dialog">
       <div id="stemma_edit_container">
     	<form id="edit_stemma">
-    		<label for="dot_field">Dot definition for this stemma: </label><br/>
+    		<label for="dot_field">Dot definition for this stemma: </label><br>
     		<textarea id="dot_field" rows="30" cols="40"></textarea>
     		<input id="stemmaseq" type="hidden" name="stemmaseq" val="n"/>
 			<div id="edit_instructions">
@@ -184,13 +184,13 @@ var textOnLoad = "[% withtradition %]";
     		<h5>Choose an algorithm</h5>
     		<label for="algorithm">Run algorithm: </label>
     		<select id="stemweb_algorithm" name="algorithm"></select>
-    		<span id="stemweb_algorithm_help">What is this?</span><br/>
+    		<span id="stemweb_algorithm_help">What is this?</span><br>
 			<div id="stemweb_algorithm_desc_text"></div>
-			<br/>
+			<br>
 			<h5>Set the options</h5>
     		<!-- Algorithm-specific options, if any, will be added within this div -->
     		<div id="stemweb_runtime_options"></div>
-    		<br/>
+    		<br>
     		<!-- Options applicable to all algorithms belong within this div -->
     		<div id="stemweb_local_options">
     			<label for="merge_reltypes">Disregard variation of type:</label>
@@ -205,23 +205,34 @@ var textOnLoad = "[% withtradition %]";
     <div id="download-dialog" title="Download tradition data">
       <div id="download_container">
     	<form id="download_form">
-    		<input id="download_tradition" type="hidden" name="tradition"/><br/>
+    		<input id="download_tradition" type="hidden" name="tradition"/><br>
     		<label for="download_format">Choose a format for download: </label>
-    		<select id="download_format" name="format">
-    			<option value="GraphML">Native GraphML XML format</option>
+    		<select id="download_format" name="format"
+				onchange="$('#dl_choose_sections').toggle(
+					$(this).val() == 'JSON' || $(this).val() == 'CSV' || $(this).val() == 'TSV'
+				)">
     			<option value="JSON">JSON table (collation only)</option>
     			<option value="CSV">Comma-separated values (collation only)</option>
     			<option value="TSV">Tab-separated values (collation only)</option>
     			<option value="dot">Graphviz dot format (collation and relationships)</option>
     			<option value="SVG">SVG graph display (collation and relationships)</option>
+				<option value="GraphML">Native GraphML XML format</option>
     			<!-- option value="tei_ps" -->
     			<!-- option value="tei_dea" -->
-    		</select>
+    		</select><br>
+			<div id="dl_choose_sections">
+				<label for="download_start">From section: </label>
+				<select id="download_start" name="start_section">
+				</select>
+				<label for="download_end">To section: </label>
+				<select id="download_end" name="end_section">
+				</select>
+			</div><br>
     	</form>
     	<div id="download_status"></div>
       </div>
     </div>
-	
+
     <!-- File upload dialog box -->
     <div id="upload-collation-dialog" title="Upload a collation">
       <div id="upload_container">
@@ -230,7 +241,7 @@ var textOnLoad = "[% withtradition %]";
         <div id="new_file_name_container" onclick="$('#new_file').click();">&nbsp;(Use 'pick file' to select a tradition file to upload.)</div>
         <form id="new_tradition">
             <label for="new_name">Name of this text / tradition: </label>
-            <input id="new_name" type="text" name="name" size="40"/><br/>
+            <input id="new_name" type="text" name="name" size="40"/><br>
 			<label for="new_filestype">Data format: </label>
 			<select name="filetype" id="new_filetype">
 				<option value="csv">Comma-separated values (spreadsheet collation)</option>
@@ -242,7 +253,7 @@ var textOnLoad = "[% withtradition %]";
 				<option value="cxjson">CollateX JSON</option>
 			</select><br>
             <label for="new_lang">Primary language of the text: </label>
-            <input id="new_lang" type="text" name="language" size="20"/><br/>
+            <input id="new_lang" type="text" name="language" size="20"/><br>
 
             <label for="direction">Text direction:</label>
 
@@ -250,10 +261,10 @@ var textOnLoad = "[% withtradition %]";
                 <option value="LR" selected>Left to Right</option>
                 <option value="RL">Right to Left</option>
                 <option value="BI">Bi-directional</option>
-            </select><Br/>
+            </select><br>
 
             <label for="new_public">Allow public display: </label>
-            <input id="new_public" name="public" type="checkbox"/><br/>
+            <input id="new_public" name="public" type="checkbox"/><br>
         </form>
         <div id="upload_status"></div>
       	<div>

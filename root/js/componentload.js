@@ -67,9 +67,27 @@ function loadTradition( textid, textname, editable ) {
 		load_stemma( selectedStemmaSequence );
     	// Set up the relationship mapper button
 		$('#run_relater').attr( 'action', _get_url([ "relation", textid ]) );
-		// Set up the download button
+		// Set up the download button and dialog
 		$('#dl_tradition').attr( 'href', _get_url([ "download", textid ]) );
 		$('#dl_tradition').attr( 'download', selectedTextInfo.name + '.xml' );
+		$('#download_tradition').attr('value', textid );
+		$.each(textdata['sections'], function(i, s) {
+			var displayname = (i+1) + " - " + s['name'];
+			var startsect = $('<option>').attr('value', s['id']).text(displayname);
+			if (i == 0) {
+				startsect.attr('selected', 'true');
+			} else {
+				startsect.removeAttr('selected');
+			}
+			$('#download_start').append(startsect);
+			var endsect = startsect.clone();
+			if (i == textdata['sections'].length - 1) {
+				endsect.attr('selected', 'true');
+			} else {
+				endsect.removeAttr('selected');
+			}
+			$('#download_end').append(endsect);
+		});
 	});
 }
 
@@ -763,19 +781,17 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	$('#download-dialog').dialog({
 		autoOpen: false,
 		height: 150,
-		width: 300,
+		width: 500,
 		modal: true,
 		buttons: {
 			Download: function (evt) {
-				var dlurl = _get_url([ "download", $('#download_tradition').val(), $('#download_format').val() ]);
+				var dlurl = _get_url([ "download" ]);
+				dlurl += '?' + $('#download_form').serialize();
 				window.location = dlurl;
 			},
 			Done: function() {
 				$('#download-dialog').dialog('close');
 			}
-		},
-		open: function() {
-			$('#download_tradition').attr('value', selectedTextID );
 		},
 	});
 

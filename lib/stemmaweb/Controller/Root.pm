@@ -8,6 +8,7 @@ use File::Temp;
 use Text::Tradition;
 use Text::Tradition::Stemma;
 use TryCatch;
+use URI;
 use XML::LibXML;
 use XML::LibXML::XPathContext;
 
@@ -291,16 +292,20 @@ sub variantgraph :Local :Args(1) {
 
 =head2 download
 
- GET /download/$textid/$format
+ GET /download
+   ?tradition=ID&format=type&start_section=123&end_section=456
 
 Returns a file for download of the tradition in the requested format.
 
 =cut
 
-sub download :Local :Args(2) {
-    my( $self, $c, $textid, $format ) = @_;
+sub download :Local :Args(0) {
+    my( $self, $c ) = @_;
+    my $prm = $c->req->params;
+    my $textid = delete $prm->{tradition};
+    my $format = delete $prm->{format};
     my $textinfo = load_tradition( $c, $textid );
-      ## Available formats are graphml, json, csv, tsv, dot. Dot -> SVG
+    ## Available formats are graphml, json, csv, tsv, dot. Dot -> SVG
 
     my $view = $format eq 'dot' ? 'View::Plain' : "View::$format";
     $c->stash->{'name'} = $textinfo->{name};
@@ -312,7 +317,8 @@ sub download :Local :Args(2) {
             $c->stash->{'result'} = $c->model('Directory')->tradition_as_svg(
                 $textid, {include_relations => 1});
         } else {
-              my $location = sprintf("/tradition/%s/%s", $textinfo->{id}, lc($format));
+            my $location = URI->new(sprintf("/tradition/%s/%s", $textid, lc($format)));
+            $location->query_form($prm);
             $c->stash->{'result'} = $c->model('Directory')->ajax('get', $location);
         }
     } catch( stemmaweb::Error $e ) {

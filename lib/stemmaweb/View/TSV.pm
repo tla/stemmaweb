@@ -1,5 +1,6 @@
 package stemmaweb::View::TSV;
 use Moose;
+use Encode qw/ encode /;
 use namespace::autoclean;
 
 extends 'Catalyst::View';
