@@ -37,12 +37,16 @@ var textOnLoad = "[% withtradition %]";
     <div id="textinfo_container" class="clearfix">
       <div id="textinfo_load_status"></div>
       <h2>Text <span class="texttitle"></span></h2>
-      <form id="open_textinfo_edit" action="" method="GET" name="edit_textinfo">
-        <div class="button" id="edit_textinfo_button"
+      <div id="open_textinfo_edit">
+        <div class="button textcontrol editcontrol" id="edit_textinfo_button"
         	onClick="$('#textinfo-edit-dialog').dialog('open')">
       	  <span>Modify information about this tradition</span>
+        </div><br>
+		<div class="button textcontrol editcontrol" id="edit_sections_button"
+        	onClick="$('#section-edit-dialog').dialog('open')">
+      	  <span>View and modify tradition sections</span>
         </div>
-      </form>
+      </div>
       <ul>
       	  <li>is owned by <span id="owner_id"></span></li>
       	  <li>is <span id="not_public"></span>public</li>
@@ -51,52 +55,41 @@ var textOnLoad = "[% withtradition %]";
       </ul>
 
       <div id="textinfo_container_buttons">
-          <form id="stemma_pager" action="" method="GET" name="stemma_pager">
             <div id="stemma_pager_buttons">
               <div class="pager_left_button" id="stemma_pager_left_button"></div>
               <div class="pager_right_button" id="stemma_pager_right_button"></div>
             </div>
-          </form>
-          <form id="open_stemma_add" action="" method="GET" name="add_new_stemma">
-            <div class="button" id="stemma_add_button"
+            <div class="button textcontrol editcontrol" id="stemma_add_button"
             	onClick="$('#stemmaseq').val('n'); $('#stemma-edit-dialog').dialog('open');">
           	  <span>Add a new stemma</span>
             </div>
-          </form>
-          <form id="open_stemma_edit" action="" method="GET" name="edit_current_stemma">
-            <div class="button" id="stemma_edit_button"
+            <div class="button textcontrol editcontrol" id="stemma_edit_button"
             	onClick="$('#stemmaseq').val(selectedStemmaSequence); $('#stemma-edit-dialog').dialog('open');">
           	  <span>Edit this stemma</span>
             </div>
-          </form>
-          <form id="open_stemweb_ui" action="" method="GET" name="run_stemweb">
-            <div class="button" id="run_stemweb_button"
+            <div class="button textcontrol editcontrol" id="run_stemweb_button"
             	onClick="$('#stemweb-ui-dialog').dialog('open');">
               <span>Run a Stemweb algorithm</span>
             </div>
-          </form>
-          <form id="query_stemweb_ui" action="" method="GET" name="query_stemweb">
-            <div class="button" id="query_stemweb_button"
+            <div class="button textcontrol editcontrol" id="query_stemweb_button"
             	onClick="query_stemweb_progress();">
               <span>Check Stemweb progress</span>
             </div>
-          </form>
+		  <!-- The next two are really forms that get submitted -->
           <form id="run_stexaminer" action="" method="GET" name="run_stexaminer">
-            <div class="button" id="stexaminer_button" onClick="$('#run_stexaminer').submit()">
+            <div class="button textcontrol" id="stexaminer_button" onClick="$('#run_stexaminer').submit()">
           	  <span>Examine variants against this stemma</span>
             </div>
           </form>
           <form id="run_relater" action="" method="GET" name="run_relater">
-            <div class="button" id="relater_button" onClick="$('#run_relater').submit()">
-              <span id='relatebutton_label'>View collation and relationships</span>
+            <div class="button textcontrol" id="relater_button" onClick="$('#run_relater').submit()">
+              <span id="relatebutton_label">View collation and relationships</span>
             </div>
           </form>
-          <form id="dl_tradition" action="" method="GET" name="run_downloader">
-            <div class="button" id="download_button"
+            <div class="button textcontrol" id="download_button"
             	onClick="$('#download-dialog').dialog('open');">
               <span id='dlbutton_label'>Download tradition</span>
             </div>
-          </form>
       </div>
       <div id="stemma_load_status"></div>
       <div id="stemma_graph"></div>

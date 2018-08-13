@@ -39,14 +39,14 @@ function loadTradition( textid, textname, editable ) {
 
     // Hide the functionality that is irrelevant
     if( editable ) {
-    	$('#open_stemma_add').show();
-    	$('#open_textinfo_edit').show();
+		// Show the buttons that do things
+    	$('.editcontrol').show();
+		// ...but then hide the irrelevant ones again
+		switch_stemweb_ui();
+		// Modify labels where appropriate
     	$('#relatebutton_label').text('View collation and edit relationships');
     } else {
-    	$('#open_stemma_add').hide();
-    	$('#open_stemweb_ui').hide();
-    	$('#query_stemweb_ui').hide();
-    	$('#open_textinfo_edit').hide();
+    	$('.editcontrol').hide();
     	$('#relatebutton_label').text('View collation and relationships');
     }
 
@@ -127,18 +127,22 @@ function load_textinfo() {
 
 // Enable / disable the appropriate buttons for paging through the stemma.
 function show_stemmapager () {
-      $('.pager_left_button').unbind('click').addClass( 'greyed_out' );
-      $('.pager_right_button').unbind('click').addClass( 'greyed_out' );
-      if( selectedStemmaSequence > 0 ) {
-              $('.pager_left_button').click( function () {
-                      load_stemma( selectedStemmaSequence - 1, selectedTextEditable );
-              }).removeClass( 'greyed_out' );
-      }
-      if( selectedStemmaSequence + 1 < stemmata.length ) {
-              $('.pager_right_button').click( function () {
-                      load_stemma( selectedStemmaSequence + 1, selectedTextEditable );
-              }).removeClass( 'greyed_out' );
-      }
+	$('.pager_left_button').unbind('click').addClass( 'greyed_out' );
+	$('.pager_right_button').unbind('click').addClass( 'greyed_out' );
+	var hasStemma = false;
+	if( selectedStemmaSequence > 0 ) {
+		$('.pager_left_button').click( function () {
+			load_stemma( selectedStemmaSequence - 1, selectedTextEditable );
+		}).removeClass( 'greyed_out' );
+		hasStemma = true;
+	}
+	if( selectedStemmaSequence + 1 < stemmata.length ) {
+		$('.pager_right_button').click( function () {
+		    load_stemma( selectedStemmaSequence + 1, selectedTextEditable );
+		}).removeClass( 'greyed_out' );
+		hasStemma = true;
+	}
+	$('#stemma_pager_buttons').children().toggle(hasStemma);
 }
 
 // Load a given stemma SVG into the stemmagraph box.
@@ -146,8 +150,8 @@ function load_stemma( idx ) {
 	// Load the stemma at idx
 	selectedStemmaSequence = idx;
 	show_stemmapager( selectedTextEditable );
-	$('#open_stemma_edit').hide();
-	$('#run_stexaminer').hide();
+	$('#stemma_edit_button').hide();
+	$('#stexaminer_button').hide();
 	$('#stemma_identifier').empty();
 	// Add the relevant Stemweb functionality
 	if( selectedTextEditable ) {
@@ -157,13 +161,13 @@ function load_stemma( idx ) {
 		// Load the stemma and its properties
 		var stemmadata = stemmata[idx];
 		if( selectedTextEditable ) {
-			$('#open_stemma_edit').show();
+			$('#stemma_edit_button').show();
 		}
 		if( stemmadata.directed ) {
 			// Stexaminer submit action
 			var stexpath = _get_url([ "stexaminer", selectedTextID, idx ]);
 			$('#run_stexaminer').attr( 'action', stexpath );
-			$('#run_stexaminer').show();
+			$('#stexaminer_button').show();
 		}
 		loadSVG( stemmadata.svg );
 		$('#stemma_identifier').text( stemmadata.name );
@@ -172,17 +176,17 @@ function load_stemma( idx ) {
 }
 
 function switch_stemweb_ui() {
-	if( !selectedTextInfo.stemweb_jobid ) {
+	if( !selectedTextInfo || !selectedTextInfo.stemweb_jobid ) {
 		// We want to run Stemweb.
-		$('#open_stemweb_ui').show();
-		$('#query_stemweb_ui').hide();
+		$('#run_stemweb_button').show();
+		$('#query_stemweb_button').hide();
 		if( ! $('#stemweb-ui-dialog').dialog('isOpen') ) {
 			$('#call_stemweb').show()
 			$('#stemweb_run_button').show();
 		}
 	} else {
-		$('#query_stemweb_ui').show();
-		$('#open_stemweb_ui').hide();
+		$('#query_stemweb_button').show();
+		$('#run_stemweb_button').hide();
 		$('#call_stemweb').hide();
 		$('#stemweb_run_button').hide();
 	}
