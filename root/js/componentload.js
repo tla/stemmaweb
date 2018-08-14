@@ -37,19 +37,6 @@ function loadTradition( textid, textname, editable ) {
     $('#textinfo_waitbox').show();
     $('#textinfo_container').hide();
 
-    // Hide the functionality that is irrelevant
-    if( editable ) {
-		// Show the buttons that do things
-    	$('.editcontrol').show();
-		// ...but then hide the irrelevant ones again
-		switch_stemweb_ui();
-		// Modify labels where appropriate
-    	$('#relatebutton_label').text('View collation and edit relationships');
-    } else {
-    	$('.editcontrol').hide();
-    	$('#relatebutton_label').text('View collation and relationships');
-    }
-
     // Then get and load the actual content.
     // TODO: scale #stemma_graph both horizontally and vertically
     // TODO: load svgs from SVG.Jquery (to make scaling react in Safari)
@@ -57,6 +44,18 @@ function loadTradition( textid, textname, editable ) {
     	// Add the scalar data
     	selectedTextInfo = textdata;
     	load_textinfo();
+		// Hide the functionality that is irrelevant
+	    if( editable ) {
+			// Show the buttons that do things
+	    	$('.editcontrol').show();
+			// ...but then hide the irrelevant ones again
+			switch_stemweb_ui();
+			// Modify labels where appropriate
+	    	$('#relatebutton_label').text('View collation and edit relationships');
+	    } else {
+	    	$('.editcontrol').hide();
+	    	$('#relatebutton_label').text('View collation and relationships');
+	    }
      	// Add the stemma(ta)
     	stemmata = textdata.stemmata;
     	if( stemmata.length ) {
@@ -519,7 +518,6 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     // call out to load the directory div
     $('#textinfo_container').hide();
     $('#textinfo_waitbox').hide();
-	refreshDirectory();
 
 	// Set up the textinfo edit dialog
 	$('#textinfo-edit-dialog').dialog({
@@ -873,5 +871,6 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
             g.setAttribute( 'transform', new_transform );
         }
     });
-
+	// Once all the page elements are set up...
+	refreshDirectory();
 });
