@@ -120,6 +120,7 @@ sub _alpha_sort {
        language: <language>,
        public: <is_public>,
        direction: <LR|RL|BI>,
+       filetype: <csv|tsv|xls|teips|cte|collatex|cxjson|graphml>
        file: <fileupload> }
 
 Creates a new tradition belonging to the logged-in user, with the given name
@@ -135,11 +136,68 @@ sub newtradition :Local :Args(0) {
         unless $c->user_exists;
     my $m = $c->model('Directory');
 
-      ## Convert the request that Catalyst received into one that
-      ## the Neo4J db expects. This involves passing through the
-      ## tempfile upload and filling in some defaults.
+    my $newopts = _make_upload_request($c);
+    my $result;
+    try {
+        $result = $m->ajax('post', '/tradition', 'Content-Type' => 'form-data', Content => $newopts );
+    } catch ( stemmaweb::Error $e ) {
+        return json_error( $c, $e->status, $e->message );
+    }
+    $c->stash->{result} = $result;
+    $c->forward('View::JSON');
+}
+
+=head2 newsection
+
+ POST /newsection/<tradId>,
+     { name: <name>,
+       filetype: <csv|tsv|xls|teips|cte|collatex|cxjson|graphml>
+       file: <fileupload> }
+
+Creates a new section for the specified tradition, with the given name
+and the collation given in the uploaded file.  Returns the ID and
+name of the new tradition.
+
+=cut
+
+sub newsection :Local :Args(1) {
+    my( $self, $c, $textid ) = @_;
+    my $textinfo = load_tradition( $c, $textid );
+    return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
+        unless $c->req->method eq 'POST';
+    return json_error( $c, 403,
+        'You do not have permission to modify this tradition' )
+        unless $textinfo->{permission} eq 'full';
+    my $m = $c->model('Directory');
+
+    # Get the upload data
+    my $formreq = _make_upload_request($c);
+    # For the section, we only need name, filetype, file.
+    my $opts = {
+        name => $formreq->{name},
+        filetype => $formreq->{filetype},
+        file => $formreq->{file}
+    };
+    my $result;
+    try {
+        $result = $m->ajax('post', "/tradition/$textid/section",
+            'Content-Type' => 'form-data', Content => $opts );
+    } catch ( stemmaweb::Error $e ) {
+        return json_error( $c, $e->status, $e->message );
+    }
+    $c->stash->{result} = $result;
+    $c->forward('View::JSON');
+}
+
+# Helper function to prepare an upload, either for a new tradition or
+# for a new section to an existing tradition.
+sub _make_upload_request {
+    my( $c ) = @_;
+
+    ## Convert the request that Catalyst received into one that
+    ## the Neo4J db expects. This involves passing through the
+    ## tempfile upload and filling in some defaults.
     my $upload = $c->req->upload('file');
-    ## If we've been asked to parse a CTE file, cheat by using the old Text::Tradition parser.
     my $fileargs = [ $upload->tempname, $upload->filename ];
     if( $upload->type ) {
         push( @$fileargs, 'Content-Type', $upload->type );
@@ -151,6 +209,7 @@ sub newtradition :Local :Args(0) {
     my $fh;
     my $filetype = $c->req->param('filetype');
     if( $filetype eq 'cte' ) {
+        ## Cheat by using the old Text::Tradition parser.
         my $t;
         try {
             $t = Text::Tradition->new(
@@ -167,28 +226,21 @@ sub newtradition :Local :Args(0) {
         $fileargs->[0] = $fh->filename; # Remaining fileargs should be the same.
         $filetype = 'stemmaweb';
     } elsif( $filetype eq 'xls' && $upload->filename =~ /xlsx$/ ) {
+        ## Distinguish the type of Excel file.
         $filetype = 'xlsx';
     }
 
-    my %newopts = (
+    my $newopts = {
         'userId' => $c->user->id,
         'filetype' => $filetype,
         'file' => $fileargs
-      );
+    };
     foreach my $opt (qw/ name language direction public /) {
         if( $c->req->param($opt) ) {
-            $newopts{$opt} = $c->req->param($opt);
+            $newopts->{$opt} = $c->req->param($opt);
         }
     }
-
-      my $result;
-    try {
-        $result = $m->ajax('post', '/tradition', 'Content-Type' => 'form-data', Content => \%newopts );
-    } catch ( stemmaweb::Error $e ) {
-        return json_error( $c, $e->status, $e->message );
-    }
-      $c->stash->{result} = $result;
-    $c->forward('View::JSON');
+    return $newopts;
 }
 
 =head2 textinfo
@@ -217,7 +269,7 @@ sub textinfo :Local :Args(1) {
             'You do not have permission to update this tradition' )
             unless $ok eq 'full';
         my $user = $c->user->get_object;
-            my $params = $c->request->parameters;
+        my $params = $c->request->parameters;
         if( !$user->is_admin && exists $params->{owner} ) {
           return json_error( $c, 403,
             "Only admin users can change tradition ownership" );

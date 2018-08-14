@@ -233,31 +233,43 @@ var textOnLoad = "[% withtradition %]";
 		<label for="new_file" id="new_file_label">Collation file: </label>
         <div id="new_file_name_container" onclick="$('#new_file').click();">&nbsp;(Use 'pick file' to select a tradition file to upload.)</div>
         <form id="new_tradition">
-            <label for="new_name">Name of this text / tradition: </label>
-            <input id="new_name" type="text" name="name" size="40"/><br>
-			<label for="new_filestype">Data format: </label>
-			<select name="filetype" id="new_filetype">
-				<option value="csv">Comma-separated values (spreadsheet collation)</option>
-				<option value="tsv">Tab-separated values (spreadhseet collation)</option>
-				<option value="xls">Microsoft Excel (spreadsheet values)</option>
-				<option value="teips">TEI parallel segmentation</option>
-				<option value="cte">CTE export (TEI double-endpoint attachment)</option>
-				<option value="collatex">CollateX XML</option>
-				<option value="cxjson">CollateX JSON</option>
-			</select><br>
-            <label for="new_lang">Primary language of the text: </label>
-            <input id="new_lang" type="text" name="language" size="20"/><br>
+			<div class="controlgroup">
+				<input type="radio" name="uploadtype" value="tradition" id="upload_tradition_radio">New tradition</input><br>
+				<input type="radio" name="uploadtype" value="section" id="upload_section_radio">New section for tradition</input>
+			</div>
+			<div class="controlgroup">
+	            <label for="new_name" id="upload_name_field">Name of this text / tradition: </label>
+	            <input id="new_name" type="text" name="name" size="40"/><br>
+				<label for="new_filetype">Data format: </label>
+				<select name="filetype" id="new_filetype">
+					<option value="csv">Comma-separated values (spreadsheet collation)</option>
+					<option value="tsv">Tab-separated values (spreadhseet collation)</option>
+					<option value="xls">Microsoft Excel (spreadsheet values)</option>
+					<option value="teips">TEI parallel segmentation</option>
+					<option value="cte">CTE export (TEI double-endpoint attachment)</option>
+					<option value="collatex">CollateX XML</option>
+					<option value="cxjson">CollateX JSON</option>
+				</select><br>
+			</div>
+			<div class="controlgroup new_section">
+				<label for="upload_for_tradition">Add section to: </label>
+				<select name="for_tradition" id="upload_for_tradition"></select>
+			</div>
+			<div class="controlgroup new_tradition">
+	            <label for="new_lang">Primary language of the text: </label>
+	            <input id="new_lang" type="text" name="language" size="20"/><br>
 
-            <label for="direction">Text direction:</label>
+	            <label for="direction">Text direction:</label>
 
-            <select name="direction" id="direction">
-                <option value="LR" selected>Left to Right</option>
-                <option value="RL">Right to Left</option>
-                <option value="BI">Bi-directional</option>
-            </select><br>
+	            <select name="direction" id="direction">
+	                <option value="LR" selected>Left to Right</option>
+	                <option value="RL">Right to Left</option>
+	                <option value="BI">Bi-directional</option>
+	            </select><br>
 
-            <label for="new_public">Allow public display: </label>
-            <input id="new_public" name="public" type="checkbox"/><br>
+	            <label for="new_public">Allow public display: </label>
+	            <input id="new_public" name="public" type="checkbox"/><br>
+			</div>
         </form>
         <div id="upload_status"></div>
       	<div>
@@ -275,6 +287,11 @@ var textOnLoad = "[% withtradition %]";
       	</div>
       </div>
     </div>
+
+	<!-- Section management dialog box -->
+	<div id="section-edit-dialog" title="Section management">
+		<ul id="section_list"></ul>
+	</div>
 
     <div id="root_tree_dialog">
         Use this node to root the stemma? <img id="root_tree_dialog_button_ok" src="[% c.uri_for( 'images', 'tick_circle_frame_24.png' ) %]"/>

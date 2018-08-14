@@ -15,12 +15,20 @@ function refreshDirectory () {
 				var msg = "An error occurred: ";
 				$("#directory").html(msg + xhr.status + " " + xhr.statusText);
 			} else {
+				// Call the click callback for the relevant text, if it is
+				// in the page.
 				if( textOnLoad != "" ) {
-					// Call the click callback for the relevant text, if it is
-					// in the page.
 					$('#'+textOnLoad).click();
 					textOnLoad = "";
 				}
+				// Initialize the tradition picklist in the collation upload dialog.
+				$('#upload_for_tradition').empty();
+				$(".canmod").each(function() {
+					var tid = $(this).attr('id');
+					var tname = $(this).text();
+					$('#upload_for_tradition')
+						.append($('<option>').attr('value', tid).text(tname));
+				});
 			}
 		}
 	);
@@ -70,7 +78,12 @@ function loadTradition( textid, textname, editable ) {
 		$('#dl_tradition').attr( 'href', _get_url([ "download", textid ]) );
 		$('#dl_tradition').attr( 'download', selectedTextInfo.name + '.xml' );
 		$('#download_tradition').attr('value', textid );
+		// Fill in the section list wherever it belongs
+		$('#download_start').empty();
+		$('#download_end').empty();
+		$('#section_list').empty();
 		$.each(textdata['sections'], function(i, s) {
+			// Download dialog
 			var displayname = (i+1) + " - " + s['name'];
 			var startsect = $('<option>').attr('value', s['id']).text(displayname);
 			if (i == 0) {
@@ -86,6 +99,23 @@ function loadTradition( textid, textname, editable ) {
 				endsect.removeAttr('selected');
 			}
 			$('#download_end').append(endsect);
+
+			// Section edit dialog
+			$('#section_list').append($('<li>').text(s['name']));
+		});
+		// Set up the magic section list sorter
+		$('#section_list').sortable({
+			sort: false,
+			onChoose: function(evt) {
+				// Load section metadata for potential edit
+
+			},
+			onEnd: function(evt) {
+				// Send the section reorder request
+				var sectinfo = selectedTextInfo.sections[evt.from];
+				var newprior = selectedTextInfo.sections[evt.to - 1];
+				var sorturl = _get_url('section', selectedTextID);
+			}
 		});
 	});
 }
@@ -406,7 +436,7 @@ function _trigger_ajaxerror( e ) {
 	jQuery.event.trigger( 'ajaxError', [ xhr, $.ajaxSettings, thrown ]);
 }
 
-function upload_new () {
+function upload_collation( upload_url ) {
 	// Serialize the upload form, get the file and attach it to the request,
 	// POST the lot and handle the response.
 	var newfile = $('#new_file').get(0).files[0];
@@ -414,15 +444,23 @@ function upload_new () {
 	reader.onload = function( evt ) {
 		var data = new FormData();
 		$.each( $('#new_tradition').serializeArray(), function( i, o ) {
+			if( o.name != 'uploadtype' ) {
 				data.append( o.name, o.value );
-			});
+			}
+		});
 		data.append( 'file', newfile );
-		var upload_url = _get_url([ 'newtradition' ]);
 		post_xhr2( upload_url, data, function( ret ) {
 			if( ret.tradId ) {
 				$('#upload-collation-dialog').dialog('close');
+				// Reload the directory with the new text selected.
+				textOnLoad = ret.tradId;
 				refreshDirectory();
-				loadTradition( ret.tradId, ret.name, 1 );
+			} else if (ret.parentId ) {
+				$('#upload-collation-dialog').dialog('close');
+				// Load the tradition to which we just uploaded.
+				var ourTradId = $('#upload_for_tradition').val();
+				var ourTradName = $('#upload_for_tradition :checked').text();
+				loadTradition( ourTradId, ourTradName, 1 );
 			} else if( ret.error ) {
 				$('#upload_status').empty().append(
 					$('<span>').attr('class', 'error').append( ret.error ) );
@@ -809,7 +847,14 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		    click: function() {
 			    $('#upload_status').empty();
 			    $('#upload_button').button("disable");
-                upload_new();
+				var url;
+				if ($('#new_tradition :radio:checked').val() === 'tradition') {
+                	url = _get_url([ 'newtradition' ]);
+				} else {
+					var textid = $('#upload_for_tradition').val()
+					url = _get_url([ 'newsection', textid ]);
+				}
+				upload_collation(url);
             }
 		  },
 		  pick_file: {
@@ -823,12 +868,48 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		    $('#upload-collation-dialog').dialog('close');
 		  }
 		},
+		create: function() {
+			// Set the radio button form modification logic
+			$('#upload_tradition_radio').click(function () {
+				$('.new_section').hide();
+				$('.new_tradition').show();
+				$('#upload_name_field').text('Name of this text / tradition: ');
+			});
+			$('#upload_section_radio').click(function () {
+				$('.new_tradition').hide();
+				$('.new_section').show();
+				$('#upload_name_field').text('Name of this section: ');
+			});
+			// Default is new tradition
+			$('#upload_tradition_radio').click();
+		},
 		open: function() {
 			// Set the upload button to its correct state based on
 			// whether a file is loaded
 			file_selected( $('#new_file').get(0) );
 			$('#upload_status').empty();
 		}
+	});
+
+	$('#section-edit-dialog').dialog({
+		autoOpen: false,
+		modal: true,
+		buttons: {
+			save: {
+				text: 'Save changes',
+				id: 'section_save_button',
+				click: function() {
+					$('#section_save_button').button("disable");
+				}
+			},
+			ok: {
+				text: 'OK',
+				click: function() {
+					$('#section-edit-dialog').dialog('close');
+				}
+			},
+		},
+
 	});
 
 	$('#stemma_graph').mousedown( function(evt) {

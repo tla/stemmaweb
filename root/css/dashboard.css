@@ -29,6 +29,11 @@
 .selected {
 	font-style: italic;
 }
+.controlgroup {
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #C6DCF1;
+}
 #textinfo_waitbox {
 	float: left;
 	padding-left: 50px;
