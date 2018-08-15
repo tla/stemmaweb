@@ -290,7 +290,21 @@ var textOnLoad = "[% withtradition %]";
 
 	<!-- Section management dialog box -->
 	<div id="section-edit-dialog" title="Section management">
-		<ul id="section_list"></ul>
+		<div id="section_edit_status"></div>
+		<h4><span class="texttitle"></span> section list</h4>
+		<div class="dialog_picker">
+			<ul id="section_list"></ul>
+		</div>
+		<div class="dialog_picked">
+			<h4>Section information</h4>
+			<form id="section-edit">
+				<input id="section_id" name="id" type="hidden"/>
+				<label for="section_name">Name: </label>
+				<input id="section_name" name="name" type="text"/><br>
+				<label for="section_language">Language: </label>
+				<input id="section_language" name="language" type="text"/><br>
+			</form>
+		</div>
 	</div>
 
     <div id="root_tree_dialog">

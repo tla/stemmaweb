@@ -3,6 +3,7 @@ var selectedTextID;
 var selectedTextInfo;
 var selectedTextEditable;
 var selectedStemmaSequence = -1;
+var sortableSectionList;
 var stemmata = [];
 
 // Load the names of the appropriate traditions into the directory div.
@@ -78,45 +79,44 @@ function loadTradition( textid, textname, editable ) {
 		$('#dl_tradition').attr( 'href', _get_url([ "download", textid ]) );
 		$('#dl_tradition').attr( 'download', selectedTextInfo.name + '.xml' );
 		$('#download_tradition').attr('value', textid );
-		// Fill in the section list wherever it belongs
-		$('#download_start').empty();
-		$('#download_end').empty();
+		// Set up everything that needs a section list
+		load_sections(true);
+	});
+}
+
+// Fill in the section list wherever it belongs, including (if requested)
+// the sortable list.
+function load_sections(load_sortable) {
+	// Fill in the section list wherever it belongs
+	$('#download_start').empty();
+	$('#download_end').empty();
+	if (load_sortable) {
 		$('#section_list').empty();
-		$.each(textdata['sections'], function(i, s) {
-			// Download dialog
-			var displayname = (i+1) + " - " + s['name'];
-			var startsect = $('<option>').attr('value', s['id']).text(displayname);
-			if (i == 0) {
-				startsect.attr('selected', 'true');
-			} else {
-				startsect.removeAttr('selected');
-			}
-			$('#download_start').append(startsect);
-			var endsect = startsect.clone();
-			if (i == textdata['sections'].length - 1) {
-				endsect.attr('selected', 'true');
-			} else {
-				endsect.removeAttr('selected');
-			}
-			$('#download_end').append(endsect);
+	}
+	$.each(selectedTextInfo.sections, function(i, s) {
+		// Download dialog
+		var displayname = (i+1) + " - " + s.name;
+		var startsect = $('<option>').attr('value', s.id).text(displayname);
+		if (i == 0) {
+			startsect.attr('selected', 'true');
+		} else {
+			startsect.removeAttr('selected');
+		}
+		$('#download_start').append(startsect);
+		var endsect = startsect.clone();
+		if (i == selectedTextInfo.sections.length - 1) {
+			endsect.attr('selected', 'true');
+		} else {
+			endsect.removeAttr('selected');
+		}
+		$('#download_end').append(endsect);
 
-			// Section edit dialog
-			$('#section_list').append($('<li>').text(s['name']));
-		});
-		// Set up the magic section list sorter
-		$('#section_list').sortable({
-			sort: false,
-			onChoose: function(evt) {
-				// Load section metadata for potential edit
-
-			},
-			onEnd: function(evt) {
-				// Send the section reorder request
-				var sectinfo = selectedTextInfo.sections[evt.from];
-				var newprior = selectedTextInfo.sections[evt.to - 1];
-				var sorturl = _get_url('section', selectedTextID);
-			}
-		});
+		if (load_sortable) {
+			var handle = $('<span class="sortable-handle ui-icon ui-icon-arrowthick-2-n-s"></span>');
+			var label = $('<span class="sectionname">').text(s.name);
+			var listel = $('<li>').append(handle).append(label).data('id', s.id);
+			$('#section_list').append(listel);
+		}
 	});
 }
 
@@ -530,6 +530,9 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		errordiv = '#upload_status';
 		error += '<br>The collation cannot be uploaded.</p>';
 		file_selected( $('#new_file').get(0) );
+	} else if ( $('#section-edit-dialog').dialog('isOpen') ) {
+		errordiv = '#section_edit_status';
+		error += '<br>The section cannot be modified.</p>';
 	} else if ( ajaxSettings.url.indexOf( 'textinfo' ) > -1 && ajaxSettings.type == 'GET'  ) {
 		$('#textinfo_waitbox').hide();
 		$('#textinfo_container').show();
@@ -894,12 +897,55 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 	$('#section-edit-dialog').dialog({
 		autoOpen: false,
 		modal: true,
+		width: 600,
+		height: 400,
 		buttons: {
+			delete: {
+				text: 'Delete section',
+				id: 'section_delete_button',
+				click: function() {
+					$('#section_delete_button').button("disable");
+					var sectionID = $('#section_id').val();
+					var url = _get_url(['delete', selectedTextID, sectionID]);
+					$.post(url, function() {
+						// Remove the affected list element
+						$('#section_list li.selected').remove();
+						// TEST Do we need to re-initialise the sortable?
+						// Remove the affected section data
+						var toRemove = -1;
+						$.each(selectedTextInfo.sections, function (i) {
+							if (this.id === sectionID) {
+								toRemove = i;
+							}
+						})
+						selectedTextInfo.sections.splice(toRemove, 1);
+					});
+				}
+			},
 			save: {
-				text: 'Save changes',
+				text: 'Save section info',
 				id: 'section_save_button',
 				click: function() {
 					$('#section_save_button').button("disable");
+					var sectionID = $('#section_id').val();
+					var url = _get_url(['sectioninfo', selectedTextID, sectionID]);
+					var reqparam = $('#section-edit').serialize();
+					$.post(url, reqparam, function (data) {
+						// Turn the button back on
+						$('#section_save_button').button("enable");
+						// Update our copy of the data
+						var toUpdate = -1;
+						$.each(selectedTextInfo.sections, function (i) {
+							if (this.id === sectionID) {
+								toUpdate = i;
+							}
+						})
+						selectedTextInfo.sections[toUpdate] = data;
+						// Refresh the text download picklists
+						load_sections();
+						// Refresh the section list itself
+						$('#section_list li.selected .sectionname').text(data.name);
+					})
 				}
 			},
 			ok: {
@@ -909,7 +955,41 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 				}
 			},
 		},
-
+		open: function() {
+			// Set up the magic section list sorter, non-jQuery style
+			var sectionlist = document.getElementById('section_list');
+			sortableSectionList = Sortable.create(sectionlist, {
+				handle: '.sortable-handle',
+				onUpdate: function(evt, ui) {
+					// Send the section reorder request
+					var sectinfo = selectedTextInfo.sections[evt.oldIndex];
+					var newprior = null;
+					if (evt.newIndex > 0) {
+						newprior = selectedTextInfo.sections[evt.newIndex - 1];
+					}
+					var sorturl = _get_url(['section', selectedTextID]);
+				}
+			});
+			// Set up the click-to-choose functionality for the section metadata
+			$('#section_list li').click(function () {
+				$('#section_list li').removeClass('selected');
+				$(this).addClass('selected');
+				$('#section_delete_button').button("enable");
+				$('#section_save_button').button("enable");
+				var ourid = $(this).data('id');
+				$.each(selectedTextInfo.sections, function () {
+					if (this.id === ourid) {
+						$('#section_id').val(this.id);
+						$('#section_name').val(this.name);
+						$('#section_language').val(this.language);
+						return true;
+					}
+				});
+			});
+		},
+		close: function() {
+			sortableSectionList.destroy();
+		},
 	});
 
 	$('#stemma_graph').mousedown( function(evt) {

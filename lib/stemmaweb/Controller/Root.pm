@@ -253,7 +253,7 @@ sub _make_upload_request {
        direction: $direction,
        owner: $new_userid } # only admin users can update the owner
 
-Returns information about a particular text.
+Returns and updates information about a particular text.
 
 =cut
 
@@ -269,7 +269,7 @@ sub textinfo :Local :Args(1) {
             'You do not have permission to update this tradition' )
             unless $ok eq 'full';
         my $user = $c->user->get_object;
-        my $params = $c->request->parameters;
+        my $params = $c->req->params;
         if( !$user->is_admin && exists $params->{owner} ) {
           return json_error( $c, 403,
             "Only admin users can change tradition ownership" );
@@ -299,15 +299,54 @@ sub textinfo :Local :Args(1) {
     $c->forward('View::JSON');
 }
 
-=head2 delete
+=head2 sectioninfo
 
- POST /delete/$textid
+ GET /sectioninfo/$textid/$sectionid
+ POST /sectioninfo/$textid/$sectionid,
+     { name: $new_name,
+       language: $new_language }
 
-Deletes the tradition and all its data. Cannot be undone.
+Returns and updates information about a particular sections.
 
 =cut
 
-sub delete :Local :Args(1) {
+sub sectioninfo :Local :Args(2) {
+    my( $self, $c, $textid, $sectionid ) = @_;
+    my $textinfo = load_tradition( $c, $textid );
+    return unless $textinfo;
+    my $ok = $textinfo->{permission};
+    my $m = $c->model('Directory');
+    my ($sectioninfo) = grep { $_->{id} eq $sectionid } @{$textinfo->{sections}};
+    # Update information if we have been asked to
+    if( $c->req->method eq 'POST' ) {
+        return json_error( $c, 403,
+            'You do not have permission to update this tradition' )
+            unless $ok eq 'full';
+        # Now pass through the request
+        try {
+            $sectioninfo = $m->ajax('put', "/tradition/$textid/section/$sectionid",
+                                 'Content-Type' => 'application/json',
+                                 Content => JSON::to_json($c->req->params));
+        } catch (stemmaweb::Error $e) {
+          return json_error( $c, $e->status, $e->message );
+        }
+    } elsif ($c->req->method ne 'GET') {
+        return json_error($c, 405, "Disallowed HTTP method " . $c->req->method);
+    }
+    $c->stash->{result} = $sectioninfo;
+    $c->forward('View::JSON');
+}
+
+=head2 delete
+
+ POST /delete/$textid
+ POST /delete/$textid/$sectionid
+
+Deletes the specified tradition or section and all its data. Cannot be undone.
+
+=cut
+
+sub deleteTradition :Path('delete') :Args(1) {
     my( $self, $c, $textid ) = @_;
     my $textinfo = load_tradition( $c, $textid );
     return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
@@ -319,6 +358,24 @@ sub delete :Local :Args(1) {
     # At this point you had better be sure.
     try {
         $c->model('Directory')->ajax('delete', "/tradition/$textid");
+        $c->stash->{result} = {'status' => 'ok'};
+        $c->forward('View::JSON');
+    } catch (stemmaweb::Error $e) {
+        return json_error( $c, $e->status, $e->message );
+    }
+}
+
+sub deleteSection :Path('delete') :Args(2) {
+    my( $self, $c, $textid, $sectionid ) = @_;
+    my $textinfo = load_tradition( $c, $textid );
+    return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
+        unless $c->req->method eq 'POST';
+    return json_error( $c, 403,
+        'You do not have permission to delete this section' )
+        unless $textinfo->{permission} eq 'full';
+
+    try {
+        $c->model('Directory')->ajax('delete', "/tradition/$textid/section/$sectionid");
         $c->stash->{result} = {'status' => 'ok'};
         $c->forward('View::JSON');
     } catch (stemmaweb::Error $e) {
