@@ -8,54 +8,54 @@ use URI::Escape;
 
 use namespace::clean;
 
-has user_id => (is => 'ro');
+has user_id   => (is => 'ro');
 has user_data => (is => 'ro');
 
-has [qw(auth_realm store)] => (
-    is => 'rw',
-);
+has [qw(auth_realm store)] => (is => 'rw',);
 
 around BUILDARGS => sub {
-    my $orig = shift;
+    my $orig  = shift;
     my $class = shift;
     my $args;
-    if( @_ == 1 ) {
+    if (@_ == 1) {
         $args = shift;
     } else {
-        $args = { @_ };
+        $args = {@_};
     }
 
     my $udata = $args->{user_data};
-    if( exists $udata->{sub} ) {
+    if (exists $udata->{sub}) {
+
         # It's a Google login. Extract id and email from the passed info.
-        $args->{user_id} = $udata->{sub};
+        $args->{user_id}   = $udata->{sub};
         $args->{user_data} = {
             email => $udata->{email},
-            role => 'user'
+            role  => 'user'
         };
-    } elsif( exists $udata->{url} ) {
+    } elsif (exists $udata->{url}) {
+
         # It's an OpenID login. Extract id; there is no email.
         $args->{user_id} = uri_escape($udata->{url});
-        $args->{user_data} = {
-            role => 'user'
-        };
-        if( exists $udata->{display} ) {
+        $args->{user_data} = { role => 'user' };
+        if (exists $udata->{display}) {
             $args->{user_data}->{email} = $udata->{display};
         }
-    } elsif( exists $udata->{username} && !exists $args->{user_id} ) {
+    } elsif (exists $udata->{username} && !exists $args->{user_id}) {
+
         # It's a username (and maybe password) from the registration form. Shift
         # them around appropriately and encrypt the password.
         my $email = delete $udata->{username};
         $args->{user_id} = $email;
-        $udata->{email} = $email;
+        $udata->{email}  = $email;
         if (exists $udata->{password}) {
             my $ctx = Digest->new('SHA-256');
             $ctx->add(delete $udata->{password});
             $udata->{passphrase} = $ctx->b64digest();
         }
     }
-    # The user data will look somewhat different if it comes from Google or OpenID.
-    $class->$orig( $args );
+
+ # The user data will look somewhat different if it comes from Google or OpenID.
+    $class->$orig($args);
 };
 
 # auth user object and backend user object are the same
@@ -93,22 +93,22 @@ sub get {
 
 sub to_hash {
     my $self = shift;
-    my $ret = {
-        id => $self->id,
+    my $ret  = {
+        id    => $self->id,
         email => $self->email,
         role => $self->roles || 'user',
     };
     $ret->{active} = JSON::false
-        if exists $self->user_data->{'active'} && !$self->user_data->{'active'};
+      if exists $self->user_data->{'active'} && !$self->user_data->{'active'};
     $ret->{passphrase} = $self->user_data->{passphrase}
-        if exists $self->user_data->{passphrase};
+      if exists $self->user_data->{passphrase};
     return $ret;
 }
 
 my %supports = (
     password => 'hashed',
-    roles   => ["roles"],
-    session => 1,
+    roles    => ["roles"],
+    session  => 1,
 );
 
 sub supports {
@@ -130,8 +130,7 @@ sub supports {
             return undef unless $self->can($key);
         }
         return 1;
-    }
-    else {
+    } else {
         return $cursor;
     }
 }

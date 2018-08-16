@@ -4,6 +4,7 @@ use namespace::autoclean;
 use JSON;
 use TryCatch;
 use Text::Tradition;
+
 #use Text::Tradition::Error;
 use Text::Tradition::Stemma;
 use Text::Tradition::StemmaUtil qw/ character_input phylip_pars newick_to_svg /;
@@ -48,37 +49,40 @@ Attempt a parse of the passed collation data, and return diagnostic information 
 =cut
 
 sub parse :Local :Args(0) {
-    my( $self, $c ) = @_;
-    if( $c->req->method eq 'POST' ) {
+    my ($self, $c) = @_;
+    if ($c->req->method eq 'POST') {
+
         # Get the passed options...
         my $warnings = [];
         $DB::single = 1;
         my %newopts = (
-            'name' => $c->request->param('name') || 'Uploaded tradition',
-            'file' => $c->request->upload('file')->tempname,
+            'name'        => $c->request->param('name') || 'Uploaded tradition',
+            'file'        => $c->request->upload('file')->tempname,
             'warnings_to' => $warnings,
-            );
-        my $type = $c->request->param( 'type' );
-        if( $type eq 'csv' ) {
-            $newopts{'input'} = 'Tabular';
+        );
+        my $type = $c->request->param('type');
+        if ($type eq 'csv') {
+            $newopts{'input'}    = 'Tabular';
             $newopts{'sep_char'} = ',';
-        } elsif( $type eq 'tsv' ) {
-            $newopts{'input'} = 'Tabular';
+        } elsif ($type eq 'tsv') {
+            $newopts{'input'}    = 'Tabular';
             $newopts{'sep_char'} = "\t";
-        } elsif( $type =~ /^xls/ ) {
+        } elsif ($type =~ /^xls/) {
             $newopts{'input'} = 'Tabular';
             $newopts{'excel'} = $type;
         } else {
             $newopts{'input'} = $type;
         }
+
         # Now try the parse.
         my $tradition;
         try {
-            $c->stash->{'result'} = Text::Tradition->new( %newopts );
-        } catch ( Text::Tradition::Error $e ) {
+            $c->stash->{'result'} = Text::Tradition->new(%newopts);
+        }
+        catch (Text::Tradition::Error $e ) {
             $c->stash->{'errormsg'} = $e->message;
         }
-        $c->stash->{'warnings'} = join( "\n", @$warnings );
+        $c->stash->{'warnings'} = join("\n", @$warnings);
     }
     $c->stash->{template} = 'testparse.tt';
 }
@@ -93,13 +97,14 @@ Parse the passed collation data and return an SVG of the collated text.
 
 # Utility function to render SVG from a collation in some recognized format.
 sub renderSVG :Local :Args(0) {
-    my( $self, $c ) = @_;
-    my $tradition = _parse_to_tradition( $c->request );
+    my ($self, $c) = @_;
+    my $tradition = _parse_to_tradition($c->request);
     try {
         $c->stash->{'result'} = $tradition->collation->as_svg;
         $c->forward('View::SVG');
-    } catch( Text::Tradition::Error $e ) {
-        $c->detach( 'error', [ $e ] );
+    }
+    catch (Text::Tradition::Error $e ) {
+        $c->detach('error', [$e]);
     }
 }
 
@@ -114,13 +119,14 @@ Parameter: dot => a string containing the dot description of the stemma.
 =cut
 
 sub stemma_svg :Local :Args(0) {
-    my( $self, $c ) = @_;
+    my ($self, $c) = @_;
     my $t = Text::Tradition->new();
     my $stemma;
     try {
-        $stemma = $t->add_stemma( 'dot' => $c->req->param('dot') );
-    } catch( Text::Tradition::Error $e ) {
-        $c->detach( 'error', [ $e ] );
+        $stemma = $t->add_stemma('dot' => $c->req->param('dot'));
+    }
+    catch (Text::Tradition::Error $e ) {
+        $c->detach('error', [$e]);
     }
     $c->stash->{'result'} = $stemma->as_svg;
     $c->forward('View::SVG');
@@ -136,13 +142,13 @@ character matrix suitable for input to Phylip PARS.
 =cut
 
 sub character_matrix :Local :Args(0) {
-    my( $self, $c ) = @_;
+    my ($self, $c) = @_;
     my $json = $c->request->params->{'alignment'};
-    $c->log->debug( $json );
-    my $table = from_json( $json );
-    my $matrix = character_input( $table );
+    $c->log->debug($json);
+    my $table  = from_json($json);
+    my $matrix = character_input($table);
     $c->stash->{'result'} = { 'matrix' => $matrix };
-    $c->forward( 'View::JSON' );
+    $c->forward('View::JSON');
 }
 
 =head2 run_pars
@@ -166,47 +172,50 @@ Exactly one of 'alignment' or 'matrix' must be specified.
 =cut
 
 sub run_pars :Local :Args(0) {
-    my( $self, $c ) = @_;
+    my ($self, $c) = @_;
     my $matrix;
-    if( $c->request->param('matrix') ) {
+    if ($c->request->param('matrix')) {
         $matrix = $c->request->param('matrix');
-    } elsif( $c->request->param('alignment') ) {
+    } elsif ($c->request->param('alignment')) {
+
         # Make the matrix from the alignment
-        my $table = from_json( $c->request->param('alignment') );
-        $matrix = character_input( $table );
+        my $table = from_json($c->request->param('alignment'));
+        $matrix = character_input($table);
     } else {
-        $c->detach( 'error', [ "Must pass either an alignment or a matrix" ] );
+        $c->detach('error', ["Must pass either an alignment or a matrix"]);
     }
 
     # Got the matrix, so try to run pars.
     my $output;
     try {
-        $output = phylip_pars( $matrix );
-    } catch( Text::Tradition::Error $e ) {
-        $c->detach( 'error', [ $e ] );
+        $output = phylip_pars($matrix);
+    }
+    catch (Text::Tradition::Error $e ) {
+        $c->detach('error', [$e]);
     }
 
     # Did we want newick or a graph?
-    my $view = 'View::JSON';
+    my $view   = 'View::JSON';
     my $format = 'newick';
     $format = $c->request->param('format') if $c->request->param('format');
-    if( $format eq 'svg' ) {
+    if ($format eq 'svg') {
+
         # Do something
         try {
-            $c->stash->{'result'} = newick_to_svg( $output );
+            $c->stash->{'result'} = newick_to_svg($output);
             $view = 'View::SVG';
-        } catch( Text::Tradition::Error $e ) {
-            $c->detach( 'error', [ $e ] );
         }
-    } elsif( $format ne 'newick' ) {
-        $c->detach( 'error', [ "Requested output format $format unknown" ] );
+        catch (Text::Tradition::Error $e ) {
+            $c->detach('error', [$e]);
+        }
+    } elsif ($format ne 'newick') {
+        $c->detach('error', ["Requested output format $format unknown"]);
     } else {
         $c->stash->{'result'} = { 'tree' => $output };
     }
 
-    $c->forward( $view );
+    $c->forward($view);
 }
-
 
 =head1 OPENSOCIAL URLs
 
@@ -217,11 +226,11 @@ Simple gadget to return the analysis table for the stexaminer
 =cut
 
 sub view_table :Local :Args(0) {
-    my( $self, $c ) = @_;
-    my $m = $c->model('Directory');
+    my ($self, $c) = @_;
+    my $m  = $c->model('Directory');
     my $id = $c->request->params->{'textid'};
-    my $t = run_analysis( $m->tradition( $id ), $m->stemma( $id ) );
-       $c->stash->{variants} = $t->{'variants'};
+    my $t  = run_analysis($m->tradition($id), $m->stemma($id));
+    $c->stash->{variants} = $t->{'variants'};
     $c->stash->{template} = 'table_gadget.tt';
 }
 
@@ -232,11 +241,11 @@ Simple gadget to return the SVG for a given stemma
 =cut
 
 sub view_svg :Local :Args(0) {
-    my( $self, $c ) = @_;
-    my $m = $c->model('Directory');
-    my $stemma = $m->tradition( $c->request->params->{'textid'} )->stemma;
-    if( $stemma ) {
-           $c->stash->{svg} = $stemma->as_svg;
+    my ($self, $c) = @_;
+    my $m      = $c->model('Directory');
+    my $stemma = $m->tradition($c->request->params->{'textid'})->stemma;
+    if ($stemma) {
+        $c->stash->{svg} = $stemma->as_svg;
     }
     $c->stash->{template} = 'stemma_gadget.tt';
 }
@@ -248,13 +257,13 @@ Default response when actions generate Text::Tradition::Error exceptions
 =cut
 
 sub error :Private {
-    my( $self, $c, $error ) = @_;
+    my ($self, $c, $error) = @_;
     my $errstr = $error;
-    if( ref( $error ) eq 'Text::Tradition::Error' ) {
+    if (ref($error) eq 'Text::Tradition::Error') {
         $errstr = $error->ident . ": " . $error->message;
     }
-    $c->response->code( 500 );
-    $c->stash->{'error'} = $errstr;
+    $c->response->code(500);
+    $c->stash->{'error'}    = $errstr;
     $c->stash->{'template'} = 'error.tt';
 }
 
@@ -265,28 +274,27 @@ Standard 404 error page
 =cut
 
 sub default :Path {
-    my ( $self, $c ) = @_;
-    $c->response->body( 'Page not found' );
+    my ($self, $c) = @_;
+    $c->response->body('Page not found');
     $c->response->status(404);
 }
 
 ## Internal utility function
 
 sub _parse_to_tradition {
-    my $req = shift;
+    my $req  = shift;
     my $type = $req->body_params->{'type'};
     my $name = $req->param('name') || 'Collation graph';
     my $data = $req->body_params->{'data'};
     my $opts = {
-        'name' => $name,
-        'input' => $type,
+        'name'   => $name,
+        'input'  => $type,
         'string' => $data
-        };
-    $opts->{'sep_char'} = ',' if $type eq 'CSV';
+    };
+    $opts->{'sep_char'} = ','  if $type eq 'CSV';
     $opts->{'sep_char'} = "\t" if $type eq 'TabSep';
-    return Text::Tradition->new( $opts );
+    return Text::Tradition->new($opts);
 }
-
 
 =head1 AUTHOR
 

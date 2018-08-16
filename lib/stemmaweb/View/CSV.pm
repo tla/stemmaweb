@@ -6,12 +6,12 @@ use namespace::autoclean;
 extends 'Catalyst::View';
 
 sub process {
-        my( $self, $c ) = @_;
-        $c->res->content_type( 'text/csv' );
-        $c->res->content_encoding( 'UTF-8' );
-        $c->res->header( 'Content-Disposition',
-            sprintf( "attachment; filename=\"%s.csv\"", $c->stash->{name} ) );
-        $c->res->output( encode( 'UTF-8', $c->stash->{result} ) );
+    my ($self, $c) = @_;
+    $c->res->content_type('text/csv');
+    $c->res->content_encoding('UTF-8');
+    $c->res->header('Content-Disposition',
+        sprintf("attachment; filename=\"%s.csv\"", $c->stash->{name}));
+    $c->res->output(encode('UTF-8', $c->stash->{result}));
 }
 
 =head1 NAME

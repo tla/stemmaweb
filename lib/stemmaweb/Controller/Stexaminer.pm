@@ -12,16 +12,16 @@ use TryCatch;
 BEGIN { extends 'Catalyst::Controller' }
 
 has idp_solver_url => (
-    is => 'ro',
-    isa => 'Str',
+    is        => 'ro',
+    isa       => 'Str',
     predicate => 'has_idp_solver_url',
-    );
+);
 
 has idp_calcdsn => (
-    is => 'ro',
-    isa => 'Str',
+    is        => 'ro',
+    isa       => 'Str',
     predicate => 'has_idp_calcdsn',
-    );
+);
 
 =head1 NAME
 
@@ -43,20 +43,22 @@ graph identified by $stemmaid.
 =cut
 
 sub index :Path :Args(2) {
-  my( $self, $c, $textid, $stemid ) = @_;
-  my $m = $c->model('Directory');
+    my ($self, $c, $textid, $stemid) = @_;
+    my $m = $c->model('Directory');
     $c->stash->{template} = 'stexaminer.tt';
 
-     my( $textinfo, $ok ) = load_tradition( $c, $textid );
+    my ($textinfo, $ok) = load_tradition($c, $textid);
     return unless $ok;
 
-    if( $stemid eq 'help' ) {
+    if ($stemid eq 'help') {
+
         # Just show the 'Help/About' popup.
         $c->stash->{template} = 'stexaminer_help.tt';
-        $c->stash->{text_id} = $textid;
+        $c->stash->{text_id}  = $textid;
     } else {
+
         # Load our old-fashioned tradition object
-        my $tradition = load_tradition( $c, $textid );
+        my $tradition = load_tradition($c, $textid);
         my $stemmadata = $m->ajax('get', "/tradition/$textid/stemma/$stemid");
         my $stemma = load_stemma($stemmadata);
         $tradition->clear_stemmata;
@@ -65,62 +67,67 @@ sub index :Path :Args(2) {
         # Continue as before
         my $svgstr = $stemma->as_svg();
         $svgstr =~ s/\n/ /g;
-        $c->stash->{svg} = $svgstr;
-        $c->stash->{graphdot} = $stemma->editable({ linesep => ' ' });
-        $c->stash->{text_id} = $textid;
+        $c->stash->{svg}        = $svgstr;
+        $c->stash->{graphdot}   = $stemma->editable({ linesep => ' ' });
+        $c->stash->{text_id}    = $textid;
         $c->stash->{text_title} = $tradition->name;
 
         # Get the analysis options
-        my( $use_type1, $ignore_sort ) = ( 0, 'none' );
-        $use_type1 = $c->req->param( 'show_type1' ) ? 1 : 0;
-        $ignore_sort = $c->req->param( 'ignore_variant' ) || '';
-        $c->stash->{'show_type1'} = $use_type1;
+        my ($use_type1, $ignore_sort) = (0, 'none');
+        $use_type1 = $c->req->param('show_type1') ? 1 : 0;
+        $ignore_sort = $c->req->param('ignore_variant') || '';
+        $c->stash->{'show_type1'}     = $use_type1;
         $c->stash->{'ignore_variant'} = $ignore_sort;
+
         # TODO Run the analysis as AJAX from the loaded page.
         my %analysis_options = (
-            stemma_id => '0', # the selected stemma is the only stemma now
-            exclude_type1 => !$use_type1 );
-        if( $ignore_sort eq 'spelling' ) {
-            $analysis_options{'merge_types'} = [ qw/ spelling orthographic / ];
-        } elsif( $ignore_sort eq 'orthographic' ) {
+            stemma_id => '0',    # the selected stemma is the only stemma now
+            exclude_type1 => !$use_type1
+        );
+        if ($ignore_sort eq 'spelling') {
+            $analysis_options{'merge_types'} = [qw/ spelling orthographic /];
+        } elsif ($ignore_sort eq 'orthographic') {
             $analysis_options{'merge_types'} = 'orthographic';
         }
-        if( $self->has_idp_solver_url ) {
+        if ($self->has_idp_solver_url) {
             $analysis_options{'solver_url'} = $self->idp_solver_url;
-        } elsif( $self->has_idp_calcdsn ) {
+        } elsif ($self->has_idp_calcdsn) {
             $analysis_options{'calcdsn'} = $self->idp_calcdsn;
         }
 
-        my $t = run_analysis( $tradition, %analysis_options );
+        my $t = run_analysis($tradition, %analysis_options);
+
         # Stringify the reading groups
-        foreach my $loc ( @{$t->{'variants'}} ) {
-            my $mst = wit_stringify( $loc->{'missing'} );
+        foreach my $loc (@{ $t->{'variants'} }) {
+            my $mst = wit_stringify($loc->{'missing'});
             $loc->{'missing'} = $mst;
-            foreach my $rhash ( @{$loc->{'readings'}} ) {
-                my $gst = wit_stringify( $rhash->{'group'} );
+            foreach my $rhash (@{ $loc->{'readings'} }) {
+                my $gst = wit_stringify($rhash->{'group'});
                 $rhash->{'group'} = $gst;
-                _stringify_element( $rhash, 'independent_occurrence' );
-                _stringify_element( $rhash, 'reversions' );
-                unless( $rhash->{'text'} ) {
+                _stringify_element($rhash, 'independent_occurrence');
+                _stringify_element($rhash, 'reversions');
+                unless ($rhash->{'text'}) {
                     $rhash->{'text'} = $rhash->{'readingid'};
                 }
             }
         }
+
         # Values for TT rendering
-        $c->stash->{variants} = $t->{'variants'};
-        $c->stash->{total} = $t->{'variant_count'};
+        $c->stash->{variants}     = $t->{'variants'};
+        $c->stash->{total}        = $t->{'variant_count'};
         $c->stash->{genealogical} = $t->{'genealogical_count'};
-        $c->stash->{conflict} = $t->{'conflict_count'};
+        $c->stash->{conflict}     = $t->{'conflict_count'};
+
         # Also make a JSON stash of the data for the statistics tables
-        $c->stash->{reading_statistics} = to_json( $t->{'variants'} );
+        $c->stash->{reading_statistics} = to_json($t->{'variants'});
     }
 }
 
 sub _stringify_element {
-    my( $hash, $key ) = @_;
+    my ($hash, $key) = @_;
     return undef unless exists $hash->{$key};
-    if( ref( $hash->{$key} ) eq 'ARRAY' ) {
-        my $str = join( ', ', @{$hash->{$key}} );
+    if (ref($hash->{$key}) eq 'ARRAY') {
+        my $str = join(', ', @{ $hash->{$key} });
         $hash->{$key} = $str;
     }
 }
@@ -137,15 +144,15 @@ layered witnesses.
 =cut
 
 sub graphsvg :Local {
-    my( $self, $c ) = @_;
-    my $dot = $c->request->param('dot');
-    my @layerwits = $c->request->param('layerwits[]');
-    my $tempstemma = Text::Tradition::Stemma->new( 'dot' => $dot );
-    my $svgopts = {};
-    if( @layerwits ) {
+    my ($self, $c) = @_;
+    my $dot        = $c->request->param('dot');
+    my @layerwits  = $c->request->param('layerwits[]');
+    my $tempstemma = Text::Tradition::Stemma->new('dot' => $dot);
+    my $svgopts    = {};
+    if (@layerwits) {
         $svgopts->{'layerwits'} = \@layerwits;
     }
-    $c->stash->{'result'} = $tempstemma->as_svg( $svgopts );
+    $c->stash->{'result'} = $tempstemma->as_svg($svgopts);
     $c->forward('View::SVG');
 }
 
@@ -155,7 +162,7 @@ Attempt to render a view, if needed.
 
 =cut
 
-sub end : ActionClass('RenderView') {}
+sub end :ActionClass('RenderView') { }
 
 =head1 AUTHOR
 
