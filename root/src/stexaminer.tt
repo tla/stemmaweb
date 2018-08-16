@@ -10,7 +10,7 @@
 [% IF error -%]
     var readingstats = [];
 [% ELSE -%]
-    var readingstats = [ % reading_statistics % ];
+    var readingstats = [% reading_statistics %];
 [% END -%]
     var graphdot = '[% graphdot %]';
   </script>

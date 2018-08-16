@@ -8,7 +8,7 @@
     var basepath = "[% c.uri_for( '/relation/' ) %]";
     var textid = "[% textid %]";
     var sectid = "[% sectid %]";
-    var sect_metadata = [ % sect_metadata % ];
+    var sect_metadata = [% sect_metadata %];
     var editable = "[% permission %]" === "full";
     var text_direction = "[% direction %]";
     // URLs for images referenced in Javascript
@@ -20,9 +20,9 @@
     var relationship_scopes = [];
     var ternary_values = [];
 [% ELSE -%]
-    var relationship_types = [ % relationship_types % ];
-    var relationship_scopes = [ % relationship_scopes % ];
-    var ternary_values = [ % ternary_values % ];
+    var relationship_types = [% relationship_types %];
+    var relationship_scopes = [% relationship_scopes %];
+    var ternary_values = [% ternary_values %];
 [% END -%]
 
     $(document).ready(function() {
