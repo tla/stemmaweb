@@ -29,7 +29,7 @@ around 'throw' => sub {
     if( exists $args->{'response'} ) {
         my $resp = delete $args->{'response'};
         $args->{'status'} = $resp->code;
-        if ($resp->header('content-type') 
+        if ($resp->header('content-type')
             && $resp->header('content-type') =~ /application\/json/) {
             my $r = from_json($resp->decoded_content);
             $args->{'message'} = $r->{error} if exists $r->{error};
@@ -37,15 +37,6 @@ around 'throw' => sub {
         if (!exists $args->{'message'}) {
             $args->{'message'} = $resp->content;
         }
-
-
-    ## If we have been passed a Moose error message object, grab the
-    ## message string out of it.
-#     } elsif( exists $args->{'message'}) {
-#         my $msg = $args->{'message'};
-#         if( $msg && UNIVERSAL::can( $msg, 'message' ) ) {
-#                 $args{message} = $msg->message;
-#         }
     }
 
     $class->$orig( $args );

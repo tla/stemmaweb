@@ -74,12 +74,18 @@ sub tradition_as_svg {
         : "/tradition/$textid/dot";
     $location .= '?include_relations=true' if $opts->{'include_relations'};
     my $dotstr = $self->ajax('get', $location);
+    unless ($dotstr =~ /^digraph/) {
+        stemmaweb::Error->throw(
+            ident => 'Datastore error',
+            status => 500,
+            message => "Bad dot string: $dotstr");
+    }
     return dot_to_svg($dotstr);
 }
 
 # Really a generic utility, but this is as good a place as any for that.
 sub dot_to_svg {
-    my( $self, $dotstr ) = @_;
+    my( $dotstr ) = @_;
     unless (File::Which::which( 'dot' )) {
         throw_ua( HTTP::Response->new(500,
             "Need GraphViz installed to output SVG") );

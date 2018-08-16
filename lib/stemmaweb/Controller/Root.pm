@@ -3,7 +3,7 @@ use Moose;
 use namespace::autoclean;
 use JSON qw ();
 use stemmaweb::Controller::Stemma;
-use stemmaweb::Controller::Util qw/ load_tradition json_error json_bool /;
+use stemmaweb::Controller::Util qw/ load_tradition json_error json_bool section_metadata /;
 use File::Temp;
 use Text::Tradition;
 use Text::Tradition::Stemma;
@@ -283,7 +283,7 @@ sub textinfo :Local :Args(1) {
         }
       } elsif ($c->req->method ne 'GET') {
         return json_error($c, 405, "Disallowed HTTP method " . $c->req->method);
-      }
+    }
     # Add the witness information
     my @witnesses = map { $_->{sigil} }
         @{$m->ajax('get', "/tradition/$textid/witnesses")};
@@ -312,29 +312,8 @@ Returns and updates information about a particular sections.
 
 sub sectioninfo :Local :Args(2) {
     my( $self, $c, $textid, $sectionid ) = @_;
-    my $textinfo = load_tradition( $c, $textid );
-    return unless $textinfo;
-    my $ok = $textinfo->{permission};
-    my $m = $c->model('Directory');
-    my ($sectioninfo) = grep { $_->{id} eq $sectionid } @{$textinfo->{sections}};
-    # Update information if we have been asked to
-    if( $c->req->method eq 'POST' ) {
-        return json_error( $c, 403,
-            'You do not have permission to update this tradition' )
-            unless $ok eq 'full';
-        # Now pass through the request
-        try {
-            $sectioninfo = $m->ajax('put', "/tradition/$textid/section/$sectionid",
-                                 'Content-Type' => 'application/json',
-                                 Content => JSON::to_json($c->req->params));
-        } catch (stemmaweb::Error $e) {
-          return json_error( $c, $e->status, $e->message );
-        }
-    } elsif ($c->req->method ne 'GET') {
-        return json_error($c, 405, "Disallowed HTTP method " . $c->req->method);
-    }
-    $c->stash->{result} = $sectioninfo;
-    $c->forward('View::JSON');
+    $c->stash->{tradition} = load_tradition( $c, $textid );
+    return section_metadata($c, $textid, $sectionid);
 }
 
 =head2 delete
@@ -394,7 +373,11 @@ Returns the variant graph for the text specified at $textid, in SVG form.
 sub variantgraph :Local :Args(1) {
     my( $self, $c, $textid ) = @_;
     my $textinfo = load_tradition( $c, $textid );
-    $c->stash->{result} = $c->model('Directory')->tradition_as_svg($textinfo->{id});
+    try {
+        $c->stash->{result} = $c->model('Directory')->tradition_as_svg($textinfo->{id});
+    } catch (stemmaweb::Error $e) {
+        return json_error( $c, $e->status, $e->message );
+    }
     $c->forward('View::SVG');
 }
 
