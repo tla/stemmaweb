@@ -1690,6 +1690,13 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			$("#dialog_overlay").hide();
 		}
 	});
+  } else {
+    // Hide the unused elements
+    $('#update_workspace_button').hide();
+    $('#keystroke_menu_button').hide();
+    $('#dialog-form').hide();
+    $('#multipleselect-form').hide();
+    $('#keystroke_menu').hide();
   }
 
   // Set up the relationship info display and deletion dialog.
@@ -1806,7 +1813,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     autoOpen: false,
     modal: true,
     buttons: {
-        Cancel: function() {
+        Close: function() {
 			$( this ).dialog( "close" );
 		},
 		Update: function( evt ) {
@@ -1832,6 +1839,13 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     open: function() {
         $("#section_name").val(sect_metadata['name']);
         $("#section_language").val(sect_metadata['language']);
+        // Show the appropriate buttons...
+		var buttonset = $(this).parent().find( '.ui-dialog-buttonset' )
+		// If the user can't edit, show only the OK button
+    	if( !editable ) {
+    		buttonset.find( "button:contains('Update')" ).hide();
+    	// If the relationship scope is local, show only OK and Delete
+    	}
     }
   });
 
@@ -1894,12 +1908,6 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     $('#keystroke_menu').toggle();
   });
 
-  if( !editable ) {
-    // Hide the unused elements
-    $('#update_workspace_button').hide();
-    $('#keystroke_menu_button').hide();
-  }
-
   $('.helptag').popupWindow({
 	  height:500,
 	  width:800,
@@ -1917,7 +1925,7 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 
 // Enable the keyboard shortcuts.
 }).bind( 'keypress', function( event ) {
-	if(!$(".ui-dialog").is(":visible")){
+	if(!$(".ui-dialog").is(":visible") && editable){
 		if( event.which in keyCommands ) {
 			var fn = keyCommands[event.which]['function'];
 			fn();
