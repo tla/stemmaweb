@@ -316,6 +316,36 @@ sub sectioninfo :Local :Args(2) {
     return section_metadata($c, $textid, $sectionid);
 }
 
+=head2 reorder
+
+  POST /orderafter/$textid/$sectionid/$othersectionid
+
+Moves the specified section to a position just AFTER the other section
+specified. To move a section to the beginning, $othersectionid can be
+set to 'none'.
+
+=cut
+
+sub orderafter :Local :Args(3) {
+    my ($self, $c, $textid, $sectionid, $priorsectid) = @_;
+    my $textinfo = load_tradition( $c, $textid );
+    return unless $textinfo;
+    return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
+        unless $c->req->method eq 'POST';
+    return json_error( $c, 403,
+        'You do not have permission to modify this tradition' )
+        unless $textinfo->{permission} eq 'full';
+
+    my $url = "/tradition/$textid/section/$sectionid/orderAfter/$priorsectid";
+    try {
+        $c->model('Directory')->ajax('put', $url);
+        $c->stash->{result} = {'status' => 'ok'};
+        $c->forward('View::JSON');
+    } catch (stemmaweb::Error $e) {
+        return json_error( $c, $e->status, $e->message );
+    }
+}
+
 =head2 delete
 
  POST /delete/$textid

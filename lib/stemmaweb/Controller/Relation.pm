@@ -104,7 +104,6 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     # Spit out the SVG
     # my $svgstr = generate_svg( $c ); # $c contains text & section info
     try {
-        $DB::single = 1;
         my $svgstr = $m->tradition_as_svg(
             $c->stash->{textid},
             {section => $c->stash->{sectid}} );

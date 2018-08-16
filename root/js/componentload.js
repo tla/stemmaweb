@@ -4,6 +4,7 @@ var selectedTextInfo;
 var selectedTextEditable;
 var selectedStemmaSequence = -1;
 var sortableSectionList;
+var sectionSortBackup;
 var stemmata = [];
 
 // Load the names of the appropriate traditions into the directory div.
@@ -532,7 +533,13 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 		file_selected( $('#new_file').get(0) );
 	} else if ( $('#section-edit-dialog').dialog('isOpen') ) {
 		errordiv = '#section_edit_status';
-		error += '<br>The section cannot be modified.</p>';
+		if ( ajaxSettings.url.indexOf( 'orderafter') > -1 ) {
+			error = '<br>The section cannot be reordered.</p>';
+			// Reset the sort order if something went wrong there.
+			sortableSectionList.sort(sectionSortBackup);
+		} else {
+			error += '<br>The section cannot be modified.</p>';
+		}
 	} else if ( ajaxSettings.url.indexOf( 'textinfo' ) > -1 && ajaxSettings.type == 'GET'  ) {
 		$('#textinfo_waitbox').hide();
 		$('#textinfo_container').show();
@@ -956,20 +963,42 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
 			},
 		},
 		open: function() {
+			// Clear any prior error messages
+			$('#section_edit_status').empty();
 			// Set up the magic section list sorter, non-jQuery style
 			var sectionlist = document.getElementById('section_list');
 			sortableSectionList = Sortable.create(sectionlist, {
 				handle: '.sortable-handle',
 				onUpdate: function(evt, ui) {
-					// Send the section reorder request
-					var sectinfo = selectedTextInfo.sections[evt.oldIndex];
-					var newprior = null;
-					if (evt.newIndex > 0) {
-						newprior = selectedTextInfo.sections[evt.newIndex - 1];
+					// Get the section that is moving
+					var sectid = selectedTextInfo.sections[evt.oldIndex].id;
+					// If the element has moved up, then the prior element is
+					// one less than its new index. If the element has moved
+					// down, its prior will have formerly lived at newIndex
+					// and is about to be shifted up. We thus need to look for
+					// the data structure at newIndex.
+					var indexOfPrior = evt.newIndex;
+					if (evt.oldIndex > evt.newIndex) { // it moved up
+						indexOfPrior -=1;
 					}
-					var sorturl = _get_url(['section', selectedTextID]);
+					var newprior = "none";
+					if (evt.newIndex > 0) {
+						newprior = selectedTextInfo.sections[indexOfPrior].id;
+					}
+					var sorturl = _get_url(
+						['orderafter', selectedTextID, sectid, newprior]);
+					$.post(sorturl, function() {
+						// Alter our sections list
+						var movedSection = selectedTextInfo.sections.splice(evt.oldIndex, 1);
+						selectedTextInfo.sections.splice(evt.newIndex, 0, movedSection[0]);
+						// Save the new sort order as current
+						sectionSortBackup = sortableSectionList.toArray();
+					})
 				}
 			});
+			// Save the current sort order in case of trouble
+			sectionSortBackup = sortableSectionList.toArray();
+
 			// Set up the click-to-choose functionality for the section metadata
 			$('#section_list li').click(function () {
 				$('#section_list li').removeClass('selected');
