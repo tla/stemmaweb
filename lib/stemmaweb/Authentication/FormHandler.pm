@@ -15,8 +15,6 @@ has_field id_token => (
     required => 0,
 );
 
-# This must match the min length in Text::Tradition::Directory!
-
 has_field password => (
     type            => 'Password',
     minlength       => 8,
