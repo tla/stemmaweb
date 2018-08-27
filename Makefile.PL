@@ -11,7 +11,6 @@ all_from 'lib/stemmaweb.pm';
 
 # Tradition libraries
 requires 'Text::Tradition' => '2.0.0';
-requires 'Text::Tradition::Directory';
 requires 'Text::Tradition::Analysis' => '2.0.0';
 requires 'Text::Tradition::StemmaUtil';
 # Catalyst libraries
