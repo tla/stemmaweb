@@ -6,8 +6,7 @@ use stemmaweb::Controller::Stemma;
 use stemmaweb::Controller::Util
   qw/ load_tradition json_error json_bool section_metadata /;
 use File::Temp;
-use Text::Tradition;
-use Text::Tradition::Stemma;
+# use Text::Tradition;
 use TryCatch;
 use URI;
 use XML::LibXML;
@@ -103,7 +102,8 @@ sub directory :Local :Args(0) {
     } else {
         $alltexts = _alpha_sort($m->ajax('get', '/traditions?public=true'));
     }
-    my @plist = grep { !$usertexts{ $_->{id} } } @$alltexts;
+    # TODO Find and fix bug that makes the public filter necessary.
+    my @plist = grep { !$usertexts{ $_->{id} } && $_->{is_public} } @$alltexts;
     $c->stash->{publictexts} = \@plist;
     $c->stash->{template}    = 'directory.tt';
 }
@@ -222,25 +222,26 @@ sub _make_upload_request {
 
     my $fh;
     my $filetype = $c->req->param('filetype');
-    if ($filetype eq 'cte') {
-        ## Cheat by using the old Text::Tradition parser.
-        my $t;
-        try {
-            $t = Text::Tradition->new(
-                name  => $c->req->param('name'),
-                input => 'CTE',
-                file  => $upload->tempname
-            );
-        }
-        catch (Text::Tradition::Error $e ) {
-            return json_error($c, 400, $e->message)
-        }
-        $fh = File::Temp->new();
-        print $fh $t->collation->as_graphml();
-        $fh->seek(0, SEEK_END);
-        $fileargs->[0] = $fh->filename; # Remaining fileargs should be the same.
-        $filetype = 'stemmaweb';
-    } elsif ($filetype eq 'xls' && $upload->filename =~ /xlsx$/) {
+    # if ($filetype eq 'cte') {
+    #     ## Cheat by using the old Text::Tradition parser.
+    #     my $t;
+    #     try {
+    #         $t = Text::Tradition->new(
+    #             name  => $c->req->param('name'),
+    #             input => 'CTE',
+    #             file  => $upload->tempname
+    #         );
+    #     }
+    #     catch (Text::Tradition::Error $e ) {
+    #         return json_error($c, 400, $e->message)
+    #     }
+    #     $fh = File::Temp->new();
+    #     print $fh $t->collation->as_graphml();
+    #     $fh->seek(0, SEEK_END);
+    #     $fileargs->[0] = $fh->filename; # Remaining fileargs should be the same.
+    #     $filetype = 'stemmaweb';
+    # } els
+    if ($filetype eq 'xls' && $upload->filename =~ /xlsx$/) {
         ## Distinguish the type of Excel file.
         $filetype = 'xlsx';
     }
@@ -277,6 +278,9 @@ sub textinfo :Local :Args(1) {
     my $textinfo = load_tradition($c, $textid);
     return unless $textinfo;
     my $ok = $textinfo->{permission};
+    return json_error($c, 403,
+        'You do not have permission to view this tradition')
+      unless $ok;
     my $m  = $c->model('Directory');
 
     # Update information if we have been asked to

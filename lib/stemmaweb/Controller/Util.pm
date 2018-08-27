@@ -3,8 +3,7 @@ use strict;
 use warnings;
 use Exporter qw/ import /;
 use JSON;
-use Text::Tradition;
-use Text::Tradition::Stemma;
+use stemmaweb::Model::Stemma;
 use TryCatch;
 use XML::LibXML;
 use XML::LibXML::XPathContext;
@@ -63,7 +62,7 @@ sub load_tradition {
 
 sub load_stemma {
     my ($stemmadata) = @_;
-    return Text::Tradition::Stemma->new(
+    return stemmaweb::Model::Stemma->new(
         dot           => $stemmadata->{dot},
         is_undirected => $stemmadata->{is_undirected} == JSON::true,
         identifier    => $stemmadata->{identifier}

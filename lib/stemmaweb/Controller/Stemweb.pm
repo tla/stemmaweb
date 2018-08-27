@@ -8,7 +8,7 @@ use List::Util qw/ max /;
 use LWP::UserAgent;
 use Safe::Isa;
 use Scalar::Util qw/ looks_like_number /;
-use Text::Tradition::StemmaUtil qw/ character_input phylip_pars /;
+use stemmaweb::Model::StemmaUtil qw/ character_input phylip_pars /;
 use TryCatch;
 use URI;
 
@@ -192,8 +192,8 @@ sub _process_stemweb_result {
                 $stemmata = $tradition->record_stemweb_result($answer);
                 $m->save($tradition);
             }
-            catch (Text::Tradition::Error $e ) {
-                return _json_error($c, 500, $e->message);
+            catch (stemmaweb::Error $e ) {
+                return _json_error($c, $e->status, $e->message);
             }
             catch {
                 return _json_error($c, 500, $@);
@@ -285,8 +285,8 @@ sub request :Local :Args(0) {
         try {
             $newick = phylip_pars($cdata, { parspath => $self->_has_pars });
         }
-        catch (Text::Tradition::Error $e ) {
-            return _json_error($c, 503,
+        catch (stemmaweb::Error $e ) {
+            return _json_error($c, $e->status,
                 "Parsimony tree generation failed: " . $e->message);
         }
 
@@ -336,7 +336,7 @@ sub request :Local :Args(0) {
             try {
                 $t->set_stemweb_jobid($stemweb_response->{jobid});
             }
-            catch (Text::Tradition::Error $e ) {
+            catch (stemmaweb::Error $e ) {
                 return _json_error($c, 429, $e->message);
             }
             $c->model('Directory')->save($t);

@@ -11,8 +11,6 @@ all_from 'lib/stemmaweb.pm';
 
 # Tradition libraries
 requires 'Text::Tradition' => '2.0.0';
-requires 'Text::Tradition::Analysis' => '2.0.0';
-requires 'Text::Tradition::StemmaUtil';
 # Catalyst libraries
 requires 'Catalyst::Runtime' => '5.90002';
 requires 'Catalyst::Plugin::Cache';

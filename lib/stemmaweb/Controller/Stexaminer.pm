@@ -4,9 +4,9 @@ use namespace::autoclean;
 use Encode qw/ decode_utf8 /;
 use File::Temp;
 use JSON;
+use stemmaweb::Model::Stemma;
 use stemmaweb::Controller::Util qw/ load_stemma json_error /;
-use Text::Tradition::Analysis qw/ run_analysis wit_stringify /;
-use Text::Tradition::Stemma;
+# use Text::Tradition::Analysis qw/ run_analysis wit_stringify /;
 use TryCatch;
 
 BEGIN { extends 'Catalyst::Controller' }
@@ -147,13 +147,23 @@ sub graphsvg :Local {
     my ($self, $c) = @_;
     my $dot        = $c->request->param('dot');
     my @layerwits  = $c->request->param('layerwits[]');
-    my $tempstemma = Text::Tradition::Stemma->new('dot' => $dot);
+    my $tempstemma = stemmaweb::Controller::Stemma->new('dot' => $dot);
     my $svgopts    = {};
     if (@layerwits) {
         $svgopts->{'layerwits'} = \@layerwits;
     }
     $c->stash->{'result'} = $tempstemma->as_svg($svgopts);
     $c->forward('View::SVG');
+}
+
+sub run_analysis {
+    my @args = @_;
+    print "Not implemented\n";
+}
+
+sub wit_stringify {
+    my @args = @_;
+    print "Not implemented\n";
 }
 
 =head2 end
