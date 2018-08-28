@@ -101,9 +101,10 @@ sub directory :Local :Args(0) {
         $alltexts = _alpha_sort($m->ajax('get', '/traditions'));
     } else {
         $alltexts = _alpha_sort($m->ajax('get', '/traditions?public=true'));
+        # TODO Find and fix bug that makes the public filter necessary.
+        @$alltexts = grep { $_->{is_public} } @$alltexts;
     }
-    # TODO Find and fix bug that makes the public filter necessary.
-    my @plist = grep { !$usertexts{ $_->{id} } && $_->{is_public} } @$alltexts;
+    my @plist = grep { !$usertexts{ $_->{id} } } @$alltexts;
     $c->stash->{publictexts} = \@plist;
     $c->stash->{template}    = 'directory.tt';
 }
