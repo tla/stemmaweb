@@ -4,10 +4,6 @@ use namespace::autoclean;
 
 use Catalyst::Runtime 5.80;
 
-use Search::GIN::Extract::Class;
-use Search::GIN::Extract::Attributes;
-use Search::GIN::Extract::Multiplex;
-
 # Set flags and add plugins for the application.
 #
 # Note that ORDERING IS IMPORTANT here as plugins are initialized in order,

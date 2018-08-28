@@ -2,7 +2,7 @@
 
 use warnings;
 use strict;
-use JSON::MaybeXS;
+use JSON::XS;
 use stemmaweb::Authentication::Credential::Google;
 use Crypt::OpenSSL::RSA;
 use FindBin;
