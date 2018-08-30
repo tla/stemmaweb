@@ -1,6 +1,7 @@
 package stemmaweb::Controller::Root;
 use Moose;
 use namespace::autoclean;
+use Encode qw (encode_utf8);
 use JSON qw ();
 use stemmaweb::Controller::Stemma;
 use stemmaweb::Controller::Util
@@ -146,7 +147,7 @@ sub newtradition :Local :Args(0) {
     try {
         $result = $m->ajax(
             'post', '/tradition',
-            'Content-Type' => 'form-data',
+            'Content-Type' => 'multipart/form-data; charset=UTF-8',
             Content        => $newopts
         );
     }
@@ -193,7 +194,7 @@ sub newsection :Local :Args(1) {
     try {
         $result = $m->ajax(
             'post', "/tradition/$textid/section",
-            'Content-Type' => 'form-data',
+            'Content-Type' => 'multipart/form-data; charset=UTF-8',
             Content        => $opts
         );
     }
@@ -246,7 +247,8 @@ sub _make_upload_request {
         ## Distinguish the type of Excel file.
         $filetype = 'xlsx';
     }
-
+    # We have to UTF-8 encode all the form values ourselves.
+    # TODO See what happens if the filename is non-ASCII!
     my $newopts = {
         'userId'   => $c->user->id,
         'filetype' => $filetype,
@@ -254,7 +256,7 @@ sub _make_upload_request {
     };
     foreach my $opt (qw/ name language direction public /) {
         if ($c->req->param($opt)) {
-            $newopts->{$opt} = $c->req->param($opt);
+            $newopts->{$opt} = encode_utf8($c->req->param($opt));
         }
     }
     return $newopts;
@@ -301,7 +303,7 @@ sub textinfo :Local :Args(1) {
             $textinfo = $m->ajax(
                 'put', "/tradition/$textid",
                 'Content-Type' => 'application/json',
-                Content        => JSON::to_json($params)
+                Content        => JSON::encode_json($params)
             );
         }
         catch (stemmaweb::Error $e) {
