@@ -532,7 +532,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   if ($('#textinfo-edit-dialog').dialog('isOpen')) {
     // the tradition metadata box
     error += '<br>The tradition cannot be updated.</p>';
-    errordiv = '#edit-textinfo-status';
+    errordiv = '#edit_textinfo_status';
   } else if ($('#stemma-edit-dialog').dialog('isOpen')) {
     // the delete box
     error += '<br>The stemma cannot be saved.</p>';
@@ -586,8 +586,8 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   // Set up the textinfo edit dialog
   $('#textinfo-edit-dialog').dialog({
     autoOpen: false,
-    height: 200,
-    width: 300,
+    height: 220,
+    width: 350,
     modal: true,
     buttons: {
       'Delete tradition': function(evt) {
