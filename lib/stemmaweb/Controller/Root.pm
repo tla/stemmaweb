@@ -297,6 +297,9 @@ sub textinfo :Local :Args(1) {
             return json_error($c, 403,
                 "Only admin users can change tradition ownership");
         }
+        # Clean up our boolean value(s)
+        my @booleans = qw/ is_public /;
+        map { $params->{$_} = json_bool($params->{$_}) } @booleans;
 
         # Now pass through the request
         try {

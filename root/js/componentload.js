@@ -145,7 +145,7 @@ function load_textinfo() {
   }
   // Whether or not it is public
   $('#not_public').empty();
-  if (selectedTextInfo['public'] == false) {
+  if (!selectedTextInfo['is_public']) {
     $('#not_public').append('NOT ');
   }
   // What language setting it has, if any
@@ -640,7 +640,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           $(fname).val(selectedTextInfo[k]);
         }
       });
-      if (selectedTextInfo['public'] == true) {
+      if (selectedTextInfo['is_public']) {
         $('#edit_public').attr('checked', 'true');
       } else {
         $('#edit_public').removeAttr('checked');
