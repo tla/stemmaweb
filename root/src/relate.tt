@@ -77,24 +77,24 @@
         <label for="rel_type">Relation type&nbsp;</label>
         <select name="type" id="rel_type" class=".ui-widget select">
         </select>
-        <br /><br />
+        <br><br>
         <label for="scope">Scope of relation&nbsp;</label>
         <select name="scope" id="scope" class=".ui-widget select">
         </select>
-        <br /><br />
+        <br><br>
         <label for="is_significant">Is this variance stemmatically significant?</label>
         <select name="is_significant" id="is_significant" class=".ui-widget select" />
         </select>
-        <br /><br />
+        <br><br>
         <input type="checkbox" name="b_derivable_from_a" id="b_derivable_from_a" />
         <label for="b_derivable_from_a"><span class="rel_rdg_a"></span> would be corrected to <span class="rel_rdg_b"></span>&nbsp;</label>
-        <br />
+        <br>
         <input type="checkbox" name="a_derivable_from_b" id="a_derivable_from_b" />
         <label for="a_derivable_from_b"><span class="rel_rdg_b"></span> would be corrected to <span class="rel_rdg_a"></span>&nbsp;</label>
-        <br />
+        <br>
         <input type="checkbox" name="non_independent" id="non_independent" />
         <label for="non_independent">Variants unlikely to arise coincidentally&nbsp;</label>
-        <br /><br />
+        <br><br>
         <label for="note">Annotation or note&nbsp;</label>
         <textarea rows="3" style="width:100%;" name="annotation" id="note" class=".ui-widget input"></textarea>
       </fieldset>
@@ -108,8 +108,8 @@
       <input type="hidden" name="target_id" id="delete_target_node_id" />
     </form>
     <div id="delete-status"></div>
-    <div id="delete-form-text">Type: <span id="delete_relation_type"></span><br />
-      Scope: <span id="delete_relation_scope"></span><br />
+    <div id="delete-form-text">Type: <span id="delete_relation_type"></span><br>
+      Scope: <span id="delete_relation_scope"></span><br>
       <span id="delete_relation_attributes"></span>
       <span id="delete_relation_note"></span>
     </div>
@@ -118,7 +118,7 @@
   <div id="multipleselect-form" title="Multiple nodes selected...">
     <div id="multipleselect-form-status"></div>
 
-    Detach or concatenate?<br />
+    Detach or concatenate?<br>
 
     <form autocomplete="off">
       <label>
@@ -141,18 +141,39 @@
       <div class="morph">
         <input type="checkbox" name="reading_is_lemma" id="reading_is_lemma" />
         <label for="reading_is_lemma">Lemmatize this reading</label>
-        <br />
+        <br>
         <input type="checkbox" name="reading_is_nonsense" id="reading_is_nonsense" />
         <label for="reading_is_nonsense">This is a nonsense word</label>
-        <br />
+        <br>
         <input type="checkbox" name="reading_grammar_invalid" id="reading_grammar_invalid" />
         <label for="reading_grammar_invalid">This word's grammar cannot be right</label>
       </div>
-      <br /><br />
+      <br><br>
       <!-- Morphological options go here -->
-      <div id="normalization" class="morph">
-        <label for="reading_normal_form">Normalized form: </label>
-        <input type="text" name="reading_normal_form" id="reading_normal_form"></input>
+      <div id="normalization" class="floatcontainer morph">
+        <div class="labels">
+          <label for="reading_normal_form">Normalized form: </label>
+        </div>
+        <div class="inputs">
+          <input type="text" name="reading_normal_form" id="reading_normal_form"></input>
+        </div>
+      </div>
+      <br><br>
+      <div id="correction" class="floatcontainer caution">
+        <p>Correct the reading - handle with care!</p><br>
+        <div class="labels">
+          <label for="reading_text">Reading base text: </label>
+        </div>
+        <div class="inputs">
+          <input type="text" name="reading_text" id="reading_text"></input>
+        </div>
+        <br>
+        <div class="labels">
+          <label for="reading_display">Reading display form: </label>
+        </div>
+        <div class="inputs">
+          <input type="text" name="reading_display" id="reading_display"></input>
+        </div>
       </div>
     </form>
     <div id="reading-form-status"></div>

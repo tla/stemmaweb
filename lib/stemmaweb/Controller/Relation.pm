@@ -372,6 +372,7 @@ my %read_write_keys = (
     'join_prior'      => 0,
     'join_next'       => 0,
     'annotation'      => 1,
+    'display'         => 1,
     'witnesses'       => 0
 );
 

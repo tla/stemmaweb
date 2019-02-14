@@ -91,20 +91,29 @@ function node_dblclick_listener(evt) {
   toggle_checkbox($('#reading_is_lemma'), reading_info['is_lemma']);
   toggle_checkbox($('#reading_is_nonsense'), reading_info['is_nonsense']);
   toggle_checkbox($('#reading_grammar_invalid'), reading_info['grammar_invalid']);
-  // Use .text as a backup for .normal_form
-  var normal_form = reading_info['normal_form'];
-  if (!normal_form) {
-    normal_form = reading_info['text'];
-  }
-  var nfboxsize = 10;
-  if (normal_form.length > 9) {
-    nfboxsize = normal_form.length + 1;
-  }
-  $('#reading_normal_form').attr('size', nfboxsize)
-  $('#reading_normal_form').val(normal_form);
+
+  // Now set the text properties
+  setup_readingbox('normal_form', reading_info);
+  setup_readingbox('text', reading_info);
+  setup_readingbox('display', reading_info);
+
   // and then open the dialog.
   $('#reading-form').dialog(opt).dialog("open");
   return false;
+}
+
+function setup_readingbox(boxname, reading) {
+  var datum = reading[boxname];
+  if (!datum) {
+    datum = reading['text'];
+  }
+  var boxsize = 10;
+  if (datum.length > 9) {
+    boxsize = datum.length + 1;
+  }
+  var boxident = '#reading_' + boxname;
+  $(boxident).attr('size', boxsize);
+  $(boxident).val(datum);
 }
 
 function toggle_checkbox(box, value) {
@@ -1859,7 +1868,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           'is_lemma': $('#reading_is_lemma').is(':checked'),
           'is_nonsense': $('#reading_is_nonsense').is(':checked'),
           'grammar_invalid': $('#reading_grammar_invalid').is(':checked'),
-          'normal_form': $('#reading_normal_form').val()
+          'normal_form': $('#reading_normal_form').val(),
+          'text': $('#reading_text').val(),
+          'display': $('#reading_display').val()
         };
         // Make the JSON call
         ncpath = getReadingURL(reading_id);

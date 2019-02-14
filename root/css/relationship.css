@@ -306,3 +306,24 @@ span.apimore {
 .error {
   color: red;
 }
+
+.caution {
+  padding-left: 5px;
+  border: 5px solid #f7cd11;
+  margin-top: 5px;
+}
+
+.floatcontainer {
+  float: left;
+  width: 95%;
+}
+
+.labels {
+  float: left;
+  width: 30%;
+  padding-top: 5px;
+}
+.inputs {
+  float: left;
+  width: 65%;
+}
