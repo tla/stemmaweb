@@ -83,7 +83,8 @@ sub tradition_as_svg {
       exists $opts->{'section'}
       ? sprintf("/tradition/$textid/section/%s/dot", $opts->{'section'})
       : "/tradition/$textid/dot";
-    $location .= '?include_relations=true' if $opts->{'include_relations'};
+    $location .= '?show_normal=true';
+    $location .= '&include_relations=true' if $opts->{'include_relations'};
     my $dotstr = $self->ajax('get', $location);
     unless ($dotstr =~ /^digraph/) {
         stemmaweb::Error->throw(
