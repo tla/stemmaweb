@@ -361,7 +361,7 @@ this dictionary will look like:
 
 my %read_write_keys = (
     'id'              => 0,
-    'text'            => 0,
+    'text'            => 1,
     'rank'            => 0,
     'is_meta'         => 0,
     'grammar_invalid' => 1,
