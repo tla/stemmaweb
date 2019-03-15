@@ -931,7 +931,7 @@ sub split :Chained('section') :PathPart :Args(0) {
 
         # Fill out the readings and return the result. This response
         # uses database IDs.
-        $c->stash->{result}->{relationships} = $response->{relations};
+        $c->stash->{result}->{relationships} = $response->{sequences};
         foreach my $r (@{ $response->{readings} }) {
             my $rinfo = _reading_struct($c, $r);
             delete $rinfo->{svg_id};

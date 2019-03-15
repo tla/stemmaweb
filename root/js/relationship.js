@@ -559,22 +559,22 @@ function path_element_class(svgpath_for_edge, out_edge) {
     get: function() {
       var path_data = svgpath_for_edge.getPathData();
       if (out_edge == true) {
-        var m_path = path_data[0];
-        return m_path.values[0];
+        var start = path_data[0]; // the M-path, i.e. start of line
+        return start.values[0];
       } else {
-        var m_path = path_data[path_data.length - 1];
-        return m_path.values[m_path.values.length - 2];
+        var end = path_data[path_data.length - 1]; // last C-path, i.e. end of line
+        return end.values[end.values.length - 2];
       }
     },
     set: function(value_for_x) {
       // console.log( value_for_x );
       var path_data = svgpath_for_edge.getPathData();
       if (out_edge == true) {
-        var m_path = path_data[0];
-        m_path.values[0] = value_for_x;
+        var start = path_data[0]; // M-path
+        start.values[0] = value_for_x;
       } else {
-        var m_path = path_data[path_data.length - 1];
-        m_path.values[m_path.values.length - 2] = value_for_x;
+        var end = path_data[path_data.length - 1]; // last C-path
+        end.values[end.values.length - 2] = value_for_x;
       }
       svgpath_for_edge.setPathData(path_data);
     }
@@ -583,22 +583,22 @@ function path_element_class(svgpath_for_edge, out_edge) {
     get: function() {
       var path_data = svgpath_for_edge.getPathData();
       if (out_edge == true) {
-        var m_path = path_data[0];
-        return m_path.values[1];
+        var start = path_data[0]; // M-path
+        return start.values[1];
       } else {
-        var m_path = path_data[path_data.length - 1];
-        return m_path.values[m_path.values.length - 1];
+        var end = path_data[path_data.length - 1]; // last C-path
+        return end.values[end.values.length - 1];
       }
     },
     set: function(value_for_y) {
       // console.log( value_for_y );
       var path_data = svgpath_for_edge.getPathData();
       if (out_edge == true) {
-        var m_path = path_data[0];
-        m_path.values[1] = value_for_y;
+        var start = path_data[0]; // M-path
+        start.values[1] = value_for_y;
       } else {
-        var m_path = path_data[path_data.length - 1];
-        m_path.values[m_path.values.length - 1] = value_for_y;
+        var end = path_data[path_data.length - 1]; // last C-path
+        end.values[end.values.length - 1] = value_for_y;
       }
       svgpath_for_edge.setPathData(path_data);
     }
@@ -868,6 +868,7 @@ function detach_node(readings) {
 
   // here we detach witnesses from the existing edges accoring to what's being relayed by readings
   $.each(readings, function(node_id, reading) {
+    var svg_id = reading.id
     var edges = edges_of(get_ellipse(reading.orig_reading));
     incoming_remaining = [];
     outgoing_remaining = [];
@@ -928,7 +929,7 @@ function detach_node(readings) {
     // Clone original node/reading, rename/id it..
     duplicate_node = get_ellipse(reading.orig_reading).parent().clone();
     duplicate_node.attr('id', node_id);
-    duplicate_node.children('title').text(node_id);
+    duplicate_node.children('title').text(svg_id);
 
     // This needs somehow to move to node or even to shapes! #repositioned
     duplicate_node_data = get_ellipse(reading.orig_reading).parent().data('repositioned');
@@ -940,11 +941,12 @@ function detach_node(readings) {
     var graph_root = $('#svgenlargement svg g.graph');
     graph_root.append(duplicate_node);
     $.each(detached_edges, function(index, edge) {
-      id_suffix = node_id.slice(node_id.indexOf('_'));
-      edge.g_elem.attr('id', (edge.g_elem.attr('id') + id_suffix));
+      // TODO use returned sequence information to set the real
+      // ID on the duplicated edges
+      edge.g_elem.attr('id', (edge.g_elem.attr('id') + 'd'));
       edge_title = edge.g_elem.children('title').text();
       edge_weight = 0.8 + (0.2 * edge.witnesses.length);
-      edge_title = edge_title.replace(reading.orig_reading, node_id);
+      edge_title = edge_title.replace(reading.orig_reading, svg_id);
       edge.g_elem.children('title').text(edge_title);
       edge.g_elem.children('path').attr('stroke-width', edge_weight);
       // Reg unabstracted knowledge: isn't it more elegant to make
