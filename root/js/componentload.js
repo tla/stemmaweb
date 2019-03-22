@@ -28,8 +28,12 @@ function refreshDirectory() {
         $(".canmod").each(function() {
           var tid = $(this).attr('id');
           var tname = $(this).text();
-          $('#upload_for_tradition')
-            .append($('<option>').attr('value', tid).text(tname));
+		  if (tid === selectedTextID) {
+			  $('#upload_for_tradition').append($('<option>')
+			  	.attr('value', tid).attr('selected', 'selected').text(tname));		  	
+		  } else {
+			  $('#upload_for_tradition').append($('<option>').attr('value', tid).text(tname));
+		  }
         });
       }
     }
@@ -484,13 +488,13 @@ function upload_collation(upload_url) {
   };
   reader.onerror = function(evt) {
     var err_resp = 'File read error';
-    if (e.name == 'NotFoundError') {
+    if (evt.name == 'NotFoundError') {
       err_resp = 'File not found';
-    } else if (e.name == 'NotReadableError') {
+    } else if (evt.name == 'NotReadableError') {
       err_resp == 'File unreadable - is it yours?';
-    } else if (e.name == 'EncodingError') {
+    } else if (evt.name == 'EncodingError') {
       err_resp == 'File cannot be encoded - is it too long?';
-    } else if (e.name == 'SecurityError') {
+    } else if (evt.name == 'SecurityError') {
       err_resp == 'File read security error';
     }
     // Fake a jqXHR object that we can pass to our generic error handler.
