@@ -88,9 +88,10 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     # Stash text direction to use in JS.
     $c->stash->{'direction'} = $tradition->{direction} || 'BI';
 
-    # Stash the relationship definitions. TODO make these configurable.
+    # Stash the relationship definitions.
     $c->stash->{'relationship_scopes'} = to_json([qw(local document)]);
     $c->stash->{'ternary_values'}      = to_json([qw(yes maybe no)]);
+	# Set some defaults for backwards compatibility
     my $reltypeinfo = [
         {
             name => 'orthographic',
@@ -136,6 +137,21 @@ sub main :Chained('section') :PathPart('') :Args(0) {
               'This is a reading that was repeated in one or more witnesses.'
         },
     ];
+	# Add / override the types associated with this tradition
+	my $textid = $c->stash->{textid};
+    try {
+        my $definedtypes = $m->ajax('get', "/tradition/$textid/relationtypes");
+		foreach my $type (@$definedtypes) {
+			my @existing = grep { $_->{name} eq $type->{name} } @$reltypeinfo;
+			if (@existing) {
+				$existing[0]->{description} = $type->{description};
+			} else {
+				push(@$reltypeinfo, { name => $type->{name}, description => $type->{description} });
+			}
+		}
+    } catch (stemmaweb::Error $e ) {
+        return json_error($c, $e->status, $e->message);
+    }
     $c->stash->{'relationship_types'} = to_json($reltypeinfo);
 
     # Get the basic info we need
@@ -147,7 +163,7 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     # Spit out the SVG
     # my $svgstr = generate_svg( $c ); # $c contains text & section info
     try {
-        my $svgstr = $m->tradition_as_svg($c->stash->{textid},
+        my $svgstr = $m->tradition_as_svg($textid,
             { section => $c->stash->{sectid} });
         $svgstr =~ s/\n//gs;
         $c->stash->{'svg_string'} = $svgstr;

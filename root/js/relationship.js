@@ -683,7 +683,9 @@ function relation_factory() {
   this.color_memo = null;
   //TODO: colors hard coded for now
   this.temp_color = '#FFA14F';
-  this.relation_colors = ["#5CCCCC", "#67E667", "#F9FE72", "#6B90D4", "#FF7673", "#E467B3", "#AA67D5", "#8370D8", "#FFC173"];
+  this.relation_colors = ["#5CCCCC", "#67E667", "#F9FE72", "#6B90D4", "#FF7673", 
+  						  "#E467B3", "#AA67D5", "#8370D8", "#FFC173", "#EC652F", 
+						  "#DB3453", "#48456A", "#ABDFCE", "#502E35", "#E761AE"];
 
   this.create_temporary = function(source_node_id, target_node_id) {
     var relation_id = get_relation_id(source_node_id, target_node_id);
