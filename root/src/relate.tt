@@ -49,6 +49,9 @@
         </select>
       </span>
 
+      <div class="button button-inline" id="section_textview_button" onclick="$('#section-text').dialog('open');">
+        <span>View running text</span>
+      </div>
       <div class="button button-inline" id="section_metadata_button" onclick="$('#section-info').dialog('open');">
         <span>[% IF permission == "full" %]Edit[% ELSE %]View[% END %] section metadata</span>
       </div>
@@ -138,6 +141,7 @@
   <div id="reading-form" title="Reading information">
     <form id="reading_data_form" action="#">
       <input type="hidden" name="reading_id" id="reading_id" />
+      <div id="reading-status"></div>
       <div class="morph">
         <input type="checkbox" name="reading_is_lemma" id="reading_is_lemma" />
         <label for="reading_is_lemma">Lemmatize this reading</label>
@@ -155,7 +159,7 @@
           <label for="reading_normal_form">Normalized form: </label>
         </div>
         <div class="inputs">
-          <input type="text" name="reading_normal_form" id="reading_normal_form"></input>
+          <input type="text" name="reading_normal_form" id="reading_normal_form">
         </div>
       </div>
       <br><br>
@@ -165,26 +169,40 @@
           <label for="reading_text">Reading base text: </label>
         </div>
         <div class="inputs">
-          <input type="text" name="reading_text" id="reading_text"></input>
+          <input type="text" name="reading_text" id="reading_text">
         </div>
         <br>
         <div class="labels">
           <label for="reading_display">Reading display form: </label>
         </div>
         <div class="inputs">
-          <input type="text" name="reading_display" id="reading_display"></input>
+          <input type="text" name="reading_display" id="reading_display">
         </div>
       </div>
     </form>
     <div id="reading-form-status"></div>
   </div>
+  
+  <div id="section-text" title="Running text view">
+    <div id="section-text-status"></div>
+    <form id="section_text_form" action="#">
+        <input type="radio" id="view_as_lemma" name="view_as" value="lemma" onclick="requestRunningText()">
+          <label for="view_as_lemma"> Lemmatised text</label>
+        <input type="radio" id="view_as_witness" name="view_as" value="witness" onclick="requestRunningText()">
+          <label for="view_as_witness"> Text of witness: </label>
+        <select id="textview_witness" name="textview_witness" onchange="requestRunningText()">
+          <option></option>
+        </select>
+    </form>
+    <div id="section_text_display"></div>
+  </div>
 
-  <div id="section-info" title="[% IF permission == " full" %]Edit[% ELSE %]View[% END %] section information">
+  <div id="section-info" title="[% IF permission == 'full' %]Edit[% ELSE %]View[% END %] section information">
     <form id="section_info_form" action="#">
       <label for="section_name">Title: </label>
-      <input type="text" name="name" id="section_name"></input><br>
+      <input type="text" name="name" id="section_name"><br>
       <label for="section_language">Language: </label>
-      <input type="text" name="language" id="section_language"></input>
+      <input type="text" name="language" id="section_language">
     </form>
     <div id="section-form-status"></div>
   </div>
@@ -192,8 +210,8 @@
   <div id="error-display" title="Error">
   </div>
 
-  <p />
-  <p />
+  <p>
+  <p>
   <div id="keymap">
     <ul id="keymaplist">
       <li></li>

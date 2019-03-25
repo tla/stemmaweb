@@ -3,6 +3,7 @@ use JSON qw/ to_json from_json encode_json /;
 use Moose;
 use Moose::Util::TypeConstraints qw/ find_type_constraint /;
 use Module::Load;
+use String::Diff;
 use namespace::autoclean;
 use stemmaweb::Controller::Util
   qw/ load_tradition json_error json_bool section_metadata /;
@@ -91,7 +92,7 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     # Stash the relationship definitions.
     $c->stash->{'relationship_scopes'} = to_json([qw(local document)]);
     $c->stash->{'ternary_values'}      = to_json([qw(yes maybe no)]);
-	# Set some defaults for backwards compatibility
+    # Set some defaults for backwards compatibility
     my $reltypeinfo = [
         {
             name => 'orthographic',
@@ -137,18 +138,18 @@ sub main :Chained('section') :PathPart('') :Args(0) {
               'This is a reading that was repeated in one or more witnesses.'
         },
     ];
-	# Add / override the types associated with this tradition
-	my $textid = $c->stash->{textid};
+    # Add / override the types associated with this tradition
+    my $textid = $c->stash->{textid};
     try {
         my $definedtypes = $m->ajax('get', "/tradition/$textid/relationtypes");
-		foreach my $type (@$definedtypes) {
-			my @existing = grep { $_->{name} eq $type->{name} } @$reltypeinfo;
-			if (@existing) {
-				$existing[0]->{description} = $type->{description};
-			} else {
-				push(@$reltypeinfo, { name => $type->{name}, description => $type->{description} });
-			}
-		}
+        foreach my $type (@$definedtypes) {
+            my @existing = grep { $_->{name} eq $type->{name} } @$reltypeinfo;
+            if (@existing) {
+                $existing[0]->{description} = $type->{description};
+            } else {
+                push(@$reltypeinfo, { name => $type->{name}, description => $type->{description} });
+            }
+        }
     } catch (stemmaweb::Error $e ) {
         return json_error($c, $e->status, $e->message);
     }
@@ -360,7 +361,7 @@ sub relationships :Chained('section') :PathPart :Args(0) {
 
 =head2 readings
 
- GET relation/$textid/readings
+ GET relation/$textid/section/$sectionid/readings
 
 Returns a JSON dictionary, keyed on the SVG node ID of the reading, of all
 readings defined for this section along with their metadata. A typical object in
@@ -390,24 +391,6 @@ my %read_write_keys = (
     'annotation'      => 1,
     'display'         => 1,
     'witnesses'       => 0
-);
-
-sub _lemma_change {
-    my ($reading, $changed) = @_;
-
-    # No other reading at this rank should be a lemma now.
-}
-
-sub _normal_form_change {
-    my ($reading, $changed) = @_;
-
-# All spelling- or orthographic-related readings should have the same normal form.
-# TODO generalise this somehow
-}
-
-my %has_side_effect = (
-    'is_lemma'    => \&_lemma_change,
-    'normal_form' => \&_normal_form_change,
 );
 
 # Return a JSONable struct of the useful keys.  Keys meant to be writable
@@ -479,11 +462,11 @@ sub readings :Chained('section') :PathPart :Args(0) {
 
 =head2 reading
 
- GET relation/$textid/reading/$id
+ GET relation/$textid/$sectionid/reading/$id
 
 Returns a JSON object describing the reading identified by $id.
 
- POST relation/$textid/reading/$id { request }
+ POST relation/$textid/$sectionid/reading/$id { request }
 
 Accepts form data containing the following fields:
 
@@ -492,6 +475,9 @@ Accepts form data containing the following fields:
   - grammar_invalid (checked or not)
   - is_nonsense (checked or not)
   - normal_form (text)
+  - text (text)
+  - display (text)
+  - annotation (text)
 
 and updates the reading attributes as indicated.
 
@@ -520,9 +506,15 @@ sub reading :Chained('section') :PathPart :Args(1) {
         }
 
         # Assemble the properties, being careful of data types
-        my @booleans      = qw/ is_lemma is_nonsense grammar_invalid /;
+        my @booleans      = qw/ is_nonsense grammar_invalid /;
         my $changed_props = [];
+        # We have to handle the lemma setting separately.
+        my $changed_lemma;
         foreach my $k (keys %{ $c->request->params }) {
+            if ($k eq 'is_lemma') {
+                $changed_lemma = $c->request->param($k);
+                next;
+            }
 
             # Be careful of data types!
             my $prop = $c->request->param($k);
@@ -535,39 +527,119 @@ sub reading :Chained('section') :PathPart :Args(1) {
 
         # Change the reading
         my $reading;
+        my @changed;
         try {
-            $reading = $m->ajax(
-                'put', "/reading/$reading_id",
-                'Content-Type' => 'application/json',
-                'Content'      => encode_json({ properties => $changed_props })
-            );
+            ## First update all the non-side-effect properties
+            if (@$changed_props) {
+                $reading = $m->ajax(
+                    'put', "/reading/$reading_id",
+                    'Content-Type' => 'application/json',
+                    'Content'      => encode_json({ properties => $changed_props })
+                );
+                push(@changed, $reading);
+            }
+            ## Now update the properties with side effects
+            if (defined $changed_lemma) {
+                # Assuming the reading itself changed, it will be in the list
+                my $lresult = $m->ajax('post', "/reading/$reading_id/setlemma?value=$changed_lemma");
+                push(@changed, @$lresult );
+            }
+            ## TODO handle normal_form as well
         }
         catch (stemmaweb::Error $e ) {
             return json_error($c, $e->status, $e->message);
         }
 
-        my $changed = { $reading->{id} => $reading };
+        # If our reading is there multiple times from multiple updates,
+        # the last version will be kept.
+        my $changelist = {};
+        map { $changelist->{$_->{id}} = $_ } @changed;
 
-        # Check for side effects from the changes
-        foreach my $k (keys %has_side_effect) {
-            next unless exists $reading->{$k};
-            if (!defined($orig_reading->{$k})
-                || $reading->{$k} ne $orig_reading->{$k})
-            {
-                my $handler = $has_side_effect{$k};
-                $handler->($reading, $changed);
-            }
-        }
-        $c->stash->{result} = { readings => [ values(%$changed) ] };
+        $c->stash->{result} = { readings => [ values(%$changelist) ] };
     } else {
         json_error($c, 405, "You can GET or POST");
     }
     $c->forward('View::JSON');
 }
 
+=head2 lemmatext
+
+ GET relation/$textid/$sectionid/lemmatext
+
+Returns the current lemma text for the section in a JSON object, key 'text'.
+If the lemma text has not been marked final, shows the gaps where text is not 
+yet lemmatised. If any lemmas have changed since the text was last marked final,
+shows the differences where they appear.
+
+=cut
+
+sub lemmatext :Chained('section') :PathPart :Args(0) {
+    my ($self, $c) = @_;
+    my $textid = $c->stash->{'textid'};
+    my $sectid = $c->stash->{'sectid'};
+    my $m = $c->model('Directory');
+    if ($c->request->method eq 'GET') {
+        try {
+            my $lemmaset = $m->ajax('get', "/tradition/$textid/section/$sectid/lemmatext?final=true");
+            my $lemmacurr = $m->ajax('get', "/tradition/$textid/section/$sectid/lemmatext?final=false");
+            if ($lemmaset->{text} eq "") {
+                # Return the non-final version, no questions asked
+                $c->stash->{result} = $lemmacurr;
+            } else {
+                # Check to see whether there is a difference between the two versions
+                my $currnonsp = $lemmacurr->{text};
+                $currnonsp =~ s/\[\.\.\.\]\s*//g;
+                if ($currnonsp ne $lemmaset->{text}) {
+                    my ($old, $new) = String::Diff::diff($lemmaset->{text}, $currnonsp);
+                    $c->stash->{result} = {text => $new};
+                } else {
+                    $c->stash->{result} = $lemmaset;
+                }
+            }
+        } catch (stemmaweb::Error $e) {
+            return json_error($c, $e->status, $e->message);
+        }
+    } else {
+        json_error($c, 405, "Use GET instead");
+    }
+    $c->forward('View::JSON');
+}
+
+=head2 witnesstext
+
+  GET relation/$textid/$sectioniod/witness/$sigil[?layer=$layer]
+
+Returns the text of the given witness for this section.
+
+=cut
+
+sub witnesstext :Chained('section') :PathPart :Args(1) {
+    my ($self, $c, $sigil) = @_;
+    my $textid = $c->stash->{'textid'};
+    my $sectid = $c->stash->{'sectid'};
+    my $m = $c->model('Directory');
+    if ($c->request->method eq 'GET') {
+        # Is there a layer parameter?
+        my $layer = $c->request->param('layer');
+        try {
+            my $url = "/tradition/$textid/section/$sectid/witness/$sigil/text";
+            if ($layer) {
+                $url .= "?layer=$layer";
+            }
+            my $resp = $m->ajax('get', $url);
+            $c->stash->{result} = $resp;
+        } catch (stemmaweb::Error $e) {
+            return json_error($c, $e->status, $e->message);
+        }
+    } else {
+        json_error($c, 405, "Use GET instead");
+    }    
+    $c->forward('View::JSON');
+}
+
 =head2 compress
 
- POST relation/$textid/compress { data }
+ POST relation/$textid/$sectionid/compress { data }
 
 Accepts form data containing a list of 'readings[]'.
 
@@ -630,7 +702,7 @@ sub compress :Chained('section') :PathPart :Args(0) {
 
 =head2 merge
 
- POST relation/$textid/merge { data }
+ POST relation/$textid/$sectionid/merge { data }
 
 Accepts form data identical to the ../relationships POST call, with one extra
 Boolean parameter 'single'.
@@ -719,7 +791,7 @@ sub merge :Chained('section') :PathPart :Args(0) {
 
 =head2 duplicate
 
- POST relation/$textid/duplicate { data }
+ POST relation/$textid/$sectionid/duplicate { data }
 
 Accepts form data with a list of 'readings[]' and a list of 'witnesses[]'.
 
@@ -857,7 +929,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
 
 =head2 split
 
- POST relation/$textid/split { data }
+ POST relation/$textid/$sectionid/split { data }
 
 Accepts form data with a reading ID, its text (for sanity checking; this should
 be a hidden field on the web form), a character index at which to split the text

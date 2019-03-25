@@ -183,8 +183,8 @@ function svgEnlargementLoaded() {
   $("#loading_overlay").width(lo_width);
   $("#loading_overlay").offset($("#enlargement_container").offset());
   // $("#loading_message").offset(
-  // 	{ 'top': lo_height / 2 - $("#loading_message").height() / 2,
-  // 	  'left': lo_width / 2 - $("#loading_message").width() / 2 });
+  //   { 'top': lo_height / 2 - $("#loading_message").height() / 2,
+  //     'left': lo_width / 2 - $("#loading_message").width() / 2 });
   $('#loading_message').position({
     my: 'center',
     at: 'top + ' + $('#loading_message').height(),
@@ -684,8 +684,8 @@ function relation_factory() {
   //TODO: colors hard coded for now
   this.temp_color = '#FFA14F';
   this.relation_colors = ["#5CCCCC", "#67E667", "#F9FE72", "#6B90D4", "#FF7673", 
-  						  "#E467B3", "#AA67D5", "#8370D8", "#FFC173", "#EC652F", 
-						  "#DB3453", "#48456A", "#ABDFCE", "#502E35", "#E761AE"];
+                "#E467B3", "#AA67D5", "#8370D8", "#FFC173", "#EC652F", 
+              "#DB3453", "#48456A", "#ABDFCE", "#502E35", "#E761AE"];
 
   this.create_temporary = function(source_node_id, target_node_id) {
     var relation_id = get_relation_id(source_node_id, target_node_id);
@@ -1328,6 +1328,28 @@ function placeMiddle() {
   return x;
 }
 
+// Function to request the text of a particular lemma or witness
+function requestRunningText() {
+  var which = $('input[type=radio][name=view_as]:checked').val();
+  var whichwit = $('select#textview_witness').val();
+  // If nothing is selected yet, do nothing
+  // If we have the witness radio button checked but no witness selected, do nothing
+  if (!which || (which === "witness" && whichwit === "")) {
+    return;
+  }
+  
+  // Remove any prior error message
+  $('#section-text-status').empty();
+  // Construct the correct URL
+  var ncpath = which === "lemma" ? getTextURL('lemmatext') : getTextURL('witnesstext/' + whichwit);
+  // Make the request
+  var jqjson = $.get(ncpath, function(data) {
+    // ...and fill in the answer.
+    var textspan = $('<p>').text(data['text']);
+    $('#section_text_display').empty().append(textspan); 
+  });
+}
+
 // Set up keypress commands:
 
 var keyCommands = {
@@ -1460,11 +1482,14 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   } else if ($('#reading-form').dialog('isOpen')) {
     // reading box
     error += '<br>The reading cannot be altered.</p>';
-    errordiv = '#reading_status';
+    errordiv = '#reading-status';
   } else if ($('#section-info').dialog('isOpen')) {
     // section box
     error += '<br>The section cannot be updated.</p>';
     errordiv = '#section-form-status';
+  } else if ($('#section-text').dialog('isOpen')) {
+    error += '<br>The running text cannot be retrieved.</br>';
+    errordiv = '#section-text-status';
   } else {
     // Probably a keystroke action
     error += '<br>The action cannot be performed.</p>';
@@ -1908,7 +1933,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     open: function() {
       $(".ui-widget-overlay").css("background", "none");
       $("#dialog_overlay").show();
-      $('#reading-form-status').empty();
+      $('#reading-status').empty();
       $("#dialog_overlay").height($("#enlargement_container").height());
       $("#dialog_overlay").width($("#enlargement_container").innerWidth());
       $("#dialog_overlay").offset($("#enlargement_container").offset());
@@ -1958,6 +1983,31 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       }
     }
   });
+  
+  $('#section-text').dialog({
+    autoOpen: false,
+    modal: true,
+    width: 800,
+    height: 600,
+    buttons: {
+      Close: function() {
+        $(this).dialog("close");
+      }
+    },
+    open: function() {
+      $('#section-text-status').empty();
+      // Populate the witness list from the start node in readingdata, but only
+      // if we haven't yet
+      if ($('#textview_witness option').length == 1) {
+        $.each(readingdata['__START__'].witnesses, function(i, wit) {
+          var witopt = $('<option>').val(wit).text(wit);
+          $('#textview_witness').append(witopt);
+        }); 
+      }
+      // Refresh whatever form settings we last had
+      requestRunningText();
+    }
+  }); 
 
   // Set up the error message dialog, for results from keystroke commands
   $('#error-display').dialog({
@@ -2063,25 +2113,25 @@ function loadSVG(svgData) {
 
 
 
-/*	OS Gadget stuff
+/*  OS Gadget stuff
 
 function svg_select_callback(topic, data, subscriberData) {
-	svgData = data;
-	loadSVG(svgData);
+  svgData = data;
+  loadSVG(svgData);
 }
 
 function loaded() {
-	var prefs = new gadgets.Prefs();
-	var preferredHeight = parseInt(prefs.getString('height'));
-	if (gadgets.util.hasFeature('dynamic-height')) gadgets.window.adjustHeight(preferredHeight);
-	expandFillPageClients();
+  var prefs = new gadgets.Prefs();
+  var preferredHeight = parseInt(prefs.getString('height'));
+  if (gadgets.util.hasFeature('dynamic-height')) gadgets.window.adjustHeight(preferredHeight);
+  expandFillPageClients();
 }
 
 if (gadgets.util.hasFeature('pubsub-2')) {
-	gadgets.HubSettings.onConnect = function(hum, suc, err) {
-		subId = gadgets.Hub.subscribe("interedition.svg.selected", svg_select_callback);
-		loaded();
-	};
+  gadgets.HubSettings.onConnect = function(hum, suc, err) {
+    subId = gadgets.Hub.subscribe("interedition.svg.selected", svg_select_callback);
+    loaded();
+  };
 }
 else gadgets.util.registerOnLoadHandler(loaded);
 */

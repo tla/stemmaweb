@@ -327,3 +327,12 @@ span.apimore {
   float: left;
   width: 65%;
 }
+
+#section_text_display {
+  border: 1px solid #B0C6F7;
+  padding: 0px 10px;
+  margin: 7px;
+  height: 430px;
+  overflow: scroll;
+  font-size: 150%;
+}
