@@ -366,8 +366,10 @@ function node_obj(ellipse) {
       });
       $(self.ellipse).parent().click(function(evt) {
         evt.stopPropagation();
-        unselect_all_readings();
-        readings_selected = [self.get_id()]
+        if (!evt.shiftKey) {
+          unselect_all_readings();
+        }
+        readings_selected.push(self.get_id())
         self.set_draggable(true)
       });
     } else {
@@ -683,8 +685,8 @@ function relation_factory() {
   this.color_memo = null;
   //TODO: colors hard coded for now
   this.temp_color = '#FFA14F';
-  this.relation_colors = ["#5CCCCC", "#67E667", "#F9FE72", "#6B90D4", "#FF7673", 
-                "#E467B3", "#AA67D5", "#8370D8", "#FFC173", "#EC652F", 
+  this.relation_colors = ["#5CCCCC", "#67E667", "#F9FE72", "#6B90D4", "#FF7673",
+                "#E467B3", "#AA67D5", "#8370D8", "#FFC173", "#EC652F",
               "#DB3453", "#48456A", "#ABDFCE", "#502E35", "#E761AE"];
 
   this.create_temporary = function(source_node_id, target_node_id) {
@@ -1337,7 +1339,7 @@ function requestRunningText() {
   if (!which || (which === "witness" && whichwit === "")) {
     return;
   }
-  
+
   // Remove any prior error message
   $('#section-text-status').empty();
   // Construct the correct URL
@@ -1346,7 +1348,7 @@ function requestRunningText() {
   var jqjson = $.get(ncpath, function(data) {
     // ...and fill in the answer.
     var textspan = $('<p>').text(data['text']);
-    $('#section_text_display').empty().append(textspan); 
+    $('#section_text_display').empty().append(textspan);
   });
 }
 
@@ -1983,7 +1985,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       }
     }
   });
-  
+
   $('#section-text').dialog({
     autoOpen: false,
     modal: true,
@@ -2002,12 +2004,12 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $.each(readingdata['__START__'].witnesses, function(i, wit) {
           var witopt = $('<option>').val(wit).text(wit);
           $('#textview_witness').append(witopt);
-        }); 
+        });
       }
       // Refresh whatever form settings we last had
       requestRunningText();
     }
-  }); 
+  });
 
   // Set up the error message dialog, for results from keystroke commands
   $('#error-display').dialog({
