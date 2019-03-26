@@ -157,6 +157,8 @@ function load_textinfo() {
   if (selectedTextInfo.language && selectedTextInfo.language != 'Default') {
     $('#marked_language').empty().append(selectedTextInfo.language);
   }
+  // What its database ID is
+  $('#id_display').empty().append(selectedTextID)
 }
 
 // Enable / disable the appropriate buttons for paging through the stemma.
