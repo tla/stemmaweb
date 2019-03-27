@@ -211,6 +211,25 @@ sub metadata :Chained('section') :PathPart :Args(0) {
     return section_metadata($c, $textid, $sectid);
 }
 
+=head2 download
+
+  GET relation/$textid/$sectid/download?format=$format
+
+Downloads the section in the requested format.
+
+=cut
+
+sub download :Chained('section') :PathPart :Args(0) {
+    my ($self, $c) = @_;
+    # Add the relevant query parameters
+    $c->request->params->{tradition} = $c->stash->{textid};
+    $c->request->params->{section} = $c->stash->{sectid};
+    # and the text name
+    $c->stash->{name} = $c->stash->{section}->{name};
+    # ...and refer this to the main download routine.
+    $c->detach($self->action_for("../download"));
+}
+
 =head2 relationships
 
  GET relation/$textid/$sectid/relationships

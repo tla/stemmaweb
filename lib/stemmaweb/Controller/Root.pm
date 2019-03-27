@@ -463,22 +463,26 @@ sub download :Local :Args(0) {
     my $prm      = $c->req->params;
     my $textid   = delete $prm->{tradition};
     my $format   = delete $prm->{format};
+    my $sectid   = delete $prm->{section}; # for single-section downloads
     my $textinfo = load_tradition($c, $textid);
     ## Available formats are graphml, json, csv, tsv, dot. Dot -> SVG
 
     my $view = $format eq 'dot' ? 'View::Plain' : "View::$format";
-    $c->stash->{'name'}     = $textinfo->{name};
+    $c->stash->{'name'}   ||= $textinfo->{name};
     $c->stash->{'download'} = 1;
 
     try {
-        if ($format eq 'svg') {
-
+        if ($format eq 'SVG') {
+            my $opts = { include_relations => 1 };
+            $opts->{section} = $sectid if $sectid;
             # Get the tradition as SVG, with relationships included
             $c->stash->{'result'} = $c->model('Directory')
-              ->tradition_as_svg($textid, { include_relations => 1 });
+              ->tradition_as_svg($textid, $opts);
         } else {
+            my $uri = "/tradition/$textid";
+            $uri .= "/section/$sectid" if $sectid;
             my $location =
-              URI->new(sprintf("/tradition/%s/%s", $textid, lc($format)));
+              URI->new(sprintf("%s/%s", $uri, lc($format)));
             $location->query_form($prm);
             $c->stash->{'result'} =
               $c->model('Directory')->ajax('get', $location);

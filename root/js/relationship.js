@@ -1492,6 +1492,10 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   } else if ($('#section-text').dialog('isOpen')) {
     error += '<br>The running text cannot be retrieved.</br>';
     errordiv = '#section-text-status';
+  } else if ($('#download-dialog').dialog('isOpen')) {
+    // reading box
+    error += '<br>The tradition cannot be downloaded.</p>';
+    errordiv = '#download_status';
   } else {
     // Probably a keystroke action
     error += '<br>The action cannot be performed.</p>';
@@ -2010,6 +2014,29 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       requestRunningText();
     }
   });
+  
+  // Set up the download dialog
+  $('#download-dialog').dialog({
+    autoOpen: false,
+    height: 150,
+    width: 500,
+    modal: true,
+    buttons: {
+      Download: function(evt) {
+        ncpath = getTextURL('download');
+        ncpath += '?' + $('#download_form').serialize();
+        window.location = ncpath;
+      },
+      Done: function() {
+        $('#download-dialog').dialog('close');
+      }
+    },
+    create: function() {
+      $('#download_tradition').attr("value", textid);
+      $('#download_section').attr("value", sectid);
+    }
+  });
+  
 
   // Set up the error message dialog, for results from keystroke commands
   $('#error-display').dialog({

@@ -64,6 +64,9 @@ __PACKAGE__->config(
     'View::TT' => {
         INCLUDE_PATH => [ stemmaweb->path_to('root', 'src'), ],
     },
+    'View::Plain' => {
+        stash_key    => 'result',
+    },
 
     'Plugin::Cache' => {
         backend => {
