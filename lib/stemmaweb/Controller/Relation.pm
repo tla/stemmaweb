@@ -388,7 +388,6 @@ this dictionary will look like:
 
   "n1051" => {"id":"1051",
    "witnesses":["Gr314","Kf133","Mu11475","Kr299","MuU151","Er16","Ba96","Wi3818","Mu28315"],
-   "lexemes":[],
    "text":"dicens.",
    "is_meta":null,
    "variants":[]}
@@ -403,7 +402,6 @@ my %read_write_keys = (
     'grammar_invalid' => 1,
     'is_lemma'        => 1,
     'is_nonsense'     => 1,
-    'lexemes'         => 1,
     'normal_form'     => 1,
     'join_prior'      => 0,
     'join_next'       => 0,
@@ -418,8 +416,7 @@ my %read_write_keys = (
 # be put in the hash; this can be used or removed before return to the client.
 #   { 'n123' => {id => '123', text => 'foo', is_lemma => JSON::False, ... }}
 sub _reading_struct {
-    my ($c, $reading) = @_;
-    my $m      = $c->model('Directory');
+    my ($reading) = @_;
     my $struct = {};
     map { $struct->{$_} = $reading->{$_} } keys %read_write_keys;
 
@@ -442,10 +439,6 @@ sub _reading_struct {
     # Set the normal form if necessary
     $struct->{normal_form} = $reading->{normal_form} || $reading->{text};
 
-    # Initialise the lexemes if necessary
-    $struct->{lexemes} = $reading->{lexemes} || [];
-
-    # Now add the list data
     return $struct;
 }
 
@@ -469,7 +462,7 @@ sub readings :Chained('section') :PathPart :Args(0) {
     # Get the extra information we need
     my $ret = {};
     foreach my $rdg (@$rdglist) {
-        my $struct = _reading_struct($c, $rdg);
+        my $struct = _reading_struct($rdg);
 
         # The struct we return needs to be keyed on SVG node ID.
         my $nid = delete $struct->{svg_id};
@@ -513,7 +506,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
         return json_error($c, $e->status, $e->message);
     }
     if ($c->request->method eq 'GET') {
-        my $result = _reading_struct($c, $orig_reading);
+        my $result = _reading_struct($orig_reading);
         delete $result->{svg_id};
         $c->stash->{'result'} = $result;
     } elsif ($c->request->method eq 'POST') {
@@ -563,7 +556,6 @@ sub reading :Chained('section') :PathPart :Args(1) {
                 my $lresult = $m->ajax('post', "/reading/$reading_id/setlemma?value=$changed_lemma");
                 push(@changed, @$lresult );
             }
-            ## TODO handle normal_form as well
         }
         catch (stemmaweb::Error $e ) {
             return json_error($c, $e->status, $e->message);
@@ -572,7 +564,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
         # If our reading is there multiple times from multiple updates,
         # the last version will be kept.
         my $changelist = {};
-        map { $changelist->{$_->{id}} = $_ } @changed;
+        map { $changelist->{$_->{id}} = _reading_struct($_) } @changed;
 
         $c->stash->{result} = { readings => [ values(%$changelist) ] };
     } else {
@@ -626,7 +618,7 @@ sub lemmatext :Chained('section') :PathPart :Args(0) {
 
 =head2 witnesstext
 
-  GET relation/$textid/$sectioniod/witness/$sigil[?layer=$layer]
+  GET relation/$textid/$sectionid/witness/$sigil[?layer=$layer]
 
 Returns the text of the given witness for this section.
 
@@ -656,6 +648,39 @@ sub witnesstext :Chained('section') :PathPart :Args(1) {
     $c->forward('View::JSON');
 }
 
+=head2 copynormal
+
+  POST relation/$textid/$sectionid/copynormal/$reading/$reltype
+
+Copies the normal form of the given reading to any readings related via the 
+given relation type. Returns a list of altered readings.
+
+=cut
+
+sub copynormal :Chained('section') :PathPart :Args(2) {
+    my ($self, $c, $reading, $reltype) = @_;
+    my $m = $c->model('Directory');
+    if ($c->request->method eq 'POST') {
+        # Auth check
+        if ($c->stash->{'permission'} ne 'full') {
+            json_error($c, 403,
+                'You do not have permission to modify this tradition.');
+        }
+        # Do the deed
+        try {
+            my $url = "/reading/$reading/normaliseRelated/$reltype";
+            my $resp = $m->ajax('post', $url);
+            my $changelist = [ map { _reading_struct($_) } @$resp];
+            $c->stash->{result} = $changelist;
+        } catch (stemmaweb::Error $e) {
+            return json_error($c, $e->status, $e->message);
+        }
+    } else {
+        json_error($c, 405, "Use POST instead");
+    }
+    $c->forward('View::JSON');
+}
+
 =head2 compress
 
  POST relation/$textid/$sectionid/compress { data }
@@ -673,6 +698,7 @@ On success returns a JSON object that looks like this:
 
 =cut
 
+## TODO push the >2-node compress operation out to stemmarest
 sub compress :Chained('section') :PathPart :Args(0) {
     my ($self, $c) = @_;
     my $m = $c->model('Directory');
@@ -826,7 +852,6 @@ indicating the relationships that should be removed from the graph. For example:
           "variants":[],
           "orig_rdg":"130",
           "is_meta":null,
-          "lexemes":[],
           "witnesses":["Ba96"],
           "text":"et "}}
 
@@ -847,6 +872,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
 
         # Sort out which readings need to be duplicated from the set given, and
         # ensure that all the given wits bear each relevant reading.
+        # TODO I think stemmarest handles this check
         my @readings;
         foreach my $rid ($c->request->param('readings[]')) {
             try {
@@ -931,7 +957,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
           @{ $response->{relations} };
         $c->stash->{result} = { DELETED => \@deleted_rels };
         foreach my $r (@{ $response->{readings} }) {
-            my $rinfo = _reading_struct($c, $r);
+            my $rinfo = _reading_struct($r);
             my $nid = delete $rinfo->{svg_id};
 
             # Add in the orig_reading information that was passed back
@@ -966,7 +992,6 @@ structure should be reflected in the updated visual display of the client.
    "n131":{"id":"n131",
              "variants":[],
              "is_meta":null,
-             "lexemes":[],
              "witnesses":["Ba96"],
              "text":"et",
              ...},
@@ -974,7 +999,6 @@ structure should be reflected in the updated visual display of the client.
              "variants":[],
              "orig_rdg":"n131",
              "is_meta":null,
-             "lexemes":[],
              "witnesses":["Ba96"],
              "text":"cetera",
              ...}}
@@ -1040,7 +1064,7 @@ sub split :Chained('section') :PathPart :Args(0) {
         # uses database IDs.
         $c->stash->{result}->{relationships} = $response->{sequences};
         foreach my $r (@{ $response->{readings} }) {
-            my $rinfo = _reading_struct($c, $r);
+            my $rinfo = _reading_struct($r);
             delete $rinfo->{svg_id};
 
             # Add in the orig_reading information that was passed back

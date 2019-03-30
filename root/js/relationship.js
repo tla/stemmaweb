@@ -40,6 +40,8 @@ function jq(myid) {
 // Our controller often returns a map of SVG node ID -> reading data,
 // including database ID. This is a set of helper functions to keep
 // the list of keys in readingdata in sync with the DB -> SVG ID map.
+
+// rdata here is a hash of SVG ID -> reading info.
 function update_readingdata(rdata) {
   $.each(rdata, function(k, v) {
     readingdata[k] = v;
@@ -47,6 +49,7 @@ function update_readingdata(rdata) {
   });
 }
 
+// rdata here is the info for an individual reading, which should have an svg_id key.
 function update_reading(rdata) {
   var rid = rdata['id'];
   var nid = rid2node[rid];
@@ -56,11 +59,62 @@ function update_reading(rdata) {
       delete rid2node[rid];
       delete readingdata[nid];
     }
-    nid = delete rdata['svg_id'];
+    nid = rdata['svg_id'];
+    delete readingdata['svg_id'];
   }
   readingdata[nid] = rdata;
   rid2node[rid] = nid;
   return nid;
+}
+
+function update_reading_display(node_id) {
+  // Grab the reading data from which we update
+  var rdata = readingdata[node_id];
+  // Get the elements of the node. These are JQuery objects
+  var ellipse = get_ellipse(node_id);
+  var g = ellipse.parent();
+  // ...but this is a DOM object 
+  var text = g.find('text').get(0);
+  // and this is an array of DOM objects.
+  var normalifexists = g.find('text[fill="grey"]');
+  // Do we need to display a normal form? 
+  if (rdata.normal_form !== rdata.text) {
+    // See if the element has a normal form specified
+    var normal;
+    if (normalifexists.length == 0) {
+      // We are going to need to resize the ellipse and shove up the existing text element(s) to accommodate
+      ellipse.attr("ry", "25.4118");
+      text.setAttribute("y", parseFloat(ellipse.attr("cy")) - 3.8);
+      normal = text.cloneNode();
+      text.after(normal);
+      normal.setAttribute("y", parseFloat(ellipse.attr("cy")) + 10.2);
+      normal.setAttribute("fill", "grey");
+    } else {
+      normal = normalifexists.get(0);
+    }
+    // Center this text node, if it isn't already.
+    normal.setAttribute("text-anchor", "middle");
+    normal.setAttribute("x", ellipse.attr("cx"));  
+    // and reset the content.    
+    normal.textContent = rdata.normal_form;
+  } else if (normalifexists.length > 0){
+    // We should shrink the ellipse and remove the normal form.
+    ellipse.attr("ry", "18");
+    text.setAttribute("y", parseFloat(ellipse.attr("cy")) + 2);
+    normalifexists.get(0).remove();
+  }
+  // Can / should we reset the reading text?
+  if ('display' in rdata && rdata.display.indexOf('<') > -1) {
+    // We can't reset the text element.
+    console.log("Not resetting text value for node " + node_id);
+  } else {
+    // Center the old text node too.
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("x", ellipse.attr("cx"));
+    // Now replace the text.
+    var newText = 'display' in rdata ? rdata.display : rdata.text;
+    text.textContent = newText;
+  }
 }
 
 function delete_reading(nodeid) {
@@ -340,8 +394,6 @@ function unselect_all_readings() {
     });
   }
 }
-
-
 
 function node_obj(ellipse) {
   this.ellipse = ellipse;
@@ -834,7 +886,7 @@ function draw_relation(source_id, target_id, relation_color, emphasis) {
 
 function delete_relation(form_values) {
   ncpath = getTextURL('relationships');
-  var jqjson = $.ajax({
+  $.ajax({
     url: ncpath,
     data: form_values,
     success: function(data) {
@@ -1345,7 +1397,7 @@ function requestRunningText() {
   // Construct the correct URL
   var ncpath = which === "lemma" ? getTextURL('lemmatext') : getTextURL('witnesstext/' + whichwit);
   // Make the request
-  var jqjson = $.get(ncpath, function(data) {
+  $.get(ncpath, function(data) {
     // ...and fill in the answer.
     var textspan = $('<p>').text(data['text']);
     $('#section_text_display').empty().append(textspan);
@@ -1399,7 +1451,7 @@ var keyCommands = {
           'id': reading_id,
           'is_lemma': set_lemma,
         };
-        var jqjson = $.post(ncpath, form_values, function(data) {
+        $.post(ncpath, form_values, function(data) {
           readings_selected = [];
           $.each(data['readings'], function(i, rdgdata) {
             // The reading data already exists; we assume that the
@@ -1414,6 +1466,13 @@ var keyCommands = {
           });
         });
       });
+    }
+  },
+  '110': {
+    'key': 'n',
+    'description': 'Propagate the normal form of the selected reading(s) along specified relations',
+    'function': function() {
+      $('#normal-form-propagate').dialog('open');
     }
   },
   '120': {
@@ -1496,6 +1555,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     // reading box
     error += '<br>The tradition cannot be downloaded.</p>';
     errordiv = '#download_status';
+  } else if ($('#normal-form-propagate').dialog('isOpen')) {
+    error += '<br>The readings cannot be updated.';
+    errordiv = '#normal-form-propagate-status';
   } else {
     // Probably a keystroke action
     error += '<br>The action cannot be performed.</p>';
@@ -1506,7 +1568,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   $(errordiv).append('<p class="error">Error: ' + error);
 
   // Open the dialog explicitly if we need to
-  if (errordiv == '#error-display') {
+  if (errordiv === '#error-display') {
     $(errordiv).dialog('open');
   } else {
     // Reset the buttons on the existing dialog
@@ -1608,7 +1670,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           mybuttons.button('disable');
           form_values = $('#merge_node_form').serialize();
           ncpath = getTextURL('merge');
-          var jqjson = $.post(ncpath, form_values, function(data) {
+          $.post(ncpath, form_values, function(data) {
             merge_nodes(rid2node[$('#source_node_id').val()],
               rid2node[$('#target_node_id').val()], data);
             mybuttons.button('enable');
@@ -1620,7 +1682,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           mybuttons.button('disable');
           form_values = $('#merge_node_form').serialize();
           ncpath = getTextURL('relationships');
-          var jqjson = $.post(ncpath, form_values, function(data) {
+          $.post(ncpath, form_values, function(data) {
             // Stash the new relationships.
             $.each(data['relationships'], function(item, source_target) {
               var source_found = get_ellipse(source_target[0]);
@@ -1714,7 +1776,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
             mybuttons.button('disable');
             var form_values = $('#detach_collated_form').serialize();
             ncpath = getTextURL('duplicate');
-            var jqjson = $.post(ncpath, form_values, function(data) {
+            $.post(ncpath, form_values, function(data) {
               readings_selected = [];
               detach_node(data);
               mybuttons.button("enable");
@@ -1734,7 +1796,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
             var form_values = $('#detach_collated_form').serialize();
             // $.each($('#detach_collated_form input').filter(function() {return this.getAttribute("name") === "readings[]"}), function( i, v ) {vals.push(i)}); vals
 
-            var jqjson = $.post(ncpath, form_values, function(data) {
+            $.post(ncpath, form_values, function(data) {
               mybuttons.button('enable');
               if (data.nodes) {
                 compress_nodes(data.nodes);
@@ -1909,9 +1971,10 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         };
         // Make the JSON call
         ncpath = getReadingURL(reading_id);
-        var jqjson = $.post(ncpath, form_values, function(data) {
+        $.post(ncpath, form_values, function(data) {
           $.each(data['readings'], function(i, rdgdata) {
             var this_nodeid = update_reading(rdgdata);
+            update_reading_display(this_nodeid);
             if ($('#update_workspace_button').data('locked') == false) {
               // Re-color the node if necessary
               color_inactive(get_ellipse(this_nodeid));
@@ -1965,7 +2028,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $('#section-form-status').empty();
         // Serialise and send the form
         ncpath = getTextURL('metadata');
-        var jqjson = $.post(ncpath, $('#section_info_form').serialize(), function(data) {
+        $.post(ncpath, $('#section_info_form').serialize(), function(data) {
           // Update the section name in the display
           sect_metadata = data;
           $('#text_title').empty().append(data['name']);
@@ -2034,6 +2097,53 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     create: function() {
       $('#download_tradition').attr("value", textid);
       $('#download_section').attr("value", sectid);
+    }
+  });
+  
+  // Set up the normal form propagation dialog
+  $('#normal-form-propagate').dialog({
+    autoOpen: false,
+    height: 150,
+    modal: true,
+    buttons: {
+      OK: function(evt) {
+        var mybuttons = $(evt.target).closest('button').parent().find('button');
+        mybuttons.button('disable');
+        $('#normal-form-propagate-status').empty();
+        // Run the POST for each reading in readings_selected
+        $.each(readings_selected, function(i, nid) {
+          var rid = readingdata[nid].id;
+          var rtype = $('#normal-form-relationtype').val();
+          ncpath = getTextURL('copynormal/' + rid + "/" + rtype);
+          $.post(ncpath, function (data) {
+            // Re-enable the buttons
+            mybuttons.button('enable');
+            // TODO update the normal form in the relevant reading nodes
+            $.each(data, function(i, rdg) {
+              var this_nodeid = update_reading(rdg);
+              update_reading_display(this_nodeid);
+            });
+            $('#normal-form-propagate').dialog('close');
+          });          
+        })
+      },
+      Cancel: function(evt) {
+        $('#normal-form-propagate').dialog('close');
+      }
+    },
+    open: function() {
+      // Populate the normal form span
+      var normals = [];
+      $.each(readings_selected, function(i, rdgid) {
+        normals.push(readingdata[rdgid].normal_form);
+      });
+      $('#normal-form-reading').empty().text(normals.join(", "));
+    },
+    create: function() {
+      // Populate the relation type select
+      $.each(relationship_types, function(i, typedef) {
+        $('#normal-form-relationtype').append($('<option />').attr("value", typedef.name).text(typedef.name));
+      });
     }
   });
   

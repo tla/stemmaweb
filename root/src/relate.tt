@@ -186,16 +186,26 @@
     <div id="reading-form-status"></div>
   </div>
   
+  <div id="normal-form-propagate" title="Propagate normal form">
+    <div id="normal-form-propagate-status"></div>
+    <form id="normal_form_form" action="#">
+      <p>Set the normal form(s) <span id="normal-form-reading"></span> for their respective
+        <select id="normal-form-relationtype" name="relationtype"></select> relations
+      </p>
+    </form>
+  </div>
+        
+  
   <div id="section-text" title="Running text view">
     <div id="section-text-status"></div>
     <form id="section_text_form" action="#">
-        <input type="radio" id="view_as_lemma" name="view_as" value="lemma" onclick="requestRunningText()">
-          <label for="view_as_lemma"> Lemmatised text</label>
-        <input type="radio" id="view_as_witness" name="view_as" value="witness" onclick="requestRunningText()">
-          <label for="view_as_witness"> Text of witness: </label>
-        <select id="textview_witness" name="textview_witness" onchange="requestRunningText()">
-          <option></option>
-        </select>
+      <input type="radio" id="view_as_lemma" name="view_as" value="lemma" onclick="requestRunningText()">
+        <label for="view_as_lemma"> Lemmatised text</label>
+      <input type="radio" id="view_as_witness" name="view_as" value="witness" onclick="requestRunningText()">
+        <label for="view_as_witness"> Text of witness: </label>
+      <select id="textview_witness" name="textview_witness" onchange="requestRunningText()">
+        <option></option>
+      </select>
     </form>
     <div id="section_text_display"></div>
   </div>
