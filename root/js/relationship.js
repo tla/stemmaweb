@@ -5,6 +5,7 @@ var start_element_height = 0;
 var global_graph_scale = 26;
 var global_graph_min = 10;
 var global_graph_max = 50;
+var global_zoomstart_yes = false;
 var reltypes = {};
 var readingdata = {};
 var readings_selected = [];
@@ -361,10 +362,13 @@ function svgEnlargementLoaded() {
     d3svg.style("background-color", "white");
     d3svg.attr("transform", "scale(" + global_graph_scale + ")");
     
+    var calledfx = d3.zoom()
+	.scaleExtent([2,global_graph_max])
+	.on("zoom", zoomer);
+    d3svg.call(calledfx);
+	 //.call(calledfx.transform, d3.zoomIdentity.scale(global_graph_scale));// JMB turn zoom function on
+    d3svg.attr("transform", "scale(" + global_graph_scale + ")");
 
-    d3svg.call(d3.zoom()
-	.scaleExtent([2, global_graph_max])
-	.on("zoom", zoomer));// JMB turn zoom function on
 
 	// This bit deals with scrollbars - JMB
 	if (text_direction == 'RL') {//For Right to Left
@@ -456,11 +460,21 @@ if ( $('#update_workspace_button').data('locked') == false ) {
 //document.getElementsByClassName('hasSVG')[1].style.transformOrigin = 'center top';
 var d3graph = d3.select("#graph0");
 //d3svg.style("background-color", "green");
+if (global_zoomstart_yes == false) {
+global_zoomstart_yes = true;
+console.log("Penguins are good.");
+d3.event.transform.k = global_graph_scale;
+};
 tfm = d3.event.transform;
 
 var coords = d3.mouse(this);
+// This next bit grabs the coordinates relative to the container, which are used to "neaten up" the final pan.
+var containerd3 = d3.select("#svgenlargement").node();
+var coords2 = d3.mouse(containerd3);
+percLR = coords2[0]
+percUD = coords2[1]
 d3svg.attr("transform", "scale(" + tfm.k + ")");
-
+//global_zoomstart_yes
 if (text_direction == 'BI') {
 // Locked pan to centre of X Axis
 var gwit = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().width;
@@ -474,7 +488,7 @@ var percy = yval/ghighB//This gives us the % of the way along the Y axis
 var realy = percy * ghighA
 console.log("True graph height is " + ghighA + ", internal height is " + ghighB);
 console.log("Internal Y is " + yval + ", percent is " + percy + ", real point to scroll to is " + realy);
-$( "div #svgenlargement" ).scrollTop(realy - 400);
+$( "div #svgenlargement" ).scrollTop(realy - percUD);
 }
 else{
 // Locked pan to centre of Y Axis
@@ -490,7 +504,7 @@ var percx = xval/gwitB//This gives us the % of the way along the X axis
 var realx = percx * gwitA
 console.log("True graph width is " + gwitA + ", internal width is " + gwitB);
 console.log("Internal X is " + xval + ", percent is " + percx + ", real point to scroll to is " + realx);
-$( "div #svgenlargement" ).scrollLeft(realx - 800);
+$( "div #svgenlargement" ).scrollLeft(realx - percLR);
 }
 
 }
@@ -1681,77 +1695,6 @@ $(document).ajaxError( function(event, jqXHR, ajaxSettings, thrownError) {
     var p = svg_root.createSVGPoint();
     p.x = event.clientX;
     p.y = event.clientY;
-    //stateOrigin = p.matrixTransform(stateTf);
-
-    // Activate marquee if in interaction mode
-/*    if( $('#update_workspace_button').data('locked') == true ) { marquee.show( event ) };
-
-    event.returnValue = false;
-    event.preventDefault();
-    return false;
-  }).mouseup(function (event) {
-    marquee.select();
-    $(this).data('down', false);
-  }).mousemove(function (event) {
-    if( timer != null ) { clearTimeout(timer); }
-    if ( ($(this).data('down') == true) && ($('#update_workspace_button').data('locked') == false) ) {
-        var p = svg_root.createSVGPoint();
-        p.x = event.clientX;
-        p.y = event.clientY;
-        //p = p.matrixTransform(stateTf);
-        //var matrix = stateTf.inverse().translate(p.x - stateOrigin.x, p.y - stateOrigin.y);
-        //var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
-        //svg_root_element.setAttribute("transform", s);
-    }
-    marquee.expand( event );
-    event.returnValue = false;
-    event.preventDefault();*/
-//  }).mousewheel(function (event, delta) {
-//    event.returnValue = false;
-//    event.preventDefault();
-//    event.stopImmediatePropagation();
-//    if ( $('#update_workspace_button').data('locked') == false ) {
-	//window.alert("You're rolling a mousewheel at me. How rude.")
-        //evt_obj.preventDefault();
-        //evt_obj.stopImmediatePropagation();
-	//window.alert(document.getElementsByClassName('hasSVG')[1])
-        //var scale = Number( document.getElementsByClassName('hasSVG')[1].style.transform.match( /\d+, \d+/ )[0].split( ',' )[0] );
-//	var scale = global_graph_scale
-//        var scale_delta = -1;
-//        if( event.deltaY > 0 ) {
-//          scale_delta = 1
-//        }
-//        scale = scale + scale_delta;
-	//window.alert(scale)
-//        global_graph_scale = global_graph_scale + scale_delta;
-//        if( scale < global_graph_min ) {
-//          scale = global_graph_min
-//          global_graph_scale = global_graph_min
-//        };
-//        if( scale > global_graph_max ) {
-//          scale = global_graph_max
-//          global_graph_scale = global_graph_max
-//        };
-//        document.getElementsByClassName('hasSVG')[1].style.transform = 'scale(' + scale + ')';
-//        if (!delta || delta == null || delta == 0) delta = event.originalEvent.wheelDelta;
-//        if (!delta || delta == null || delta == 0) delta = -1 * event.originalEvent.detail;
-//        if( delta < -9 ) { delta = -9 };
-//        var z = 1 + delta/10;
-//        z = delta > 0 ? 1 : -1;
-//        var g = svg_root_element;
-//        if (g && ((z<1 && (g.getScreenCTM().a * start_element_height) > 4.0) || (z>=1 && (g.getScreenCTM().a * start_element_height) < 100))) {
-//            var root = svg_root;
-//            var p = root.createSVGPoint();
-//            p.x = event.originalEvent.clientX;
-//            p.y = event.originalEvent.clientY;
-//            p = p.matrixTransform(g.getCTM().inverse());
-//            var scaleLevel = 1+(z/20);
-//            var k = root.createSVGMatrix().translate(p.x, p.y).scale(scaleLevel).translate(-p.x, -p.y);
-//            var matrix = g.getCTM().multiply(k);
-//            var s = "matrix(" + matrix.a + "," + matrix.b + "," + matrix.c + "," + matrix.d + "," + matrix.e + "," + matrix.f + ")";
-//            g.setAttribute("transform", s);
-//        }
-//    }
   }).css({
     'overflow' : 'hidden',
     'cursor' : '-moz-grab'
