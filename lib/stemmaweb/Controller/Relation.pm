@@ -130,7 +130,7 @@ sub help :Local :Args(1) {
 
  Update the metadata for a section. At present, this means changing its name.
 
- Accepts a form data post with the new section info, and attempts to change 
+ Accepts a form data post with the new section info, and attempts to change
  the name on the server. Returns a JSON structure with the updated info.
 
   { 'id' => $sectid, 'name' => $new_name }
@@ -276,7 +276,7 @@ sub relationships :Chained('section') :PathPart :Args(0) {
                     $result = $m->ajax( 'delete',
                         "/tradition/$textid/relation",
                         'Content-Type' => 'application/json',
-                        'Content' => to_json( $opts ) );
+                        'Content' => encode_json( $opts ) );
                 } catch (stemmaweb::Error $e ) {
                     return json_error( $c, $e->status, $e->message );
                 }
@@ -294,8 +294,8 @@ sub relationships :Chained('section') :PathPart :Args(0) {
 
  GET relation/$textid/readings
 
-Returns a JSON dictionary, keyed on the SVG node ID of the reading, of all readings 
-defined for this section along with their metadata. A typical object in this dictionary 
+Returns a JSON dictionary, keyed on the SVG node ID of the reading, of all readings
+defined for this section along with their metadata. A typical object in this dictionary
 will look like:
 
   "n1051" => {"id":"1051",
@@ -341,17 +341,24 @@ my %has_side_effect = (
 
 
 # Return a JSONable struct of the useful keys.  Keys meant to be writable
-# have a true value; read-only keys have a false value.
+# have a true value; read-only keys have a false value. If the SVG ID for
+# the reading differs from the database ID, an additional key 'svg_id' will
+# be put in the hash; this can be used or removed before return to the client.
+#   { 'n123' => {id => '123', text => 'foo', is_lemma => JSON::False, ... }}
 sub _reading_struct {
     my( $c, $reading ) = @_;
     my $m = $c->model('Directory');
-    my $rid = $reading->{id};
     my $struct = {};
     map { $struct->{$_} = $reading->{$_} } keys %read_write_keys;
 
     # Set known IDs on start/end nodes, that match what will be in the SVG
-    $struct->{id} = '__START__' if $reading->{is_start} == JSON::true;
-    $struct->{id} = '__END__' if $reading->{is_end} == JSON::true;
+    if ($reading->{is_start} == JSON::true) {
+        $struct->{id} = '__START__';
+    } elsif ($reading->{is_end} == JSON::true) {
+        $struct->{id} = '__END__';
+    } else {
+        $struct->{svg_id} = 'n' . $reading->{id};
+    }
 
     # Calculate is_meta
     $struct->{is_meta} = $reading->{is_start} || $reading->{is_end}
@@ -382,7 +389,9 @@ sub readings :Chained('section') :PathPart :Args(0) {
     my $ret = {};
     foreach my $rdg (@$rdglist) {
         my $struct = _reading_struct( $c, $rdg );
-        $ret->{'n' . $struct->{id}} = $struct;
+        # The struct we return needs to be keyed on SVG node ID.
+        my $nid = delete $struct->{svg_id};
+        $ret->{$nid ? $nid : $struct->{id}} = $struct;
     }
     $c->stash->{result} = $ret;
     $c->forward('View::JSON');
@@ -418,7 +427,9 @@ sub reading :Chained('section') :PathPart :Args(1) {
         return json_error( $c, $e->status, $e->message );
     }
     if( $c->request->method eq 'GET' ) {
-        $c->stash->{'result'} = _reading_struct($c, $orig_reading);
+        my $result = _reading_struct($c, $orig_reading);
+        delete $result->{svg_id};
+        $c->stash->{'result'} = $result;
     } elsif ( $c->request->method eq 'POST' ) {
         # Auth check
         if( $c->stash->{'permission'} ne 'full' ) {
@@ -444,7 +455,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
         try {
             $reading = $m->ajax('put', "/reading/$reading_id",
                 'Content-Type' => 'application/json',
-                'Content' => to_json( { properties => $changed_props } ) );
+                'Content' => encode_json( { properties => $changed_props } ) );
         } catch (stemmaweb::Error $e ) {
             return json_error( $c, $e->status, $e->message );
         }
@@ -500,7 +511,7 @@ sub compress :Chained('section') :PathPart :Args(0) {
                 my $rid = shift @rids;
                 $m->ajax('post', "/reading/$first/concatenate/$rid",
                     'Content-Type' => 'application/json',
-                    'Content' => to_json( {character => " "} ));
+                    'Content' => encode_json( {character => " "} ));
                 push( @nodes, $rid );
             }
         } catch (stemmaweb::Error $e ) {
@@ -557,13 +568,19 @@ sub merge :Chained('section') :PathPart :Args(0) {
 
         my $main = $c->request->param('target');
         my $second = $c->request->param('source');
-        my $endrank = $c->stash->{section}->{'endRank'};
+        my $extent;
         my $rdg_rank;
         try {
+            ## Figure out the range of ranks we are dealing with
             my $main_info = $m->ajax('get', "/reading/$main");
             my $second_info = $m->ajax('get', "/reading/$second");
-            $rdg_rank = $main_info->{rank} < $second_info->{rank}
-                ? $main_info->{rank} : $second_info->{rank};
+            my @ordered = sort { $a->{rank} <=> $b->{rank} } ($main_info, $second_info);
+            $rdg_rank = $ordered[0]->{rank};
+            $extent = $rdg_rank + (2 * ($ordered[1]->{rank} - $rdg_rank));
+            if ($extent > $c->stash->{section}->{'endRank'}) {
+                $extent = $c->stash->{section}->{'endRank'};
+            }
+            ## Do the merge
             $m->ajax('post', "/reading/$main/merge/$second");
         } catch (stemmaweb::Error $e) {
             return json_error( $c, $e->status, $e->message );
@@ -575,7 +592,7 @@ sub merge :Chained('section') :PathPart :Args(0) {
         unless( $c->request->param('single') ) {
             my $mergeable;
             try {
-                $mergeable = $m->ajax('get', "/tradition/$textid/section/$sectid/mergeablereadings/$rdg_rank/$endrank");
+                $mergeable = $m->ajax('get', "/tradition/$textid/section/$sectid/mergeablereadings/$rdg_rank/$extent");
             } catch (stemmaweb::Error $e ) {
                 $response->{status} = 'warn';
                 $response->{warning} = 'Could not check for mergeable readings: ' . $e->message;
@@ -601,18 +618,18 @@ sub merge :Chained('section') :PathPart :Args(0) {
 Accepts form data with a list of 'readings[]' and a list of 'witnesses[]'.
 Duplicates the requested readings, detaching the witnesses specified in
 the list to use the new reading(s) instead of the old. Returns a JSON object
-that contains a key for each new reading thus created, as well as a key
-'DELETED' that contains a list of tuples indicating the relationships that
-should be removed from the graph. For example:
+that contains a key for each new reading thus created (which is its SVG ID),
+as well as a key 'DELETED' that contains a list of tuples indicating the
+relationships that should be removed from the graph. For example:
 
-  {"DELETED":[["n135","n130"]],
-   "n131_0":{"id":"n131_0",
-             "variants":[],
-             "orig_rdg":"n131",
-             "is_meta":null,
-             "lexemes":[],
-             "witnesses":["Ba96"],
-             "text":"et "}}
+  {"DELETED":[["135","130","transposition"]],
+   "n476":{"id":"476",
+          "variants":[],
+          "orig_rdg":"130",
+          "is_meta":null,
+          "lexemes":[],
+          "witnesses":["Ba96"],
+          "text":"et "}}
 
 
 =cut
@@ -690,19 +707,21 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
         try {
             $response = $m->ajax('post', $url,
                 'Content-Type' => 'application/json',
-                'Content' => to_json($req));
+                'Content' => encode_json($req));
         } catch (stemmaweb::Error $e) {
             json_error( $c, $e->status, $e->message );
         }
 
-        # Massage the response into the expected form.
+        # Massage the response into the expected form. For this response
+        # we use database IDs, for consistency.
         my @deleted_rels = map { [$_->{source}, $_->{target}, $_->{type}] } @{$response->{relations}};
         $c->stash->{result} = {DELETED => \@deleted_rels};
         foreach my $r (@{$response->{readings}}) {
             my $rinfo = _reading_struct($c, $r);
+            my $nid = delete $rinfo->{svg_id};
             # Add in the orig_reading information that was passed back
             $rinfo->{orig_reading} = $r->{orig_reading};
-            $c->stash->{result}->{$r->{id}} = $rinfo;
+            $c->stash->{result}->{$nid} = $rinfo;
         }
     } else {
         json_error( $c, 405, "Use POST instead");
@@ -788,15 +807,17 @@ sub split :Chained('section') :PathPart :Args(0) {
         try {
             $response = $m->ajax('post', $url,
                 'Content-Type' => 'application/json',
-                'Content' => to_json($model));
+                'Content' => encode_json($model));
         } catch (stemmaweb::Error $e) {
             json_error( $c, $e->status, $e->message );
         }
 
-        # Fill out the readings and return the result
+        # Fill out the readings and return the result. This response
+        # uses database IDs.
         $c->stash->{result}->{relationships} = $response->{relations};
         foreach my $r (@{$response->{readings}}) {
             my $rinfo = _reading_struct($c, $r);
+            delete $rinfo->{svg_id};
             # Add in the orig_reading information that was passed back
             $rinfo->{orig_reading} = $r->{orig_reading};
             $c->stash->{result}->{$r->{id}} = $rinfo;
