@@ -104,7 +104,7 @@ function update_reading_display(node_id) {
     normalifexists.get(0).remove();
   }
   // Can / should we reset the reading text?
-  if ('display' in rdata && rdata.display.indexOf('<') > -1) {
+  if (rdata['display'] && rdata.display.indexOf('<') > -1) {
     // We can't reset the text element.
     console.log("Not resetting text value for node " + node_id);
   } else {
@@ -112,7 +112,7 @@ function update_reading_display(node_id) {
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("x", ellipse.attr("cx"));
     // Now replace the text.
-    var newText = 'display' in rdata ? rdata.display : rdata.text;
+    var newText = rdata.display ? rdata.display : rdata.text;
     text.textContent = newText;
   }
 }
@@ -188,8 +188,7 @@ function stringify_wordform(tag) {
 function color_inactive(el) {
   var svg_id = $(el).parent().attr('id');
   var reading_info = readingdata[svg_id];
-  // If the reading info has any non-disambiguated lexemes, color it yellow;
-  // otherwise color it green.
+  // If the reading is a lemma, color it red; otherwise color it green.
   $(el).attr({
     stroke: 'green',
     fill: '#b3f36d'
@@ -418,11 +417,19 @@ function node_obj(ellipse) {
       });
       $(self.ellipse).parent().click(function(evt) {
         evt.stopPropagation();
+        // Enable shift-select for multiple readings
         if (!evt.shiftKey) {
           unselect_all_readings();
+        } 
+        // Unselect a selected reading if we clicked on it
+        var idx = readings_selected.indexOf(self.get_id())
+        if (idx > -1) {
+          readings_selected.splice(idx, 1);
+          self.set_draggable(false);
+        } else {
+          readings_selected.push(self.get_id());
+          self.set_draggable(true);
         }
-        readings_selected.push(self.get_id())
-        self.set_draggable(true)
       });
     } else {
       self.ellipse.siblings('text').attr('class', '');
@@ -479,9 +486,9 @@ function node_obj(ellipse) {
   this.mouseup_listener = function(evt) {
     if ($('ellipse[fill="#ffccff"]').size() > 0) {
       var source_node_id = $(self.ellipse).parent().attr('id');
-      var source_node_text = self.ellipse.siblings('text').text();
+      var source_node_text = readingdata[source_node_id].text
       var target_node_id = $('ellipse[fill="#ffccff"]').parent().attr('id');
-      var target_node_text = $('ellipse[fill="#ffccff"]').siblings("text").text();
+      var target_node_text = readingdata[target_node_id].text
       $('#source_node_id').val(readingdata[source_node_id]['id']);
       $('.rel_rdg_a').text("'" + source_node_text + "'");
       $('#target_node_id').val(readingdata[target_node_id]['id']);
@@ -1197,7 +1204,7 @@ function compress_nodes(readings) {
         //This 'Curveto' property determines how long the line is.
         //The Syntax is C c1x,c1y c2x,c2y x,y where x,y are where the
         //path ends.
-        var c_attr = d.match(/C(\S+) (\S+) (\S+)/);
+        var c_attr = d.match(/C\s?(\S+) (\S+) (\S+)/);
 
         var c_x = parseInt(first[0].getAttribute('cx'), 10);
         var r_x = parseInt(first[0].getAttribute('rx'), 10);
@@ -1452,7 +1459,7 @@ var keyCommands = {
           'is_lemma': set_lemma,
         };
         $.post(ncpath, form_values, function(data) {
-          readings_selected = [];
+          unselect_all_readings();
           $.each(data['readings'], function(i, rdgdata) {
             // The reading data already exists; we assume that the
             // database ID hasn't changed, and replace it wholesale.
@@ -1684,22 +1691,24 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           ncpath = getTextURL('relationships');
           $.post(ncpath, form_values, function(data) {
             // Stash the new relationships.
-            $.each(data['relationships'], function(item, source_target) {
-              var source_found = get_ellipse(source_target[0]);
-              var target_found = get_ellipse(source_target[1]);
-              var relation_found = $.inArray(source_target[2], $('#keymap').data('relations'));
-              if (source_found.size() && target_found.size() && relation_found > -1) {
-                var emphasis = $('#is_significant option:selected').attr('value');
-                var relation = relation_manager.create(source_target[0], source_target[1], relation_found, emphasis);
-                $.each($('#merge_node_form').serializeArray(), function(i, k) {
-                  relation.data(k.name, k.value);
-                });
-              }
-            });
-            // Stash any changed readings.
-            $.each(data['readings'], function(i, rdgdata) {
-              update_reading(rdgdata);
-            });
+            if (data) { // If we get a 304 response, there is no data.
+              $.each(data['relationships'], function(item, source_target) {
+                var source_found = get_ellipse(source_target[0]);
+                var target_found = get_ellipse(source_target[1]);
+                var relation_found = $.inArray(source_target[2], $('#keymap').data('relations'));
+                if (source_found.size() && target_found.size() && relation_found > -1) {
+                  var emphasis = $('#is_significant option:selected').attr('value');
+                  var relation = relation_manager.create(source_target[0], source_target[1], relation_found, emphasis);
+                  $.each($('#merge_node_form').serializeArray(), function(i, k) {
+                    relation.data(k.name, k.value);
+                  });
+                }
+              });
+              // Stash any changed readings.
+              $.each(data['readings'], function(i, rdgdata) {
+                update_reading(rdgdata);
+              });
+            }
             mybuttons.button('enable');
             $('#dialog-form').dialog('close');
           }, 'json');
@@ -1777,7 +1786,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
             var form_values = $('#detach_collated_form').serialize();
             ncpath = getTextURL('duplicate');
             $.post(ncpath, form_values, function(data) {
-              readings_selected = [];
+              unselect_all_readings();
               detach_node(data);
               mybuttons.button("enable");
               self.dialog("close");
@@ -2131,6 +2140,12 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $('#normal-form-propagate').dialog('close');
       }
     },
+    create: function() {
+      // Populate the relation type select
+      $.each(relationship_types, function(i, typedef) {
+        $('#normal-form-relationtype').append($('<option />').attr("value", typedef.name).text(typedef.name));
+      });
+    },
     open: function() {
       // Populate the normal form span
       var normals = [];
@@ -2138,12 +2153,16 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         normals.push(readingdata[rdgid].normal_form);
       });
       $('#normal-form-reading').empty().text(normals.join(", "));
-    },
-    create: function() {
-      // Populate the relation type select
-      $.each(relationship_types, function(i, typedef) {
-        $('#normal-form-relationtype').append($('<option />').attr("value", typedef.name).text(typedef.name));
+      // Bind the return key to the OK button
+      var okbutton = $(this).parent().find('button:contains("OK")')[0];
+      $(this).keypress(function(evt) {
+        if (evt.which === 13) {
+          okbutton.click();
+        }
       });
+    },
+    close: function() {
+      $(this).off("keypress");
     }
   });
   

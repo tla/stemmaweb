@@ -979,8 +979,8 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           })
         }
       },
-      ok: {
-        text: 'OK',
+      close: {
+        text: 'Close',
         click: function() {
           $('#section-edit-dialog').dialog('close');
         }
