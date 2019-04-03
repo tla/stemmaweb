@@ -8,22 +8,22 @@ use List::Util qw/ max /;
 use LWP::UserAgent;
 use Safe::Isa;
 use Scalar::Util qw/ looks_like_number /;
-use Text::Tradition::StemmaUtil qw/ character_input phylip_pars /;
+use stemmaweb::Model::StemmaUtil qw/ character_input phylip_pars /;
 use TryCatch;
 use URI;
 
 BEGIN { extends 'Catalyst::Controller' }
 
 has stemweb_url => (
-    is => 'ro',
-    isa => 'Str',
+    is      => 'ro',
+    isa     => 'Str',
     default => 'http://slinkola.users.cs.helsinki.fi',
-    );
+);
 
 has pars_path => (
-    is => 'ro',
+    is  => 'ro',
     isa => 'Str',
-    );
+);
 
 =head1 NAME
 
@@ -56,34 +56,38 @@ has been calculated in response to an earlier request.
 =cut
 
 sub result :Local :Args(0) {
-    my( $self, $c ) = @_;
-    if( $c->request->method eq 'POST' ) {
+    my ($self, $c) = @_;
+    if ($c->request->method eq 'POST') {
+
         # TODO: Verify the sender!
         my $answer;
-        if( ref( $c->request->body ) eq 'File::Temp' ) {
+        if (ref($c->request->body) eq 'File::Temp') {
+
             # Read in the file and parse that.
-            $c->log->debug( "Request body is in a temp file" );
-            open( POSTDATA, $c->request->body )
-                or return _json_error( $c, 500, "Failed to open post data file" );
-            binmode( POSTDATA, ':utf8' );
+            $c->log->debug("Request body is in a temp file");
+            open(POSTDATA, $c->request->body)
+              or return _json_error($c, 500, "Failed to open post data file");
+            binmode(POSTDATA, ':utf8');
+
             # JSON should be all one line
             my $pdata = <POSTDATA>;
             chomp $pdata;
             close POSTDATA;
             try {
-                $answer = from_json( $pdata );
-            } catch {
-                return _json_error( $c, 400,
-                    "Could not parse POST request '' $pdata '' as JSON: $@" );
+                $answer = from_json($pdata);
+            }
+            catch {
+                return _json_error($c, 400,
+                    "Could not parse POST request '' $pdata '' as JSON: $@");
             }
         } else {
-            $answer = from_json( $c->request->body );
+            $answer = from_json($c->request->body);
         }
-        $c->log->debug( "Received push notification from Stemweb: "
-            . to_json( $answer ) );
-        return _process_stemweb_result( $c, $answer );
+        $c->log->debug(
+            "Received push notification from Stemweb: " . to_json($answer));
+        return _process_stemweb_result($c, $answer);
     } else {
-        return _json_error( $c, 403, 'Please use POST!' );
+        return _json_error($c, 403, 'Please use POST!');
     }
 }
 
@@ -97,26 +101,31 @@ parameters. Returns the JSON answer as obtained from Stemweb.
 =cut
 
 sub available :Local :Args(0) {
-    my( $self, $c ) = @_;
-    my $ua = LWP::UserAgent->new();
-    my $resp = $ua->get( $self->stemweb_url . '/algorithms/available' );
+    my ($self, $c) = @_;
+    my $ua         = LWP::UserAgent->new();
+    my $resp       = $ua->get($self->stemweb_url . '/algorithms/available');
     my $parameters = [];
-    if( $resp->is_success && $resp->content_type =~ /json/ ) {
-        $parameters = decode_json( $resp->content );
-    } # otherwise we have no available algorithms.
+    if ($resp->is_success && $resp->content_type =~ /json/) {
+        $parameters = decode_json($resp->content);
+    }    # otherwise we have no available algorithms.
     ## Temporary HACK: run Pars too
-    if( $self->_has_pars ) {
+    if ($self->_has_pars) {
+
         # Use 100 as the special pars key
         # Add Pars as an algorithm
-        push( @$parameters, {
-            pk => 100,
-            model => 'algorithms.algorithm',
-            fields => {
-                args => [],
-                name => 'Pars',
-                desc => 'The program "pars", from the Phylip bio-statistical software package, produces a maximum-parsimony distance tree of the witnesses. More information on maximum parsimony can be found <a href="https://wiki.hiit.fi/display/stemmatology/Maximum+parsimony">here</a>. Please note that Phylip "pars" only supports a maximum of eight variants readings in any one variant location in the text. If your text displays more divergence than this at any point, please consider disregarding orthographic and spelling variation below, or use one of the other algorithms.'
+        push(
+            @$parameters,
+            {
+                pk     => 100,
+                model  => 'algorithms.algorithm',
+                fields => {
+                    args => [],
+                    name => 'Pars',
+                    desc =>
+'The program "pars", from the Phylip bio-statistical software package, produces a maximum-parsimony distance tree of the witnesses. More information on maximum parsimony can be found <a href="https://wiki.hiit.fi/display/stemmatology/Maximum+parsimony">here</a>. Please note that Phylip "pars" only supports a maximum of eight variants readings in any one variant location in the text. If your text displays more divergence than this at any point, please consider disregarding orthographic and spelling variation below, or use one of the other algorithms.'
+                }
             }
-        });
+        );
     }
     $c->stash->{result} = $parameters;
     $c->forward('View::JSON');
@@ -133,87 +142,106 @@ indicate that the job is still running.
 =cut
 
 sub query :Local :Args(1) {
-    my( $self, $c, $jobid ) = @_;
-    my $ua = LWP::UserAgent->new();
-    my $resp = $ua->get( $self->stemweb_url . "/algorithms/jobstatus/$jobid" );
-    if( $resp->is_success ) {
+    my ($self, $c, $jobid) = @_;
+    my $ua   = LWP::UserAgent->new();
+    my $resp = $ua->get($self->stemweb_url . "/algorithms/jobstatus/$jobid");
+    if ($resp->is_success) {
+
         # Process it
-        my $response = decode_utf8( $resp->content );
-        $c->log->debug( "Got a response from the server: $response" );
+        my $response = decode_utf8($resp->content);
+        $c->log->debug("Got a response from the server: $response");
         my $answer;
         try {
-            $answer = from_json( $response );
-        } catch {
-            return _json_error( $c, 500,
-                "Could not parse stemweb response '' $response '' as JSON: $@" );
+            $answer = from_json($response);
         }
-        return _process_stemweb_result( $c, $answer );
-    } elsif( $resp->code == 500 && $resp->header('Client-Warning')
-        && $resp->header('Client-Warning') eq 'Internal response' ) {
+        catch {
+            return _json_error($c, 500,
+                "Could not parse stemweb response '' $response '' as JSON: $@");
+        }
+        return _process_stemweb_result($c, $answer);
+    } elsif ($resp->code == 500
+        && $resp->header('Client-Warning')
+        && $resp->header('Client-Warning') eq 'Internal response')
+    {
         # The server was unavailable.
-        return _json_error( $c, 503, "The Stemweb server is currently unreachable." );
+        return _json_error($c, 503,
+            "The Stemweb server is currently unreachable.");
     } else {
-        return _json_error( $c, 500, "Stemweb error: " . $resp->code . " / "
-            . $resp->content );
+        return _json_error($c, 500,
+            "Stemweb error: " . $resp->code . " / " . $resp->content);
     }
 }
 
-
 ## Helper function for parsing Stemweb result data either by push or by pull
 sub _process_stemweb_result {
-    my( $c, $answer ) = @_;
+    my ($c, $answer) = @_;
+
     # Find the specified tradition and check its job ID.
-    my $m = $c->model('Directory');
-    my $tradition = $m->tradition( $answer->{textid} );
-    unless( $tradition ) {
-        return _json_error( $c, 400, "No tradition found with ID "
-            . $answer->{textid} );
+    my $m         = $c->model('Directory');
+    my $tradition = $m->tradition($answer->{textid});
+    unless ($tradition) {
+        return _json_error($c, 400,
+            "No tradition found with ID " . $answer->{textid});
     }
-    if( $answer->{status} == 0 ) {
+    if ($answer->{status} == 0) {
         my $stemmata;
-        if( $tradition->has_stemweb_jobid
-            && $tradition->stemweb_jobid eq $answer->{jobid} ) {
+        if (   $tradition->has_stemweb_jobid
+            && $tradition->stemweb_jobid eq $answer->{jobid})
+        {
             try {
-                $stemmata = $tradition->record_stemweb_result( $answer );
-                $m->save( $tradition );
-            } catch( Text::Tradition::Error $e ) {
-                return _json_error( $c, 500, $e->message );
-            } catch {
-                return _json_error( $c, 500, $@ );
+                $stemmata = $tradition->record_stemweb_result($answer);
+                $m->save($tradition);
+            }
+            catch (stemmaweb::Error $e ) {
+                return _json_error($c, $e->status, $e->message);
+            }
+            catch {
+                return _json_error($c, 500, $@);
             }
         } else {
+
             # It may be that we already received a callback meanwhile.
             # Check all stemmata for the given jobid and return them.
-            @$stemmata = grep { $_->came_from_jobid && $_->from_jobid eq $answer->{jobid} } $tradition->stemmata;
+            @$stemmata =
+              grep { $_->came_from_jobid && $_->from_jobid eq $answer->{jobid} }
+              $tradition->stemmata;
         }
-        if( @$stemmata ) {
+        if (@$stemmata) {
+
             # If we got here, success!
             # TODO Use helper in Root.pm to do this
-            my @steminfo = map { {
-                    name => $_->identifier,
-                    directed => _json_bool( !$_->is_undirected ),
-                    svg => $_->as_svg() } }
-                @$stemmata;
+            my @steminfo = map {
+                {
+                    name     => $_->identifier,
+                    directed => _json_bool(!$_->is_undirected),
+                    svg      => $_->as_svg()
+                }
+            } @$stemmata;
             $c->stash->{'result'} = {
-                'status' => 'success',
-                'stemmata' => \@steminfo };
+                'status'   => 'success',
+                'stemmata' => \@steminfo
+            };
         } else {
+
             # Hm, no stemmata found on this tradition with this jobid.
             # Clear the tradition jobid so that the user can try again.
-            if( $tradition->has_stemweb_jobid ) {
+            if ($tradition->has_stemweb_jobid) {
                 $tradition->_clear_stemweb_jobid;
-                $m->save( $tradition );
+                $m->save($tradition);
             }
             $c->stash->{'result'} = { status => 'notfound' };
         }
-    } elsif( $answer->{status} == 1 || $answer->{status} == -1  ) {
+    } elsif ($answer->{status} == 1 || $answer->{status} == -1) {
+
         # 1 means running, -1 means waiting to run. Either way, 'not ready'.
         $c->stash->{'result'} = { 'status' => 'running' };
     } else {
+
         # Failure. Clear the job ID so that the user can try again.
         $tradition->_clear_stemweb_jobid;
-        $m->save( $tradition );
-        $c->stash->{'result'} = { 'status' => 'failed', 'message' => $answer->{result} };
+        $m->save($tradition);
+        $c->stash->{'result'} =
+          { 'status' => 'failed', 'message' => $answer->{result} };
     }
     $c->forward('View::JSON');
 }
@@ -231,82 +259,99 @@ Processes and returns the JSON response given by the Stemweb server.
 =cut
 
 sub request :Local :Args(0) {
-    my( $self, $c ) = @_;
+    my ($self, $c) = @_;
+
     # Look up the relevant tradition and check permissions.
     my $reqparams = $c->req->params;
-    my $tid = delete $reqparams->{tradition};
-    my $t = $c->model('Directory')->tradition( $tid );
-    my $ok = _check_permission( $c, $t );
+    my $tid       = delete $reqparams->{tradition};
+    my $t         = $c->model('Directory')->tradition($tid);
+    my $ok        = _check_permission($c, $t);
     return unless $ok;
-    return( _json_error( $c, 403,
-            'You do not have permission to update stemmata for this tradition' ) )
-        unless $ok eq 'full';
+    return (
+        _json_error(
+            $c,
+            403,
+            'You do not have permission to update stemmata for this tradition'
+        )
+    ) unless $ok eq 'full';
 
-    my $algorithm = delete $reqparams->{algorithm};
+    my $algorithm  = delete $reqparams->{algorithm};
     my $mergetypes = delete $reqparams->{merge_reltypes};
-    if( $self->_has_pars && $algorithm == 100 ) {
-        my $start_time = scalar( gmtime( time() ) );
-        $t->set_stemweb_jobid( 'local' );
-        my $cdata = character_input( $t, { collapse => $mergetypes } );
+    if ($self->_has_pars && $algorithm == 100) {
+        my $start_time = scalar(gmtime(time()));
+        $t->set_stemweb_jobid('local');
+        my $cdata = character_input($t, { collapse => $mergetypes });
         my $newick;
         try {
-            $newick = phylip_pars( $cdata, { parspath => $self->_has_pars } );
-        } catch ( Text::Tradition::Error $e ) {
-            return _json_error( $c, 503, "Parsimony tree generation failed: "
-                . $e->message );
+            $newick = phylip_pars($cdata, { parspath => $self->_has_pars });
         }
+        catch (stemmaweb::Error $e ) {
+            return _json_error($c, $e->status,
+                "Parsimony tree generation failed: " . $e->message);
+        }
+
         # We have a result, so form an answer to process.
         my $answer = {
-            status => 0,
-            algorithm => 'pars',
-            'format' => 'newick',
-            textid => $tid,
-            jobid => 'local',
-            result => $newick,
+            status     => 0,
+            algorithm  => 'pars',
+            'format'   => 'newick',
+            textid     => $tid,
+            jobid      => 'local',
+            result     => $newick,
             start_time => $start_time
         };
-        return _process_stemweb_result( $c, $answer );
+        return _process_stemweb_result($c, $answer);
     } else {
+
         # Form the request for Stemweb.
-        my $return_uri = URI->new( $c->uri_for( '/stemweb/result' ) );
+        my $return_uri = URI->new($c->uri_for('/stemweb/result'));
         my $tsv_options = { noac => 1, ascii => 1 };
-        if( $mergetypes && @$mergetypes ) {
+        if ($mergetypes && @$mergetypes) {
             $tsv_options->{mergetypes} = $mergetypes;
         }
         my $stemweb_request = {
             return_path => $return_uri->path,
             return_host => $return_uri->host_port,
-            data => $t->collation->as_tsv( $tsv_options ),
-            userid => $c->user->get_object->email,
-            textid => $tid,
-            parameters => _cast_nonstrings( $reqparams ) };
+            data        => $t->collation->as_tsv($tsv_options),
+            userid      => $c->user->get_object->email,
+            textid      => $tid,
+            parameters  => _cast_nonstrings($reqparams)
+        };
 
         # Call to the appropriate URL with the request parameters.
         my $ua = LWP::UserAgent->new();
-        # $c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) );
-        my $resp = $ua->post( $self->stemweb_url . "/algorithms/process/$algorithm/",
+
+# $c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) );
+        my $resp = $ua->post(
+            $self->stemweb_url . "/algorithms/process/$algorithm/",
             'Content-Type' => 'application/json; charset=utf-8',
-            'Content' => encode_json( $stemweb_request ) );
-        if( $resp->is_success ) {
+            'Content'      => encode_json($stemweb_request)
+        );
+        if ($resp->is_success) {
+
             # Process it
-            $c->log->debug( 'Got a response from the server: '
-                . decode_utf8( $resp->content ) );
-            my $stemweb_response = decode_json( $resp->content );
+            $c->log->debug('Got a response from the server: '
+                  . decode_utf8($resp->content));
+            my $stemweb_response = decode_json($resp->content);
             try {
-                $t->set_stemweb_jobid( $stemweb_response->{jobid} );
-            } catch( Text::Tradition::Error $e ) {
-                return _json_error( $c, 429, $e->message );
+                $t->set_stemweb_jobid($stemweb_response->{jobid});
             }
-            $c->model('Directory')->save( $t );
+            catch (stemmaweb::Error $e ) {
+                return _json_error($c, 429, $e->message);
+            }
+            $c->model('Directory')->save($t);
             $c->stash->{'result'} = $stemweb_response;
             $c->forward('View::JSON');
-        } elsif( $resp->code == 500 && $resp->header('Client-Warning')
-            && $resp->header('Client-Warning') eq 'Internal response' ) {
+        } elsif ($resp->code == 500
+            && $resp->header('Client-Warning')
+            && $resp->header('Client-Warning') eq 'Internal response')
+        {
             # The server was unavailable.
-            return _json_error( $c, 503, "The Stemweb server is currently unreachable." );
+            return _json_error($c, 503,
+                "The Stemweb server is currently unreachable.");
         } else {
-            return _json_error( $c, 500, "Stemweb error: " . $resp->code . " / "
-                . $resp->content );
+            return _json_error($c, 500,
+                "Stemweb error: " . $resp->code . " / " . $resp->content);
         }
     }
 }
@@ -314,28 +359,31 @@ sub request :Local :Args(0) {
 # Helper to check what permission, if any, the active user has for
 # the given tradition
 sub _check_permission {
-    my( $c, $tradition ) = @_;
+    my ($c, $tradition) = @_;
     my $user = $c->user_exists ? $c->user->get_object : undef;
-    if( $user ) {
-        return 'full' if ( $user->is_admin ||
-            ( $tradition->has_user && $tradition->user->id eq $user->id ) );
+    if ($user) {
+        return 'full'
+          if ($user->is_admin
+            || ($tradition->has_user && $tradition->user->id eq $user->id));
     }
+
     # Text doesn't belong to us, so maybe it's public?
     return 'readonly' if $tradition->public;
 
     # ...nope. Forbidden!
-    return _json_error( $c, 403, 'You do not have permission to view this tradition.' );
+    return _json_error($c, 403,
+        'You do not have permission to view this tradition.');
 }
 
 # QUICK HACK to deal with strict Stemweb validation.
 sub _cast_nonstrings {
     my $params = shift;
-    foreach my $k ( keys %$params ) {
+    foreach my $k (keys %$params) {
         my $v = $params->{$k};
-        if( looks_like_number( $v ) ) {
+        if (looks_like_number($v)) {
             $params->{$k} = $v * 1;
-        } elsif ( !defined $v || $v eq 'true' ) {
-            $params->{$k} = _json_bool( $v );
+        } elsif (!defined $v || $v eq 'true') {
+            $params->{$k} = _json_bool($v);
         }
     }
     return $params;
@@ -343,8 +391,8 @@ sub _cast_nonstrings {
 
 # Helper to throw a JSON exception
 sub _json_error {
-    my( $c, $code, $errmsg ) = @_;
-    $c->response->status( $code );
+    my ($c, $code, $errmsg) = @_;
+    $c->response->status($code);
     $c->stash->{'result'} = { 'error' => $errmsg };
     $c->forward('View::JSON');
     return 0;
@@ -358,6 +406,5 @@ sub _has_pars {
     my $self = shift;
     return $self->pars_path || which('pars');
 }
-
 
 1;

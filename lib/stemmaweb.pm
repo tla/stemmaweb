@@ -4,10 +4,6 @@ use namespace::autoclean;
 
 use Catalyst::Runtime 5.80;
 
-use Search::GIN::Extract::Class;
-use Search::GIN::Extract::Attributes;
-use Search::GIN::Extract::Multiplex;
-
 # Set flags and add plugins for the application.
 #
 # Note that ORDERING IS IMPORTANT here as plugins are initialized in order,
@@ -21,16 +17,16 @@ use Search::GIN::Extract::Multiplex;
 #                 directory
 
 use Catalyst qw/
-    ConfigLoader
-    Static::Simple
-    Authentication
-    Session
-    Session::Store::File
-    Session::State::Cookie
-    StatusMessage
-    StackTrace
-    Cache
-/;
+  ConfigLoader
+  Static::Simple
+  Authentication
+  Session
+  Session::Store::File
+  Session::State::Cookie
+  StatusMessage
+  StackTrace
+  Cache
+  /;
 use CatalystX::RoleApplicator;
 
 extends 'Catalyst';
@@ -48,29 +44,34 @@ our $VERSION = '0.01';
 # details given here can function as a default configuration,
 # with an external configuration file acting as an override for
 # local deployment.
-__PACKAGE__->apply_request_class_roles(qw/
-    Catalyst::TraitFor::Request::ProxyBase
-/);
+__PACKAGE__->apply_request_class_roles(
+    qw/
+      Catalyst::TraitFor::Request::ProxyBase
+      /
+);
 __PACKAGE__->config(
     name => 'stemmaweb',
+
     # Disable deprecated behavior needed by old applications
     disable_component_resolution_regex_fallback => 1,
+
     # Set Unicode as the default
-    encoding => 'UTF-8',
+    encoding     => 'UTF-8',
     default_view => 'TT',
     'View::JSON' => {
         expose_stash => 'result',
     },
     'View::TT' => {
-        INCLUDE_PATH => [
-            stemmaweb->path_to( 'root', 'src' ),
-        ],
+        INCLUDE_PATH => [ stemmaweb->path_to('root', 'src'), ],
+    },
+    'View::Plain' => {
+        stash_key    => 'result',
     },
 
     'Plugin::Cache' => {
         backend => {
-            class => 'Cache::FileCache',
-            namespace => 'cache',
+            class              => 'Cache::FileCache',
+            namespace          => 'cache',
             default_expires_in => 86400,
         },
     },
@@ -79,35 +80,36 @@ __PACKAGE__->config(
     'Plugin::Authentication' => {
         default => {
             credential => {
-                class => 'Password',
-                password_field => 'password',
-                password_type => 'hashed',
+                class              => 'Password',
+                password_field     => 'password',
+                password_type      => 'hashed',
                 password_hash_type => 'SHA-256'
             },
             store => {
-                class => 'Neo4p',
+                class      => 'Neo4p',
                 model_name => 'Directory',
-                realm => 'default',
+                realm      => 'default',
             },
         },
         openid => {
             credential => {
-                class => 'OpenID',
-                extensions => ['http://openid.net/srv/ax/1.0' =>
-                    {
-                        ns          => 'ax',
-                        uri         => 'http://openid.net/srv/ax/1.0',
-                        mode        => 'fetch_request',
-                        required    => 'email',
+                class      => 'OpenID',
+                extensions => [
+                    'http://openid.net/srv/ax/1.0' => {
+                        ns           => 'ax',
+                        uri          => 'http://openid.net/srv/ax/1.0',
+                        mode         => 'fetch_request',
+                        required     => 'email',
                         'type.email' => 'http://axschema.org/contact/email',
+
                         # type        => {
                         #     email => 'http://axschema.org/contact/email'
                         # }
                     }
-                    ],
+                ],
             },
             store => {
-                class => 'Neo4p',
+                class      => 'Neo4p',
                 model_name => 'Directory',
             },
             auto_create_user => 1,
@@ -117,7 +119,7 @@ __PACKAGE__->config(
                 class => '+stemmaweb::Authentication::Credential::Google',
             },
             store => {
-                class => 'Neo4p',
+                class      => 'Neo4p',
                 model_name => 'Directory',
             },
             auto_create_user => 1,
@@ -125,20 +127,21 @@ __PACKAGE__->config(
     },
     ## Auth with CatalystX::Controller::Auth
     'Controller::Users' => {
-        form_handler => 'stemmaweb::Authentication::FormHandler',
-        model => 'User',
-        login_id_field => 'username',
-        login_db_field => 'username',
-        action_after_login => '/users/success',
+        form_handler          => 'stemmaweb::Authentication::FormHandler',
+        model                 => 'User',
+        login_id_field        => 'username',
+        login_db_field        => 'username',
+        action_after_login    => '/users/success',
         action_after_register => '/users/success',
         enable_sending_register_email => 0,
-        register_email_from  => '"Stemmaweb" <stemmaweb@byzantini.st>',
-        register_email_subject => 'Registration to stemmaweb',
+        register_email_from           => '"Stemmaweb" <stemmaweb@byzantini.st>',
+        register_email_subject        => 'Registration to stemmaweb',
         register_email_template_plain => 'register-plain.tt',
-        realm => 'default',
-        login_fields => { openid => [qw/openid_identifier/],
-                          default => [qw/username password remember/],
-                          google => [qw/email id_token/],
+        realm                         => 'default',
+        login_fields                  => {
+            openid  => [qw/openid_identifier/],
+            default => [qw/username password remember/],
+            google  => [qw/email id_token/],
         },
     },
     'View::Email::Template' => {
@@ -146,14 +149,13 @@ __PACKAGE__->config(
     },
 
     recaptcha => {
-        pub_key => '6LfR19MSAAAAACy2meHvLfZGRn3PM2rRYIAfh665',
+        pub_key  => '6LfR19MSAAAAACy2meHvLfZGRn3PM2rRYIAfh665',
         priv_key => '6LfR19MSAAAAAMlQb8BdyecWNRE1bAL2YSgz2sah',
     },
 );
 
 # Start the application
 __PACKAGE__->setup();
-
 
 =head1 NAME
 

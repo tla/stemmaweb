@@ -1,284 +1,359 @@
 body {
-    margin: 0;
-    padding: 0 20px;
-    font: 1em "Trebuchet MS", verdana, arial, sans-serif;
-    font-size: 85%;
-    background: #EDF1FA;
+  margin: 0;
+  padding: 0 20px;
+  font: 1em "Trebuchet MS", verdana, arial, sans-serif;
+  font-size: 85%;
+  background: #EDF1FA;
 }
+
 #topbanner {
-	padding: 0px;
+  padding: 0px;
 }
+
 #logoimg {
-	float: left;
-	margin-left: 20px;
+  float: left;
+  margin-left: 20px;
 }
+
 #logotitle {
-	float: left;
-	margin-left: 30px;
-	height: 55px;
-	padding-top: 40px;
+  float: left;
+  margin-left: 30px;
+  height: 55px;
+  padding-top: 40px;
 }
+
 .segment_guide {
-	color: #488dd2;
-	padding-left: 30px;
-	padding-right: 30px;
+  color: #488dd2;
+  padding-left: 30px;
+  padding-right: 30px;
 }
+
 .selected {
-	background-color: #dadada;
+  background-color: #dadada;
 }
+
 h1.title a:link, h1.title a:visited, h1.title a:active {
-	color: #666;
-	font-weight: bold;
-	text-decoration: none;
+  color: #666;
+  font-weight: bold;
+  text-decoration: none;
 }
+
 h1.title a:hover {
-	color: #222;
+  color: #222;
 }
+
 h1.title {
-	margin: 0;
-	padding: 0;
-	letter-spacing: -1px;
-	line-height: 1.0em;
-	font-family: tahoma, arial, sans-serif;
-	font-size: 240%;
+  margin: 0;
+  padding: 0;
+  letter-spacing: -1px;
+  line-height: 1.0em;
+  font-family: tahoma, arial, sans-serif;
+  font-size: 240%;
 }
+
 p.tagline {
-	margin: 0;
-	padding: 0;
-	font-size: 1.2em;
-	font-weight: bold;
-	color: #666;
+  margin: 0;
+  padding: 0;
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #666;
 }
+
 .term {
-	font-style: italic;
+  font-style: italic;
 }
+
 p.api {
-	font-weight: bold;
-	font-family: Courier;
+  font-weight: bold;
+  font-family: Courier;
 }
+
 span.apimore {
-	font-family: Courier;
+  font-family: Courier;
 }
+
 .ui-tooltip {
-	max-width: 500px;
+  max-width: 500px;
 }
+
 #enlargement_container {
-    height: 504px;
-    width: 90%;
-    margin-top: 5px;
-    border: 2px solid #B0C6F7;
-    background: #fff;
-    padding-top: 5px;
-    padding-bottom: 5px;
+  height: 504px;
+  width: 90%;
+  margin-top: 5px;
+  border: 2px solid #B0C6F7;
+  background: #fff;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
+
 #loading_overlay {
-	display: none;
-	position: absolute;
-	height: 500px;
-	width: 89%;
-	z-index: 2;
-	opacity: 0.7;
-    background-image: url("cupertino/images/ui-bg_diagonals-thick_90_eeeeee_40x40.png");
-    background-repeat: repeat;
-    background-attachment: scroll;
-    background-position: 50% 50%;
-    background-color: #EEEEEE;
+  display: none;
+  position: absolute;
+  height: 500px;
+  width: 89%;
+  z-index: 2;
+  opacity: 0.7;
+  background-image: url("cupertino/images/ui-bg_diagonals-thick_90_eeeeee_40x40.png");
+  background-repeat: repeat;
+  background-attachment: scroll;
+  background-position: 50% 50%;
+  background-color: #EEEEEE;
 }
+
 #loading_message {
-	position: relative;
-	background-color: #EDF1FA;
-	color: #222222;
-    border: 2px solid #B0C6F7;
-	height: 20px;
-	width: 150px;
-	padding: 20px;
+  position: relative;
+  background-color: #EDF1FA;
+  color: #222222;
+  border: 2px solid #B0C6F7;
+  height: 20px;
+  width: 150px;
+  padding: 20px;
 }
+
 #dialog_overlay {
-    display: none;
-    position: absolute;
-    background-image: url("cupertino/images/ui-bg_diagonals-thick_90_eeeeee_40x40.png");
-    background-repeat: repeat;
-    background-attachment: scroll;
-    background-position: 50% 50%;
-    background-color: #EEEEEE;
-    opacity: 0.5;
-    padding-bottom: 5px;
-    padding-top: 5px;
-    border: 2px solid #B0C6F7;
+  display: none;
+  position: absolute;
+  background-image: url("cupertino/images/ui-bg_diagonals-thick_90_eeeeee_40x40.png");
+  background-repeat: repeat;
+  background-attachment: scroll;
+  background-position: 50% 50%;
+  background-color: #EEEEEE;
+  opacity: 0.5;
+  padding-bottom: 5px;
+  padding-top: 5px;
+  border: 2px solid #B0C6F7;
 }
+
 #update_workspace_button {
-    position: absolute;
-    left: 74.5%;
-    top: 126px;
-    height: 44px;
-    width: 46px;
-    margin-top: 17px;
-    border: none;
-    background-image: url('../images/act_icons.png');
-    background-position: 0px 44px;
-    background-color: none;
-    background-repeat: none;
-    z-index: 50;
+  position: absolute;
+  left: 74.5%;
+  top: 126px;
+  height: 44px;
+  width: 46px;
+  margin-top: 17px;
+  border: none;
+  background-image: url('../images/act_icons.png');
+  background-position: 0px 44px;
+  background-color: none;
+  background-repeat: none;
+  z-index: 50;
 }
+
 #workspace_container {
-    height: 504px;
-    width: 43%;
-    position: relative;
-    top: -545px;
-    left: 47%;
-    margin-top: 10px;
-    border: 2px solid #B0C6F7;
-    background: #fff;
+  height: 504px;
+  width: 43%;
+  position: relative;
+  top: -545px;
+  left: 47%;
+  margin-top: 10px;
+  border: 2px solid #B0C6F7;
+  background: #fff;
 }
+
 #graph_underlay {
-    height: 100%;
-    width: 100%;
-    background: #fff;
-    position: relative;
-    z-index: -2;
+  height: 100%;
+  width: 100%;
+  background: #fff;
+  position: relative;
+  z-index: -2;
 }
+
 #visor {
-    height: 100px;
-    width: 20%;
-    background-color: #61EDAE;
-    opacity: 0.15;
-    position: relative;
-    left: 40%;
-    top: -104px;
-    z-index: -1;
-    border-left: 2px solid #3C73FA;
-    border-right: 2px solid #3C73FA;
-    border-bottom: 2px solid #B0C6F7;
-    border-top: 2px solid #B0C6F7;
+  height: 100px;
+  width: 20%;
+  background-color: #61EDAE;
+  opacity: 0.15;
+  position: relative;
+  left: 40%;
+  top: -104px;
+  z-index: -1;
+  border-left: 2px solid #3C73FA;
+  border-right: 2px solid #3C73FA;
+  border-bottom: 2px solid #B0C6F7;
+  border-top: 2px solid #B0C6F7;
 }
+
 #graph {
-    position: relative; top: -208px;
-    padding: 0px;
-    overflow: auto;
-    /* cursor: -moz-grab !important; */ /* should this be applied with JS? */
+  position: relative;
+  top: -208px;
+  padding: 0px;
+  overflow: auto;
+  /* cursor: -moz-grab !important; */
+  /* should this be applied with JS? */
 }
+
 #enlargement {
-    padding: 0px;
-    overflow: hidden;
+  padding: 0px;
+  overflow: hidden;
 }
 #svgenlargement {
-    width: 1620px;
-    height: 650px;
     border: red, 2px;
     padding: 0px;
     overflow-x: scroll;
     overflow-y: scroll;
 }
 #workspace {
-    padding: 0px;
-    overflow: hidden;
+  padding: 0px;
+  overflow: hidden;
 }
+
 #keymap {
-    position: absolute;
-    left: 80%;
-    top: 140px;
-    border: 2px solid #B0C6F7;
-    background: #fff;
-    background: url("cupertino/images/ui-bg_highlight-hard_100_f2f5f7_1x100.png");
-    background-repeat: repeat-x;
-    background-scroll: scroll;
-    background-position: 50% top;
-    background-color: #F2F5F7;
+  position: absolute;
+  left: 80%;
+  top: 140px;
+  border: 2px solid #B0C6F7;
+  background: #fff;
+  background: url("cupertino/images/ui-bg_highlight-hard_100_f2f5f7_1x100.png");
+  background-repeat: repeat-x;
+  background-scroll: scroll;
+  background-position: 50% top;
+  background-color: #F2F5F7;
 }
+
 #keymap ul {
-    padding: 10px;
-    padding-left: 14px;
-    padding-right: 14px;
-    margin: 0px;
+  padding: 10px;
+  padding-left: 14px;
+  padding-right: 14px;
+  margin: 0px;
 }
+
 #keymap li {
-    border-left: 16px solid #fff;
-    padding-left: 8px;
-    list-style: none;
-    margin-bottom: 3px;
+  border-left: 16px solid #fff;
+  padding-left: 8px;
+  list-style: none;
+  margin-bottom: 3px;
+}
+
+#keymap hr {
+  border: 0;
+  height: 0;
+  margin-left: 10px;
+  margin-right: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+#keymap p {
+  padding: 14px;
+  font-size: 80%;
 }
 
 .draggable {
-	cursor:pointer;
+  cursor: pointer;
 }
 
 .noselect {
--webkit-touch-callout: none;
--webkit-user-select: none;
--khtml-user-select: none;
--moz-user-select: none;
--ms-user-select: none;
-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 #normalization {
-	float: left;
-	padding: 10px;
+  float: left;
+  padding: 10px;
 }
+
 #relemmatize_pending {
-	float: left;
-	padding: 10px;
-	display: none;
+  float: left;
+  padding: 10px;
+  display: none;
 }
+
 #morph_outer {
-	clear: both;
-	float: left;
+  clear: both;
+  float: left;
 }
+
 #morphology {
-	text-align: right;
-	margin: 10px;
+  text-align: right;
+  margin: 10px;
 }
 
 #keystroke_menu_button {
-    position: absolute;
-    left: 69.5%;
-    top: 126px;
-    height: 44px;
-    width: 46px;
-    margin-top: 17px;
-    border: none;
-    background-image: url('../images/keystroke_menu_icon.png');
-    background-position: 0px 0px;
-    background-color: none;
-    background-repeat: none;
-    z-index: 50;
+  position: absolute;
+  left: 69.5%;
+  top: 126px;
+  height: 44px;
+  width: 46px;
+  margin-top: 17px;
+  border: none;
+  background-image: url('../images/keystroke_menu_icon.png');
+  background-position: 0px 0px;
+  background-color: none;
+  background-repeat: none;
+  z-index: 50;
 }
 
 #keystroke_menu {
-    position: absolute;
-    left: 39%;
-    width: 30%;
-    padding: 0% 0.8% 0.2% 0.8%;
-    top: 134px;
-    border: 2px solid #B0C6F7;
-    background: #fff;
-    background: url("cupertino/images/ui-bg_highlight-hard_100_f2f5f7_1x100.png");
-    background-repeat: repeat-x;
-    background-scroll: scroll;
-    background-position: 50% top;
-    background-color: #F2F5F7;
-    font-size: 80%;
+  position: absolute;
+  left: 39%;
+  width: 30%;
+  padding: 0% 0.8% 0.2% 0.8%;
+  top: 134px;
+  border: 2px solid #B0C6F7;
+  background: #fff;
+  background: url("cupertino/images/ui-bg_highlight-hard_100_f2f5f7_1x100.png");
+  background-repeat: repeat-x;
+  background-scroll: scroll;
+  background-position: 50% top;
+  background-color: #F2F5F7;
+  font-size: 80%;
 }
 
 .key .key_tip_container {
-    visibility: hidden;
-    position:absolute;
-    left:-150px;
-    width:140px;
+  visibility: hidden;
+  position: absolute;
+  left: -150px;
+  width: 140px;
 }
+
 .key:hover .key_tip {
-    padding: 4px;
-    font-size: 60%;
-    position: relative;
-    top: -18px;
-    visibility: visible;
-    border: 1px solid #B2B26B;
-    background-color: #FFFFCC;
-    z-index: 51; /* Cf. #update_workspace_button */
+  padding: 4px;
+  font-size: 60%;
+  position: relative;
+  top: -18px;
+  visibility: visible;
+  border: 1px solid #B2B26B;
+  background-color: #FFFFCC;
+  z-index: 51;
+  /* Cf. #update_workspace_button */
 }
 
 .error {
-    color: red;
+  color: red;
+}
+
+.caution {
+  padding-left: 5px;
+  border: 5px solid #f7cd11;
+  margin-top: 5px;
+}
+
+.floatcontainer {
+  float: left;
+  width: 95%;
+}
+
+.labels {
+  float: left;
+  width: 30%;
+  padding-top: 5px;
+}
+.inputs {
+  float: left;
+  width: 65%;
+}
+
+#section_text_display {
+  border: 1px solid #B0C6F7;
+  padding: 0px 10px;
+  margin: 7px;
+  height: 430px;
+  overflow: scroll;
+  font-size: 150%;
 }
 
 /* Cf. #update_workspace_button */

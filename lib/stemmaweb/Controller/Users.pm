@@ -8,7 +8,7 @@ use JSON::WebToken;
 
 use MIME::Base64;
 
-BEGIN {extends 'CatalystX::Controller::Auth'; }
+BEGIN { extends 'CatalystX::Controller::Auth'; }
 with 'Catalyst::TraitFor::Controller::reCAPTCHA';
 
 =head1 NAME
@@ -29,11 +29,10 @@ help prevent spam signups.
 
 =cut
 
-sub base :Chained('/') :PathPart('') :CaptureArgs(0)
-{
-        my ( $self, $c ) = @_;
+sub base :Chained('/') :PathPart('') :CaptureArgs(0) {
+    my ($self, $c) = @_;
 
-        $self->next::method( $c );
+    $self->next::method($c);
 }
 
 =head2 index
@@ -43,7 +42,7 @@ The index action is not currently used.
 =cut
 
 sub index :Path :Args(0) {
-    my ( $self, $c ) = @_;
+    my ($self, $c) = @_;
 
     $c->response->body('Matched stemmaweb::Controller::Users in Users.');
 }
@@ -59,15 +58,16 @@ authenticating against to be C<openid> in this case.
 =cut
 
 before login => sub {
-  my($self, $c) = @_;
-  $c->req->param( realm => 'openid')
-    if $c->req->param('openid-check');
+    my ($self, $c) = @_;
+    $c->req->param(realm => 'openid')
+      if $c->req->param('openid-check');
 
-  if ($c->req->params->{email} && $c->req->params->{id_token}) {
-    $c->req->param( realm => 'google');
-  }
+    if ($c->req->params->{email} && $c->req->params->{id_token}) {
+        $c->req->param(realm => 'google');
+    }
 
-  $c->stash->{google_client_id} = $c->config->{'Authentication::Credential::Google'}->{client_id};
+    $c->stash->{google_client_id} =
+      $c->config->{'Authentication::Credential::Google'}->{client_id};
 };
 
 =head2 register with recaptcha
@@ -88,11 +88,14 @@ before register => sub {
     }
 
     ## When submitting, check recaptcha passes, else re-draw form
-    if($c->req->method eq 'POST') {
-        if ( !$c->config->{'Registration'}->{'no_recaptcha'} && !$c->forward('captcha_check') ) {
+    if ($c->req->method eq 'POST') {
+        if (   !$c->config->{'Registration'}->{'no_recaptcha'}
+            && !$c->forward('captcha_check'))
+        {
             ## Need these two lines to detach, so end can draw the correct template again:
-            my $form = $self->form_handler->new( active => [ $self->login_id_field, 'password', 'confirm_password' ] );
-            $c->stash( template => $self->register_template, form => $form );
+            my $form = $self->form_handler->new(active =>
+                  [ $self->login_id_field, 'password', 'confirm_password' ]);
+            $c->stash(template => $self->register_template, form => $form);
 
             $c->detach();
         }
@@ -106,7 +109,7 @@ A stub page returned on login / registration success.
 =cut
 
 sub success :Local :Args(0) {
-    my ( $self, $c ) = @_;
+    my ($self, $c) = @_;
 
     $c->load_status_msgs;
     $c->stash->{template} = 'auth/success.tt';
@@ -119,8 +122,8 @@ Return to the index page, not to the login page.
 =cut
 
 sub post_logout {
-    my( $self, $c ) = @_;
-    $c->response->redirect( $c->uri_for_action( '/index' ) );
+    my ($self, $c) = @_;
+    $c->response->redirect($c->uri_for_action('/index'));
     $c->detach;
 }
 

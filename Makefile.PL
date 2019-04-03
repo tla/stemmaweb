@@ -9,11 +9,12 @@ use Module::Install::Catalyst; # Complain loudly if you don't have
 name 'stemmaweb';
 all_from 'lib/stemmaweb.pm';
 
+# This should reflect the config file format you've chosen
+requires 'Config::General';
+# See Catalyst::Plugin::ConfigLoader for supported formats
+
 # Tradition libraries
 requires 'Text::Tradition' => '2.0.0';
-requires 'Text::Tradition::Directory';
-requires 'Text::Tradition::Analysis' => '2.0.0';
-requires 'Text::Tradition::StemmaUtil';
 # Catalyst libraries
 requires 'Catalyst::Runtime' => '5.90002';
 requires 'Catalyst::Plugin::Cache';
@@ -23,7 +24,6 @@ requires 'Catalyst::Plugin::Static::Simple';
 requires 'Catalyst::Plugin::Unicode::Encoding';
 requires 'Catalyst::Action::RenderView';
 requires 'Catalyst::Authentication::Credential::OpenID';
-requires 'Catalyst::Model::KiokuDB';
 requires 'Catalyst::View::Download::Plain';
 requires 'Catalyst::View::JSON';
 requires 'Catalyst::View::TT';
@@ -39,25 +39,30 @@ requires 'Catalyst::TraitFor::Request::ProxyBase';
 requires 'Catalyst::TraitFor::Controller::reCAPTCHA';
 requires 'LWP::Protocol::https';
 ##
-requires 'Date::Parse';
-requires 'Digest::SHA256';
-requires 'LWP::Protocol::https';
-requires 'URI::Escape';
-requires 'strictures';
+requires 'Bio::Phylo::IO';
+requires 'Cache::FileCache';
 requires 'Crypt::OpenSSL::X509';
 requires 'Crypt::OpenSSL::RSA';
-requires 'IO::All';
-requires 'JSON::WebToken';
-requires 'JSON::MaybeXS';
-requires 'MIME::Base64';
+requires 'Date::Parse';
+requires 'Digest::SHA256';
+requires 'File::chdir';
+requires 'File::Temp';
 requires 'File::Which';
+requires 'Graph';
+requires 'Graph::Reader::Dot';
+requires 'IO::All';
+requires 'IPC::Run';
+requires 'JSON::WebToken';
+requires 'JSON::XS';
 requires 'List::Util';
+requires 'LWP::Protocol::https';
+requires 'MIME::Base64';
 requires 'Moose';
 requires 'TryCatch';
+requires 'URI::Escape';
 requires 'namespace::autoclean';
-requires 'Config::General'; # This should reflect the config file format you've chosen
-                 # See Catalyst::Plugin::ConfigLoader for supported formats
-requires 'Cache::FileCache';
+requires 'strictures';
+
 test_requires 'Test::More' => '0.88';
 test_requires 'LWP::Protocol::PSGI';
 test_requires 'Test::WWW::Mechanize';

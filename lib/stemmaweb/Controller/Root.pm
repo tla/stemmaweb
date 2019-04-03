@@ -1,16 +1,17 @@
 package stemmaweb::Controller::Root;
 use Moose;
 use namespace::autoclean;
+use Encode qw (encode_utf8);
 use JSON qw ();
 use stemmaweb::Controller::Stemma;
-use stemmaweb::Controller::Util qw/ load_tradition json_error json_bool /;
+use stemmaweb::Controller::Util
+  qw/ load_tradition json_error json_bool section_metadata /;
 use File::Temp;
-use Text::Tradition;
-use Text::Tradition::Stemma;
+# use Text::Tradition;
 use TryCatch;
+use URI;
 use XML::LibXML;
 use XML::LibXML::XPathContext;
-
 
 BEGIN { extends 'Catalyst::Controller' }
 
@@ -38,10 +39,10 @@ components will be loaded.
 =cut
 
 sub index :Path :Args(0) {
-    my ( $self, $c ) = @_;
+    my ($self, $c) = @_;
 
     # Are we being asked to load a text immediately? If so
-    if( $c->req->param('withtradition') ) {
+    if ($c->req->param('withtradition')) {
         $c->stash->{'withtradition'} = $c->req->param('withtradition');
     }
     $c->stash->{template} = 'index.tt';
@@ -54,7 +55,7 @@ A general overview/documentation page for the site.
 =cut
 
 sub about :Local :Args(0) {
-    my( $self, $c ) = @_;
+    my ($self, $c) = @_;
     $c->stash->{template} = 'about.tt';
 }
 
@@ -65,7 +66,7 @@ A dispatcher for documentation of various aspects of the application.
 =cut
 
 sub help :Local :Args(1) {
-    my( $self, $c, $topic ) = @_;
+    my ($self, $c, $topic) = @_;
     $c->stash->{template} = "$topic.tt";
 }
 
@@ -80,28 +81,33 @@ Serves a snippet of HTML that lists the available texts.  This returns texts bel
 =cut
 
 sub directory :Local :Args(0) {
-    my( $self, $c ) = @_;
+    my ($self, $c) = @_;
     my $m = $c->model('Directory');
+
     # Is someone logged in?
     my %usertexts;
-    if( $c->user_exists ) {
+    if ($c->user_exists) {
         my $user = $c->user->get_object;
-        my $list = _alpha_sort($m->ajax( 'get', "/user/" . $user->id . "/traditions" ));
-        map { $usertexts{$_->{id}} = 1 } @$list;
-            $c->stash->{usertexts} = $list;
-            $c->stash->{is_admin} = 1 if $user->is_admin;
+        my $list =
+          _alpha_sort($m->ajax('get', "/user/" . $user->id . "/traditions"));
+        map { $usertexts{ $_->{id} } = 1 } @$list;
+        $c->stash->{usertexts} = $list;
+        $c->stash->{is_admin} = 1 if $user->is_admin;
     }
+
     # List public (i.e. readonly) texts separately from any user (i.e.
     # full access) texts that exist.
     my $alltexts;
-    if( exists $c->stash->{is_admin} && $c->stash->{is_admin} ) {
-        $alltexts = _alpha_sort($m->ajax( 'get', '/traditions' ));
+    if (exists $c->stash->{is_admin} && $c->stash->{is_admin}) {
+        $alltexts = _alpha_sort($m->ajax('get', '/traditions'));
     } else {
-        $alltexts = _alpha_sort($m->ajax( 'get', '/traditions?public=true'));
+        $alltexts = _alpha_sort($m->ajax('get', '/traditions?public=true'));
+        # TODO Find and fix bug that makes the public filter necessary.
+        @$alltexts = grep { $_->{is_public} } @$alltexts;
     }
-    my @plist = grep { !$usertexts{$_->{id}} } @$alltexts;
+    my @plist = grep { !$usertexts{ $_->{id} } } @$alltexts;
     $c->stash->{publictexts} = \@plist;
-    $c->stash->{template} = 'directory.tt';
+    $c->stash->{template}    = 'directory.tt';
 }
 
 sub _alpha_sort {
@@ -119,6 +125,7 @@ sub _alpha_sort {
        language: <language>,
        public: <is_public>,
        direction: <LR|RL|BI>,
+       filetype: <csv|tsv|xls|teips|cte|collatex|cxjson|graphml>
        file: <fileupload> }
 
 Creates a new tradition belonging to the logged-in user, with the given name
@@ -129,65 +136,130 @@ name of the new tradition.
 =cut
 
 sub newtradition :Local :Args(0) {
-    my( $self, $c ) = @_;
-    return json_error( $c, 403, 'Cannot save a tradition without being logged in' )
-        unless $c->user_exists;
+    my ($self, $c) = @_;
+    return json_error($c, 403,
+        'Cannot save a tradition without being logged in')
+      unless $c->user_exists;
     my $m = $c->model('Directory');
 
-      ## Convert the request that Catalyst received into one that
-      ## the Neo4J db expects. This involves passing through the
-      ## tempfile upload and filling in some defaults.
-    my $upload = $c->req->upload('file');
-    ## If we've been asked to parse a CTE file, cheat by using the old Text::Tradition parser.
-    my $fileargs = [ $upload->tempname, $upload->filename ];
-    if( $upload->type ) {
-        push( @$fileargs, 'Content-Type', $upload->type );
+    my $newopts = _make_upload_request($c);
+    my $result;
+    try {
+        $result = $m->ajax(
+            'post', '/tradition',
+            'Content-Type' => 'multipart/form-data; charset=UTF-8',
+            Content        => $newopts
+        );
     }
-    if( $upload->charset ) {
-        push( @$fileargs, 'Content-Encoding', $upload->charset );
+    catch (stemmaweb::Error $e ) {
+        return json_error($c, $e->status, $e->message);
+    }
+    $c->stash->{result} = $result;
+    $c->forward('View::JSON');
+}
+
+=head2 newsection
+
+ POST /newsection/<tradId>,
+     { name: <name>,
+       filetype: <csv|tsv|xls|teips|cte|collatex|cxjson|graphml>
+       file: <fileupload> }
+
+Creates a new section for the specified tradition, with the given name
+and the collation given in the uploaded file.  Returns the ID and
+name of the new tradition.
+
+=cut
+
+sub newsection :Local :Args(1) {
+    my ($self, $c, $textid) = @_;
+    my $textinfo = load_tradition($c, $textid);
+    return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
+      unless $c->req->method eq 'POST';
+    return json_error($c, 403,
+        'You do not have permission to modify this tradition')
+      unless $textinfo->{permission} eq 'full';
+    my $m = $c->model('Directory');
+
+    # Get the upload data
+    my $formreq = _make_upload_request($c);
+
+    # For the section, we only need name, filetype, file.
+    my $opts = {
+        name     => $formreq->{name},
+        filetype => $formreq->{filetype},
+        file     => $formreq->{file}
+    };
+    my $result;
+    try {
+        $result = $m->ajax(
+            'post', "/tradition/$textid/section",
+            'Content-Type' => 'multipart/form-data; charset=UTF-8',
+            Content        => $opts
+        );
+    }
+    catch (stemmaweb::Error $e ) {
+        return json_error($c, $e->status, $e->message);
+    }
+    $c->stash->{result} = $result;
+    $c->forward('View::JSON');
+}
+
+# Helper function to prepare an upload, either for a new tradition or
+# for a new section to an existing tradition.
+sub _make_upload_request {
+    my ($c) = @_;
+
+    ## Convert the request that Catalyst received into one that
+    ## the Neo4J db expects. This involves passing through the
+    ## tempfile upload and filling in some defaults.
+    my $upload = $c->req->upload('file');
+    my $fileargs = [ $upload->tempname, $upload->filename ];
+    if ($upload->type) {
+        push(@$fileargs, 'Content-Type', $upload->type);
+    }
+    if ($upload->charset) {
+        push(@$fileargs, 'Content-Encoding', $upload->charset);
     }
 
     my $fh;
     my $filetype = $c->req->param('filetype');
-    if( $filetype eq 'cte' ) {
-        my $t;
-        try {
-            $t = Text::Tradition->new(
-                name => $c->req->param('name'),
-                input => 'CTE',
-                file => $upload->tempname
-            );
-        } catch ( Text::Tradition::Error $e ) {
-            return json_error( $c, 400, $e->message )
-        }
-        $fh = File::Temp->new();
-        print $fh $t->collation->as_graphml();
-        $fh->seek(0, SEEK_END);
-        $fileargs->[0] = $fh->filename; # Remaining fileargs should be the same.
-        $filetype = 'stemmaweb';
-    } elsif( $filetype eq 'xls' && $upload->filename =~ /xlsx$/ ) {
+    # if ($filetype eq 'cte') {
+    #     ## Cheat by using the old Text::Tradition parser.
+    #     my $t;
+    #     try {
+    #         $t = Text::Tradition->new(
+    #             name  => $c->req->param('name'),
+    #             input => 'CTE',
+    #             file  => $upload->tempname
+    #         );
+    #     }
+    #     catch (Text::Tradition::Error $e ) {
+    #         return json_error($c, 400, $e->message)
+    #     }
+    #     $fh = File::Temp->new();
+    #     print $fh $t->collation->as_graphml();
+    #     $fh->seek(0, SEEK_END);
+    #     $fileargs->[0] = $fh->filename; # Remaining fileargs should be the same.
+    #     $filetype = 'stemmaweb';
+    # } els
+    if ($filetype eq 'xls' && $upload->filename =~ /xlsx$/) {
+        ## Distinguish the type of Excel file.
         $filetype = 'xlsx';
     }
-
-    my %newopts = (
-        'userId' => $c->user->id,
+    # We have to UTF-8 encode all the form values ourselves.
+    # TODO See what happens if the filename is non-ASCII!
+    my $newopts = {
+        'userId'   => $c->user->id,
         'filetype' => $filetype,
-        'file' => $fileargs
-      );
+        'file'     => $fileargs
+    };
     foreach my $opt (qw/ name language direction public /) {
-        if( $c->req->param($opt) ) {
-            $newopts{$opt} = $c->req->param($opt);
+        if ($c->req->param($opt)) {
+            $newopts->{$opt} = encode_utf8($c->req->param($opt));
         }
     }
-
-      my $result;
-    try {
-        $result = $m->ajax('post', '/tradition', 'Content-Type' => 'form-data', Content => \%newopts );
-    } catch ( stemmaweb::Error $e ) {
-        return json_error( $c, $e->status, $e->message );
-    }
-      $c->stash->{result} = $result;
-    $c->forward('View::JSON');
+    return $newopts;
 }
 
 =head2 textinfo
@@ -200,76 +272,159 @@ sub newtradition :Local :Args(0) {
        direction: $direction,
        owner: $new_userid } # only admin users can update the owner
 
-Returns information about a particular text.
+Returns and updates information about a particular text.
 
 =cut
 
 sub textinfo :Local :Args(1) {
-    my( $self, $c, $textid ) = @_;
-    my $textinfo = load_tradition( $c, $textid );
+    my ($self, $c, $textid) = @_;
+    my $textinfo = load_tradition($c, $textid);
     return unless $textinfo;
     my $ok = $textinfo->{permission};
-    my $m = $c->model('Directory');
+    return json_error($c, 403,
+        'You do not have permission to view this tradition')
+      unless $ok;
+    my $m  = $c->model('Directory');
+
     # Update information if we have been asked to
-    if( $c->req->method eq 'POST' ) {
-        return json_error( $c, 403,
-            'You do not have permission to update this tradition' )
-            unless $ok eq 'full';
-        my $user = $c->user->get_object;
-            my $params = $c->request->parameters;
-        if( !$user->is_admin && exists $params->{owner} ) {
-          return json_error( $c, 403,
-            "Only admin users can change tradition ownership" );
+    if ($c->req->method eq 'POST') {
+        return json_error($c, 403,
+            'You do not have permission to update this tradition')
+          unless $ok eq 'full';
+        my $user   = $c->user->get_object;
+        my $params = $c->req->params;
+        if (!$user->is_admin && exists $params->{owner}) {
+            return json_error($c, 403,
+                "Only admin users can change tradition ownership");
         }
+        # Clean up our boolean value(s)
+        my @booleans = qw/ is_public /;
+        map { $params->{$_} = json_bool($params->{$_}) } @booleans;
+
         # Now pass through the request
         try {
-          $textinfo = $m->ajax('put', "/tradition/$textid",
-            'Content-Type' => 'application/json', Content => JSON::to_json($params));
-        } catch (stemmaweb::Error $e) {
-          return json_error( $c, $e->status, $e->message );
+            $textinfo = $m->ajax(
+                'put', "/tradition/$textid",
+                'Content-Type' => 'application/json',
+                Content        => JSON::encode_json($params)
+            );
         }
-      } elsif ($c->req->method ne 'GET') {
+        catch (stemmaweb::Error $e) {
+            return json_error($c, $e->status, $e->message);
+        }
+    } elsif ($c->req->method ne 'GET') {
         return json_error($c, 405, "Disallowed HTTP method " . $c->req->method);
-      }
+    }
+
     # Add the witness information
-    my @witnesses = map { $_->{sigil} }
-        @{$m->ajax('get', "/tradition/$textid/witnesses")};
+    my @witnesses =
+      map { $_->{sigil} } @{ $m->ajax('get', "/tradition/$textid/witnesses") };
     $textinfo->{witnesses} = \@witnesses;
 
     # Add the stemma information that exists, if any
     my @stemmata;
-    foreach my $stemma ( @{$m->ajax('get', "/tradition/$textid/stemmata")} ) {
-        push( @stemmata, stemmaweb::Controller::Stemma::stemma_info($stemma));
+    foreach my $stemma (@{ $m->ajax('get', "/tradition/$textid/stemmata") }) {
+        push(@stemmata, stemmaweb::Controller::Stemma::stemma_info($stemma));
     }
     $textinfo->{stemmata} = \@stemmata;
     $c->stash->{'result'} = $textinfo;
     $c->forward('View::JSON');
 }
 
-=head2 delete
+=head2 sectioninfo
 
- POST /delete/$textid
+ GET /sectioninfo/$textid/$sectionid
+ POST /sectioninfo/$textid/$sectionid,
+     { name: $new_name,
+       language: $new_language }
 
-Deletes the tradition and all its data. Cannot be undone.
+Returns and updates information about a particular sections.
 
 =cut
 
-sub delete :Local :Args(1) {
-    my( $self, $c, $textid ) = @_;
-    my $textinfo = load_tradition( $c, $textid );
+sub sectioninfo :Local :Args(2) {
+    my ($self, $c, $textid, $sectionid) = @_;
+    $c->stash->{tradition} = load_tradition($c, $textid);
+    return section_metadata($c, $textid, $sectionid);
+}
+
+=head2 reorder
+
+  POST /orderafter/$textid/$sectionid/$othersectionid
+
+Moves the specified section to a position just AFTER the other section
+specified. To move a section to the beginning, $othersectionid can be
+set to 'none'.
+
+=cut
+
+sub orderafter :Local :Args(3) {
+    my ($self, $c, $textid, $sectionid, $priorsectid) = @_;
+    my $textinfo = load_tradition($c, $textid);
+    return unless $textinfo;
     return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
-        unless $c->req->method eq 'POST';
-    return json_error( $c, 403,
-        'You do not have permission to delete this tradition' )
-        unless $textinfo->{permission} eq 'full';
+      unless $c->req->method eq 'POST';
+    return json_error($c, 403,
+        'You do not have permission to modify this tradition')
+      unless $textinfo->{permission} eq 'full';
+
+    my $url = "/tradition/$textid/section/$sectionid/orderAfter/$priorsectid";
+    try {
+        $c->model('Directory')->ajax('put', $url);
+        $c->stash->{result} = { 'status' => 'ok' };
+        $c->forward('View::JSON');
+    }
+    catch (stemmaweb::Error $e) {
+        return json_error($c, $e->status, $e->message);
+    }
+}
+
+=head2 delete
+
+ POST /delete/$textid
+ POST /delete/$textid/$sectionid
+
+Deletes the specified tradition or section and all its data. Cannot be undone.
+
+=cut
+
+sub deleteTradition :Path('delete') :Args(1) {
+    my ($self, $c, $textid) = @_;
+    my $textinfo = load_tradition($c, $textid);
+    return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
+      unless $c->req->method eq 'POST';
+    return json_error($c, 403,
+        'You do not have permission to delete this tradition')
+      unless $textinfo->{permission} eq 'full';
 
     # At this point you had better be sure.
     try {
         $c->model('Directory')->ajax('delete', "/tradition/$textid");
-        $c->stash->{result} = {'status' => 'ok'};
+        $c->stash->{result} = { 'status' => 'ok' };
         $c->forward('View::JSON');
-    } catch (stemmaweb::Error $e) {
-        return json_error( $c, $e->status, $e->message );
+    }
+    catch (stemmaweb::Error $e) {
+        return json_error($c, $e->status, $e->message);
+    }
+}
+
+sub deleteSection :Path('delete') :Args(2) {
+    my ($self, $c, $textid, $sectionid) = @_;
+    my $textinfo = load_tradition($c, $textid);
+    return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
+      unless $c->req->method eq 'POST';
+    return json_error($c, 403,
+        'You do not have permission to delete this section')
+      unless $textinfo->{permission} eq 'full';
+
+    try {
+        $c->model('Directory')
+          ->ajax('delete', "/tradition/$textid/section/$sectionid");
+        $c->stash->{result} = { 'status' => 'ok' };
+        $c->forward('View::JSON');
+    }
+    catch (stemmaweb::Error $e) {
+        return json_error($c, $e->status, $e->message);
     }
 }
 
@@ -282,45 +437,62 @@ Returns the variant graph for the text specified at $textid, in SVG form.
 =cut
 
 sub variantgraph :Local :Args(1) {
-    my( $self, $c, $textid ) = @_;
-    my $textinfo = load_tradition( $c, $textid );
-    $c->stash->{result} = $c->model('Directory')->tradition_as_svg($textinfo->{id});
+    my ($self, $c, $textid) = @_;
+    my $textinfo = load_tradition($c, $textid);
+    try {
+        $c->stash->{result} =
+          $c->model('Directory')->tradition_as_svg($textinfo->{id});
+    }
+    catch (stemmaweb::Error $e) {
+        return json_error($c, $e->status, $e->message);
+    }
     $c->forward('View::SVG');
 }
 
-
 =head2 download
 
- GET /download/$textid/$format
+ GET /download
+   ?tradition=ID&format=type&start_section=123&end_section=456
 
 Returns a file for download of the tradition in the requested format.
 
 =cut
 
-sub download :Local :Args(2) {
-    my( $self, $c, $textid, $format ) = @_;
-    my $textinfo = load_tradition( $c, $textid );
-      ## Available formats are graphml, json, csv, tsv, dot. Dot -> SVG
+sub download :Local :Args(0) {
+    my ($self, $c) = @_;
+    my $prm      = $c->req->params;
+    my $textid   = delete $prm->{tradition};
+    my $format   = delete $prm->{format};
+    my $sectid   = delete $prm->{section}; # for single-section downloads
+    my $textinfo = load_tradition($c, $textid);
+    ## Available formats are graphml, json, csv, tsv, dot. Dot -> SVG
 
     my $view = $format eq 'dot' ? 'View::Plain' : "View::$format";
-    $c->stash->{'name'} = $textinfo->{name};
+    $c->stash->{'name'}   ||= $textinfo->{name};
     $c->stash->{'download'} = 1;
 
     try {
-        if( $format eq 'svg' ) {
+        if ($format eq 'SVG') {
+            my $opts = { include_relations => 1 };
+            $opts->{section} = $sectid if $sectid;
             # Get the tradition as SVG, with relationships included
-            $c->stash->{'result'} = $c->model('Directory')->tradition_as_svg(
-                $textid, {include_relations => 1});
+            $c->stash->{'result'} = $c->model('Directory')
+              ->tradition_as_svg($textid, $opts);
         } else {
-              my $location = sprintf("/tradition/%s/%s", $textinfo->{id}, lc($format));
-            $c->stash->{'result'} = $c->model('Directory')->ajax('get', $location);
+            my $uri = "/tradition/$textid";
+            $uri .= "/section/$sectid" if $sectid;
+            my $location =
+              URI->new(sprintf("%s/%s", $uri, lc($format)));
+            $location->query_form($prm);
+            $c->stash->{'result'} =
+              $c->model('Directory')->ajax('get', $location);
         }
-    } catch( stemmaweb::Error $e ) {
-        return json_error( $c, $e->status, $e->message );
     }
-    $c->forward( $view );
+    catch (stemmaweb::Error $e ) {
+        return json_error($c, $e->status, $e->message);
+    }
+    $c->forward($view);
 }
-
 
 =head2 default
 
@@ -329,8 +501,8 @@ Standard 404 error page
 =cut
 
 sub default :Path {
-    my ( $self, $c ) = @_;
-    $c->response->body( 'Page not found' );
+    my ($self, $c) = @_;
+    $c->response->body('Page not found');
     $c->response->status(404);
 }
 
@@ -340,7 +512,7 @@ Attempt to render a view, if needed.
 
 =cut
 
-sub end : ActionClass('RenderView') {}
+sub end :ActionClass('RenderView') { }
 
 =head1 AUTHOR
 

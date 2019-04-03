@@ -38,33 +38,39 @@ sub new {
 }
 
 sub authenticate {
-    my ($self, $c, $realm, $authinfo) =@_;
+    my ($self, $c, $realm, $authinfo) = @_;
 
     my $id_token = $authinfo->{id_token};
-    $id_token ||= $c->req->method eq 'GET' ?
-        $c->req->query_params->{id_token} : $c->req->body_params->{id_token};
+    $id_token ||=
+        $c->req->method eq 'GET'
+      ? $c->req->query_params->{id_token}
+      : $c->req->body_params->{id_token};
 
     if (!$id_token) {
         Catalyst::Exception->throw("id_token not specified.");
     }
 
     my $email = $authinfo->{email};
-    $email ||= $c->req->method eq 'GET' ? $c->req->query_params->{email} :
-    $c->req->body_params->{email};
+    $email ||=
+        $c->req->method eq 'GET'
+      ? $c->req->query_params->{email}
+      : $c->req->body_params->{email};
 
     my $userinfo = $self->decode($id_token);
-    my $sub = $userinfo->{sub};
+    my $sub      = $userinfo->{sub};
 
     unless (exists $userinfo->{email}) {
         if ($email) {
             $userinfo->{email} = $email;
         } else {
-            Catalyst::Exception->throw('No email address associated with login request!');
+            Catalyst::Exception->throw(
+                'No email address associated with login request!');
         }
     }
 
     if (!$sub) {
-        Catalyst::Exception->throw('Could not retrieve sub from token! Is the token correct?');
+        Catalyst::Exception->throw(
+            'Could not retrieve sub from token! Is the token correct?');
     }
 
     return $realm->find_user($userinfo, $c);
@@ -97,14 +103,18 @@ Decoded JSON object containing certificates.
 sub retrieve_certs {
     my ($self, $url) = @_;
 
-    my $c = $self->{_app};
+    my $c      = $self->{_app};
     my $cached = 0;
     my $certs;
     my $cache;
 
-    $url ||= ( $c->config->{'Authentication::Credential::Google'}->{public_cert_url} || 'https://www.googleapis.com/oauth2/v1/certs' );
+    $url ||=
+      ($c->config->{'Authentication::Credential::Google'}->{public_cert_url}
+          || 'https://www.googleapis.com/oauth2/v1/certs');
 
-    if ( ($c->registered_plugins('Catalyst::Plugin::Cache')) && ($cache = $c->cache) ) {
+    if (   ($c->registered_plugins('Catalyst::Plugin::Cache'))
+        && ($cache = $c->cache))
+    {
         if ($certs = $cache->get('certs')) {
             $certs = decode_json($certs);
 
@@ -171,6 +181,7 @@ sub get_key_from_cert {
     my $x509 = Crypt::OpenSSL::X509->new_from_string($cert);
 
     if ($self->is_cert_expired($x509)) {
+
         # If we ended up here, we were given
         # an old $certs string from the user.
         # Let's force getting another.
@@ -231,7 +242,7 @@ sub decode {
     if (!$pubkey) {
         my $details = decode_json(
             MIME::Base64::decode_base64(
-                substr( $token, 0, CORE::index($token, '.') )
+                substr($token, 0, CORE::index($token, '.'))
             )
         );
 

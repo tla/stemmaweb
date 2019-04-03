@@ -1,15 +1,16 @@
-  <table id="alignment_table">
-    <tr><td/>
+<table id="alignment_table">
+  <tr>
+    <td />
 [% FOREACH w IN witnesses -%]
-      <th>[% w %]</th>
+    <th>[% w %]</th>
 [% END -%]
-    </tr>
+  </tr>
 [% FOREACH row IN table -%]
-    <tr>
-      <th>[% row.rank %]</th>
+  <tr>
+    <th>[% row.rank %]</th>
 [% FOREACH reading IN row.readings -%]
-      <td>[% reading %]</td>
+    <td>[% reading %]</td>
 [% END -%]
-    </tr>
+  </tr>
 [% END -%]
-  </table>
+</table>

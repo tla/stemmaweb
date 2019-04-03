@@ -1,0 +1,38 @@
+  <!-- Data download dialog box -->
+  <div id="download-dialog" title="Download tradition data">
+    <div id="download_container">
+      <form id="download_form">
+        [% IF referringpage == 'index' %]
+        <input id="download_tradition" type="hidden" name="tradition" /><br>
+        [% END %]
+        <label for="download_format">Choose a format for download: </label>
+        [% IF referringpage == 'index' %]
+        <select id="download_format" name="format" onchange="$('#dl_choose_sections').toggle(
+  					$(this).val() == 'JSON' || $(this).val() == 'CSV' || $(this).val() == 'TSV'
+  				)">
+        [% ELSE %]
+        <select id="download_format" name="format">
+        [% END %]
+          <option value="JSON">JSON table (collation only)</option>
+          <option value="CSV">Comma-separated values (collation only)</option>
+          <option value="TSV">Tab-separated values (collation only)</option>
+          <option value="dot">Graphviz dot format (collation and relationships)</option>
+          <option value="SVG">SVG graph display (collation and relationships)</option>
+          <option value="GraphML">Native GraphML XML format</option>
+          <!-- option value="tei_ps" -->
+          <!-- option value="tei_dea" -->
+        </select><br>
+        [% IF referringpage == "index" %]
+        <div id="dl_choose_sections">
+          <label for="download_start">From section: </label>
+          <select id="download_start" name="start_section">
+          </select>
+          <label for="download_end">To section: </label>
+          <select id="download_end" name="end_section">
+          </select>
+        </div><br>
+        [% END %]
+      </form>
+      <div id="download_status"></div>
+    </div>
+  </div>
