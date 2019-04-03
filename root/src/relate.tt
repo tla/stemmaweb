@@ -141,7 +141,7 @@
     </form>
   </div>
 
-  <div id="split-form" title="Split a reading">
+  <!-- div id="split-form" title="Split a reading">
 		<div id="split-form-status"></div>
 
 		Split a reading:<br/>
@@ -155,7 +155,7 @@
 			</div>
 			<label for="split_reading_separate">These should be separate words?</label> <input type="checkbox" name="separate" id="split_reading_separate">
 		</form>
-	</div>
+	</div -->
 
   <div id="reading-form" title="Reading information">
     <form id="reading_data_form" action="#">

@@ -1690,15 +1690,15 @@ var keyCommands = {
       $('#normal-form-propagate').dialog('open');
     }
   },
-  '115': {
-		'key': 's',
-		'description': 'Split the selected reading according to given criteria',
-		'function': function () {
-			// S for Split reading
-			if( readings_selected.length == 1 ) {
-				$('#split-form').dialog( 'open' );
-			}
-		} },
+  // '115': {
+	// 	'key': 's',
+	// 	'description': 'Split the selected reading according to given criteria',
+	// 	'function': function () {
+	// 		// S for Split reading
+	// 		if( readings_selected.length == 1 ) {
+	// 			$('#split-form').dialog( 'open' );
+	// 		}
+	// 	} },
   '120': {
     'key': 'x',
     'description': 'Expunge all relationships on the selected reading(s)',
@@ -1768,10 +1768,10 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     // reading box
     error += '<br>The reading cannot be altered.</p>';
     errordiv = '#reading-status';
-  } else if ( $('#split-form').dialog('isOpen') ) {
-		// the split-reading box
-		error += '<br>The reading cannot be split.</p>';
-		errordiv = '#split-form-status';
+  // } else if ( $('#split-form').dialog('isOpen') ) {
+	// 	// the split-reading box
+	// 	error += '<br>The reading cannot be split.</p>';
+	// 	errordiv = '#split-form-status';
   } else if ($('#section-info').dialog('isOpen')) {
     // section box
     error += '<br>The section cannot be updated.</p>';
@@ -2071,33 +2071,33 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   }
 
     // Set up the reading split dialog.
-    $( '#split-form').dialog({
-  	  autoOpen: false,
-  	  modal: true,
-  	  buttons: {
-  		  Cancel: function() {
-  			  $('#split-form-status').empty();
-  			  $(this).dialog("close");
-  		  },
-  		  Split: function() {
-  			  form_values = $('#split-form').serialize();
-  			  split_readings( form_values );
-  		  }
-  	  },
-	  /* create: function() {
-		  var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
-		  buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
-	  } */
-  	  open: function() {
-		  // Set up the hidden form values. There should be only one reading selected.
-		  var rdg = readings_selected[0];
-		  $('#split_reading_id').empty().append(rdg);
-		  $('#split_reading_text').empty().append(readingdata[rdg]["text"]);
-  	  },
-	  close: function() {
-		  $("#dialog_overlay").hide();
-    }
-  });
+  //   $( '#split-form').dialog({
+  // 	  autoOpen: false,
+  // 	  modal: true,
+  // 	  buttons: {
+  // 		  Cancel: function() {
+  // 			  $('#split-form-status').empty();
+  // 			  $(this).dialog("close");
+  // 		  },
+  // 		  Split: function() {
+  // 			  form_values = $('#split-form').serialize();
+  // 			  split_readings( form_values );
+  // 		  }
+  // 	  },
+	//   /* create: function() {
+	// 	  var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
+	// 	  buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
+	//   } */
+  // 	  open: function() {
+	// 	  // Set up the hidden form values. There should be only one reading selected.
+	// 	  var rdg = readings_selected[0];
+	// 	  $('#split_reading_id').empty().append(rdg);
+	// 	  $('#split_reading_text').empty().append(readingdata[rdg]["text"]);
+  // 	  },
+	//   close: function() {
+	// 	  $("#dialog_overlay").hide();
+  //   }
+  // });
 
   // Set up the relationship info display and deletion dialog.
   $("#delete-form").dialog({
