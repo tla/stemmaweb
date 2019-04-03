@@ -291,6 +291,13 @@ sub relationships :Chained('section') :PathPart :Args(0) {
                 'You do not have permission to modify this tradition.');
         } elsif ($c->request->method eq 'POST') {
             my $opts = $c->request->params;
+            my $sourceparam = delete $opts->{'source'};
+            my @sourcenodes;
+            if (ref($sourceparam) eq 'ARRAY') {
+                push(@sourcenodes, @$sourceparam);
+            } else {
+                push(@sourcenodes, $sourceparam);
+            }
 
             # TODO validate relationship type
             # Keep the data clean
@@ -306,28 +313,40 @@ sub relationships :Chained('section') :PathPart :Args(0) {
             delete $opts->{annotation}     unless $opts->{annotation};
             delete $opts->{is_significant} unless $opts->{is_significant};
 
-            # $opts->{propagate} = 1;
-
-            my $result;
+            my $result = {status => 'ok'};
+            my @relpairs;
+            my @changed_readings;
+            my $lastattempted;
+            ## Error out on the first failed request.
             try {
-                $result = $m->ajax(
-                    'post',
-                    "/tradition/$textid/relation",
-                    'Content-Type' => 'application/json',
-                    'Content'      => encode_json($opts)
-                );
+                foreach my $s (@sourcenodes) {
+                    $lastattempted = $s;
+                    my $reqopts = { %$opts };
+                    $reqopts->{source} = $s;
+                    my $result = $m->ajax(
+                        'post',
+                        "/tradition/$textid/relation",
+                        'Content-Type' => 'application/json',
+                        'Content'      => encode_json($reqopts)
+                    );
+                    push(@relpairs, map { [ $_->{source}, $_->{target}, $_->{type} ] } @{ $result->{relations} });
+                    push(@changed_readings, @{ $result->{readings} });
+                }
+            } catch (stemmaweb::Error $e ) {
+                if (@relpairs) {
+                    # Return a warning
+                    $result->{status} = 'warn';
+                    $result->{warning} = sprintf("Could not relate reading %s: %d / %s", 
+                        $lastattempted, $e->status, $e->message);
+                } else {
+                    # Return an error
+                    return json_error($c, $e->status, $e->message);
+                }
             }
-            catch (stemmaweb::Error $e ) {
-                return json_error($c, $e->status, $e->message);
-            }
-
-            # TODO should any propagation be done?
-            # TODO should any normal forms be propagated?
-            # Massage the server result into what the JS expects
-            my @relpairs = map { [ $_->{source}, $_->{target}, $_->{type} ] }
-              @{ $result->{relations} };
-            $c->stash->{result} =
-              { relationships => \@relpairs, readings => $result->{readings} };
+            
+            $result->{relationships} = \@relpairs;
+            $result->{readings} = \@changed_readings;
+            $c->stash->{result} = $result;
 
         } elsif ($c->request->method eq 'DELETE') {
 
@@ -714,7 +733,7 @@ sub compress :Chained('section') :PathPart :Args(0) {
         my $first = shift @rids;
 
         my @nodes = ($first);
-        my $result = { success => 1 };
+        my $result = { status => 'ok' };
         try {
             while (scalar @rids) {
                 my $rid = shift @rids;
@@ -732,7 +751,7 @@ sub compress :Chained('section') :PathPart :Args(0) {
             # response, but note a warning too.
             return json_error($c, $e->status, $e->message)
               if scalar(@nodes) == 1;
-            $result->{success} = 0;
+            $result->{status} = 'warn';
             $result->{warning} = $e->message;
         }
         $result->{nodes} = \@nodes;
@@ -781,37 +800,50 @@ sub merge :Chained('section') :PathPart :Args(0) {
             json_error($c, 403,
                 'You do not have permission to modify this tradition.');
         }
-
         my $main   = $c->request->param('target');
-        my $second = $c->request->param('source');
-        my $extent;
-        my $rdg_rank;
-        try {
-            ## Figure out the range of ranks we are dealing with
-            my $main_info   = $m->ajax('get', "/reading/$main");
-            my $second_info = $m->ajax('get', "/reading/$second");
-            my @ordered =
-              sort { $a->{rank} <=> $b->{rank} } ($main_info, $second_info);
-            $rdg_rank = $ordered[0]->{rank};
-            $extent = $rdg_rank + (2 * ($ordered[1]->{rank} - $rdg_rank));
-            if ($extent > $c->stash->{section}->{'endRank'}) {
-                $extent = $c->stash->{section}->{'endRank'};
+        my @rest = $c->request->param('source');
+        my $section_end = $c->stash->{section}->{'endRank'};
+        my $extent = 0; # Keep track of how many ranks are crossed, for later mergeability check
+        my $rdg_rank = $section_end;
+        my @succeeded;
+        my $failed = {};
+        foreach my $second (@rest) {
+            try {
+                ## Figure out the range of ranks we are dealing with
+                my $main_info   = $m->ajax('get', "/reading/$main");
+                my $second_info = $m->ajax('get', "/reading/$second");
+                my $mrank = $main_info->{rank};
+                my $srank = $second_info->{rank};
+                my $magnitude = abs($mrank - $srank);
+                $rdg_rank = $mrank < $rdg_rank ? $mrank : $rdg_rank;
+                $rdg_rank = $srank < $rdg_rank ? $srank : $rdg_rank;
+                $extent = $magnitude > $extent ? $magnitude : $extent;
+                ## Do the merge
+                $m->ajax('post', "/reading/$main/merge/$second");
+                push(@succeeded, $second);
             }
-            ## Do the merge
-            $m->ajax('post', "/reading/$main/merge/$second");
-        }
-        catch (stemmaweb::Error $e) {
-            return json_error($c, $e->status, $e->message);
+            catch (stemmaweb::Error $e) {
+                $failed->{$second} = [$e->status, $e->message];
+            }            
         }
 
         my $response = { status => 'ok' };
-
-        # Now look for any mergeable readings on the tradition.
-        unless ($c->request->param('single')) {
+        if (keys %$failed) {
+            # Don't do the mergeability check, just return the results.
+            if (@succeeded) {
+                $response->{status} = 'warn';
+                $response->{warning} = assemble_warnings($failed);
+                $response->{failed} = [ keys %$failed ];
+            } else {
+                my $error = assemble_failed($failed);
+                json_error($c, @$error);
+            }
+        } elsif (!$c->request->param('single')) {
+            # Now look for any mergeable readings on the tradition.
             my $mergeable;
             try {
                 $mergeable = $m->ajax('get',
-"/tradition/$textid/section/$sectid/mergeablereadings/$rdg_rank/$extent"
+"/tradition/$textid/section/$sectid/mergeablereadings/$rdg_rank/$section_end?threshold=$extent"
                 );
             }
             catch (stemmaweb::Error $e ) {
@@ -1078,6 +1110,47 @@ sub split :Chained('section') :PathPart :Args(0) {
     $c->forward('View::JSON');
 }
 
+=head2 assemble_warnings 
+
+Make a single warning message from a set of failed operations. Returns a collected string.
+
+=cut
+
+sub assemble_warnings {
+    my ($failures) = @_;
+    my $result = "";
+    foreach my $r (keys %$failures) {
+        $result .= sprintf("Reading %s: %d / %s\n", $r, $failures->{$r}->[0], $failures->{$r}->[1]);
+    }
+    return $result;
+}
+
+=head2 assemble_warnings 
+
+Make a single warning message from a set of failed operations. Returns a status code + message.
+
+=cut
+
+sub assemble_failures {
+    my ($failures) = @_;
+    my $result = "";
+    my $code;
+    my $errmsg;
+    foreach my $r (keys %$failures) {
+        my( $c, $e ) = @{$failures->{$r}};
+        if ($code && $code != $c) {
+            $code = 500;
+        } else {
+            $code = $c;
+        }
+        if ($errmsg && $errmsg ne $e) {
+            $errmsg = "Multiple errors returned";
+        } else {
+            $errmsg = $e;
+        }
+    }
+    return [$code, $errmsg];
+}
 =head2 end
 
 Attempt to render a view, if needed.

@@ -120,6 +120,7 @@ function Edge(g_elem) {
         var dx = (target_cx - target_rx) - (source_cx - source_rx);
         var dy = (target_cy - source_cy);
         end_point_arrowhead.reposition(dx, dy);
+        // TODO this does a wrong thing and leave a dangling path
         edge_path.reposition(dx, dy);
         g_elem.children('title').text(g_elem.children('title').text().replace(self.end_node_id, target_node_id));
       }
