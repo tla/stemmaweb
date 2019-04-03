@@ -2058,7 +2058,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $('#multiple_selected_readings').attr('value', readings_selected.join(','));
       },
       close: function() {
-        marquee.unselect();
         $("#dialog_overlay").hide();
       }
     });
@@ -2096,7 +2095,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
 		  $('#split_reading_text').empty().append(readingdata[rdg]["text"]);
   	  },
 	  close: function() {
-		  marquee.unselect();
 		  $("#dialog_overlay").hide();
     }
   });
