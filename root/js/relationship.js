@@ -1745,7 +1745,9 @@ function keystroke_menu() {
 // Some utility functions for the dialogs
 function dialog_background(status_el) {
 	$(".ui-widget-overlay").css("background", "none");
-	$(status_el).empty();
+  if (status_el) {
+    $(status_el).empty();
+  }
 	$("#dialog_overlay").show();
 	$("#dialog_overlay").height( $("#enlargement_container").height() );
 	$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
@@ -2334,6 +2336,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         buttonset.find("button:contains('Update')").hide();
         // If the relationship scope is local, show only OK and Delete
       }
+    },
+    close: function() {
+      $("#dialog_overlay").hide();
     }
   });
 
@@ -2359,6 +2364,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       }
       // Refresh whatever form settings we last had
       requestRunningText();
+    },
+    close: function() {
+      $("#dialog_overlay").hide();
     }
   });
 
@@ -2384,6 +2392,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     },
     open: function() {
       dialog_background('#download_status');
+    },
+    close: function() {
+      $("#dialog_overlay").hide();
     }
   });
 
@@ -2441,6 +2452,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       });
     },
     close: function() {
+      $('#dialog_overlay').hide();
       $(this).off("keypress");
     }
   });
@@ -2463,6 +2475,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     if (!editable) {
       return;
     }
+    $(this).hide();
     var svg_enlargement = $('#svgenlargement').svg().svg('get').root();
     mouse_scale = svg_root_element.getScreenCTM().a;
     if ($(this).data('locked') == true) {
@@ -2514,6 +2527,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       $(this).css('background-position', '0px 0px');
       $(this).data('locked', true);
     }
+    $(this).show();
   });
 
   $('#keystroke_menu_button').click(function() {
