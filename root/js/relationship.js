@@ -1251,6 +1251,7 @@ function compress_nodes(readings) {
   get_node_obj(readings[0]).update_elements();
 }
 
+<<<<<<< HEAD
 function Marquee() {
 
   var self = this;
@@ -1356,6 +1357,8 @@ function Marquee() {
 
 }
 
+=======
+>>>>>>> d576358... Merge branch 'master' of github.com:tla/stemmaweb; fix bugs in warnings
 // This is called with SVG node IDs.
 function readings_equivalent(source, target) {
   var sourcetext = readingdata[source].text;
@@ -1498,6 +1501,18 @@ var keyCommands = {
       }
     }
   },
+<<<<<<< HEAD
+=======
+  // '115': {
+	// 	'key': 's',
+	// 	'description': 'Split the selected reading according to given criteria',
+	// 	'function': function () {
+	// 		// S for Split reading
+	// 		if( readings_selected.length == 1 ) {
+	// 			$('#split-form').dialog( 'open' );
+	// 		}
+	// 	} },
+>>>>>>> d576358... Merge branch 'master' of github.com:tla/stemmaweb; fix bugs in warnings
   '120': {
     'key': 'x',
     'description': 'Expunge all relationships on the selected reading(s)',
@@ -1536,7 +1551,11 @@ function dialog_background(status_el) {
 }
 
 function get_relation_querystring () {
+<<<<<<< HEAD
   // A cheesy hack - if we used the keystroke menu, add on the rest of the 
+=======
+  // A cheesy hack - if we used the keystroke menu, add on the rest of the
+>>>>>>> d576358... Merge branch 'master' of github.com:tla/stemmaweb; fix bugs in warnings
   // source nodes to our form data.
 	var form_values = $( '#merge_node_form' ).serialize();
   if (!$('#dialog-form').data('binary')) {
@@ -1546,7 +1565,11 @@ function get_relation_querystring () {
       var rid = readingdata[nid].id;
       if (rid !== formsource && rid !== formtarget) {
         // Prepend the extra source.
+<<<<<<< HEAD
         form_values = 'source=' + rid + '&' + form_values;      
+=======
+        form_values = 'source=' + rid + '&' + form_values;
+>>>>>>> d576358... Merge branch 'master' of github.com:tla/stemmaweb; fix bugs in warnings
       }
     })
   }
@@ -1727,7 +1750,11 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
                 failed.push(rid2node[rid]);
               })
               var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
+<<<<<<< HEAD
               $('#dialog-form-status').empty.append(dataerror);
+=======
+              $('#dialog-form-status').empty().append(dataerror);
+>>>>>>> d576358... Merge branch 'master' of github.com:tla/stemmaweb; fix bugs in warnings
             }
             // Here again we profit from the source nodes all being in readings_selected
             var target = rid2node[$( '#target_node_id' ).val()];
@@ -1742,7 +1769,13 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
               }
             })
     				mybuttons.button( 'enable' );
+<<<<<<< HEAD
     				$( '#dialog-form' ).dialog( 'close' );
+=======
+            if (data.status === 'ok') {
+              $( '#dialog-form' ).dialog( 'close' );
+            }
+>>>>>>> d576358... Merge branch 'master' of github.com:tla/stemmaweb; fix bugs in warnings
     			} );
     		},
     		OK: function( evt ) {
@@ -1751,11 +1784,14 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     			var form_values = get_relation_querystring();
     			var ncpath = getTextURL( 'relationships' );
     			var jqjson = $.post( ncpath, form_values, function( data ) {
+<<<<<<< HEAD
             // See if we need to display a warning.
             if (data.status === 'warn') {
               var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
               $('#dialog-form-status').empty.append(dataerror);
             }
+=======
+>>>>>>> d576358... Merge branch 'master' of github.com:tla/stemmaweb; fix bugs in warnings
     				// Stash the new relationships.
     				$.each( data['relationships'], function( item, source_target ) {
     					var source_found = get_ellipse( source_target[0] );
@@ -1774,7 +1810,17 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     					update_reading(rdgdata);
     				});
     				mybuttons.button( 'enable' );
+<<<<<<< HEAD
     				$( '#dialog-form' ).dialog( 'close' );
+=======
+            // See if we need to display a warning.
+            if (data.status === 'warn') {
+              var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
+              $('#dialog-form-status').empty().append(dataerror);
+            } else {
+              $( '#dialog-form' ).dialog( 'close' );
+            }
+>>>>>>> d576358... Merge branch 'master' of github.com:tla/stemmaweb; fix bugs in warnings
     			}, 'json' );
     		},
     		Cancel: function() {
@@ -1810,7 +1856,11 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           // Form values are already set from the mouseup event
           // Should the merge button be shown?
           show_merge = readings_equivalent( rid2node[$('#source_node_id').val()],
+<<<<<<< HEAD
                                             rid2node[$('#target_node_id').val()] );          
+=======
+                                            rid2node[$('#target_node_id').val()] );
+>>>>>>> d576358... Merge branch 'master' of github.com:tla/stemmaweb; fix bugs in warnings
         } else {
           // Hide the parts of the form that aren't applicable
           $('#binary_relation_only').hide();
@@ -1830,7 +1880,11 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           var source_id = readingdata[nid].id;
           var target_id = $('#target_node_id').val();
           if (source_id !== target_id) {
+<<<<<<< HEAD
         		relation_manager.create_temporary(source_id, target_id);          
+=======
+        		relation_manager.create_temporary(source_id, target_id);
+>>>>>>> d576358... Merge branch 'master' of github.com:tla/stemmaweb; fix bugs in warnings
           }
         });
         // Show the merge button if applicable
@@ -2248,6 +2302,10 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   });
   
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> d576358... Merge branch 'master' of github.com:tla/stemmaweb; fix bugs in warnings
   // Set up the error message dialog, for results from keystroke commands without their own
   // dialog boxes
   $('#error-display').dialog({
