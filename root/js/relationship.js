@@ -1631,80 +1631,87 @@ function requestRunningText() {
 // Set up keypress commands:
 
 var keyCommands = {
-  '104': {
-    'key': 'h',
-    'description': 'Show / hide this menu',
-    'function': function() {
-      $('#keystroke_menu').toggle();
-    }
-  },
-  '99': {
-    'key': 'c',
-    'description': 'Concatenate a sequence of readings into a single reading',
-    'function': function() {
-      // C for Compress; TODO get rid of dialog altogether
-      if (readings_selected.length > 0) {
-        $('#action-concat').prop('checked', true);
-        $('#multipleselect-form').dialog('open');
-      }
-    }
-  },
-  '100': {
-    'key': 'd',
-    'description': 'Detach one or more witnesses from the collation for the selected reading(s)',
-    'function': function() {
-      // D for Detach
-      if (readings_selected.length > 0) {
-        $('#action-detach').prop('checked', true);
-        $('#multipleselect-form').dialog('open');
-      }
-    }
-  },
-  '108': {
-    'key': 'l',
-    'description': 'Set / unset the selected reading(s) as canonical / lemma',
-    'function': function() {
-      // L for making a Lemma
-      $.each(readings_selected, function(i, reading_id) {
-        // need current state of lemmatization
-        var selected = readingdata[reading_id]
-        var set_lemma = !selected['is_lemma']
-        var ncpath = getReadingURL(reading_id);
-        var form_values = {
-          'id': reading_id,
-          'is_lemma': set_lemma,
-        };
-        $.post(ncpath, form_values, function(data) {
-          unselect_all_readings();
-          $.each(data['readings'], function(i, rdgdata) {
-            // The reading data already exists; we assume that the
-            // database ID hasn't changed, and replace it wholesale.
-            var this_nodeid = update_reading(rdgdata);
-            if ($('#update_workspace_button').data('locked')) {
-              color_active(get_ellipse(this_nodeid));
-            } else {
-              // Re-color the node if necessary
-              color_inactive(get_ellipse(this_nodeid));
+    // TODO maybe also 'c' for compress and/or 's' for split...
+    '104': {
+        'key': 'h',
+        'description': 'Show / hide this menu',
+        'function': function() {
+            $('#keystroke_menu').toggle();
+        }
+    },
+    '99': {
+        'key': 'c',
+        'description': 'Concatenate a sequence of readings into a single reading',
+        'function': function() {
+            // C for Compress; TODO get rid of dialog altogether
+            if ($('#svgenlargement').data('display_normalised')) {
+              $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
+              $('#error-display').dialog('open');
+            } else if (readings_selected.length > 0) {
+                $('#action-concat').prop('checked', true);
+                $('#multipleselect-form').dialog('open');
             }
-          });
-        });
-      });
-    }
-  },
-  '110': {
-    'key': 'n',
-    'description': 'Propagate the normal form of the selected reading(s) along specified relations',
-    'function': function() {
-      $('#normal-form-propagate').dialog('open');
-    }
-  },
-  '114': {
-    'key': 'r',
-    'description': 'Relate the selected readings',
-    'function': function() {
-      if (readings_selected.length > 0) {
-        $('#dialog-form').data('binary', false);
-        $('#dialog-form').dialog('open');
+        }
+    },
+    '100': {
+        'key': 'd',
+        'description': 'Detach one or more witnesses from the collation for the selected reading(s)',
+        'function': function() {
+            // D for Detach
+            if ($('#svgenlargement').data('display_normalised')) {
+              $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
+              $('#error-display').dialog('open');
+            } else if (readings_selected.length > 0) {
+                $('#action-detach').prop('checked', true);
+                $('#multipleselect-form').dialog('open');
+            }
+        }
+    },
+    '108': {
+        'key': 'l',
+        'description': 'Set / unset the selected reading(s) as canonical / lemma',
+        'function': function() {
+            // L for making a Lemma
+            $.each(readings_selected, function(i, reading_id) {
+                // need current state of lemmatization
+                var selected = readingdata[reading_id]
+                var set_lemma = !selected['is_lemma']
+                var ncpath = getReadingURL(reading_id);
+                var form_values = {
+                    'id': reading_id,
+                    'is_lemma': set_lemma,
+                };
+                $.post(ncpath, form_values, function(data) {
+                    unselect_all_readings();
+                    $.each(data['readings'], function(i, rdgdata) {
+                        // The reading data already exists; we assume that the
+                        // database ID hasn't changed, and replace it wholesale.
+                        var this_nodeid = update_reading(rdgdata);
+                        if ($('#update_workspace_button').data('locked')) {
+                            color_active(get_ellipse(this_nodeid));
+                        } else {
+                            // Re-color the node if necessary
+                            color_inactive(get_ellipse(this_nodeid));
+                        }
+                    });
+                });
+            });
+        }
+    },
+    '110': {
+        'key': 'n',
+        'description': 'Propagate the normal form of the selected reading(s) along specified relations',
+        'function': function() {
+            $('#normal-form-propagate').dialog('open');
+        }
+    },
+    '114': {
+        'key': 'r',
+        'description': 'Relate the selected readings',
+        'function': function() {
+            if (readings_selected.length > 0) {
+                $('#dialog-form').data('binary', false);
+                $('#dialog-form').dialog('open');
       }
     }
   },
@@ -1979,7 +1986,8 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     		});
     	},
     	open: function() {
-        var show_merge = true;
+        // Don't allow merge (or split) if we are in normalised view mode
+        var show_merge = !$('#svgenlargement').data('display_normalised');
         if ($('#dialog-form').data('binary')) {
           // Form values are already set from the mouseup event
           // Should the merge button be shown?
