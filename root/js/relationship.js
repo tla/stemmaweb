@@ -1438,7 +1438,10 @@ var keyCommands = {
         'description': 'Concatenate a sequence of readings into a single reading',
         'function': function() {
             // C for Compress; TODO get rid of dialog altogether
-            if (readings_selected.length > 0) {
+            if ($('#svgenlargement').data('display_normalised')) {
+              $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
+              $('#error-display').dialog('open');
+            } else if (readings_selected.length > 0) {
                 $('#action-concat').prop('checked', true);
                 $('#multipleselect-form').dialog('open');
             }
@@ -1449,7 +1452,10 @@ var keyCommands = {
         'description': 'Detach one or more witnesses from the collation for the selected reading(s)',
         'function': function() {
             // D for Detach
-            if (readings_selected.length > 0) {
+            if ($('#svgenlargement').data('display_normalised')) {
+              $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
+              $('#error-display').dialog('open');
+            } else if (readings_selected.length > 0) {
                 $('#action-detach').prop('checked', true);
                 $('#multipleselect-form').dialog('open');
             }
@@ -1813,7 +1819,8 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
                 });
             },
             open: function() {
-                var show_merge = true;
+                // Don't allow merge (or split) if we are in normalised view mode
+                var show_merge = !$('#svgenlargement').data('display_normalised')
                 if ($('#dialog-form').data('binary')) {
                     // Form values are already set from the mouseup event
                     // Should the merge button be shown?
