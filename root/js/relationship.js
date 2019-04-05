@@ -101,7 +101,7 @@ function update_reading_display(node_id) {
     normal.setAttribute("x", ellipse.attr("cx"));
     // and reset the content.
     normal.textContent = rdata.normal_form;
-  } else if (normalifexists.length > 0){
+  } else if (normalifexists.length > 0) {
     // We should shrink the ellipse and remove the normal form.
     ellipse.attr("ry", "18");
     text.setAttribute("y", parseFloat(ellipse.attr("cy")) + 2);
@@ -241,159 +241,159 @@ var view_high = 0;
 var tfm = -1;
 
 var selectionRect = {
-	element			: null,
-	previousElement : null,
-	currentY		: 0,
-	currentX		: 0,
-	originX			: 0,
-	originY			: 0,
-	setElement: function(ele) {
-		this.previousElement = this.element;
-		this.element = ele;
-	},
-	getNewAttributes: function() {
-		var x = this.currentX<this.originX?this.currentX:this.originX;
-		var y = this.currentY<this.originY?this.currentY:this.originY;
-		var width = Math.abs(this.currentX - this.originX);
-		var height = Math.abs(this.currentY - this.originY);
-		return {
-	        x       : x,
-	        y       : y,
-	        width  	: width,
-	        height  : height
-		};
-	},
-	getCurrentAttributes: function() {
-		// use plus sign to convert string into number
-		var x = +this.element.attr("x");
-		var y = +this.element.attr("y");
-		var width = +this.element.attr("width");
-		var height = +this.element.attr("height");
-		return {
-			x1  : x,
-	        y1	: y,
-	        x2  : x + width,
-	        y2  : y + height
-		};
-	},
-	getCurrentAttributesAsText: function() {
-		var attrs = this.getCurrentAttributes();
-		return "x1: " + attrs.x1 + " x2: " + attrs.x2 + " y1: " + attrs.y1 + " y2: " + attrs.y2;
-	},
-	init: function(newX, newY) {
-		d3svg = d3.select("svg");
-		//d3svg3.style("background-color", "red");
-		var rectElement = d3svg.append("rect")
-		    .attrs({
-		        rx      : 4,
-		        ry      : 4,
-		        x       : 0,
-		        y       : 0,
-		        width   : 0,
-		        height  : 0
-		    })
-		    .classed("selection", true);
-	    this.setElement(rectElement);
-		this.originX = newX;
-		this.originY = newY;
-		this.update(newX, newY);
-	},
-	update: function(newX, newY) {
-		this.currentX = newX;
-		this.currentY = newY;
-		this.element.attrs(this.getNewAttributes());
-	},
-	focus: function() {
-        this.element
-            .style("stroke", "#DE695B")
-            .style("stroke-width", "2.5");
-    },
-    remove: function() {
-    	this.element.remove();
-    	this.element = null;
-    },
-    removePrevious: function() {
-    	if(this.previousElement) {
-    		this.previousElement.remove();
-    	}
+  element: null,
+  previousElement: null,
+  currentY: 0,
+  currentX: 0,
+  originX: 0,
+  originY: 0,
+  setElement: function(ele) {
+    this.previousElement = this.element;
+    this.element = ele;
+  },
+  getNewAttributes: function() {
+    var x = this.currentX < this.originX ? this.currentX : this.originX;
+    var y = this.currentY < this.originY ? this.currentY : this.originY;
+    var width = Math.abs(this.currentX - this.originX);
+    var height = Math.abs(this.currentY - this.originY);
+    return {
+      x: x,
+      y: y,
+      width: width,
+      height: height
+    };
+  },
+  getCurrentAttributes: function() {
+    // use plus sign to convert string into number
+    var x = +this.element.attr("x");
+    var y = +this.element.attr("y");
+    var width = +this.element.attr("width");
+    var height = +this.element.attr("height");
+    return {
+      x1: x,
+      y1: y,
+      x2: x + width,
+      y2: y + height
+    };
+  },
+  getCurrentAttributesAsText: function() {
+    var attrs = this.getCurrentAttributes();
+    return "x1: " + attrs.x1 + " x2: " + attrs.x2 + " y1: " + attrs.y1 + " y2: " + attrs.y2;
+  },
+  init: function(newX, newY) {
+    d3svg = d3.select("svg");
+    //d3svg3.style("background-color", "red");
+    var rectElement = d3svg.append("rect")
+      .attrs({
+        rx: 4,
+        ry: 4,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0
+      })
+      .classed("selection", true);
+    this.setElement(rectElement);
+    this.originX = newX;
+    this.originY = newY;
+    this.update(newX, newY);
+  },
+  update: function(newX, newY) {
+    this.currentX = newX;
+    this.currentY = newY;
+    this.element.attrs(this.getNewAttributes());
+  },
+  focus: function() {
+    this.element
+      .style("stroke", "#DE695B")
+      .style("stroke-width", "2.5");
+  },
+  remove: function() {
+    this.element.remove();
+    this.element = null;
+  },
+  removePrevious: function() {
+    if (this.previousElement) {
+      this.previousElement.remove();
     }
+  }
 };
 
 function dragStart() {
-	console.log("dragStart");
-    var p = d3.mouse(this);
-    selectionRect.init(p[0], p[1]);
-	selectionRect.removePrevious();
+  console.log("dragStart");
+  var p = d3.mouse(this);
+  selectionRect.init(p[0], p[1]);
+  selectionRect.removePrevious();
 }
 
 function dragMove() {
-	console.log("dragMove");
-	var p = d3.mouse(this);
-    selectionRect.update(p[0], p[1]);
-//    attributesText
-//    	.text(selectionRect.getCurrentAttributesAsText());
+  console.log("dragMove");
+  var p = d3.mouse(this);
+  selectionRect.update(p[0], p[1]);
+  //    attributesText
+  //    	.text(selectionRect.getCurrentAttributesAsText());
 }
 
 function dragEnd() {
-	console.log("dragEnd");
-	var finalAttributes = selectionRect.getCurrentAttributes();
-	console.dir(finalAttributes);
-	if(finalAttributes.x2 - finalAttributes.x1 > 1 && finalAttributes.y2 - finalAttributes.y1 > 1){
-		console.log("range selected");
-		// range selected
-		d3.event.sourceEvent.preventDefault();
-		selectionRect.focus();
-	// GET SELECTIONS WITH MARQUEE
-            unselect_all_readings();
-    		ghigh = document.getElementsByClassName('graph')[0].getBBox().height;
-		negys1 = (0 - finalAttributes.y1) + ghigh;
-		negys2 = (0 - finalAttributes.y2) + ghigh;
-		//Y coordinates of nodes count upwards
-            $('#svgenlargement ellipse').each( function( index ) {
-                var cx = parseInt( $(this).attr('cx') );
-                var cy = parseInt( $(this).attr('cy') );
-		var transf_cy = 0 - cy
+  console.log("dragEnd");
+  var finalAttributes = selectionRect.getCurrentAttributes();
+  console.dir(finalAttributes);
+  if (finalAttributes.x2 - finalAttributes.x1 > 1 && finalAttributes.y2 - finalAttributes.y1 > 1) {
+    console.log("range selected");
+    // range selected
+    d3.event.sourceEvent.preventDefault();
+    selectionRect.focus();
+    // GET SELECTIONS WITH MARQUEE
+    unselect_all_readings();
+    ghigh = document.getElementsByClassName('graph')[0].getBBox().height;
+    negys1 = (0 - finalAttributes.y1) + ghigh;
+    negys2 = (0 - finalAttributes.y2) + ghigh;
+    //Y coordinates of nodes count upwards
+    $('#svgenlargement ellipse').each(function(index) {
+      var cx = parseInt($(this).attr('cx'));
+      var cy = parseInt($(this).attr('cy'));
+      var transf_cy = 0 - cy
 
-                // This needs somehow to move to node or even to shapes! #repositioned
-                // We should ask something more aling the lines of: nodes.each { |item| node.selected? }
-		//JMB: I have no idea what this bit does
-                var org_translate = $(this).parent().data( 'repositioned' );
-                if( org_translate != null ) {
-                    cx = cx + org_translate[0];
-                    cy = cy + org_translate[1];
-                }
+      // This needs somehow to move to node or even to shapes! #repositioned
+      // We should ask something more aling the lines of: nodes.each { |item| node.selected? }
+      //JMB: I have no idea what this bit does
+      var org_translate = $(this).parent().data('repositioned');
+      if (org_translate != null) {
+        cx = cx + org_translate[0];
+        cy = cy + org_translate[1];
+      }
 
-	           //select any node with its center inside the marquee
-               if( cx > finalAttributes.x1 && cx < finalAttributes.x2) {
-                    if( transf_cy > negys2 && transf_cy < negys1) {
-			console.log("Ellipse at " + cx + ", " + transf_cy + ". Testing on y between " + negys1 + " and "+ negys2 + ".");
-			console.log("Testing on x between " + finalAttributes.x1 + " and "+ finalAttributes.x2 + ".");
-                        // Take note of the selected reading(s) and applicable witness(es)
-                        // so we can populate the multipleselect-form
-                        readings_selected.push( $(this).parent().attr('id') );
-                    }
-                }
-            });
+      //select any node with its center inside the marquee
+      if (cx > finalAttributes.x1 && cx < finalAttributes.x2) {
+        if (transf_cy > negys2 && transf_cy < negys1) {
+          console.log("Ellipse at " + cx + ", " + transf_cy + ". Testing on y between " + negys1 + " and " + negys2 + ".");
+          console.log("Testing on x between " + finalAttributes.x1 + " and " + finalAttributes.x2 + ".");
+          // Take note of the selected reading(s) and applicable witness(es)
+          // so we can populate the multipleselect-form
+          readings_selected.push($(this).parent().attr('id'));
+        }
+      }
+    });
 
-            $.each( readings_selected, function ( i, reading ) {
-            	color_active( get_ellipse( reading ) );
-            });
+    $.each(readings_selected, function(i, reading) {
+      color_active(get_ellipse(reading));
+    });
 
-	// END OF SELECTION GRABBER
-        selectionRect.remove();
-	} else {
-		console.log("single point");
-        // single point selected
-        selectionRect.remove();
-        // trigger click event manually
-        //clicked();
-    }
+    // END OF SELECTION GRABBER
+    selectionRect.remove();
+  } else {
+    console.log("single point");
+    // single point selected
+    selectionRect.remove();
+    // trigger click event manually
+    //clicked();
+  }
 }
 
 var dragBehavior = d3.drag()
-    .on("drag", dragMove)
-    .on("start", dragStart)
-    .on("end", dragEnd);
+  .on("drag", dragMove)
+  .on("start", dragStart)
+  .on("end", dragEnd);
 
 
 
@@ -433,7 +433,9 @@ function svgEnlargementLoaded() {
       break;
     }
   }
+  // Give any lemma-text paths a more interesting color
   $(svg_root_element).find('.edge[id^="l"] path').attr("stroke", "#bb2255");
+
   //JMB - BBox gets us the real (internal coords) size of the graph, as opposed to getBoundingClientRect which would show the on-screen value
   ghigh = document.getElementsByClassName('graph')[0].getBBox().height;
   gwit = document.getElementsByClassName('graph')[0].getBBox().width;
@@ -505,52 +507,52 @@ function svgEnlargementLoaded() {
     $("div #svgenlargement").scrollTop(grhigh / 2 - 400);
   }
 
-    //document.getElementsByClassName('hasSVG')[1].style.transform = "scale(" + global_graph_scale + ")";
-    //$('#svgenlargement').scrollTop(ghigh*(global_graph_scale/2));
+  //document.getElementsByClassName('hasSVG')[1].style.transform = "scale(" + global_graph_scale + ")";
+  //$('#svgenlargement').scrollTop(ghigh*(global_graph_scale/2));
 
-    //$('#svgenlargement svg').setAttribute("width", "800px");
-    //('#svgenlargement svg').setAttribute("height", "500px");
+  //$('#svgenlargement svg').setAttribute("width", "800px");
+  //('#svgenlargement svg').setAttribute("height", "500px");
 
-    // BIG BLOCK OF DEPRECATED CODE (Not deleting yet just in case - JMB)
-    //Set viewbox width and height to width and height of $('#svgenlargement svg').
-    //This is essential to make sure zooming and panning works properly.
-    //Now set scale and translate so svg height is about 150px and vertically centered in viewbox.
-    //This is just to create a nice starting enlargement.
-    //var initial_svg_height = 250;
-    //var scale = initial_svg_height/graph_svg.attr( 'height' );
-    //var additional_translate = (graph_svg.attr( 'height' ) - initial_svg_height)/(2*scale);
-    //var transform = svg_g.getAttribute('graph_svg.attr( 'height' )transform');
-    //
-    //	var x = 4;
-    //
-    //	var y = parseFloat( transform.match( /translate\([^\)]*\)/ )[0].split('(')[1].split(' ')[1].split(')')[0] );
-    //	y += additional_translate;
-    //
-    //	var transform = 'rotate(0) scale(' + scale + ')';
-    //	svg_g.setAttribute('transform', transform);
-    //
-    //	var keymap = document.getElementById("keymap");
-    //
-    //	var keymap_right = keymap.getBoundingClientRect().right;
-    //	keymap_right = svg_root.viewBox.baseVal.width -  keymap_right;
-    //
-    //	var keymap_left = keymap.getBoundingClientRect().width;
-    //
-    //	if (text_direction == 'RL') {
-    // Edge of screen minus the width of the svg minus the width of the
-    // keymap minus the margin
-    //
-    //		x = (scrollToEnd()  - keymap_right  - keymap_left  - 40) / scale;
-    //	}
-    //	else if (text_direction == 'BI') {
-    //		x = placeMiddle() / scale;
-    //		y = (svg_g.getBoundingClientRect().height + 50) / scale;
-    //	}
-    //
-    //	svg_g.setAttribute('transform', transform + ' translate(' + x + ' ' + y + ')');
+  // BIG BLOCK OF DEPRECATED CODE (Not deleting yet just in case - JMB)
+  //Set viewbox width and height to width and height of $('#svgenlargement svg').
+  //This is essential to make sure zooming and panning works properly.
+  //Now set scale and translate so svg height is about 150px and vertically centered in viewbox.
+  //This is just to create a nice starting enlargement.
+  //var initial_svg_height = 250;
+  //var scale = initial_svg_height/graph_svg.attr( 'height' );
+  //var additional_translate = (graph_svg.attr( 'height' ) - initial_svg_height)/(2*scale);
+  //var transform = svg_g.getAttribute('graph_svg.attr( 'height' )transform');
+  //
+  //	var x = 4;
+  //
+  //	var y = parseFloat( transform.match( /translate\([^\)]*\)/ )[0].split('(')[1].split(' ')[1].split(')')[0] );
+  //	y += additional_translate;
+  //
+  //	var transform = 'rotate(0) scale(' + scale + ')';
+  //	svg_g.setAttribute('transform', transform);
+  //
+  //	var keymap = document.getElementById("keymap");
+  //
+  //	var keymap_right = keymap.getBoundingClientRect().right;
+  //	keymap_right = svg_root.viewBox.baseVal.width -  keymap_right;
+  //
+  //	var keymap_left = keymap.getBoundingClientRect().width;
+  //
+  //	if (text_direction == 'RL') {
+  // Edge of screen minus the width of the svg minus the width of the
+  // keymap minus the margin
+  //
+  //		x = (scrollToEnd()  - keymap_right  - keymap_left  - 40) / scale;
+  //	}
+  //	else if (text_direction == 'BI') {
+  //		x = placeMiddle() / scale;
+  //		y = (svg_g.getBoundingClientRect().height + 50) / scale;
+  //	}
+  //
+  //	svg_g.setAttribute('transform', transform + ' translate(' + x + ' ' + y + ')');
 
-    //used to calculate min and max zoom level:
-    //start_element_height = $('#__START__').children('ellipse')[0].getBBox().height;
+  //used to calculate min and max zoom level:
+  //start_element_height = $('#__START__').children('ellipse')[0].getBBox().height;
 
 
   // END OF DEPRECATED CODE
@@ -1057,8 +1059,9 @@ function relation_factory() {
   //TODO: colors hard coded for now
   this.temp_color = '#FFA14F';
   this.relation_colors = ["#5CCCCC", "#67E667", "#F9FE72", "#6B90D4", "#FF7673",
-                "#E467B3", "#AA67D5", "#8370D8", "#FFC173", "#EC652F",
-              "#DB3453", "#48456A", "#ABDFCE", "#502E35", "#E761AE"];
+    "#E467B3", "#AA67D5", "#8370D8", "#FFC173", "#EC652F",
+    "#DB3453", "#48456A", "#ABDFCE", "#502E35", "#E761AE"
+  ];
 
   this.create_temporary = function(source_node_id, target_node_id) {
     var relation_id = get_relation_id(source_node_id, target_node_id);
@@ -1631,99 +1634,99 @@ function requestRunningText() {
 // Set up keypress commands:
 
 var keyCommands = {
-    // TODO maybe also 'c' for compress and/or 's' for split...
-    '104': {
-        'key': 'h',
-        'description': 'Show / hide this menu',
-        'function': function() {
-            $('#keystroke_menu').toggle();
-        }
-    },
-    '99': {
-        'key': 'c',
-        'description': 'Concatenate a sequence of readings into a single reading',
-        'function': function() {
-            // C for Compress; TODO get rid of dialog altogether
-            if ($('#svgenlargement').data('display_normalised')) {
-              $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
-              $('#error-display').dialog('open');
-            } else if (readings_selected.length > 0) {
-                $('#action-concat').prop('checked', true);
-                $('#multipleselect-form').dialog('open');
+  // TODO maybe also 'c' for compress and/or 's' for split...
+  '104': {
+    'key': 'h',
+    'description': 'Show / hide this menu',
+    'function': function() {
+      $('#keystroke_menu').toggle();
+    }
+  },
+  '99': {
+    'key': 'c',
+    'description': 'Concatenate a sequence of readings into a single reading',
+    'function': function() {
+      // C for Compress; TODO get rid of dialog altogether
+      if ($('#svgenlargement').data('display_normalised')) {
+        $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
+        $('#error-display').dialog('open');
+      } else if (readings_selected.length > 0) {
+        $('#action-concat').prop('checked', true);
+        $('#multipleselect-form').dialog('open');
+      }
+    }
+  },
+  '100': {
+    'key': 'd',
+    'description': 'Detach one or more witnesses from the collation for the selected reading(s)',
+    'function': function() {
+      // D for Detach
+      if ($('#svgenlargement').data('display_normalised')) {
+        $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
+        $('#error-display').dialog('open');
+      } else if (readings_selected.length > 0) {
+        $('#action-detach').prop('checked', true);
+        $('#multipleselect-form').dialog('open');
+      }
+    }
+  },
+  '108': {
+    'key': 'l',
+    'description': 'Set / unset the selected reading(s) as canonical / lemma',
+    'function': function() {
+      // L for making a Lemma
+      $.each(readings_selected, function(i, reading_id) {
+        // need current state of lemmatization
+        var selected = readingdata[reading_id]
+        var set_lemma = !selected['is_lemma']
+        var ncpath = getReadingURL(reading_id);
+        var form_values = {
+          'id': reading_id,
+          'is_lemma': set_lemma,
+        };
+        $.post(ncpath, form_values, function(data) {
+          unselect_all_readings();
+          $.each(data['readings'], function(i, rdgdata) {
+            // The reading data already exists; we assume that the
+            // database ID hasn't changed, and replace it wholesale.
+            var this_nodeid = update_reading(rdgdata);
+            if ($('#update_workspace_button').data('locked')) {
+              color_active(get_ellipse(this_nodeid));
+            } else {
+              // Re-color the node if necessary
+              color_inactive(get_ellipse(this_nodeid));
             }
-        }
-    },
-    '100': {
-        'key': 'd',
-        'description': 'Detach one or more witnesses from the collation for the selected reading(s)',
-        'function': function() {
-            // D for Detach
-            if ($('#svgenlargement').data('display_normalised')) {
-              $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
-              $('#error-display').dialog('open');
-            } else if (readings_selected.length > 0) {
-                $('#action-detach').prop('checked', true);
-                $('#multipleselect-form').dialog('open');
-            }
-        }
-    },
-    '108': {
-        'key': 'l',
-        'description': 'Set / unset the selected reading(s) as canonical / lemma',
-        'function': function() {
-            // L for making a Lemma
-            $.each(readings_selected, function(i, reading_id) {
-                // need current state of lemmatization
-                var selected = readingdata[reading_id]
-                var set_lemma = !selected['is_lemma']
-                var ncpath = getReadingURL(reading_id);
-                var form_values = {
-                    'id': reading_id,
-                    'is_lemma': set_lemma,
-                };
-                $.post(ncpath, form_values, function(data) {
-                    unselect_all_readings();
-                    $.each(data['readings'], function(i, rdgdata) {
-                        // The reading data already exists; we assume that the
-                        // database ID hasn't changed, and replace it wholesale.
-                        var this_nodeid = update_reading(rdgdata);
-                        if ($('#update_workspace_button').data('locked')) {
-                            color_active(get_ellipse(this_nodeid));
-                        } else {
-                            // Re-color the node if necessary
-                            color_inactive(get_ellipse(this_nodeid));
-                        }
-                    });
-                });
-            });
-        }
-    },
-    '110': {
-        'key': 'n',
-        'description': 'Propagate the normal form of the selected reading(s) along specified relations',
-        'function': function() {
-            $('#normal-form-propagate').dialog('open');
-        }
-    },
-    '114': {
-        'key': 'r',
-        'description': 'Relate the selected readings',
-        'function': function() {
-            if (readings_selected.length > 0) {
-                $('#dialog-form').data('binary', false);
-                $('#dialog-form').dialog('open');
+          });
+        });
+      });
+    }
+  },
+  '110': {
+    'key': 'n',
+    'description': 'Propagate the normal form of the selected reading(s) along specified relations',
+    'function': function() {
+      $('#normal-form-propagate').dialog('open');
+    }
+  },
+  '114': {
+    'key': 'r',
+    'description': 'Relate the selected readings',
+    'function': function() {
+      if (readings_selected.length > 0) {
+        $('#dialog-form').data('binary', false);
+        $('#dialog-form').dialog('open');
       }
     }
   },
   // '115': {
-	// 	'key': 's',
-	// 	'description': 'Split the selected reading according to given criteria',
-	// 	'function': function () {
-	// 		// S for Split reading
-	// 		if( readings_selected.length == 1 ) {
-	// 			$('#split-form').dialog( 'open' );
-	// 		}
-	// 	} },
+  // 	'key': 's',
+  // 	'description': 'Split the selected reading according to given criteria',
+  // 	'function': function () {
+  // 		// S for Split reading
+  // 		if( readings_selected.length == 1 ) {
+  // 			$('#split-form').dialog( 'open' );
+  // 		}
+  // 	} },
   '120': {
     'key': 'x',
     'description': 'Expunge all relationships on the selected reading(s)',
@@ -1753,20 +1756,20 @@ function keystroke_menu() {
 
 // Some utility functions for the dialogs
 function dialog_background(status_el) {
-	$(".ui-widget-overlay").css("background", "none");
+  $(".ui-widget-overlay").css("background", "none");
   if (status_el) {
     $(status_el).empty();
   }
-	$("#dialog_overlay").show();
-	$("#dialog_overlay").height( $("#enlargement_container").height() );
-	$("#dialog_overlay").width( $("#enlargement_container").innerWidth() );
-	$("#dialog_overlay").offset( $("#enlargement_container").offset() );
+  $("#dialog_overlay").show();
+  $("#dialog_overlay").height($("#enlargement_container").height());
+  $("#dialog_overlay").width($("#enlargement_container").innerWidth());
+  $("#dialog_overlay").offset($("#enlargement_container").offset());
 }
 
-function get_relation_querystring () {
+function get_relation_querystring() {
   // A cheesy hack - if we used the keystroke menu, add on the rest of the
   // source nodes to our form data.
-	var form_values = $( '#merge_node_form' ).serialize();
+  var form_values = $('#merge_node_form').serialize();
   if (!$('#dialog-form').data('binary')) {
     var formsource = $('#source_node_id').val();
     var formtarget = $('#target_node_id').val();
@@ -1823,10 +1826,10 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     // reading box
     error += '<br>The reading cannot be altered.</p>';
     errordiv = '#reading-status';
-  // } else if ( $('#split-form').dialog('isOpen') ) {
-	// 	// the split-reading box
-	// 	error += '<br>The reading cannot be split.</p>';
-	// 	errordiv = '#split-form-status';
+    // } else if ( $('#split-form').dialog('isOpen') ) {
+    // 	// the split-reading box
+    // 	error += '<br>The reading cannot be split.</p>';
+    // 	errordiv = '#split-form-status';
   } else if ($('#section-info').dialog('isOpen')) {
     // section box
     error += '<br>The section cannot be updated.</p>';
@@ -1886,19 +1889,19 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   // dialog-form (relationship creation/merge) and multiselect should only be set up
   // if the tradition is editable. delete-form (relationship info) and reading-form
   // should be set up in all cases.
-  if( editable ) {
-  	$( '#dialog-form' ).dialog( {
-    	autoOpen: false,
-    	height: "auto",
-    	width: 340,
-    	modal: true,
-    	buttons: {
-    		'Merge readings': function( evt ) {
-    			var mybuttons = $(evt.target).closest('button').parent().find('button');
-    			mybuttons.button( 'disable' );
-    			var form_values = get_relation_querystring();
-    			var ncpath = getTextURL( 'merge' );
-          var jqjson = $.post( ncpath, form_values, function( data ) {
+  if (editable) {
+    $('#dialog-form').dialog({
+      autoOpen: false,
+      height: "auto",
+      width: 340,
+      modal: true,
+      buttons: {
+        'Merge readings': function(evt) {
+          var mybuttons = $(evt.target).closest('button').parent().find('button');
+          mybuttons.button('disable');
+          var form_values = get_relation_querystring();
+          var ncpath = getTextURL('merge');
+          var jqjson = $.post(ncpath, form_values, function(data) {
             failed = [];
             if (data.status === 'warn') {
               $.each(data['failed'], function(i, rid) {
@@ -1908,91 +1911,93 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
               $('#dialog-form-status').empty().append(dataerror);
             }
             // Here again we profit from the source nodes all being in readings_selected
-            var target = rid2node[$( '#target_node_id' ).val()];
+            var target = rid2node[$('#target_node_id').val()];
             $.each(readings_selected, function(i, nid) {
               // Don't send the checkalign data until we are merging the last node.
-              var consequences = {'status': 'ok'};
-              if (nid === rid2node[$( '#source_node_id' ).val()] && 'checkalign' in data) {
+              var consequences = {
+                'status': 'ok'
+              };
+              if (nid === rid2node[$('#source_node_id').val()] && 'checkalign' in data) {
                 consequences['checkalign'] = data.checkalign;
               }
               if (!failed.includes(nid) && nid !== target) {
                 merge_nodes(nid, target, consequences);
               }
             })
-    				mybuttons.button( 'enable' );
+            mybuttons.button('enable');
             if (data.status === 'ok') {
-              $( '#dialog-form' ).dialog( 'close' );
+              $('#dialog-form').dialog('close');
             }
-    			} );
-    		},
-    		OK: function( evt ) {
-    			var mybuttons = $(evt.target).closest('button').parent().find('button');
-    			mybuttons.button( 'disable' );
-    			var form_values = get_relation_querystring();
-    			var ncpath = getTextURL( 'relationships' );
-    			var jqjson = $.post( ncpath, form_values, function( data ) {
-    				// Stash the new relationships.
-    				$.each( data['relationships'], function( item, source_target ) {
-    					var source_found = get_ellipse( source_target[0] );
-    					var target_found = get_ellipse( source_target[1] );
-    					var relation_found = $.inArray( source_target[2], $( '#keymap' ).data( 'relations' ) );
-    					if( source_found.size() && target_found.size() && relation_found > -1 ) {
-    						var emphasis = $('#is_significant option:selected').attr('value');
-    						var relation = relation_manager.create( source_target[0], source_target[1], relation_found, emphasis );
-    						$.each( $('#merge_node_form').serializeArray(), function( i, k ) {
-    							relation.data( k.name, k.value );
-    						});
-    					}
-    				});
-    				// Stash any changed readings.
-    				$.each( data['readings'], function( i, rdgdata ) {
-    					update_reading(rdgdata);
-    				});
-    				mybuttons.button( 'enable' );
+          });
+        },
+        OK: function(evt) {
+          var mybuttons = $(evt.target).closest('button').parent().find('button');
+          mybuttons.button('disable');
+          var form_values = get_relation_querystring();
+          var ncpath = getTextURL('relationships');
+          var jqjson = $.post(ncpath, form_values, function(data) {
+            // Stash the new relationships.
+            $.each(data['relationships'], function(item, source_target) {
+              var source_found = get_ellipse(source_target[0]);
+              var target_found = get_ellipse(source_target[1]);
+              var relation_found = $.inArray(source_target[2], $('#keymap').data('relations'));
+              if (source_found.size() && target_found.size() && relation_found > -1) {
+                var emphasis = $('#is_significant option:selected').attr('value');
+                var relation = relation_manager.create(source_target[0], source_target[1], relation_found, emphasis);
+                $.each($('#merge_node_form').serializeArray(), function(i, k) {
+                  relation.data(k.name, k.value);
+                });
+              }
+            });
+            // Stash any changed readings.
+            $.each(data['readings'], function(i, rdgdata) {
+              update_reading(rdgdata);
+            });
+            mybuttons.button('enable');
             // See if we need to display a warning.
             if (data.status === 'warn') {
               var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
               $('#dialog-form-status').empty().append(dataerror);
             } else {
-              $( '#dialog-form' ).dialog( 'close' );
+              $('#dialog-form').dialog('close');
             }
-    			}, 'json' );
-    		},
-    		Cancel: function() {
-    			$( '#dialog-form-status' ).empty();
-    			$( this ).dialog( 'close' );
-    		}
-    	},
-    	create: function(event, ui) {
-    		$(this).data( 'relation_drawn', false );
-    		$('#rel_type').data( 'changed_after_open', false );
-    		$.each( relationship_types, function(index, typedef) {
-    			 $('#rel_type').append( $('<option />').attr( "value", typedef.name ).text(typedef.name) );
-    		});
-    		$.each( relationship_scopes, function(index, value) {
-    			 $('#scope').append( $('<option />').attr( "value", value ).text(value) );
-    		});
-    		$.each( ternary_values, function( index, value ) {
-    			$('#is_significant').append( $('<option />').attr( "value", value ).text(value) );
-    		});
-    		// Handler to reset fields to default, the first time the relationship
-    		// is changed after opening the form.
-    		$('#rel_type').change( function () {
-    			if( !$(this).data( 'changed_after_open' ) ) {
-    				$('#note').val('');
-    				$(this).find(':checked').removeAttr('checked');
-    			}
-    			$(this).data( 'changed_after_open', true );
-    		});
-    	},
-    	open: function() {
+          }, 'json');
+        },
+        Cancel: function() {
+          $('#dialog-form-status').empty();
+          $(this).dialog('close');
+        }
+      },
+      create: function(event, ui) {
+        $(this).data('relation_drawn', false);
+        $('#rel_type').data('changed_after_open', false);
+        $.each(relationship_types, function(index, typedef) {
+          $('#rel_type').append($('<option />').attr("value", typedef.name).text(typedef.name));
+        });
+        $.each(relationship_scopes, function(index, value) {
+          $('#scope').append($('<option />').attr("value", value).text(value));
+        });
+        $.each(ternary_values, function(index, value) {
+          $('#is_significant').append($('<option />').attr("value", value).text(value));
+        });
+        // Handler to reset fields to default, the first time the relationship
+        // is changed after opening the form.
+        $('#rel_type').change(function() {
+          if (!$(this).data('changed_after_open')) {
+            $('#note').val('');
+            $(this).find(':checked').removeAttr('checked');
+          }
+          $(this).data('changed_after_open', true);
+        });
+      },
+      open: function() {
         // Don't allow merge (or split) if we are in normalised view mode
         var show_merge = !$('#svgenlargement').data('display_normalised');
         if ($('#dialog-form').data('binary')) {
           // Form values are already set from the mouseup event
           // Should the merge button be shown?
-          show_merge = readings_equivalent( rid2node[$('#source_node_id').val()],
-                                            rid2node[$('#target_node_id').val()] );
+          show_merge = readings_equivalent(rid2node[$('#source_node_id').val()],
+            rid2node[$('#target_node_id').val()]);
         } else {
           // Hide the parts of the form that aren't applicable
           $('#binary_relation_only').hide();
@@ -2012,24 +2017,24 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           var source_id = readingdata[nid].id;
           var target_id = $('#target_node_id').val();
           if (source_id !== target_id) {
-        		relation_manager.create_temporary(source_id, target_id);
+            relation_manager.create_temporary(source_id, target_id);
           }
         });
         // Show the merge button if applicable
-    		var buttonset = $(this).parent().find( '.ui-dialog-buttonset' )
-    		if( show_merge ) {
-    			buttonset.find( "button:contains('Merge readings')" ).show();
-    		} else {
-    			buttonset.find( "button:contains('Merge readings')" ).hide();
-    		}
+        var buttonset = $(this).parent().find('.ui-dialog-buttonset')
+        if (show_merge) {
+          buttonset.find("button:contains('Merge readings')").show();
+        } else {
+          buttonset.find("button:contains('Merge readings')").hide();
+        }
         // Set the dialog background and our form state data
         dialog_background('#dialog-form-status');
-    		$('#rel_type').data( 'changed_after_open', false );
-    	},
-    	close: function() {
-    		relation_manager.remove_temporary();
-    		$("#dialog_overlay").hide();
-    	}
+        $('#rel_type').data('changed_after_open', false);
+      },
+      close: function() {
+        relation_manager.remove_temporary();
+        $("#dialog_overlay").hide();
+      }
     });
 
     $("#multipleselect-form").dialog({
@@ -2038,56 +2043,53 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       width: 250,
       modal: true,
       buttons: [{
-          text: "Cancel",
-          click: function() {
-            $('#multipleselect-form-status').empty();
-            $(this).dialog("close");
-          }
-        },
-        {
-          text: "Detach",
-          id: "detach_btn",
-          click: function(evt) {
-            var self = $(this);
-            var mybuttons = $(evt.target).closest('button').parent().find('button');
-            mybuttons.button('disable');
-            var form_values = $('#detach_collated_form').serialize();
-            var ncpath = getTextURL('duplicate');
-            $.post(ncpath, form_values, function(data) {
-              unselect_all_readings();
-              detach_node(data);
-              mybuttons.button("enable");
-              self.dialog("close");
-            });
-          }
-        },
-        {
-          text: "Concatenate",
-          id: "concat_btn",
-          click: function(evt) {
-            var self = $(this);
-            var mybuttons = $(evt.target).closest('button').parent().find('button');
-            mybuttons.button('disable');
-
-            var ncpath = getTextURL('compress');
-            var form_values = $('#detach_collated_form').serialize();
-            // $.each($('#detach_collated_form input').filter(function() {return this.getAttribute("name") === "readings[]"}), function( i, v ) {vals.push(i)}); vals
-
-            $.post(ncpath, form_values, function(data) {
-              mybuttons.button('enable');
-              if (data.nodes) {
-                compress_nodes(data.nodes);
-              }
-              if (data.status === 'warn') {
-                var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
-                $('#multipleselect-form-status').empty().append(dataerror);
-              } else {
-                self.dialog('close');
-              }
-            });
-          }
+        text: "Cancel",
+        click: function() {
+          $('#multipleselect-form-status').empty();
+          $(this).dialog("close");
         }
-      ],
+      }, {
+        text: "Detach",
+        id: "detach_btn",
+        click: function(evt) {
+          var self = $(this);
+          var mybuttons = $(evt.target).closest('button').parent().find('button');
+          mybuttons.button('disable');
+          var form_values = $('#detach_collated_form').serialize();
+          var ncpath = getTextURL('duplicate');
+          $.post(ncpath, form_values, function(data) {
+            unselect_all_readings();
+            detach_node(data);
+            mybuttons.button("enable");
+            self.dialog("close");
+          });
+        }
+      }, {
+        text: "Concatenate",
+        id: "concat_btn",
+        click: function(evt) {
+          var self = $(this);
+          var mybuttons = $(evt.target).closest('button').parent().find('button');
+          mybuttons.button('disable');
+
+          var ncpath = getTextURL('compress');
+          var form_values = $('#detach_collated_form').serialize();
+          // $.each($('#detach_collated_form input').filter(function() {return this.getAttribute("name") === "readings[]"}), function( i, v ) {vals.push(i)}); vals
+
+          $.post(ncpath, form_values, function(data) {
+            mybuttons.button('enable');
+            if (data.nodes) {
+              compress_nodes(data.nodes);
+            }
+            if (data.status === 'warn') {
+              var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
+              $('#multipleselect-form-status').empty().append(dataerror);
+            } else {
+              self.dialog('close');
+            }
+          });
+        }
+      }],
       create: function(event, ui) {
         var buttonset = $(this).parent().find('.ui-dialog-buttonset').css('width', '100%');
         buttonset.find("button:contains('Cancel')").css('float', 'right');
@@ -2166,7 +2168,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     $('#keystroke_menu').hide();
   }
 
-    // Set up the reading split dialog.
+  // Set up the reading split dialog.
   //   $( '#split-form').dialog({
   // 	  autoOpen: false,
   // 	  modal: true,
@@ -2180,18 +2182,18 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   // 			  split_readings( form_values );
   // 		  }
   // 	  },
-	//   /* create: function() {
-	// 	  var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
-	// 	  buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
-	//   } */
+  //   /* create: function() {
+  // 	  var buttonset = $(this).parent().find( '.ui-dialog-buttonset' ).css( 'width', '100%' );
+  // 	  buttonset.find( "button:contains('Cancel')" ).css( 'float', 'right' );
+  //   } */
   // 	  open: function() {
-	// 	  // Set up the hidden form values. There should be only one reading selected.
-	// 	  var rdg = readings_selected[0];
-	// 	  $('#split_reading_id').empty().append(rdg);
-	// 	  $('#split_reading_text').empty().append(readingdata[rdg]["text"]);
+  // 	  // Set up the hidden form values. There should be only one reading selected.
+  // 	  var rdg = readings_selected[0];
+  // 	  $('#split_reading_id').empty().append(rdg);
+  // 	  $('#split_reading_text').empty().append(readingdata[rdg]["text"]);
   // 	  },
-	//   close: function() {
-	// 	  $("#dialog_overlay").hide();
+  //   close: function() {
+  // 	  $("#dialog_overlay").hide();
   //   }
   // });
 
@@ -2226,7 +2228,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     open: function() {
       // Show the appropriate buttons...
       var buttonset = $(this).parent().find('.ui-dialog-buttonset')
-      // If the user can't edit, show only the OK button
+        // If the user can't edit, show only the OK button
       if (!editable) {
         buttonset.find("button:contains('Delete')").hide();
         // If the relationship scope is local, show only OK and Delete
@@ -2341,7 +2343,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       $("#section_language").val(sect_metadata['language']);
       // Show the appropriate buttons...
       var buttonset = $(this).parent().find('.ui-dialog-buttonset')
-      // If the user can't edit, show only the OK button
+        // If the user can't edit, show only the OK button
       if (!editable) {
         buttonset.find("button:contains('Update')").hide();
         // If the relationship scope is local, show only OK and Delete
@@ -2423,7 +2425,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           var rid = readingdata[nid].id;
           var rtype = $('#normal-form-relationtype').val();
           var ncpath = getTextURL('copynormal/' + rid + "/" + rtype);
-          $.post(ncpath, function (data) {
+          $.post(ncpath, function(data) {
             // Re-enable the buttons
             mybuttons.button('enable');
             // TODO update the normal form in the relevant reading nodes
