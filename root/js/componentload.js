@@ -66,6 +66,8 @@ function loadTradition(textid, textname, editable) {
       switch_stemweb_ui();
       // Modify labels where appropriate
       $('#relatebutton_label').text('View collation and edit relationships');
+      // Update the default tradition for uploading sections
+      $('#upload_for_tradition').val(textid)
     } else {
       $('.editcontrol').hide();
       $('#relatebutton_label').text('View collation and relationships');

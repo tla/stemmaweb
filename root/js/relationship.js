@@ -433,6 +433,7 @@ function svgEnlargementLoaded() {
       break;
     }
   }
+  $(svg_root_element).find('.edge[id^="l"] path').attr("stroke", "#bb2255");
   //JMB - BBox gets us the real (internal coords) size of the graph, as opposed to getBoundingClientRect which would show the on-screen value
   ghigh = document.getElementsByClassName('graph')[0].getBBox().height;
   gwit = document.getElementsByClassName('graph')[0].getBBox().width;
@@ -628,6 +629,7 @@ function zoomer() {
 
 function add_relations(callback_fn) {
   // Add the relationship types to the keymap list
+  $('#keymaplist').empty();
   $.each(relationship_types, function(index, typedef) {
     li_elm = $('<li class="key">').css("border-color",
       relation_manager.relation_colors[index]).text(typedef.name);
@@ -2574,6 +2576,37 @@ function loadSVG(svgData) {
   $(svgElement).svg({
     loadURL: svgData,
     onLoad: svgEnlargementLoaded
+  });
+}
+
+function reloadSVG() {
+  // For some reason svg.loadURL only works for text strings
+  $('#select_normalised').addClass('disable');
+  var ncpath = getTextURL('get_graph') + '?type=Plain';
+  var currentlyNorm = $('#svgenlargement').data('display_normalised');
+  var buttonText;
+
+  if (currentlyNorm) {
+    // We are switching back to the expanded view
+    buttonText = "Normalize for";
+  } else {
+    // We are switching to the normalised view
+    ncpath += '&' + $('#normalize-for-type').serialize();
+    buttonText = "Expand graph";
+  }
+  $.get(ncpath, function(svgData) {
+    // Change the button text
+    $('#select_normalised span').text(buttonText);
+    // Hide the select box
+    if (buttonText.includes("Normal")) {
+      $('#normalize-for-type').show();
+    } else {
+      $('#normalize-for-type').hide();
+    }
+    // Reload the SVG
+    $('#select_normalised').removeClass('disable');
+    loadSVG(svgData)
+    $('#svgenlargement').data('display_normalised', !currentlyNorm)
   });
 }
 

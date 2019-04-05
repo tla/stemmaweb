@@ -43,7 +43,7 @@ sub process {
 
     my $content_type = "text/plain";
     $c->res->headers->header( "Content-Type" => "text/plain" )
-        if ( $c->res->headers->header( "Content-Type" ) eq "" );
+        unless $c->res->headers->header( "Content-Type" );
     $c->res->body( $content );
 }
 
