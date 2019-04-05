@@ -178,6 +178,28 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     $c->stash->{'template'} = 'relate.tt';
 }
 
+sub get_graph :Chained('section') :PathPart :Args(0) {
+    my ($self, $c) = @_;
+    my $textid = $c->stash->{textid};
+    my $m = $c->model('Directory');
+    my $contenttype = delete $c->request->params->{'type'};
+    $contenttype ||= 'SVG';
+    
+    my $opts = { section => $c->stash->{sectid} };
+    foreach my $k (keys %{$c->request->params}) {
+        $opts->{$k} = $c->request->params->{$k};
+    }
+    
+    my $svgstr;
+    try {
+        $svgstr = $m->tradition_as_svg($textid, $opts);
+        $c->stash->{'result'} = $svgstr;
+    } catch (stemmaweb::Error $e) {
+        return json_error($c, $e->status, $e->message);
+    }
+    $c->forward("View::$contenttype");
+}
+
 =head2 help
 
  GET relation/help/$language
@@ -835,7 +857,7 @@ sub merge :Chained('section') :PathPart :Args(0) {
                 $response->{warning} = assemble_warnings($failed);
                 $response->{failed} = [ keys %$failed ];
             } else {
-                my $error = assemble_failed($failed);
+                my $error = assemble_failures($failed);
                 json_error($c, @$error);
             }
         } elsif (!$c->request->param('single')) {

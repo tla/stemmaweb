@@ -27,6 +27,9 @@
 
     $(document).ready(function() {
       loadSVG('[% svg_string %]');
+      $.each(relationship_types, function(i, typedef) {
+        $('.relation-type-list').append($('<option />').attr("value", typedef.name).text(typedef.name));
+      });
       window.setTimeout(function() {
         $('#keystroke_menu').hide();
       }, 10000);
@@ -48,16 +51,20 @@
 [% END -%]
         </select>
       </span>
-
+      
       <div class="button button-inline" id="section_textview_button" onclick="$('#section-text').dialog('open');">
         <span>View running text</span>
       </div>
       <div class="button button-inline" id="section_metadata_button" onclick="$('#section-info').dialog('open');">
         <span>[% IF permission == "full" %]Edit[% ELSE %]View[% END %] section metadata</span>
       </div>
-    <div class="button button-inline" id="section_download_button" onclick="$('#download-dialog').dialog('open');">
-      <span>Download section</span>
-    </div>
+      <div class="button button-inline" id="section_download_button" onclick="$('#download-dialog').dialog('open');">
+        <span>Download section</span>
+      </div>
+      <div class="button button-inline" id="select_normalised" onclick="reloadSVG()">
+        <span>Normalise for</span>
+      </div>
+      <select id="normalize-for-type" class="relation-type-list" name="normalise"></select>
     </div>
   </div>
 
@@ -81,7 +88,7 @@
         <input type="hidden" name="source" id="source_node_id" />
         <input type="hidden" name="target" id="target_node_id" />
         <label for="rel_type">Relation type&nbsp;</label>
-        <select name="type" id="rel_type" class=".ui-widget select">
+        <select name="type" id="rel_type" class=".ui-widget select relation-type-list">
         </select>
         <br><br>
         <label for="scope">Scope of relation&nbsp;</label>
@@ -191,7 +198,7 @@
     <div id="normal-form-propagate-status"></div>
     <form id="normal_form_form" action="#">
       <p>Set the normal form(s) <span id="normal-form-reading"></span> for their respective
-        <select id="normal-form-relationtype" name="relationtype"></select> relations
+        <select id="normal-form-relationtype" class="relation-type-list" name="relationtype"></select> relations
       </p>
     </form>
   </div>

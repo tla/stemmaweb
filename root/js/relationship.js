@@ -260,6 +260,9 @@ function svgEnlargementLoaded() {
             break;
         }
     }
+    
+    // Color the lemma links
+    $(svg_root_element).find('.edge[id^="l"] path').attr("stroke", "#bb2255");
 
     //Set viewbox width and height to width and height of $('#svgenlargement svg').
     //This is essential to make sure zooming and panning works properly.
@@ -320,6 +323,7 @@ function svgEnlargementLoaded() {
 
 function add_relations(callback_fn) {
     // Add the relationship types to the keymap list
+    $('#keymaplist').empty();
     $.each(relationship_types, function(index, typedef) {
         li_elm = $('<li class="key">').css("border-color",
             relation_manager.relation_colors[index]).text(typedef.name);
@@ -1791,9 +1795,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
             create: function(event, ui) {
                 $(this).data('relation_drawn', false);
                 $('#rel_type').data('changed_after_open', false);
-                $.each(relationship_types, function(index, typedef) {
-                    $('#rel_type').append($('<option />').attr("value", typedef.name).text(typedef.name));
-                });
+                // Relation types are populated in the main relate.tt
                 $.each(relationship_scopes, function(index, value) {
                     $('#scope').append($('<option />').attr("value", value).text(value));
                 });
@@ -2235,12 +2237,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
                 $('#normal-form-propagate').dialog('close');
             }
         },
-        create: function() {
-            // Populate the relation type select
-            $.each(relationship_types, function(i, typedef) {
-                $('#normal-form-relationtype').append($('<option />').attr("value", typedef.name).text(typedef.name));
-            });
-        },
         open: function() {
             dialog_background('#normal-form-propagate-status');
             // Populate the normal form span
@@ -2325,7 +2321,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     $('#keystroke_menu_button').click(function() {
         $('#keystroke_menu').toggle();
     });
-
+    
     $('.helptag').popupWindow({
         height: 500,
         width: 800,
@@ -2349,6 +2345,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
             fn();
         }
     }
+    
 });
 
 function expandFillPageClients() {
@@ -2367,6 +2364,37 @@ function loadSVG(svgData) {
         loadURL: svgData,
         onLoad: svgEnlargementLoaded
     });
+}
+
+function reloadSVG() {
+  // For some reason svg.loadURL only works for text strings
+  $('#select_normalised').addClass('disable');
+  var ncpath = getTextURL('get_graph') + '?type=Plain';
+  var currentlyNorm = $('#svgenlargement').data('display_normalised');
+  var buttonText;
+  
+  if (currentlyNorm) {
+    // We are switching back to the expanded view
+    buttonText = "Normalize for";
+  } else {
+    // We are switching to the normalised view
+    ncpath += '&' + $('#normalize-for-type').serialize();
+    buttonText = "Expand graph";
+  }
+  $.get(ncpath, function(svgData) {
+    // Change the button text
+    $('#select_normalised span').text(buttonText);
+    // Hide the select box
+    if (buttonText.includes("Normal")) {
+      $('#normalize-for-type').show();
+    } else {
+      $('#normalize-for-type').hide();
+    }
+    // Reload the SVG
+    $('#select_normalised').removeClass('disable');
+    loadSVG(svgData)
+    $('#svgenlargement').data('display_normalised', !currentlyNorm)
+  });
 }
 
 

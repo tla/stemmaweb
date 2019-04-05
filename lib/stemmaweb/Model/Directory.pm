@@ -85,6 +85,7 @@ sub tradition_as_svg {
       : "/tradition/$textid/dot";
     $location .= '?show_normal=true';
     $location .= '&include_relations=true' if $opts->{'include_relations'};
+    $location .= '&normalise=' . $opts->{'normalise'} if $opts->{'normalise'};
     my $dotstr = $self->ajax('get', $location);
     unless ($dotstr =~ /^digraph/) {
         stemmaweb::Error->throw(

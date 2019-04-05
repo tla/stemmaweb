@@ -82,8 +82,8 @@ div.button span {
   padding: 5px 0 5px 18px;
 }
 
-div.button.reset span {
-  background: transparent url('../images/c_button_span.png') no-repeat;
+div.button.disable {
+    opacity: .35;
 }
 
 div.button:hover {
