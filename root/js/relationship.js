@@ -234,10 +234,6 @@ function color_active(el) {
 // New marquee code attempt JMB
 
 var d3svg = 1;
-var d3svg2 = 1;
-var svg_g = 1;
-var view_wide = 0;
-var view_high = 0;
 var tfm = -1;
 
 var selectionRect = {
@@ -395,8 +391,21 @@ var dragBehavior = d3.drag()
   .on("start", dragStart)
   .on("end", dragEnd);
 
+var zoomBehavior = d3.zoom()
+  .scaleExtent([2, global_graph_max])
+  .filter(function() {
+    return d3.event.shiftKey;
+  })
+  .on("zoom", zoomer);
 
 
+// A function to d3-load some SVG
+d3.selection.prototype.appendSVG = function(SVGString) {
+    return this.select(function() {
+        return this.appendChild(document.importNode(new DOMParser()
+        .parseFromString(SVGString, 'application/xml').documentElement, true));
+    });
+};
 
 // MAIN INITIALISATION FUNCTION
 // Initialize the SVG once it exists
@@ -474,20 +483,18 @@ function svgEnlargementLoaded() {
   //document.getElementsByClassName('hasSVG')[1].style.transform-origin = "left center";
   //THen this gives us our startsing zoom;
   $(window).bind("mousewheel DOMMouseScroll", function(event) {
-    return false
+    if (event.shiftKey) {
+        event.preventDefault();
+        return false;
+    }
   }); //Turn off native mousewheel scroll
-  d3svg = d3.select("svg"),
-    dwidth = +d3svg.attr("width"),
-    dheight = +d3svg.attr("height");
+  d3svg = d3.select("svg");
   d3svg.style("background-color", "white");
   d3svg.attr("transform", "scale(" + global_graph_scale + ")");
 
-  var calledfx = d3.zoom()
-    .scaleExtent([2, global_graph_max])
-    .on("zoom", zoomer);
-  d3svg.call(calledfx);
+  d3svg.call(zoomBehavior);
   //.call(calledfx.transform, d3.zoomIdentity.scale(global_graph_scale));// JMB turn zoom function on
-  d3svg.attr("transform", "scale(" + global_graph_scale + ")");
+  // d3svg.attr("transform", "scale(" + global_graph_scale + ")");
 
 
   // This bit deals with scrollbars - JMB
@@ -2492,9 +2499,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     mouse_scale = svg_root_element.getScreenCTM().a;
     if ($(this).data('locked') == true) {
       d3svg.on(".drag", null);
-      d3svg.call(d3.zoom()
-        .scaleExtent([2, global_graph_max])
-        .on("zoom", zoomer)); // JMB turn zoom function on
+      d3svg.call(zoomBehavior); // JMB turn zoom function on
       $('#svgenlargement ellipse').each(function(index) {
         if ($(this).data('node_obj') != null) {
           $(this).data('node_obj').ungreyout_edges();
@@ -2615,7 +2620,8 @@ function reloadSVG() {
     }
     // Reload the SVG
     $('#select_normalised').removeClass('disable');
-    loadSVG(svgData)
+    d3.select("#svgenlargement").select('svg').remove();
+    d3.select("#svgenlargement").appendSVG(svgData);
     $('#svgenlargement').data('display_normalised', !currentlyNorm)
   });
 }
