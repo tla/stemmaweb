@@ -163,15 +163,15 @@ sub main :Chained('section') :PathPart('') :Args(0) {
 
     # Spit out the SVG
     # my $svgstr = generate_svg( $c ); # $c contains text & section info
-    try {
-        my $svgstr = $m->tradition_as_svg($textid,
-            { section => $c->stash->{sectid} });
-        $svgstr =~ s/\n//gs;
-        $c->stash->{'svg_string'} = $svgstr;
-    }
-    catch (stemmaweb::Error $e) {
-        return json_error($c, $e->status, $e->message);
-    }
+    # try {
+    #     my $svgstr = $m->tradition_as_svg($textid,
+    #         { section => $c->stash->{sectid} });
+    #     $svgstr =~ s/\n//gs;
+    #     $c->stash->{'svg_string'} = $svgstr;
+    # }
+    # catch (stemmaweb::Error $e) {
+    #     return json_error($c, $e->status, $e->message);
+    # }
 
     # $c->stash->{'can_morphologize'} = $tradition->{language} ne 'Default';
     # Set the template for the page load
@@ -184,12 +184,12 @@ sub get_graph :Chained('section') :PathPart :Args(0) {
     my $m = $c->model('Directory');
     my $contenttype = delete $c->request->params->{'type'};
     $contenttype ||= 'SVG';
-    
+
     my $opts = { section => $c->stash->{sectid} };
     foreach my $k (keys %{$c->request->params}) {
         $opts->{$k} = $c->request->params->{$k};
     }
-    
+
     my $svgstr;
     try {
         $svgstr = $m->tradition_as_svg($textid, $opts);
@@ -358,14 +358,14 @@ sub relationships :Chained('section') :PathPart :Args(0) {
                 if (@relpairs) {
                     # Return a warning
                     $result->{status} = 'warn';
-                    $result->{warning} = sprintf("Could not relate reading %s: %d / %s", 
+                    $result->{warning} = sprintf("Could not relate reading %s: %d / %s",
                         $lastattempted, $e->status, $e->message);
                 } else {
                     # Return an error
                     return json_error($c, $e->status, $e->message);
                 }
             }
-            
+
             $result->{relationships} = \@relpairs;
             $result->{readings} = \@changed_readings;
             $c->stash->{result} = $result;
@@ -619,7 +619,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
  GET relation/$textid/$sectionid/lemmatext
 
 Returns the current lemma text for the section in a JSON object, key 'text'.
-If the lemma text has not been marked final, shows the gaps where text is not 
+If the lemma text has not been marked final, shows the gaps where text is not
 yet lemmatised. If any lemmas have changed since the text was last marked final,
 shows the differences where they appear.
 
@@ -685,7 +685,7 @@ sub witnesstext :Chained('section') :PathPart :Args(1) {
         }
     } else {
         json_error($c, 405, "Use GET instead");
-    }    
+    }
     $c->forward('View::JSON');
 }
 
@@ -693,7 +693,7 @@ sub witnesstext :Chained('section') :PathPart :Args(1) {
 
   POST relation/$textid/$sectionid/copynormal/$reading/$reltype
 
-Copies the normal form of the given reading to any readings related via the 
+Copies the normal form of the given reading to any readings related via the
 given relation type. Returns a list of altered readings.
 
 =cut
@@ -846,7 +846,7 @@ sub merge :Chained('section') :PathPart :Args(0) {
             }
             catch (stemmaweb::Error $e) {
                 $failed->{$second} = [$e->status, $e->message];
-            }            
+            }
         }
 
         my $response = { status => 'ok' };
@@ -1132,7 +1132,7 @@ sub split :Chained('section') :PathPart :Args(0) {
     $c->forward('View::JSON');
 }
 
-=head2 assemble_warnings 
+=head2 assemble_warnings
 
 Make a single warning message from a set of failed operations. Returns a collected string.
 
@@ -1147,7 +1147,7 @@ sub assemble_warnings {
     return $result;
 }
 
-=head2 assemble_warnings 
+=head2 assemble_warnings
 
 Make a single warning message from a set of failed operations. Returns a status code + message.
 

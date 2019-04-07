@@ -13,8 +13,6 @@ all_from 'lib/stemmaweb.pm';
 requires 'Config::General';
 # See Catalyst::Plugin::ConfigLoader for supported formats
 
-# Tradition libraries
-requires 'Text::Tradition' => '2.0.0';
 # Catalyst libraries
 requires 'Catalyst::Runtime' => '5.90002';
 requires 'Catalyst::Plugin::Cache';

@@ -2,9 +2,6 @@ var MARGIN = 30;
 var svg_root = null;
 var svg_root_element = null;
 var start_element_height = 0;
-var global_graph_scale = 26;
-var global_graph_min = 10;
-var global_graph_max = 50;
 var global_zoomstart_yes = false;
 var reltypes = {};
 var readingdata = {};
@@ -231,10 +228,10 @@ function color_active(el) {
 }
 
 
-// New marquee code attempt JMB
+var d3svg;
+var slider;
 
-var d3svg = 1;
-var tfm = -1;
+// New marquee code attempt JMB
 
 var selectionRect = {
   element: null,
@@ -392,10 +389,7 @@ var dragBehavior = d3.drag()
   .on("end", dragEnd);
 
 var zoomBehavior = d3.zoom()
-  .scaleExtent([2, global_graph_max])
-  .filter(function() {
-    return d3.event.shiftKey;
-  })
+  .scaleExtent([0.1, 3])
   .on("zoom", zoomer);
 
 
@@ -430,89 +424,65 @@ function svgEnlargementLoaded() {
     $('#update_workspace_button').data('locked', false);
     $('#update_workspace_button').css('background-position', '0px 44px');
   }
-  var graph_svg = $('#svgenlargement svg');
-  var svg_g = $('#svgenlargement svg g')[0];
-  if (!svg_g) return;
-  svg_root = graph_svg.svg().svg('get').root();
+  // Set our SVG root elements
+  svg_root_element = document.getElementById('graph0');
+  svg_root = svg_root_element.parentNode;
 
-  // Find the real root and ignore any text nodes
-  for (i = 0; i < svg_root.childNodes.length; ++i) {
-    if (svg_root.childNodes[i].nodeName != '#text') {
-      svg_root_element = svg_root.childNodes[i];
-      break;
-    }
-  }
-  // Give any lemma-text paths a more interesting color
-  $(svg_root_element).find('.edge[id^="l"] path').attr("stroke", "#bb2255");
-
-  //JMB - BBox gets us the real (internal coords) size of the graph, as opposed to getBoundingClientRect which would show the on-screen value
-  ghigh = document.getElementsByClassName('graph')[0].getBBox().height;
-  gwit = document.getElementsByClassName('graph')[0].getBBox().width;
-  // This section mainly calculates the starting zoom. Transform origin, unlike in earlier versions, always remains as "top left". -JMB
-  if (text_direction == 'RL') { //For Right to Left
-    document.getElementsByClassName('hasSVG')[1].style.transformOrigin = 'top left';
-    var graph_ratio = gwit / ghigh;
-    global_graph_scale = 650 / (1600 / graph_ratio);
-    global_graph_max = global_graph_scale + 30;
-    global_graph_min = global_graph_scale - 20;
-    if (global_graph_min <= 1) {
-      global_graph_min = 2;
-    }
-  } else if (text_direction == 'BI') { //Top to bottom
-    document.getElementsByClassName('hasSVG')[1].style.transformOrigin = 'top left';
-    var graph_ratio = ghigh / gwit;
-    global_graph_scale = 1600 / (650 / graph_ratio);
-    global_graph_max = global_graph_scale + 30;
-    global_graph_min = global_graph_scale - 20;
-    if (global_graph_min <= 1) {
-      global_graph_min = 2;
-    }
-  } else { //Left to Right
-    document.getElementsByClassName('hasSVG')[1].style.transformOrigin = 'top left';
-    var graph_ratio = gwit / ghigh;
-    global_graph_scale = 650 / (1600 / graph_ratio);
-    global_graph_max = global_graph_scale + 30;
-    global_graph_min = global_graph_scale - 20;
-    if (global_graph_min <= 1) {
-      global_graph_min = 2;
-    }
-  }
-  // Set the viewbox to the height of the "real" graph
-  svg_root.viewBox.baseVal.height = ghigh;
-  svg_root.viewBox.baseVal.width = gwit;
-  //document.getElementsByClassName('hasSVG')[1].style.transform-origin = "left center";
-  //THen this gives us our startsing zoom;
-  $(window).bind("mousewheel DOMMouseScroll", function(event) {
-    if (event.shiftKey) {
-        event.preventDefault();
-        return false;
-    }
-  }); //Turn off native mousewheel scroll
+  // Get the SVG into d3 for manipulation
   d3svg = d3.select("svg");
   d3svg.style("background-color", "white");
-  d3svg.attr("transform", "scale(" + global_graph_scale + ")");
+  d3svg.style('transformOrigin', 'top left');
+  // Give any lemma-text paths a more interesting color
+  d3svg.selectAll('.edge[id^="l"] path').attr("stroke", "#bb2255");
 
-  d3svg.call(zoomBehavior);
-  //.call(calledfx.transform, d3.zoomIdentity.scale(global_graph_scale));// JMB turn zoom function on
-  // d3svg.attr("transform", "scale(" + global_graph_scale + ")");
+  //JMB - BBox gets us the real (internal coords) size of the graph, as opposed to getBoundingClientRect which would show the on-screen value
+  // This section mainly calculates the starting zoom. Transform origin, unlike in earlier versions, always remains as "top left". -JMB
+  var ghigh = document.getElementsByClassName('graph')[0].getBBox().height;
+  var gwit = document.getElementsByClassName('graph')[0].getBBox().width;
 
+  // Make the zoom slider
+  slider = d3.select("body").append("p").append("input")
+              .datum({})
+              .attr("type", "range")
+              .attr("value", zoomBehavior.scaleExtent()[0])
+              .attr("min", zoomBehavior.scaleExtent()[0])
+              .attr("max", zoomBehavior.scaleExtent()[1])
+              .attr("step", (zoomBehavior.scaleExtent()[1] - zoomBehavior.scaleExtent()[0]) / 100)
+              .on("input", function(d) {
+                zoomBehavior.scaleTo(d3svg, d3.select(this).property("value"));
+              });
 
-  // This bit deals with scrollbars - JMB
-  if (text_direction == 'RL') { //For Right to Left
-
-    var grwit = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().width;
-    $("div #svgenlargement").scrollLeft(grwit - 800);
-    var grhigh = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().height;
-    $("div #svgenlargement").scrollTop(grhigh / 2 - 400);
-  } else if (text_direction == 'BI') { //Top to bottom
-
-    var grwit = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().width;
-    $("div #svgenlargement").scrollLeft(grwit / 2 - 800);
-  } else { //Left to Right
-
-    var grhigh = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().height;
-    $("div #svgenlargement").scrollTop(grhigh / 2 - 400);
+  // Figure out the actual starting zoom -
+  // - so that the graph all fits in the box top to bottom
+  // - so that the start node is centered vertically bzw. horizontally
+  // TODO this needs work.
+  var initialScale;
+  var initialScrollTop;
+  var initialScrollLeft;
+  if (text_direction == 'BI') {
+    var windowSize = $('#svgenlargement').width();
+    initialScale = windowSize / gwit;
+    // x 0 is at left, startPosition will be positive
+    var startPosition = d3svg.select('#__START__').attr('cx');
+    initialScrollLeft = startPosition;
+    initialScrollTop = 0;
+  } else {
+    var windowSize = $('#svgenlargement').height();
+    initialScale = windowSize / ghigh;
+    // y 0 is at bottom, startPosition will be negative
+    var startPosition = d3svg.select('#__START__').attr('cy');
+    initialScrollTop = windowSize + startPosition;
+    initialScrollLeft = 0;
   }
+  if (initialScale > 1) {
+    initialScale = 1;
+  }
+  d3svg.attr("transform", "scale(" + initialScale + ")");
+  d3svg.call(zoomBehavior);
+
+  // Scroll to our starting position
+  $("div #svgenlargement").scrollLeft(initialScrollLeft);
+  $("div #svgenlargement").scrollTop(initialScrollTop);
 
   //document.getElementsByClassName('hasSVG')[1].style.transform = "scale(" + global_graph_scale + ")";
   //$('#svgenlargement').scrollTop(ghigh*(global_graph_scale/2));
@@ -574,63 +544,60 @@ function svgEnlargementLoaded() {
       $('#loading_overlay').hide();
     });
   });
-  //initialize marquee
-  //marquee = new Marquee();
-
 }
 
 // JMB: d3 zoom function
 function zoomer() {
   if ($('#update_workspace_button').data('locked') == false) {
     //document.getElementsByClassName('hasSVG')[1].style.transformOrigin = 'center top';
-    var d3graph = d3.select("#graph0");
     //d3svg.style("background-color", "green");
     if (global_zoomstart_yes == false) {
       global_zoomstart_yes = true;
       console.log("Penguins are good.");
-      d3.event.transform.k = global_graph_scale;
+      // d3.event.transform.k = global_graph_scale;
     };
-    tfm = d3.event.transform;
+    const tfm = d3.event.transform;
+    d3svg.attr("transform", tfm);
+    slider.property("value", tfm.k);
 
-    var coords = d3.mouse(this);
-    // This next bit grabs the coordinates relative to the container, which are used to "neaten up" the final pan.
-    var containerd3 = d3.select("#svgenlargement").node();
-    var coords2 = d3.mouse(containerd3);
-    percLR = coords2[0]
-    percUD = coords2[1]
-    d3svg.attr("transform", "scale(" + tfm.k + ")");
-    //global_zoomstart_yes
-    if (text_direction == 'BI') {
-      // Locked pan to centre of X Axis
-      var gwit = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().width;
-      $("div #svgenlargement").scrollLeft(gwit / 2 - 800);
-      // Panning zoom in Y Axis
-      console.log("Mouse coords at " + coords[1]);
-      var ghighA = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().height; // Real height
-      var ghighB = document.getElementsByClassName('hasSVG')[1].getBBox().height; // Internal height
-      var yval = coords[1] //This gives us INTERNAL Y coord
-      var percy = yval / ghighB //This gives us the % of the way along the Y axis
-      var realy = percy * ghighA
-      console.log("True graph height is " + ghighA + ", internal height is " + ghighB);
-      console.log("Internal Y is " + yval + ", percent is " + percy + ", real point to scroll to is " + realy);
-      $("div #svgenlargement").scrollTop(realy - percUD);
-    } else {
-      // Locked pan to centre of Y Axis
-      var ghigh = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().height;
-      console.log("Total real height: " + ghigh);
-      $("div #svgenlargement").scrollTop(ghigh / 2 - 400);
-      // Panning zoom in X Axis
-      console.log("Mouse coords at " + coords[0]);
-      var gwitA = document.getElementsByClassName('hasSVG')[1].getBoundingClientRect().width; // Real width
-      var gwitB = document.getElementsByClassName('hasSVG')[1].getBBox().width; // Internal width
-      var xval = coords[0] //This gives us INTERNAL X coord
-      var percx = xval / gwitB //This gives us the % of the way along the X axis
-      var realx = percx * gwitA
-      console.log("True graph width is " + gwitA + ", internal width is " + gwitB);
-      console.log("Internal X is " + xval + ", percent is " + percx + ", real point to scroll to is " + realx);
-      $("div #svgenlargement").scrollLeft(realx - percLR);
-    }
-
+    // var coords = d3.mouse(this);
+    // // This next bit grabs the coordinates relative to the container, which are used to "neaten up" the final pan.
+    // var containerd3 = d3.select("#svgenlargement").node();
+    // var coords2 = d3.mouse(containerd3);
+    // percLR = coords2[0]
+    // percUD = coords2[1]
+    // //global_zoomstart_yes
+    // if (text_direction == 'BI') {
+    //   // Locked pan to centre of X Axis
+    //   var gwit = document.getElementById('graph0').getBoundingClientRect().width;
+    //   $("div #svgenlargement").scrollLeft(gwit / 2 - 800);
+    //   // Panning zoom in Y Axis
+    //   console.log("Mouse coords at " + coords[1]);
+    //   var ghighA = document.getElementById('graph0').getBoundingClientRect().height; // Real height
+    //   var ghighB = document.getElementById('graph0').getBBox().height; // Internal height
+    //   var yval = coords[1] //This gives us INTERNAL Y coord
+    //   var percy = yval / ghighB //This gives us the % of the way along the Y axis
+    //   var realy = percy * ghighA
+    //   console.log("True graph height is " + ghighA + ", internal height is " + ghighB);
+    //   console.log("Internal Y is " + yval + ", percent is " + percy + ", real point to scroll to is " + realy);
+    //   $("div #svgenlargement").scrollTop(realy - percUD);
+    // } else {
+    //   // Locked pan to centre of Y Axis
+    //   var ghigh = document.getElementById('graph0').getBoundingClientRect().height;
+    //   console.log("Total real height: " + ghigh);
+    //   $("div #svgenlargement").scrollTop(ghigh / 2 - 400);
+    //   // Panning zoom in X Axis
+    //   console.log("Mouse coords at " + coords[0]);
+    //   var gwitA = document.getElementById('graph0').getBoundingClientRect().width; // Real width
+    //   var gwitB = document.getElementById('graph0').getBBox().width; // Internal width
+    //   var xval = coords[0] //This gives us INTERNAL X coord
+    //   var percx = xval / gwitB //This gives us the % of the way along the X axis
+    //   var realx = percx * gwitA
+    //   console.log("True graph width is " + gwitA + ", internal width is " + gwitB);
+    //   console.log("Internal X is " + xval + ", percent is " + percx + ", real point to scroll to is " + realx);
+    //   $("div #svgenlargement").scrollLeft(realx - percLR);
+    // }
+    //
   } else {
     d3svg.style("background-color", "orange");
   }
@@ -2495,7 +2462,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       return;
     }
     $(this).hide();
-    var svg_enlargement = $('#svgenlargement').svg().svg('get').root();
     mouse_scale = svg_root_element.getScreenCTM().a;
     if ($(this).data('locked') == true) {
       d3svg.on(".drag", null);
@@ -2513,7 +2479,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     } else {
       d3svg.on(".zoom", null); // JMB turn zoom function off
       d3svg.call(dragBehavior);
-      document.getElementsByClassName('hasSVG')[1].style.transformOrigin = 'top left';
+      document.getElementById('graph0').style.transformOrigin = 'top left';
       var left = $('#enlargement').offset().left;
       var right = left + $('#enlargement').width();
       var tf = svg_root_element.getScreenCTM().inverse();
@@ -2583,46 +2549,40 @@ function expandFillPageClients() {
 }
 
 // Wondering what kicks it all in motion? See: relate.tt
-function loadSVG(svgData) {
-  var svgElement = $('#svgenlargement');
 
-  $(svgElement).svg('destroy');
-
-  $(svgElement).svg({
-    loadURL: svgData,
-    onLoad: svgEnlargementLoaded
-  });
-}
-
-function reloadSVG() {
-  // For some reason svg.loadURL only works for text strings
+function loadSVG(normalised) {
+  // Disable the toggle button
   $('#select_normalised').addClass('disable');
-  var ncpath = getTextURL('get_graph') + '?type=Plain';
-  var currentlyNorm = $('#svgenlargement').data('display_normalised');
+  // Save our state
+  $('#svgenlargement').data('display_normalised', normalised);
+
+  // Construct the request
+  var ncpath = getTextURL('get_graph');
   var buttonText;
 
-  if (currentlyNorm) {
-    // We are switching back to the expanded view
-    buttonText = "Normalize for";
-  } else {
+  if (normalised) {
     // We are switching to the normalised view
     ncpath += '&' + $('#normalize-for-type').serialize();
     buttonText = "Expand graph";
+  } else {
+    // We are switching back to the expanded view
+    buttonText = "Normalize for";
   }
+
+  // Make the request
   $.get(ncpath, function(svgData) {
-    // Change the button text
+    // Change the button text and re-enable the button
     $('#select_normalised span').text(buttonText);
-    // Hide the select box
-    if (buttonText.includes("Normal")) {
-      $('#normalize-for-type').show();
-    } else {
+    $('#select_normalised').removeClass('disable');
+    // Show or hide the select box as appropriate
+    if (normalised) {
       $('#normalize-for-type').hide();
+    } else {
+      $('#normalize-for-type').show();
     }
     // Reload the SVG
-    $('#select_normalised').removeClass('disable');
-    d3.select("#svgenlargement").select('svg').remove();
-    d3.select("#svgenlargement").appendSVG(svgData);
-    $('#svgenlargement').data('display_normalised', !currentlyNorm)
+    $('#svgenlargement').empty().append(svgData.documentElement)
+    svgEnlargementLoaded();
   });
 }
 
