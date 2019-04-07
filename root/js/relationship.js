@@ -227,6 +227,23 @@ function color_active(el) {
   }
 }
 
+function showLoadingScreen() {
+  $('#loading_overlay').show();
+  lo_height = $("#enlargement_container").outerHeight();
+  lo_width = $("#enlargement_container").outerWidth();
+  $("#loading_overlay").height(lo_height);
+  $("#loading_overlay").width(lo_width);
+  $("#loading_overlay").offset($("#enlargement_container").offset());
+  // $("#loading_message").offset(
+  //   { 'top': lo_height / 2 - $("#loading_message").height() / 2,
+  //     'left': lo_width / 2 - $("#loading_message").width() / 2 });
+  $('#loading_message').position({
+    my: 'center',
+    at: 'top + ' + $('#loading_message').height(),
+    of: '#loading_overlay'
+  });
+}
+
 
 var d3svg;
 var slider;
@@ -390,6 +407,9 @@ var dragBehavior = d3.drag()
 
 var zoomBehavior = d3.zoom()
   .scaleExtent([0.1, 3])
+  .filter(function() {
+    return !d3.event.button && d3.event.type !== "wheel";
+  })
   .on("zoom", zoomer);
 
 
@@ -435,22 +455,16 @@ function svgEnlargementLoaded() {
   // Give any lemma-text paths a more interesting color
   d3svg.selectAll('.edge[id^="l"] path').attr("stroke", "#bb2255");
 
+  $(window).bind("mousewheel DOMMouseScroll", function(event) {
+    if (event.shiftKey) {
+      event.preventDefault();
+    }
+  });
+
   //JMB - BBox gets us the real (internal coords) size of the graph, as opposed to getBoundingClientRect which would show the on-screen value
   // This section mainly calculates the starting zoom. Transform origin, unlike in earlier versions, always remains as "top left". -JMB
   var ghigh = document.getElementsByClassName('graph')[0].getBBox().height;
   var gwit = document.getElementsByClassName('graph')[0].getBBox().width;
-
-  // Make the zoom slider
-  slider = d3.select("body").append("p").append("input")
-              .datum({})
-              .attr("type", "range")
-              .attr("value", zoomBehavior.scaleExtent()[0])
-              .attr("min", zoomBehavior.scaleExtent()[0])
-              .attr("max", zoomBehavior.scaleExtent()[1])
-              .attr("step", (zoomBehavior.scaleExtent()[1] - zoomBehavior.scaleExtent()[0]) / 100)
-              .on("input", function(d) {
-                zoomBehavior.scaleTo(d3svg, d3.select(this).property("value"));
-              });
 
   // Figure out the actual starting zoom -
   // - so that the graph all fits in the box top to bottom
@@ -477,6 +491,22 @@ function svgEnlargementLoaded() {
   if (initialScale > 1) {
     initialScale = 1;
   }
+
+  // Make the zoom slider
+  slider = d3.select("body").append("p").append("input")
+              .datum({})
+              .attr("id", "slider")
+              .attr("type", "range")
+              .attr("value", initialScale)
+              .attr("min", zoomBehavior.scaleExtent()[0])
+              .attr("max", zoomBehavior.scaleExtent()[1])
+              .attr("step", (zoomBehavior.scaleExtent()[1] - zoomBehavior.scaleExtent()[0]) / 100)
+              .attr("orient", "vertical") // for Firefox
+              .on("input", function(d) {
+                zoomBehavior.scaleTo(d3svg, d3.select(this).property("value"));
+              });
+
+
   d3svg.attr("transform", "scale(" + initialScale + ")");
   d3svg.call(zoomBehavior);
 
@@ -556,9 +586,9 @@ function zoomer() {
       console.log("Penguins are good.");
       // d3.event.transform.k = global_graph_scale;
     };
-    const tfm = d3.event.transform;
-    d3svg.attr("transform", tfm);
-    slider.property("value", tfm.k);
+    var transformString = "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")";
+    d3svg.attr("transform", d3.event.transform);
+    slider.property("value", d3.event.transform.k);
 
     // var coords = d3.mouse(this);
     // // This next bit grabs the coordinates relative to the container, which are used to "neaten up" the final pan.

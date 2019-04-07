@@ -323,6 +323,13 @@ span.apimore {
   /* Cf. #update_workspace_button */
 }
 
+#slider {
+  position: absolute;
+  left: 91%;
+  bottom: 10px;
+  -webkit-appearance: slider-vertical;  /* for Chrome */
+}
+
 .error {
   color: red;
 }

@@ -26,7 +26,7 @@
 [% END -%]
 
     $(document).ready(function() {
-      $('#loading_overlay').show();
+      showLoadingScreen();
       loadSVG();
       $.each(relationship_types, function(i, typedef) {
         $('.relation-type-list').append($('<option />').attr("value", typedef.name).text(typedef.name));
@@ -63,7 +63,7 @@
         <span>Download section</span>
       </div>
       <div class="button button-inline" id="select_normalised"
-           onclick="loadSVG(!$('#svgEnlargementLoaded').data('display_normalised'))">
+           onclick="showLoadingScreen(); loadSVG(!$('#svgEnlargementLoaded').data('display_normalised'))">
         <span>Normalise for</span>
       </div>
       <select id="normalize-for-type" class="relation-type-list" name="normalise"></select>
