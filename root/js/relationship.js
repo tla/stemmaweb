@@ -477,15 +477,16 @@ function svgEnlargementLoaded() {
     var windowSize = $('#svgenlargement').width();
     initialScale = windowSize / gwit;
     // x 0 is at left, startPosition will be positive
-    var startPosition = d3svg.select('#__START__').attr('cx');
-    initialScrollLeft = startPosition;
+    var startPosition = parseInt(d3svg.select('#__START__ ellipse').attr('cx'));
+    // Coordinate is cx minus half the window size
+    initialScrollLeft = startPosition - (windowSize / 2);
     initialScrollTop = 0;
   } else {
     var windowSize = $('#svgenlargement').height();
     initialScale = windowSize / ghigh;
     // y 0 is at bottom, startPosition will be negative
-    var startPosition = d3svg.select('#__START__').attr('cy');
-    initialScrollTop = windowSize + startPosition;
+    var startPosition = parseInt(d3svg.select('#__START__ ellipse').attr('cy'));
+    initialScrollTop = ghigh + startPosition;
     initialScrollLeft = 0;
   }
   if (initialScale > 1) {
@@ -511,8 +512,8 @@ function svgEnlargementLoaded() {
   d3svg.call(zoomBehavior);
 
   // Scroll to our starting position
-  $("div #svgenlargement").scrollLeft(initialScrollLeft);
-  $("div #svgenlargement").scrollTop(initialScrollTop);
+  $("#svgenlargement").scrollLeft(initialScrollLeft);
+  $("#svgenlargement").scrollTop(initialScrollTop);
 
   //document.getElementsByClassName('hasSVG')[1].style.transform = "scale(" + global_graph_scale + ")";
   //$('#svgenlargement').scrollTop(ghigh*(global_graph_scale/2));
@@ -586,8 +587,8 @@ function zoomer() {
       console.log("Penguins are good.");
       // d3.event.transform.k = global_graph_scale;
     };
-    var transformString = "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")";
-    d3svg.attr("transform", d3.event.transform);
+    var transformString = "scale(" + slider.property("value") + ")";
+    d3svg.attr("transform", transformString);
     slider.property("value", d3.event.transform.k);
 
     // var coords = d3.mouse(this);
