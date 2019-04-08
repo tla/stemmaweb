@@ -507,7 +507,7 @@ function svgEnlargementLoaded() {
                 zoomBehavior.scaleTo(d3svg, d3.select(this).property("value"));
               });
 
-
+  d3svg.style("transform-origin", "top left");
   d3svg.attr("transform", "scale(" + initialScale + ")");
   d3svg.call(zoomBehavior);
 
@@ -587,6 +587,9 @@ function zoomer() {
       console.log("Penguins are good.");
       // d3.event.transform.k = global_graph_scale;
     };
+    // TODO Calculate a translate that keeps the graph "centered"
+    // Find what the center actually is
+    var currentX = 0;
     var transformString = "scale(" + slider.property("value") + ")";
     d3svg.attr("transform", transformString);
     slider.property("value", d3.event.transform.k);
