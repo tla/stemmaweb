@@ -624,12 +624,12 @@ function zoomer() {
     //global_zoomstart_yes
     if (text_direction == 'BI') {
       // Locked pan to centre of X Axis
-      var gwit = document.getElementById('graph0').getBoundingClientRect().width;
-      $("div #svgenlargement").scrollLeft(gwit / 2 - 800);
+      var gwit = svg_root_element.getBoundingClientRect().width;
+      crect.scrollTo({left: (gwit - crect.width)/ 2});
       // Panning zoom in Y Axis
       console.log("Mouse coords at " + coords[1]);
-      var ghighA = document.getElementById('graph0').getBoundingClientRect().height; // Real height
-      var ghighB = document.getElementById('graph0').getBBox().height; // Internal height
+      var ghighA = svg_root_element.getBoundingClientRect().height; // Real height
+      var ghighB = svg_root_element.getBBox().height; // Internal height
       var yval = coords[1] //This gives us INTERNAL Y coord
       var percy = yval / ghighB //This gives us the % of the way along the Y axis
       var realy = percy * ghighA
@@ -637,24 +637,13 @@ function zoomer() {
       console.log("Internal Y is " + yval + ", percent is " + percy + ", real point to scroll to is " + realy);
       $("div #svgenlargement").scrollTop(realy - percUD);
     } else {
-      // Locked pan to centre of Y Axis
-      var ghigh = document.getElementById('graph0').getBoundingClientRect().height;
-      console.log("Total real height: " + ghigh);
-      $("div #svgenlargement").scrollTop(ghigh / 2 - 400);
-      // Panning zoom in X Axis
-      console.log("Mouse coords at " + coords[0]);
-      var gwitA = document.getElementById('graph0').getBoundingClientRect().width; // Real width
-      var gwitB = document.getElementById('graph0').getBBox().width; // Internal width
-      var xval = coords[0] //This gives us INTERNAL X coord
-      var percx = xval / gwitB //This gives us the % of the way along the X axis
-      var realx = percx * gwitA
-      console.log("True graph width is " + gwitA + ", internal width is " + gwitB);
-      console.log("Internal X is " + xval + ", percent is " + percx + ", real point to scroll to is " + realx);
-      $("div #svgenlargement").scrollLeft(realx - percLR);
+      // Panning zoom in X Axis, no need to change Y axis
+      // Get the scale factor of the internal width vs. DOM with of the SVG
+      var scrollScale = svg_root.getBoundingClientRect().width / svg_root.getBBox().width;
+      // Apply this factor to the SVG center point, offsetting half the width of the box
+      svg_root.parentNode.scrollTo({left: (svgpt.x * scrollScale) - (crect.width / 2)})
     }
 
-  } else {
-    d3svg.style("background-color", "orange");
   }
 }
 
