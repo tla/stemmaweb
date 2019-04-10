@@ -876,9 +876,18 @@ sub merge :Chained('section') :PathPart :Args(0) {
 
             # Look for readings that are now identical.
             if (@$mergeable) {
-                my @pairs =
-                  map { [ $_->[0]->{id}, $_->[1]->{id} ] } @$mergeable;
-                $response->{checkalign} = \@pairs;
+                # Bug diagnostics
+                try {
+                    # Flip the order of the pairs, since Stemmaweb takes the first argument as the
+                    # reading to get rid of
+                    my @pairs =
+                      map { [ $_->[1]->{id}, $_->[0]->{id} ] } @$mergeable;
+                    $response->{checkalign} = \@pairs;
+                } catch ($e) {
+                    use Data::Dumper;
+                    $c->log->warn("Caught bug in mergeables; response was");
+                    $c->log->warn(Dumper($mergeable));
+                }
             }
         }
         $c->stash->{'result'} = $response;
