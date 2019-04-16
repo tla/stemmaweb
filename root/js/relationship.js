@@ -1766,26 +1766,29 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           var form_values = get_relation_querystring();
           var ncpath = getTextURL('relationships');
           var jqjson = $.post(ncpath, form_values, function(data) {
+            // If we were handed a 304 response, there won't be data.
+            if (data) {
+              $.each(data['relationships'], function(item, source_target) {
+                var source_found = get_ellipse(source_target[0]);
+                var target_found = get_ellipse(source_target[1]);
+                var relation_found = $.inArray(source_target[2], $('#keymap').data('relations'));
+                if (source_found.size() && target_found.size() && relation_found > -1) {
+                  var emphasis = $('#is_significant option:selected').attr('value');
+                  var relation = relation_manager.create(source_target[0], source_target[1], relation_found, emphasis);
+                  $.each($('#merge_node_form').serializeArray(), function(i, k) {
+                    relation.data(k.name, k.value);
+                  });
+                }
+              });
+              // Stash any changed readings.
+              $.each(data['readings'], function(i, rdgdata) {
+                update_reading(rdgdata);
+              });
+            }
             // Stash the new relationships.
-            $.each(data['relationships'], function(item, source_target) {
-              var source_found = get_ellipse(source_target[0]);
-              var target_found = get_ellipse(source_target[1]);
-              var relation_found = $.inArray(source_target[2], $('#keymap').data('relations'));
-              if (source_found.size() && target_found.size() && relation_found > -1) {
-                var emphasis = $('#is_significant option:selected').attr('value');
-                var relation = relation_manager.create(source_target[0], source_target[1], relation_found, emphasis);
-                $.each($('#merge_node_form').serializeArray(), function(i, k) {
-                  relation.data(k.name, k.value);
-                });
-              }
-            });
-            // Stash any changed readings.
-            $.each(data['readings'], function(i, rdgdata) {
-              update_reading(rdgdata);
-            });
             mybuttons.button('enable');
             // See if we need to display a warning.
-            if (data.status === 'warn') {
+            if (data && data.status === 'warn') {
               var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
               $('#dialog-form-status').empty().append(dataerror);
             } else {
