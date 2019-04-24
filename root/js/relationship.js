@@ -47,6 +47,12 @@ function update_readingdata(rdata) {
   $.each(rdata, function(k, v) {
     readingdata[k] = v;
     rid2node[v['id']] = k;
+    // Throw in an extra entry for START and END nodes
+    if (k === '__START__' || k === '__END__') {
+      var jqid = '#' + k + ' title';
+      var rid = parseInt($(jqid).text());
+      rid2node[rid] = k;
+    }
   });
 }
 
@@ -415,10 +421,10 @@ var zoomBehavior = d3.zoom()
 
 // A function to d3-load some SVG
 d3.selection.prototype.appendSVG = function(SVGString) {
-    return this.select(function() {
-        return this.appendChild(document.importNode(new DOMParser()
-        .parseFromString(SVGString, 'application/xml').documentElement, true));
-    });
+  return this.select(function() {
+    return this.appendChild(document.importNode(new DOMParser()
+      .parseFromString(SVGString, 'application/xml').documentElement, true));
+  });
 };
 
 // MAIN INITIALISATION FUNCTION
@@ -493,11 +499,11 @@ function svgEnlargementLoaded() {
     var startNode = d3svg.select(startSelector)
     var startY = parseInt(startNode.attr('cy'));
     // scroll to ((height of SVG - center of start)/scale) - (height of window / 2)
-    initialScrollTop = (ghigh + startY)/initialScale - (chigh/2);
+    initialScrollTop = (ghigh + startY) / initialScale - (chigh / 2);
     if (text_direction === 'RL') {
       // Calculate the left scroll - SVG end point minus width
       var startX = parseInt(startNode.attr('cx'));
-      initialScrollLeft = (startX*initialScale) - gwit;
+      initialScrollLeft = (startX * initialScale) - gwit;
     } else {
       initialScrollLeft = 0;
     }
@@ -505,24 +511,28 @@ function svgEnlargementLoaded() {
 
   // Make the zoom slider
   slider = d3.select("body").append("p").append("input")
-              .datum({})
-              .attr("id", "slider")
-              .attr("type", "range")
-              .attr("value", initialScale)
-              .attr("min", zoomBehavior.scaleExtent()[0])
-              .attr("max", zoomBehavior.scaleExtent()[1])
-              .attr("step", (zoomBehavior.scaleExtent()[1] - zoomBehavior.scaleExtent()[0]) / 100)
-              .attr("orient", "vertical") // for Firefox
-              .on("input", function(d) {
-                zoomBehavior.scaleTo(d3svg, d3.select(this).property("value"));
-              });
+    .datum({})
+    .attr("id", "slider")
+    .attr("type", "range")
+    .attr("value", initialScale)
+    .attr("min", zoomBehavior.scaleExtent()[0])
+    .attr("max", zoomBehavior.scaleExtent()[1])
+    .attr("step", (zoomBehavior.scaleExtent()[1] - zoomBehavior.scaleExtent()[0]) / 100)
+    .attr("orient", "vertical") // for Firefox
+    .on("input", function(d) {
+      zoomBehavior.scaleTo(d3svg, d3.select(this).property("value"));
+    });
 
   // d3svg.style("transform-origin", "top left");
   d3svg.attr("transform", "scale(" + initialScale + ")");
   d3svg.call(zoomBehavior);
 
   // Scroll to our starting position
-  svg_container.scrollTo({'top': initialScrollTop, 'left': initialScrollLeft, 'behavior': 'auto'});
+  svg_container.scrollTo({
+    'top': initialScrollTop,
+    'left': initialScrollLeft,
+    'behavior': 'auto'
+  });
 
   //document.getElementsByClassName('hasSVG')[1].style.transform = "scale(" + global_graph_scale + ")";
   //$('#svgenlargement').scrollTop(ghigh*(global_graph_scale/2));
@@ -581,6 +591,10 @@ function svgEnlargementLoaded() {
       $('#svgenlargement ellipse').each(function(i, el) {
         color_inactive(el)
       });
+      $.getJSON(getTextURL('emendations'), function(data) {
+        add_emendation(data);
+      });
+
       $('#loading_overlay').hide();
     });
   });
@@ -625,7 +639,9 @@ function zoomer() {
     if (text_direction == 'BI') {
       // Locked pan to centre of X Axis
       var gwit = svg_root_element.getBoundingClientRect().width;
-      crect.scrollTo({left: (gwit - crect.width)/ 2});
+      crect.scrollTo({
+        left: (gwit - crect.width) / 2
+      });
       // Panning zoom in Y Axis
       console.log("Mouse coords at " + coords[1]);
       var ghighA = svg_root_element.getBoundingClientRect().height; // Real height
@@ -641,7 +657,9 @@ function zoomer() {
       // Get the scale factor of the internal width vs. DOM with of the SVG
       var scrollScale = svg_root.getBoundingClientRect().width / svg_root.getBBox().width;
       // Apply this factor to the SVG center point, offsetting half the width of the box
-      svg_root.parentNode.scrollTo({left: (svgpt.x * scrollScale) - (crect.width / 2)})
+      svg_root.parentNode.scrollTo({
+        left: (svgpt.x * scrollScale) - (crect.width / 2)
+      })
     }
 
   }
@@ -1240,6 +1258,62 @@ function delete_relation(form_values) {
   });
 }
 
+function add_emendation(data) {
+  // Data is a set of readings and a set of sequences.
+  $.each(data['readings'], function(i, e) {
+    // Set some useful utility functions
+    const floor = (acc, cval) => acc < cval ? acc : cval;
+    const ceiling = (acc, cval) => acc > cval ? acc : cval;
+    // Find the rank span, so we can set the width of the emendation node
+    var startrank = e.rank;
+    var endrank = data.sequences.filter(x => x.source === e.id)
+      .map(x => readingdata[rid2node[x.target]].rank).reduce(floor);
+    endrank = endrank - 1;
+
+    // Find the nodes we are "covering" based on the rank span
+    var startNodes = Object.entries(readingdata)
+      .filter(x => x[1].rank === startrank).map(x => x[0]);
+    var endNodes = Object.entries(readingdata)
+      .filter(x => x[1].rank === endrank).map(x => x[0]);
+    var coveredNodes = Object.entries(readingdata)
+      .filter(x => x[1].rank >= startrank && x[1].rank <= endrank).map(x => x[0]);
+    // Get the X value for the new node
+    var startCX = startNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
+    var startRX = startNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
+    var startingX = startCX - startRX;
+
+    // Get the width of the new node
+    var endCX = endNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
+    var endRX = endNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
+    var width = endCX + endRX - startingX;
+
+    // Get the Y value for the new node
+    var highestY = coveredNodes.map(x => parseFloat(get_ellipse(x).attr('cy'))).reduce(floor);
+    var startingY = highestY - 100;
+
+    // Add the emendation node
+    var svg = $(svg_root).svg('get');
+    var g = svg.group(svg_root_element, 'e' + e.id);
+    // Set the center 90 px above the highest center
+    // Set the width to ending-starting X
+    svg.rect(g, startingX, startingY, width, 36, 5, 5, {
+      fill: 'white',
+      opacity: '0.75',
+      stroke: 'red',
+      strokeWidth: 1
+    });
+    // Set the text center to the middle of the rect
+    svg.text(g, startingX + width / 2, startingY + 20, e.text, {
+      'text-anchor': 'middle',
+      'font-family': 'Times,serif',
+      'font-size': '14.00'
+    });
+
+    // TODO add sequences maybe?
+
+  });
+}
+
 function detach_node(readings) {
   // separate out the deleted relationships, discard for now
   if ('DELETED' in readings) {
@@ -1688,6 +1762,16 @@ var keyCommands = {
       }
     }
   },
+  '101': {
+    'key': 'e',
+    'description': 'Provide an emendation at the selected text position',
+    'function': function() {
+      // E for Emend
+      if (readings_selected.length > 0) {
+        $('#emend').dialog('open');
+      }
+    }
+  },
   '108': {
     'key': 'l',
     'description': 'Set / unset the selected reading(s) as canonical / lemma',
@@ -1862,6 +1946,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   } else if ($('#normal-form-propagate').dialog('isOpen')) {
     error += '<br>The readings cannot be updated.';
     errordiv = '#normal-form-propagate-status';
+  } else if ($('#emend').dialog('isOpen')) {
+    error += '<br>The text cannot be emended.';
+    errordiv = '#emend-status';
   } else {
     // Probably a keystroke action
     error += '<br>The action cannot be performed.</p>';
@@ -2490,6 +2577,48 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     }
   });
 
+  $('#emend').dialog({
+    autoOpen: false,
+    width: 350,
+    modal: true,
+    buttons: {
+      OK: function(evt) {
+        var mybuttons = $(evt.target).closest('button').parent().find('button');
+        mybuttons.button('disable');
+        var ncpath = getTextURL('emend');
+        $.post(ncpath, $('#emend_form').serialize(), function(data) {
+          // Data will be a reading and several sequences
+          add_emendation(data);
+          mybuttons.button('enable');
+          $('#emend').dialog('close');
+        });
+      },
+      Cancel: function(evt) {
+        $('#emend').dialog('close');
+      }
+    },
+    open: function() {
+      dialog_background('#emend-status');
+      // Populate the hidden from/to ranks
+      var minRank = readingdata['__END__'].rank;
+      var maxRank = 0;
+      $.each(readings_selected, function(i, rdgid) {
+        var myRank = readingdata[rdgid].rank;
+        if (minRank > myRank) {
+          minRank = myRank;
+        }
+        if (maxRank < myRank) {
+          maxRank = myRank;
+        }
+      });
+      $('#emend-from').val(minRank);
+      $('#emend-to').val(maxRank + 1);
+    },
+    close: function() {
+      $('#dialog_overlay').hide();
+    }
+  });
+
 
   // Set up the error message dialog, for results from keystroke commands without their own
   // dialog boxes
@@ -2511,6 +2640,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     $(this).hide();
     mouse_scale = svg_root_element.getScreenCTM().a;
     if ($(this).data('locked') == true) {
+      unselect_all_readings();
       d3svg.on(".drag", null);
       d3svg.call(zoomBehavior); // JMB turn zoom function on
       $('#svgenlargement ellipse').each(function(index) {
