@@ -47,6 +47,12 @@ function update_readingdata(rdata) {
   $.each(rdata, function(k, v) {
     readingdata[k] = v;
     rid2node[v['id']] = k;
+    // Throw in an extra entry for START and END nodes
+    if (k === '__START__' || k === '__END__') {
+      var jqid = '#' + k + ' title';
+      var rid = parseInt($(jqid).text());
+      rid2node[rid] = k;
+    }
   });
 }
 
@@ -581,6 +587,10 @@ function svgEnlargementLoaded() {
       $('#svgenlargement ellipse').each(function(i, el) {
         color_inactive(el)
       });
+      $.getJSON(getTextURL('emendations'), function(data) {
+        add_emendation(data);
+      });
+
       $('#loading_overlay').hide();
     });
   });
@@ -1240,6 +1250,62 @@ function delete_relation(form_values) {
   });
 }
 
+function add_emendation(data) {
+  // Data is a set of readings and a set of sequences.
+  $.each(data['readings'], function(i, e) {
+    // Set some useful utility functions
+    const floor = (acc, cval) => acc < cval ? acc : cval;
+    const ceiling = (acc, cval) => acc > cval ? acc : cval;
+    // Find the rank span, so we can set the width of the emendation node
+    var startrank = e.rank;
+    var endrank = data.sequences.filter(x => x.source === e.id)
+      .map(x => readingdata[rid2node[x.target]].rank).reduce(floor);
+    endrank = endrank - 1;
+
+    // Find the nodes we are "covering" based on the rank span
+    var startNodes = Object.entries(readingdata)
+      .filter(x => x[1].rank === startrank).map(x => x[0]);
+    var endNodes = Object.entries(readingdata)
+      .filter(x => x[1].rank === endrank).map(x => x[0]);
+    var coveredNodes = Object.entries(readingdata)
+      .filter(x => x[1].rank >= startrank && x[1].rank <= endrank).map(x => x[0]);
+    // Get the X value for the new node
+    var startCX = startNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
+    var startRX = startNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
+    var startingX = startCX - startRX;
+
+    // Get the width of the new node
+    var endCX = endNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
+    var endRX = endNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
+    var width = endCX + endRX - startingX;
+
+    // Get the Y value for the new node
+    var highestY = coveredNodes.map(x => parseFloat(get_ellipse(x).attr('cy'))).reduce(floor);
+    var startingY = highestY - 100;
+
+    // Add the emendation node
+    var svg = $(svg_root).svg('get');
+    var g = svg.group(svg_root_element, 'e' + e.id);
+    // Set the center 90 px above the highest center
+    // Set the width to ending-starting X
+    svg.rect(g, startingX, startingY, width, 36, 5, 5, {
+      fill: 'white',
+      opacity: '0.75',
+      stroke: 'red',
+      strokeWidth: 1
+    });
+    // Set the text center to the middle of the rect
+    svg.text(g, startingX + width / 2, startingY + 20, e.text, {
+      'text-anchor': 'middle',
+      'font-family': 'Times,serif',
+      'font-size': '14.00'
+    });
+
+    // TODO add sequences maybe?
+
+  });
+}
+
 function detach_node(readings) {
   // separate out the deleted relationships, discard for now
   if ('DELETED' in readings) {
@@ -1688,6 +1754,16 @@ var keyCommands = {
       }
     }
   },
+  '101': {
+    'key': 'e',
+    'description': 'Provide an emendation at the selected text position',
+    'function': function() {
+      // E for Emend
+      if (readings_selected.length > 0) {
+        $('#emend').dialog('open');
+      }
+    }
+  },
   '108': {
     'key': 'l',
     'description': 'Set / unset the selected reading(s) as canonical / lemma',
@@ -1862,6 +1938,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   } else if ($('#normal-form-propagate').dialog('isOpen')) {
     error += '<br>The readings cannot be updated.';
     errordiv = '#normal-form-propagate-status';
+  } else if ($('#emend').dialog('isOpen')) {
+    error += '<br>The text cannot be emended.';
+    errordiv = '#emend-status';
   } else {
     // Probably a keystroke action
     error += '<br>The action cannot be performed.</p>';
@@ -2490,6 +2569,48 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     }
   });
 
+  $('#emend').dialog({
+    autoOpen: false,
+    width: 350,
+    modal: true,
+    buttons: {
+      OK: function(evt) {
+        var mybuttons = $(evt.target).closest('button').parent().find('button');
+        mybuttons.button('disable');
+        var ncpath = getTextURL('emend');
+        $.post(ncpath, $('#emend_form').serialize(), function(data) {
+          // Data will be a reading and several sequences
+          add_emendation(data);
+          mybuttons.button('enable');
+          $('#emend').dialog('close');
+        });
+      },
+      Cancel: function(evt) {
+        $('#emend').dialog('close');
+      }
+    },
+    open: function() {
+      dialog_background('#emend-status');
+      // Populate the hidden from/to ranks
+      var minRank = readingdata['__END__'].rank;
+      var maxRank = 0;
+      $.each(readings_selected, function(i, rdgid) {
+        var myRank = readingdata[rdgid].rank;
+        if (minRank > myRank) {
+          minRank = myRank;
+        }
+        if (maxRank < myRank) {
+          maxRank = myRank;
+        }
+      });
+      $('#emend-from').val(minRank);
+      $('#emend-to').val(maxRank + 1);
+    },
+    close: function() {
+      $('#dialog_overlay').hide();
+    }
+  });
+
 
   // Set up the error message dialog, for results from keystroke commands without their own
   // dialog boxes
@@ -2513,6 +2634,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     if ($(this).data('locked') == true) {
       d3svg.on(".drag", null);
       d3svg.call(zoomBehavior); // JMB turn zoom function on
+      unselect_all_readings();
       $('#svgenlargement ellipse').each(function(index) {
         if ($(this).data('node_obj') != null) {
           $(this).data('node_obj').ungreyout_edges();
