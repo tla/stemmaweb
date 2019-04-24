@@ -51,7 +51,7 @@
 [% END -%]
         </select>
       </span>
-      
+
       <div class="button button-inline" id="section_textview_button" onclick="$('#section-text').dialog('open');">
         <span>View running text</span>
       </div>
@@ -193,7 +193,7 @@
     </form>
     <div id="reading-form-status"></div>
   </div>
-  
+
   <div id="normal-form-propagate" title="Propagate normal form">
     <div id="normal-form-propagate-status"></div>
     <form id="normal_form_form" action="#">
@@ -202,8 +202,20 @@
       </p>
     </form>
   </div>
-        
-  
+
+  <div id="emend" title="Emend the text">
+    <div id="emend-status"></div>
+    <form id="emend_form" action="#">
+      <p>Emend the text at the selected position</p>
+      <input type="hidden" name="fromRank" id="emend-from">
+      <input type="hidden" name="toRank" id="emend-to">
+      <label for="emend-text">Text to appear at this point: </label>
+      <input type="text" name="text" id="emend-text"><br>
+      <label for="emend-authority">Who proposes this emendation: </label>
+      <input type="text" name="authority" id="emend-authority"><br>
+    </form>
+  </div>
+
   <div id="section-text" title="Running text view">
     <div id="section-text-status"></div>
     <form id="section_text_form" action="#">
@@ -230,7 +242,7 @@
 
   <div id="error-display" title="Error">
   </div>
-  
+
   [% INCLUDE downloadbox.tt referringpage = "relate" %]
 
   <p>

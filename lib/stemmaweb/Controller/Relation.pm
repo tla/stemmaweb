@@ -184,12 +184,12 @@ sub get_graph :Chained('section') :PathPart :Args(0) {
     my $m = $c->model('Directory');
     my $contenttype = delete $c->request->params->{'type'};
     $contenttype ||= 'SVG';
-    
+
     my $opts = { section => $c->stash->{sectid} };
     foreach my $k (keys %{$c->request->params}) {
         $opts->{$k} = $c->request->params->{$k};
     }
-    
+
     my $svgstr;
     try {
         $svgstr = $m->tradition_as_svg($textid, $opts);
@@ -358,14 +358,14 @@ sub relationships :Chained('section') :PathPart :Args(0) {
                 if (@relpairs) {
                     # Return a warning
                     $result->{status} = 'warn';
-                    $result->{warning} = sprintf("Could not relate reading %s: %d / %s", 
+                    $result->{warning} = sprintf("Could not relate reading %s: %d / %s",
                         $lastattempted, $e->status, $e->message);
                 } else {
                     # Return an error
                     return json_error($c, $e->status, $e->message);
                 }
             }
-            
+
             $result->{relationships} = \@relpairs;
             $result->{readings} = \@changed_readings;
             $c->stash->{result} = $result;
@@ -503,6 +503,9 @@ sub readings :Chained('section') :PathPart :Args(0) {
     # Get the extra information we need
     my $ret = {};
     foreach my $rdg (@$rdglist) {
+        # Exclude emendations
+        next if $rdg->{is_emendation};
+        # Modify the stemmarest reading into a stemmaweb one
         my $struct = _reading_struct($rdg);
 
         # The struct we return needs to be keyed on SVG node ID.
@@ -619,7 +622,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
  GET relation/$textid/$sectionid/lemmatext
 
 Returns the current lemma text for the section in a JSON object, key 'text'.
-If the lemma text has not been marked final, shows the gaps where text is not 
+If the lemma text has not been marked final, shows the gaps where text is not
 yet lemmatised. If any lemmas have changed since the text was last marked final,
 shows the differences where they appear.
 
@@ -685,7 +688,7 @@ sub witnesstext :Chained('section') :PathPart :Args(1) {
         }
     } else {
         json_error($c, 405, "Use GET instead");
-    }    
+    }
     $c->forward('View::JSON');
 }
 
@@ -693,7 +696,7 @@ sub witnesstext :Chained('section') :PathPart :Args(1) {
 
   POST relation/$textid/$sectionid/copynormal/$reading/$reltype
 
-Copies the normal form of the given reading to any readings related via the 
+Copies the normal form of the given reading to any readings related via the
 given relation type. Returns a list of altered readings.
 
 =cut
@@ -714,6 +717,87 @@ sub copynormal :Chained('section') :PathPart :Args(2) {
             my $changelist = [ map { _reading_struct($_) } @$resp];
             $c->stash->{result} = $changelist;
         } catch (stemmaweb::Error $e) {
+            return json_error($c, $e->status, $e->message);
+        }
+    } else {
+        json_error($c, 405, "Use POST instead");
+    }
+    $c->forward('View::JSON');
+}
+
+=head2 emendations
+
+  GET relation/$textid/$sectionid/emendations
+
+ Returns a list of emendations for a given section.
+
+=cut
+
+sub emendations :Chained('section') :PathPart :Args(0) {
+    my ($self, $c) = @_;
+    my $textid = $c->stash->{'textid'};
+    my $sectid = $c->stash->{'sectid'};
+    my $m = $c->model('Directory');
+    if ($c->request->method eq 'GET') {
+        try {
+            my $resp = $m->ajax(
+                'get', "/tradition/$textid/section/$sectid/emendations");
+            $c->stash->{result} = {
+                readings => [map { _reading_struct($_) } @{$resp->{readings}}],
+                sequences => $resp->{sequences}
+            };
+        }
+        catch (stemmaweb::Error $e) {
+            return json_error($c, $e->status, $e->message);
+        }
+    } else {
+        json_error($c, 405, "Use GET instead");
+    }
+    $c->forward('View::JSON');
+}
+
+=head2 emend
+
+  POST relation/$textid/$sectionid/emend
+
+Accepts form data containing the following:
+- fromRank
+- toRank
+- text
+- authority
+
+Adds an emendation to the text at the given location. On success,
+returns the new reading and the sequence links to the neighbour readings.
+
+=cut
+
+sub emend :Chained('section') :PathPart :Args(0) {
+    my ($self, $c) = @_;
+    my $textid = $c->stash->{'textid'};
+    my $sectid = $c->stash->{'sectid'};
+    my $m = $c->model('Directory');
+    if ($c->request->method eq 'POST') {
+
+        # Auth check
+        if ($c->stash->{'permission'} ne 'full') {
+            json_error($c, 403,
+                'You do not have permission to modify this tradition.');
+        }
+
+        # The proposed emendation object should be a JSONification
+        # of the form params.
+        try {
+            my $resp = $m->ajax(
+                'post', "/tradition/$textid/section/$sectid/emend",
+                'Content-Type' => 'application/json',
+                'Content'      => encode_json($c->request->params)
+            );
+            $c->stash->{result} = {
+                readings => [map { _reading_struct($_) } @{$resp->{readings}}],
+                sequences => $resp->{sequences}
+            }
+        }
+        catch (stemmaweb::Error $e) {
             return json_error($c, $e->status, $e->message);
         }
     } else {
@@ -846,7 +930,7 @@ sub merge :Chained('section') :PathPart :Args(0) {
             }
             catch (stemmaweb::Error $e) {
                 $failed->{$second} = [$e->status, $e->message];
-            }            
+            }
         }
 
         my $response = { status => 'ok' };
@@ -1141,7 +1225,7 @@ sub split :Chained('section') :PathPart :Args(0) {
     $c->forward('View::JSON');
 }
 
-=head2 assemble_warnings 
+=head2 assemble_warnings
 
 Make a single warning message from a set of failed operations. Returns a collected string.
 
@@ -1156,7 +1240,7 @@ sub assemble_warnings {
     return $result;
 }
 
-=head2 assemble_warnings 
+=head2 assemble_failures
 
 Make a single warning message from a set of failed operations. Returns a status code + message.
 
