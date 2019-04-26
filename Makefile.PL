@@ -56,6 +56,8 @@ requires 'List::Util';
 requires 'LWP::Protocol::https';
 requires 'MIME::Base64';
 requires 'Moose';
+requires 'strictures' => '2';
+requires 'Throwable::X';
 requires 'TryCatch';
 requires 'URI::Escape';
 requires 'namespace::autoclean';
