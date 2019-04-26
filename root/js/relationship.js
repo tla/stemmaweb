@@ -2541,9 +2541,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
               var this_nodeid = update_reading(rdg);
               update_reading_display(this_nodeid);
             });
-            $('#normal-form-propagate').dialog('close');
           });
-        })
+        });
+        $('#normal-form-propagate').dialog('close');
       },
       Cancel: function(evt) {
         $('#normal-form-propagate').dialog('close');
