@@ -192,6 +192,10 @@ span.apimore {
     padding: 0px;
     overflow-x: scroll;
     overflow-y: scroll;
+    position: relative;
+}
+#svgenlargement svg {
+  position: absolute;
 }
 #workspace {
   padding: 0px;
