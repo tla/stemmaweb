@@ -187,16 +187,19 @@ span.apimore {
   padding: 0px;
   overflow: hidden;
 }
+
 #svgenlargement {
-    border: red, 2px;
-    padding: 0px;
-    overflow-x: scroll;
-    overflow-y: scroll;
-    position: relative;
+  border: red, 2px;
+  padding: 0px;
+  overflow-x: scroll;
+  overflow-y: scroll;
+  position: relative;
 }
+
 #svgenlargement svg {
   position: absolute;
 }
+
 #workspace {
   padding: 0px;
   overflow: hidden;
@@ -331,7 +334,8 @@ span.apimore {
   position: absolute;
   left: 91%;
   bottom: 10px;
-  -webkit-appearance: slider-vertical;  /* for Chrome */
+  -webkit-appearance: slider-vertical;
+  /* for Chrome */
 }
 
 .error {
@@ -354,6 +358,7 @@ span.apimore {
   width: 30%;
   padding-top: 5px;
 }
+
 .inputs {
   float: left;
   width: 65%;
@@ -369,11 +374,12 @@ span.apimore {
 }
 
 /* Cf. #update_workspace_button */
-svg{
-    background-color: #00FFFF;
-    overflow: scroll;
-    transform-origin: left center;
+svg {
+  background-color: #00FFFF;
+  overflow: scroll;
+  transform-origin: left center;
 }
+
 /* Marquee rectangle JMB */
 rect.selection {
   cursor: move !important;
@@ -389,6 +395,7 @@ rect.selection {
   fill: white;
   fill-opacity: 0.5;
 }
+
 rect.showcase {
   cursor: move !important;
   -webkit-touch-callout: none !important;
