@@ -1250,60 +1250,76 @@ function delete_relation(form_values) {
   });
 }
 
-function add_emendation(data) {
-  // Data is a set of readings and a set of sequences.
-  $.each(data['readings'], function(i, e) {
-    // Set some useful utility functions
-    const floor = (acc, cval) => acc < cval ? acc : cval;
-    const ceiling = (acc, cval) => acc > cval ? acc : cval;
-    // Find the rank span, so we can set the width of the emendation node
-    var startrank = e.rank;
-    var endrank = data.sequences.filter(x => x.source === e.id)
-      .map(x => readingdata[rid2node[x.target]].rank).reduce(floor);
-    endrank = endrank - 1;
+function add_emendation(emenddata) {
+  // Set some useful reduce functions
+  const floor = (acc, cval) => acc < cval ? acc : cval;
+  const ceiling = (acc, cval) => acc > cval ? acc : cval;
 
-    // Find the nodes we are "covering" based on the rank span
-    var startNodes = Object.entries(readingdata)
-      .filter(x => x[1].rank === startrank).map(x => x[0]);
-    var endNodes = Object.entries(readingdata)
-      .filter(x => x[1].rank === endrank).map(x => x[0]);
-    var coveredNodes = Object.entries(readingdata)
-      .filter(x => x[1].rank >= startrank && x[1].rank <= endrank).map(x => x[0]);
-    // Get the X value for the new node
-    var startCX = startNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
-    var startRX = startNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
-    var startingX = startCX - startRX;
-
-    // Get the width of the new node
-    var endCX = endNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
-    var endRX = endNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
-    var width = endCX + endRX - startingX;
-
-    // Get the Y value for the new node
-    var highestY = coveredNodes.map(x => parseFloat(get_ellipse(x).attr('cy'))).reduce(floor);
-    var startingY = highestY - 100;
-
-    // Add the emendation node
-    var svg = $(svg_root).svg('get');
-    var g = svg.group(svg_root_element, 'e' + e.id);
-    // Set the center 90 px above the highest center
-    // Set the width to ending-starting X
-    svg.rect(g, startingX, startingY, width, 36, 5, 5, {
-      fill: 'white',
-      opacity: '0.75',
-      stroke: 'red',
-      strokeWidth: 1
-    });
-    // Set the text center to the middle of the rect
-    svg.text(g, startingX + width / 2, startingY + 20, e.text, {
-      'text-anchor': 'middle',
-      'font-family': 'Times,serif',
-      'font-size': '14.00'
-    });
+  // Data is a set of readings and a set of sequences. For each reading
+  // we make an SVG group consisting of a rect and a text element.
+  emenddata.readings.forEach(function(r) {
+    // Initialize the d3 element
+    var enode = d3svg.select('#graph0')
+      .selectAll('#e' + r.id)
+      .data([r])
+      .enter()
+      .append('g')
+      .attr('id', 'e' + r.id);
+    enode.append('rect')
+      .attr('x', function(d) {
+        var startNodes = Object.entries(readingdata)
+          .filter(x => x[1].rank === d.rank).map(x => x[0]);
+        var startCX = startNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
+        var startRX = startNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
+        return startCX - startRX;
+      })
+      .attr('width', function(d) {
+        // Find the last rank that this emendation covers
+        var endrank = emenddata.sequences.filter(x => x.source === d.id)
+          .map(x => readingdata[rid2node[x.target]].rank).reduce(floor);
+        endrank = endrank - 1;
+        // Find the end of the widest / leftmost node at that rank
+        var endNodes = Object.entries(readingdata)
+          .filter(x => x[1].rank === endrank).map(x => x[0]);
+        var endCX = endNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
+        var endRX = endNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
+        return endCX + endRX - parseFloat(d3.select(this).attr('x'));
+      })
+      .attr('y', function(d) {
+        // Find the last rank that this emendation covers
+        var endrank = emenddata.sequences.filter(x => x.source === d.id)
+          .map(x => readingdata[rid2node[x.target]].rank).reduce(floor);
+        endrank = endrank - 1;
+        // Find the highest of all the nodes covered
+        var coveredNodes = Object.entries(readingdata)
+          .filter(x => x[1].rank >= d.rank && x[1].rank <= endrank).map(x => x[0]);
+        var highestY = coveredNodes.map(x => parseFloat(get_ellipse(x).attr('cy'))).reduce(floor);
+        return highestY - 100;
+      })
+      .attr('height', 36)
+      .attr('rx', '5')
+      .attr('ry', '5')
+      .attr('fill', 'white')
+      .attr('opacity', '0.75')
+      .attr('stroke', 'red')
+      .attr('strokeWidth', 1);
+    enode.append('text')
+      .attr('x', function() {
+        var rx = parseFloat(enode.select('rect').attr('x'));
+        var rw = parseFloat(enode.select('rect').attr('width'));
+        return rx + rw / 2;
+      })
+      .attr('y', function() {
+        var ry = parseFloat(enode.select('rect').attr('y'));
+        return ry + 22;
+      })
+      .attr('text-anchor', 'middle')
+      .attr('font-family', 'Times,serif')
+      .attr('font-size', '14.00')
+      .text(r.text);
+  });
 
     // TODO add sequences maybe?
-
-  });
 }
 
 function detach_node(readings) {
