@@ -1103,7 +1103,10 @@ function relation_factory() {
     var relation_id = get_relation_id(source_node_id, target_node_id);
     var relation = $(jq(relation_id));
     if (relation.size() == 0) {
-      draw_relation(source_node_id, target_node_id, self.temp_color);
+      draw_relation(source_node_id, target_node_id, {
+        color: self.temp_color,
+        class: 'temporary'
+      });
     } else {
       self.color_memo = relation.children('path').attr('stroke');
       relation.children('path').attr('stroke', self.temp_color);
@@ -1123,7 +1126,10 @@ function relation_factory() {
   this.create = function(source_node_id, target_node_id, color_index, emphasis) {
     //TODO: Protect from (color_)index out of bound..
     var relation_color = self.relation_colors[color_index];
-    var relation = draw_relation(source_node_id, target_node_id, relation_color, emphasis);
+    var relation = draw_relation(source_node_id, target_node_id, {
+      color: relation_color,
+      emphasis: emphasis
+    });
     get_node_obj(source_node_id).update_elements();
     get_node_obj(target_node_id).update_elements();
     // Set the relationship info box on click.
@@ -1215,7 +1221,11 @@ function get_related_nodes(relation_id) {
   return srctotarg.split('-___-');
 }
 
-function draw_relation(source_id, target_id, relation_color, emphasis) {
+function draw_relation(source_id, target_id, opts) {
+  var cssclass = 'relation';
+  if (opts.class) {
+    cssclass += ' ' + opts.class;
+  }
   var source_ellipse = get_ellipse(source_id);
   var target_ellipse = get_ellipse(target_id);
   var relation_id = get_relation_id(source_id, target_id);
@@ -1227,14 +1237,14 @@ function draw_relation(source_id, target_id, relation_color, emphasis) {
   var ex = parseInt(target_ellipse.attr('cx'));
   var ey = parseInt(target_ellipse.attr('cy'));
   var relation = svg.group($("#svgenlargement svg g"), {
-    'class': 'relation',
+    'class': cssclass,
     'id': relation_id
   });
   svg.title(relation, source_id + '->' + target_id);
-  var stroke_width = emphasis === "yes" ? 6 : emphasis === "maybe" ? 4 : 2;
+  var stroke_width = opts.emphasis === "yes" ? 6 : opts.emphasis === "maybe" ? 4 : 2;
   svg.path(relation, path.move(sx, sy).curveC(sx + (2 * rx), sy, ex + (2 * rx), ey, ex, ey), {
     fill: 'none',
-    stroke: relation_color,
+    stroke: opts.color,
     strokeWidth: stroke_width
   });
   var relation_element = $('#svgenlargement .relation').filter(':last');
@@ -1447,46 +1457,66 @@ function merge_nodes(source_node_id, target_node_id, consequences) {
   if (consequences.status != null && consequences.status == 'ok') {
     merge_node(source_node_id, target_node_id);
     if (consequences.checkalign != null) {
+      // Remove all prior checkmerge button groups
+      $('[id*="nomerge"]').parent().remove();
+      // Remove all leftover temp relations
+      $('.checkalign').remove();
       $.each(consequences.checkalign, function(index, node_ids) {
-        var temp_relation = draw_relation(node_ids[0], node_ids[1], "#89a02c");
-        var sy = parseInt(temp_relation.children('path').attr('d').split('C')[0].split(',')[1]);
-        var ey = parseInt(temp_relation.children('path').attr('d').split(' ')[2].split(',')[1]);
-        var yC = ey + ((sy - ey) / 2);
-        // TODO: compute xC to be always the same distance to the amplitude of the curve
-        var xC = parseInt(temp_relation.children('path').attr('d').split(' ')[1].split(',')[0]);
-        var svg = $('#svgenlargement').children('svg').svg('get');
-        parent_g = svg.group($('#svgenlargement svg g'));
         var ids_text = node_ids[0] + '-' + node_ids[1];
         var merge_id = 'merge-' + ids_text;
-        var yes = svg.image(parent_g, xC, (yC - 8), 16, 16, merge_button_yes, {
-          id: merge_id
-        });
-        var no = svg.image(parent_g, (xC + 20), (yC - 8), 16, 16, merge_button_no, {
-          id: 'no' + merge_id
-        });
-        $(yes).hover(function() {
-          $(this).addClass('draggable')
-        }, function() {
-          $(this).removeClass('draggable')
-        });
-        $(no).hover(function() {
-          $(this).addClass('draggable')
-        }, function() {
-          $(this).removeClass('draggable')
-        });
-        $(yes).click(function(evt) {
-          merge_node(rid2node[node_ids[0]], rid2node[node_ids[1]]);
-          temp_relation.remove();
-          $(evt.target).parent().remove();
-          //notify backend
-          var ncpath = getTextURL('merge');
-          var form_values = "source=" + node_ids[0] + "&target=" + node_ids[1] + "&single=true";
-          $.post(ncpath, form_values);
-        });
-        $(no).click(function(evt) {
-          temp_relation.remove();
-          $(evt.target).parent().remove();
-        });
+        // Make a checkmerge button if there isn't one already, for this pair
+        if ($('#' + merge_id).length == 0) {
+          var temp_relation = draw_relation(node_ids[0], node_ids[1], {
+            color: "#89a02c",
+            class: "checkalign"
+          });
+          var sy = parseInt(temp_relation.children('path').attr('d').split('C')[0].split(',')[1]);
+          var ey = parseInt(temp_relation.children('path').attr('d').split(' ')[2].split(',')[1]);
+          var yC = ey + ((sy - ey) / 2);
+          // TODO: compute xC to be always the same distance to the amplitude of the curve
+          var xC = parseInt(temp_relation.children('path').attr('d').split(' ')[1].split(',')[0]);
+          var svg = $('#svgenlargement').children('svg').svg('get');
+          parent_g = svg.group($('#svgenlargement svg g'));
+          var yes = svg.image(parent_g, xC, (yC - 8), 16, 16, merge_button_yes, {
+            id: merge_id
+          });
+          var no = svg.image(parent_g, (xC + 20), (yC - 8), 16, 16, merge_button_no, {
+            id: 'no' + merge_id
+          });
+          $(yes).hover(function() {
+            $(this).addClass('draggable')
+            // Indicate which nodes are active
+            get_ellipse(node_ids[0]).attr('fill', '#9999ff');
+            get_ellipse(node_ids[1]).attr('fill', '#9999ff');
+          }, function() {
+            $(this).removeClass('draggable');
+            var colorme = $('#update_workspace_button').data('locked') ? color_active : color_inactive;
+            colorme(get_ellipse(node_ids[0]));
+            colorme(get_ellipse(node_ids[1]));
+          });
+          $(no).hover(function() {
+            $(this).addClass('draggable')
+          }, function() {
+            $(this).removeClass('draggable')
+          });
+          $(yes).click(function(evt) {
+            // node_ids[0] is the one that goes away
+            merge_node(rid2node[node_ids[0]], rid2node[node_ids[1]]);
+            temp_relation.remove();
+            $(evt.target).parent().remove();
+            // remove any suggestions that involve the removed node
+            $('[id*="-' + node_ids[0] + '"]').parent().remove();
+            $('.checkalign[id*="' + rid2node[node_ids[0]] + '"]').remove();
+            //notify backend
+            var ncpath = getTextURL('merge');
+            var form_values = "source=" + node_ids[0] + "&target=" + node_ids[1] + "&single=true";
+            $.post(ncpath, form_values);
+          });
+          $(no).click(function(evt) {
+            temp_relation.remove();
+            $(evt.target).parent().remove();
+          });
+        }
       });
     }
   }
