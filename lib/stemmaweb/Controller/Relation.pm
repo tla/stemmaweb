@@ -1017,74 +1017,14 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
                 'You do not have permission to modify this tradition.');
         }
 
-        # Sort out which readings need to be duplicated from the set given, and
-        # ensure that all the given wits bear each relevant reading.
-        # TODO I think stemmarest handles this check
-        my @readings;
-        foreach my $rid ($c->request->param('readings[]')) {
-            try {
-                my $rdginfo = $m->ajax('get', "/reading/$rid");
-                push(@readings, $rdginfo);
-            }
-            catch (stemmaweb::Error $e ) {
-                return json_error($c, $e->status, $e->message);
-            }
-        }
-
-        my %wits = ();
-        map { $wits{$_} = 1 } $c->request->param('witnesses[]');
-        my %rdgranks = ();
-        foreach my $rdg (@readings) {
-            my $rid     = $rdg->{id};
-            my $numwits = 0;
-            foreach my $rwit (@{ $rdg->{witnesses} }) {
-                $numwits++ if exists $wits{$rwit};
-            }
-            next
-              unless $numwits;   # Disregard readings with none of our witnesses
-            if ($numwits < keys(%wits)) {
-
-                # TODO decide if this should really be an error
-                json_error($c, 400,
-"Reading $rid contains some but not all of the specified witnesses."
-                );
-            } elsif (exists $rdgranks{ $rdg->{rank} }) {
-                json_error($c, 400,
-"More than one reading would be detached along with $rid at rank "
-                      . $rdg->{rank});
-            } else {
-                $rdgranks{ $rdg->{rank} } = $rid;
-            }
-        }
-
-        # Now check that the readings make a single sequence.
-        my $prior;
-        foreach my $rank (sort { $a <=> $b } keys %rdgranks) {
-            my $rid = $rdgranks{$rank};
-            if ($prior) {
-
-                # Check that there is only one path between $prior and $rdg.
-                foreach my $wit (keys %wits) {
-                    my $prdg;
-                    try {
-                        $prdg = $m->ajax('get', "/reading/$rid/prior/$wit");
-                    }
-                    catch (stemmaweb::Error $e) {
-                        json_error($c, $e->status, $e->message);
-                    }
-                    json_error($c, 400,
-                        "Diverging witness paths from $prior to $rid at $wit")
-                      unless $prdg->{id} eq $prior;
-                }
-            }
-            $prior = $rid;
-        }
-
-        # If we got this far, do the deed.
-        my $url = sprintf("/reading/%s/duplicate", $readings[0]->{id});
+        # Pass all the listed readings to stemmarest and let it sort
+        # out the logic of what can be duplicated
+        my @readings = $c->request->param('readings[]');
+        my @wits = $c->request->param('witnesses[]');
+        my $url = sprintf("/reading/%s/duplicate", $readings[0]);
         my $req = {
-            readings  => [ values %rdgranks ],
-            witnesses => [ keys %wits ]
+            readings  => \@readings,
+            witnesses => \@wits
         };
         my $response;
         try {
