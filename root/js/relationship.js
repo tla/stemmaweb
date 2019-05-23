@@ -1571,7 +1571,7 @@ var keyCommands = {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
-        $('#action-detach').prop('checked', true);
+        $('#action-detach-only').val('on');
         $('#multipleselect-form').dialog('open');
       }
     }
@@ -2024,54 +2024,17 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
               self.dialog("close");
             });
           }
-        },
-        {
-          text: "Concatenate",
-          id: "concat_btn",
-          click: function(evt) {
-            var self = $(this);
-            var mybuttons = $(evt.target).closest('button').parent().find('button');
-            mybuttons.button('disable');
-
-            var ncpath = getTextURL('compress');
-            var form_values = $('#detach_collated_form').serialize();
-            // $.each($('#detach_collated_form input').filter(function() {return this.getAttribute("name") === "readings[]"}), function( i, v ) {vals.push(i)}); vals
-
-            $.post(ncpath, form_values, function(data) {
-              mybuttons.button('enable');
-              if (data.nodes) {
-                compress_nodes(data.nodes);
-              }
-              if (data.status === 'warn') {
-                var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
-                $('#multipleselect-form-status').empty().append(dataerror);
-              } else {
-                self.dialog('close');
-              }
-            });
-          }
         }
       ],
       create: function(event, ui) {
         var buttonset = $(this).parent().find('.ui-dialog-buttonset').css('width', '100%');
         buttonset.find("button:contains('Cancel')").css('float', 'right');
-        $('#action-detach').change(function() {
-          if ($('#action-detach')[0].checked) {
+        $('#action-detach-only').change(function() {
+          if ($('#action-detach-only').val() == 'on') {
             $('#detach_collated_form').show();
             $('#multipleselect-form-text').show();
 
             $('#detach_btn').show();
-            $('#concat_btn').hide();
-          }
-        });
-
-        $('#action-concat').change(function() {
-          if ($('#action-concat')[0].checked) {
-            $('#detach_collated_form').hide();
-            $('#multipleselect-form-text').hide();
-
-            $('#detach_btn').hide();
-            $('#concat_btn').show();
           }
         });
       },
@@ -2079,18 +2042,11 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $(this).dialog("option", "width", 200);
         dialog_background('#multipleselect-form-status');
 
-        if ($('#action-concat')[0].checked) {
-          $('#detach_collated_form').hide();
-          $('#multipleselect-form-text').hide();
-
-          $('#detach_btn').hide();
-          $('#concat_btn').show();
-        } else {
+        if ($('#action-detach-only').val() == 'on') {
           $('#detach_collated_form').show();
           $('#multipleselect-form-text').show();
 
           $('#detach_btn').show();
-          $('#concat_btn').hide();
         }
 
         // Populate the forms with the currently selected readings
@@ -2119,6 +2075,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       },
       close: function() {
         marquee.unselect();
+        $('#action-detach-only').val('off');
         $("#dialog_overlay").hide();
       }
     });
