@@ -133,7 +133,7 @@
     <div id="multipleselect-form-status"></div>
 
     <form autocomplete="off">
-      <input type="hidden" id="action-detach-only" name='option' value='off' />
+      <input type="hidden" id="action-detach" name='option' value='off' />
     </form>
 
     <div id="multipleselect-form-text">Select witness(es) to detach:</div>

@@ -1538,11 +1538,12 @@ var keyCommands = {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
+        // TODO show + hide dialog_overlay, prevent further keyCommands until finished.
         var ncpath = getTextURL('compress');
         var form_values = '' // server expects sth like 'readings%5B%5D=2063&readings%5B%5D=2074'
         for (var i = 0; i < readings_selected.length; i++) {
           if (i > 0) { form_values += '&' }
-          form_values += 'readings%5B%5D=' + readings_selected[i].substring(1); // 2028 instead of n2028 // TODO
+          form_values += 'readings%5B%5D=' + readings_selected[i].substring(1); // 2028 instead of n2028 for the server // TODO use the general id detection if there is one (other than node_id.replace('n', ''))
         };
         $.post(ncpath, form_values, function(data) {
           if (data.nodes) {
@@ -1567,7 +1568,7 @@ var keyCommands = {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
-        $('#action-detach-only').val('on');
+        $('#action-detach').val('on');
         $('#multipleselect-form').dialog('open');
       }
     }
@@ -2025,8 +2026,8 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       create: function(event, ui) {
         var buttonset = $(this).parent().find('.ui-dialog-buttonset').css('width', '100%');
         buttonset.find("button:contains('Cancel')").css('float', 'right');
-        $('#action-detach-only').change(function() {
-          if ($('#action-detach-only').val() == 'on') {
+        $('#action-detach').change(function() {
+          if ($('#action-detach').val() == 'on') {
             $('#detach_collated_form').show();
             $('#multipleselect-form-text').show();
 
@@ -2038,7 +2039,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $(this).dialog("option", "width", 200);
         dialog_background('#multipleselect-form-status');
 
-        if ($('#action-detach-only').val() == 'on') {
+        if ($('#action-detach').val() == 'on') {
           $('#detach_collated_form').show();
           $('#multipleselect-form-text').show();
 
@@ -2071,7 +2072,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       },
       close: function() {
         marquee.unselect();
-        $('#action-detach-only').val('off');
+        $('#action-detach').val('off');
         $("#dialog_overlay").hide();
       }
     });
