@@ -1538,15 +1538,11 @@ var keyCommands = {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
-        // $('#action-concat').prop('checked', true);
-        // $('#multipleselect-form').dialog('open');
-
         var ncpath = getTextURL('compress');
-        // in dialog: var form_values = $('#detach_collated_form').serialize();
-        var form_values = ''
+        var form_values = '' // server expects sth like 'readings%5B%5D=2063&readings%5B%5D=2074'
         for (var i = 0; i < readings_selected.length; i++) {
           if (i > 0) { form_values += '&' }
-          form_values += 'readings%5B%5D=' + readings_selected[i].substring(1); // 2028 instead of n2028
+          form_values += 'readings%5B%5D=' + readings_selected[i].substring(1); // 2028 instead of n2028 // TODO
         };
         $.post(ncpath, form_values, function(data) {
           if (data.nodes) {
@@ -1556,7 +1552,7 @@ var keyCommands = {
             var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
             $('#multipleselect-form-status').empty().append(dataerror);
           } else {
-            // self.dialog('close');
+            marquee.unselect();
           }
         });
       }
