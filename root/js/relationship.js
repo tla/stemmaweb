@@ -2403,6 +2403,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       OK: function() {
         $(this).dialog("close");
       },
+    },
+    close: function() {
+      marquee.unselect();
     }
   });
 
