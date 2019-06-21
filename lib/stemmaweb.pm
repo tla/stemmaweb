@@ -76,6 +76,10 @@ __PACKAGE__->config(
         },
     },
 
+    'Plugin::Session' => {
+        expires => 43200,
+    },
+
     ## kiokudb auth store testing
     'Plugin::Authentication' => {
         default => {
