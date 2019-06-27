@@ -1934,13 +1934,16 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         // Don't allow merge (or split) if we are in normalised view mode
         var show_merge = !$('#svgenlargement').data('display_normalised')
         if ($('#dialog-form').data('binary')) {
-          // Form values are already set from the mouseup event
+          // Show the form parts that only make sense here
+          $('#binary_relation_only').show();
           // Should the merge button be shown?
           show_merge = readings_equivalent(rid2node[$('#source_node_id').val()],
             rid2node[$('#target_node_id').val()]);
         } else {
           // Hide the parts of the form that aren't applicable
           $('#binary_relation_only').hide();
+          $('#b_derivable_from_a').prop('checked', false);
+          $('#a_derivable_from_b').prop('checked', false);
           // We need to set the form values from readings_selected
           var numrdgs = readings_selected.length;
           var target = readings_selected[numrdgs - 1];

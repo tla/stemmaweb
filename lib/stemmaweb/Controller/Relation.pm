@@ -90,8 +90,8 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     $c->stash->{'direction'} = $tradition->{direction} || 'BI';
 
     # Stash the relationship definitions.
-    $c->stash->{'relationship_scopes'} = to_json([qw(local document)]);
-    $c->stash->{'ternary_values'}      = to_json([qw(yes maybe no)]);
+    $c->stash->{'relationship_scopes'} = to_json([qw(local section tradition)]);
+    $c->stash->{'ternary_values'}      = to_json([qw(no maybe yes)]);
     # Set some defaults for backwards compatibility
     my $reltypeinfo = [
         {
@@ -597,7 +597,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
             ## Now update the properties with side effects
             if (defined $changed_lemma) {
                 # Assuming the reading itself changed, it will be in the list
-                my $lresult = $m->ajax('post', "/reading/$reading_id/setlemma?value=$changed_lemma");
+                my $lresult = $m->ajax('post', "/reading/$reading_id/setlemma", [value => $changed_lemma]);
                 push(@changed, @$lresult );
             }
         }
