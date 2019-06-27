@@ -216,6 +216,13 @@
     </form>
   </div>
 
+  <div id="witness-filter" title="Filter witnesses">
+    <form id="witness_filter_form" action="#">
+      <p>Exclude witnesses from the graph view</p>
+    </form>
+  </div>
+
+
   <div id="section-text" title="Running text view">
     <div id="section-text-status"></div>
     <form id="section_text_form" action="#">

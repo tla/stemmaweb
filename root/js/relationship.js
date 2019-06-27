@@ -1602,7 +1602,9 @@ var keyCommands = {
     'key': 'n',
     'description': 'Propagate the normal form of the selected reading(s) along specified relations',
     'function': function() {
-      $('#normal-form-propagate').dialog('open');
+      if (readings_selected.length > 0) {
+        $('#normal-form-propagate').dialog('open');
+      }
     }
   },
   '114': {
@@ -1970,12 +1972,20 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         } else {
           buttonset.find("button:contains('Merge readings')").hide();
         }
+        // Bind the return key to the OK button
+        var okbutton = $(this).parent().find('button:contains("OK")')[0];
+        $(this).keypress(function(evt) {
+          if (evt.which === 13) {
+            okbutton.click();
+          }
+        });
         // Set the dialog background and our form state data
         dialog_background('#dialog-form-status');
         $('#rel_type').data('changed_after_open', false);
       },
       close: function() {
         relation_manager.remove_temporary();
+        $(this).off("keypress");
         $("#dialog_overlay").hide();
       }
     });
@@ -2423,6 +2433,27 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     }
   });
 
+  $('#witness-filter').dialog({
+    autoOpen: false,
+    modal: true,
+    buttons: {
+      OK: function() {
+        $(this).dialog("close");
+        dialog_background('#error-display');
+        // TODO Get the new graph
+      },
+      Cancel: function() {
+        $('#witness-filter').dialog('close');
+      }
+    },
+    create: function() {
+      // Populate the witness list
+
+    },
+    open: function() {
+
+    }
+  });
 
   // Set up the error message dialog, for results from keystroke commands without their own
   // dialog boxes
