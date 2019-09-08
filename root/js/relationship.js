@@ -686,17 +686,10 @@ function add_relations(callback_fn) {
   $.getJSON(textrelpath, function(data) {
     $.each(data, function(index, rel_info) {
       var type_index = $.inArray(rel_info.type, rel_types);
-      var source_svg = rid2node[rel_info.source];
-      var target_svg = rid2node[rel_info.target];
-      var source_found = get_ellipse(source_svg);
-      var target_found = get_ellipse(target_svg);
-      var emphasis = rel_info.is_significant;
+      var source_found = get_ellipse(rel_info.source);
+      var target_found = get_ellipse(rel_info.target);
       if (type_index != -1 && source_found.size() && target_found.size()) {
-        var relation = relation_manager.create(source_svg, target_svg, type_index, emphasis);
-        // Save the relationship data too.
-        $.each(rel_info, function(k, v) {
-          relation.data(k, v);
-        });
+        var relation = relation_manager.create(rel_info);
         if (editable) {
           var node_obj = get_node_obj(rel_info.source);
           node_obj.set_selectable(false);
@@ -705,6 +698,9 @@ function add_relations(callback_fn) {
           node_obj.set_selectable(false);
           node_obj.ellipse.data('node_obj', null);
         }
+      } else {
+        // Either the source, target, or type wasn't found
+        console.log("Error creating database relation " + rel_info);
       }
     });
     callback_fn.call();
@@ -1123,12 +1119,23 @@ function relation_factory() {
       temporary = null;
     }
   }
-  this.create = function(source_node_id, target_node_id, color_index, emphasis) {
-    //TODO: Protect from (color_)index out of bound..
+  this.create = function(rel_info) {
+    // Get our info from the relation struct
+    var source_node_id = rid2node[rel_info.source];
+    var target_node_id = rid2node[rel_info.target];
+    var rel_types = $('#keymap').data('relations');
+    var color_index = $.inArray(rel_info.type, rel_types);;
+    var emphasis = rel_info.is_significant;
+    // TODO: Protect from (color_)index out of bound..
     var relation_color = self.relation_colors[color_index];
+    // Make the relation DOM object
     var relation = draw_relation(source_node_id, target_node_id, {
       color: relation_color,
       emphasis: emphasis
+    });
+    // Save the relationship data into the DOM object.
+    $.each(rel_info, function(k, v) {
+      relation.data(k, v);
     });
     get_node_obj(source_node_id).update_elements();
     get_node_obj(target_node_id).update_elements();
@@ -2073,16 +2080,14 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           var jqjson = $.post(ncpath, form_values, function(data) {
             // If we were handed a 304 response, there won't be data.
             if (data) {
-              $.each(data['relationships'], function(item, source_target) {
-                var source_found = get_ellipse(source_target[0]);
-                var target_found = get_ellipse(source_target[1]);
-                var relation_found = $.inArray(source_target[2], $('#keymap').data('relations'));
+              $.each(data['relationships'], function(item, rel_info) {
+                var source_found = get_ellipse(rel_info.source);
+                var target_found = get_ellipse(rel_info.target);
+                var relation_found = $.inArray(rel_info.type, $('#keymap').data('relations'));
                 if (source_found.size() && target_found.size() && relation_found > -1) {
-                  var emphasis = $('#is_significant option:selected').attr('value');
-                  var relation = relation_manager.create(source_target[0], source_target[1], relation_found, emphasis);
-                  $.each($('#merge_node_form').serializeArray(), function(i, k) {
-                    relation.data(k.name, k.value);
-                  });
+                  var relation = relation_manager.create(rel_info);
+                } else {
+                  console.log("Error adding returned relation " + rel_info);
                 }
               });
               // Stash any changed readings.

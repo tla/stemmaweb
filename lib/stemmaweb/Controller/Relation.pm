@@ -351,7 +351,7 @@ sub relationships :Chained('section') :PathPart :Args(0) {
                         'Content-Type' => 'application/json',
                         'Content'      => encode_json($reqopts)
                     );
-                    push(@relpairs, map { [ $_->{source}, $_->{target}, $_->{type} ] } @{ $result->{relations} });
+                    push(@relpairs, @{ $result->{relations} });
                     push(@changed_readings, @{ $result->{readings} });
                 }
             } catch (stemmaweb::Error $e ) {
