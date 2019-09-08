@@ -2114,9 +2114,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       create: function(event, ui) {
         $(this).data('relation_drawn', false);
         $('#rel_type').data('changed_after_open', false);
-        $.each(relationship_types, function(index, typedef) {
-          $('#rel_type').append($('<option />').attr("value", typedef.name).text(typedef.name));
-        });
         $.each(relationship_scopes, function(index, value) {
           $('#scope').append($('<option />').attr("value", value).text(value));
         });
