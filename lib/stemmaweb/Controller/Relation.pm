@@ -399,8 +399,8 @@ sub relationships :Chained('section') :PathPart :Args(0) {
                 my $result;
                 try {
                     $result = $m->ajax(
-                        'delete',
-                        "/tradition/$textid/relation",
+                        'post',
+                        "/tradition/$textid/relation/remove",
                         'Content-Type' => 'application/json',
                         'Content'      => encode_json($opts)
                     );
