@@ -399,8 +399,8 @@ sub relationships :Chained('section') :PathPart :Args(0) {
                 my $result;
                 try {
                     $result = $m->ajax(
-                        'delete',
-                        "/tradition/$textid/relation",
+                        'post',
+                        "/tradition/$textid/relation/remove",
                         'Content-Type' => 'application/json',
                         'Content'      => encode_json($opts)
                     );
@@ -462,9 +462,9 @@ sub _reading_struct {
     map { $struct->{$_} = $reading->{$_} } keys %read_write_keys;
 
     # Set known IDs on start/end nodes, that match what will be in the SVG
-    if ($reading->{is_start} == JSON::true) {
+    if (exists $reading->{is_start} && $reading->{is_start} == JSON::true) {
         $struct->{id} = '__START__';
-    } elsif ($reading->{is_end} == JSON::true) {
+    } elsif (exists $reading->{is_end} && $reading->{is_end} == JSON::true) {
         $struct->{id} = '__END__';
     } else {
         $struct->{svg_id} = 'n' . $reading->{id};
