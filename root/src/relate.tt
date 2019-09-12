@@ -258,17 +258,48 @@
     <div id="section-form-status"></div>
   </div>
 
+  <div id="relation-type-dialog" title="Manage relation types for [% text_title %]">
+      <div id="relation-type-status"></div>
+      <div class="dialog_picker">
+        <h4>Defined relation types</h4>
+        <ul class="keymaplist"></ul>
+      </div>
+      <div class="dialog_picked">
+        <h4>Relation type information</h4>
+        <form id="relation-type-edit">
+          <label for="relation_type_name">Name: </label>
+          <span id="relation_type_name" name="name" type="text" /><br>
+          <label for="relation_type_description">Description: </label><br>
+          <textarea id="relation_type_description" name="description" rows="5" cols="33" ></textarea><br>
+          <hr>
+          <input id="relation_type_bindlevel" name="bindlevel" type="text" />
+          <label for="relation_type_bindlevel">Binding level</label><br>
+          <input id="relation_type_weak" name="is_weak" type="checkbox"/>
+          <label for="relation_type_weak">Is this a weak relation?</label><br>
+          <input id="relation_type_colocation" name="is_colocation" type="checkbox"/>
+          <label for="relation_type_colocation">Is this a colocation?</label><br>
+          <input id="relation_type_transitive" name="is_transitive" type="checkbox"/>
+          <label for="relation_type_transitive">Is this a transitive relation?</label><br>
+          <input id="relation_type_generalizable" name="is_generalizable" type="checkbox"/>
+          <label for="relation_type_general">Is this relation generalizable?</label><br>
+          <input id="relation_type_use_regular" name="use_regular" type="checkbox"/>
+          <label for="relation_type_use_regular">Should the normal form of the reading be used to apply this relation generally?</label><br>
+        </form>
+      </div>
+
+  </div>
+
   <div id="error-display" title="Error">
   </div>
 
   [% INCLUDE downloadbox.tt referringpage = "relate" %]
 
   <div id="keymap">
-    <ul id="keymaplist">
+    <ul class="keymaplist">
       <li></li>
     </ul>
-  <!--hr>
-  <p>Edit</p -->
+  <hr>
+  <span id="rtype-edit" onclick="$('#relation-type-dialog').dialog('open');">Edit relation types</span>
   </div>
   <div id="keystroke_menu">
   </div>
