@@ -421,10 +421,10 @@ var zoomBehavior = d3.zoom()
 
 // A function to d3-load some SVG
 d3.selection.prototype.appendSVG = function(SVGString) {
-    return this.select(function() {
-        return this.appendChild(document.importNode(new DOMParser()
-        .parseFromString(SVGString, 'application/xml').documentElement, true));
-    });
+  return this.select(function() {
+    return this.appendChild(document.importNode(new DOMParser()
+      .parseFromString(SVGString, 'application/xml').documentElement, true));
+  });
 };
 
 // MAIN INITIALISATION FUNCTION
@@ -499,11 +499,11 @@ function svgEnlargementLoaded() {
     var startNode = d3svg.select(startSelector)
     var startY = parseInt(startNode.attr('cy'));
     // scroll to ((height of SVG - center of start)/scale) - (height of window / 2)
-    initialScrollTop = (ghigh + startY)/initialScale - (chigh/2);
+    initialScrollTop = (ghigh + startY) / initialScale - (chigh / 2);
     if (text_direction === 'RL') {
       // Calculate the left scroll - SVG end point minus width
       var startX = parseInt(startNode.attr('cx'));
-      initialScrollLeft = (startX*initialScale) - gwit;
+      initialScrollLeft = (startX * initialScale) - gwit;
     } else {
       initialScrollLeft = 0;
     }
@@ -511,24 +511,28 @@ function svgEnlargementLoaded() {
 
   // Make the zoom slider
   slider = d3.select("body").append("p").append("input")
-              .datum({})
-              .attr("id", "slider")
-              .attr("type", "range")
-              .attr("value", initialScale)
-              .attr("min", zoomBehavior.scaleExtent()[0])
-              .attr("max", zoomBehavior.scaleExtent()[1])
-              .attr("step", (zoomBehavior.scaleExtent()[1] - zoomBehavior.scaleExtent()[0]) / 100)
-              .attr("orient", "vertical") // for Firefox
-              .on("input", function(d) {
-                zoomBehavior.scaleTo(d3svg, d3.select(this).property("value"));
-              });
+    .datum({})
+    .attr("id", "slider")
+    .attr("type", "range")
+    .attr("value", initialScale)
+    .attr("min", zoomBehavior.scaleExtent()[0])
+    .attr("max", zoomBehavior.scaleExtent()[1])
+    .attr("step", (zoomBehavior.scaleExtent()[1] - zoomBehavior.scaleExtent()[0]) / 100)
+    .attr("orient", "vertical") // for Firefox
+    .on("input", function(d) {
+      zoomBehavior.scaleTo(d3svg, d3.select(this).property("value"));
+    });
 
   // d3svg.style("transform-origin", "top left");
   d3svg.attr("transform", "scale(" + initialScale + ")");
   d3svg.call(zoomBehavior);
 
   // Scroll to our starting position
-  svg_container.scrollTo({'top': initialScrollTop, 'left': initialScrollLeft, 'behavior': 'auto'});
+  svg_container.scrollTo({
+    'top': initialScrollTop,
+    'left': initialScrollLeft,
+    'behavior': 'auto'
+  });
 
   //document.getElementsByClassName('hasSVG')[1].style.transform = "scale(" + global_graph_scale + ")";
   //$('#svgenlargement').scrollTop(ghigh*(global_graph_scale/2));
@@ -635,7 +639,9 @@ function zoomer() {
     if (text_direction == 'BI') {
       // Locked pan to centre of X Axis
       var gwit = svg_root_element.getBoundingClientRect().width;
-      crect.scrollTo({left: (gwit - crect.width)/ 2});
+      crect.scrollTo({
+        left: (gwit - crect.width) / 2
+      });
       // Panning zoom in Y Axis
       console.log("Mouse coords at " + coords[1]);
       var ghighA = svg_root_element.getBoundingClientRect().height; // Real height
@@ -651,7 +657,9 @@ function zoomer() {
       // Get the scale factor of the internal width vs. DOM with of the SVG
       var scrollScale = svg_root.getBoundingClientRect().width / svg_root.getBBox().width;
       // Apply this factor to the SVG center point, offsetting half the width of the box
-      svg_root.parentNode.scrollTo({left: (svgpt.x * scrollScale) - (crect.width / 2)})
+      svg_root.parentNode.scrollTo({
+        left: (svgpt.x * scrollScale) - (crect.width / 2)
+      })
     }
 
   }
@@ -678,17 +686,10 @@ function add_relations(callback_fn) {
   $.getJSON(textrelpath, function(data) {
     $.each(data, function(index, rel_info) {
       var type_index = $.inArray(rel_info.type, rel_types);
-      var source_svg = rid2node[rel_info.source];
-      var target_svg = rid2node[rel_info.target];
-      var source_found = get_ellipse(source_svg);
-      var target_found = get_ellipse(target_svg);
-      var emphasis = rel_info.is_significant;
+      var source_found = get_ellipse(rel_info.source);
+      var target_found = get_ellipse(rel_info.target);
       if (type_index != -1 && source_found.size() && target_found.size()) {
-        var relation = relation_manager.create(source_svg, target_svg, type_index, emphasis);
-        // Save the relationship data too.
-        $.each(rel_info, function(k, v) {
-          relation.data(k, v);
-        });
+        var relation = relation_manager.create(rel_info);
         if (editable) {
           var node_obj = get_node_obj(rel_info.source);
           node_obj.set_selectable(false);
@@ -697,6 +698,9 @@ function add_relations(callback_fn) {
           node_obj.set_selectable(false);
           node_obj.ellipse.data('node_obj', null);
         }
+      } else {
+        // Either the source, target, or type wasn't found
+        console.log("Error creating database relation " + rel_info);
       }
     });
     callback_fn.call();
@@ -1115,12 +1119,23 @@ function relation_factory() {
       temporary = null;
     }
   }
-  this.create = function(source_node_id, target_node_id, color_index, emphasis) {
-    //TODO: Protect from (color_)index out of bound..
+  this.create = function(rel_info) {
+    // Get our info from the relation struct
+    var source_node_id = rid2node[rel_info.source];
+    var target_node_id = rid2node[rel_info.target];
+    var rel_types = $('#keymap').data('relations');
+    var color_index = $.inArray(rel_info.type, rel_types);;
+    var emphasis = rel_info.is_significant;
+    // TODO: Protect from (color_)index out of bound..
     var relation_color = self.relation_colors[color_index];
+    // Make the relation DOM object
     var relation = draw_relation(source_node_id, target_node_id, {
       color: relation_color,
       emphasis: emphasis
+    });
+    // Save the relationship data into the DOM object.
+    $.each(rel_info, function(k, v) {
+      relation.data(k, v);
     });
     get_node_obj(source_node_id).update_elements();
     get_node_obj(target_node_id).update_elements();
@@ -1329,7 +1344,7 @@ function add_emendation(emenddata) {
       .text(r.text);
   });
 
-    // TODO add sequences maybe?
+  // TODO add sequences maybe?
 }
 
 function detach_node(readings) {
@@ -2081,16 +2096,14 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           var jqjson = $.post(ncpath, form_values, function(data) {
             // If we were handed a 304 response, there won't be data.
             if (data) {
-              $.each(data['relationships'], function(item, source_target) {
-                var source_found = get_ellipse(source_target[0]);
-                var target_found = get_ellipse(source_target[1]);
-                var relation_found = $.inArray(source_target[2], $('#keymap').data('relations'));
+              $.each(data['relationships'], function(item, rel_info) {
+                var source_found = get_ellipse(rel_info.source);
+                var target_found = get_ellipse(rel_info.target);
+                var relation_found = $.inArray(rel_info.type, $('#keymap').data('relations'));
                 if (source_found.size() && target_found.size() && relation_found > -1) {
-                  var emphasis = $('#is_significant option:selected').attr('value');
-                  var relation = relation_manager.create(source_target[0], source_target[1], relation_found, emphasis);
-                  $.each($('#merge_node_form').serializeArray(), function(i, k) {
-                    relation.data(k.name, k.value);
-                  });
+                  var relation = relation_manager.create(rel_info);
+                } else {
+                  console.log("Error adding returned relation " + rel_info);
                 }
               });
               // Stash any changed readings.
@@ -2117,9 +2130,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       create: function(event, ui) {
         $(this).data('relation_drawn', false);
         $('#rel_type').data('changed_after_open', false);
-        $.each(relationship_types, function(index, typedef) {
-          $('#rel_type').append($('<option />').attr("value", typedef.name).text(typedef.name));
-        });
         $.each(relationship_scopes, function(index, value) {
           $('#scope').append($('<option />').attr("value", value).text(value));
         });
@@ -2678,6 +2688,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     $(this).hide();
     mouse_scale = svg_root_element.getScreenCTM().a;
     if ($(this).data('locked') == true) {
+      unselect_all_readings();
       d3svg.on(".drag", null);
       d3svg.call(zoomBehavior); // JMB turn zoom function on
       unselect_all_readings();

@@ -3,32 +3,15 @@
 	applicationstyle = c.uri_for('/css/auth.css')
 %]
 
-<meta name="google-signin-clientid" content="[% google_client_id %]" />
-<meta name="google-signin-scope" content="https://www.googleapis.com/auth/plus.profile.emails.read" />
-<meta name="google-signin-requestvisibleactions" content="http://schema.org/AddAction" />
-<meta name="google-signin-cookiepolicy" content="single_host_origin" />
-<meta name="google-signin-openidrealm" content="[% c.uri_for('/').scheme _ '://' _ c.uri_for('/').host %]" />
-<script src="https://apis.google.com/js/client:platform.js?onload=render" async defer>
-</script>
+<meta name="google-signin-client_id" content="[% google_client_id %]" />
+<meta name="google-signin-scope" content="profile email" />
+<script src="https://apis.google.com/js/platform.js" async defer></script>
 <script>
- /* Executed when the APIs finish loading */
- function render() {
-
-    document.getElementById('signinButton').disabled = false;
-   var additionalParams = {
-     'callback': googleSignIn
-   };
-
-   // Attach a click listener to a button to trigger the flow.
-   var signinButton = document.getElementById('signinButton');
-   signinButton.addEventListener('click', function() {
-     gapi.auth.signIn(additionalParams); // Will use page level configuration
-   });
-
+ $(document).ready(function() {
     $('#login_actions').accordion();
     $('.login_button').button();
     $('#submit').button();
-    
+
     var status = '[% status_msg %]';
     if( status == 'Logged in!' ) {
     	setInterval( function ( e ) {
@@ -37,40 +20,32 @@
     		e.preventDefault();
     	}, 2000 );
     }
- }
+ });
 </script>
-    <script type="text/javascript">
+<script type="text/javascript">
 
-	function googleSignIn(authResult) {
-		if (authResult['status']['signed_in']) {
-			document.getElementById('signinButton').disabled = true;
-			gapi.client.load('plus', 'v1', function apiClientLoaded() {
-				gapi.client.plus.people.get({ userId: 'me'}).execute(function infoRetrieved(resp) {
-					var primaryEmail;
-					for (var i = 0; i < resp.emails.length; i++) {
-						if (resp.emails[i].type === 'account') {
-							primaryEmail = resp.emails[i].value;
-						}
-					}
+	// Google login success
+	function googleSignIn(googleUser) {
+		// Get the information we need
+		console.log(googleUser);
+		var profile = googleUser.getBasicProfile();
+		var email = profile.getEmail();
+		var id_token = googleUser.getAuthResponse().id_token;
+		// Log back out of Google, so that we don't get auto-logged in next time
+		var auth2 = gapi.auth2.getAuthInstance();
+		auth2.signOut();
 
-					dataRetrieved(authResult, primaryEmail);
-				});
-			});
-		} else {
-			console.log("Error", authResult);
-		}
-	}
-
-	function dataRetrieved(login, email) {
-		console.log(email);
-		console.log(login.id_token);
-
-		document.getElementById('email').value = email;
-		document.getElementById('id_token').value = login.id_token;
+		// Send credentials to the server for verification
+		document.getElementById('google_email').value = email;
+		document.getElementById('google_id_token').value = id_token;
 		document.getElementById('google_form').submit();
 	}
 
-    </script>
+	// Google login failure
+	function googleSignInFailed() {
+		document.getElementById('login_status').innerHTML = '<p class="error">Google sign-in failed.</p>';
+	}
+</script>
 [% END %]
 	<div id="topbanner">
 		<h1>Stemmaweb - Sign in</h1>
@@ -86,7 +61,7 @@
 
 [% IF form.has_errors %]
 			<p class="error">Some fields had errors:</p>
-					
+
 			<ul class="errors">
 	[% FOREACH msg IN form.errors %]
 				<li>[% msg | html %]</li>
@@ -100,10 +75,14 @@
 	<div>
 		<p>If you have a Google account, you may use it to sign into Stemmaweb.</p>
 
-        <button disabled id="signinButton">Sign in with Google</button>
+        <div class="g-signin2"
+			data-onsuccess="googleSignIn"
+			data-onfailure="googleSignInFailed"
+			data-theme="dark">
+		</div>
 		<form id="google_form" action="[% c.uri_for_action('/users/login') | html %]" method="post">
-			<input id='email' name='email' value='' type='hidden' />
-			<input id='id_token' name='id_token' value='' type='hidden' />
+			<input id='google_email' name='email' value='' type='hidden' />
+			<input id='google_id_token' name='id_token' value='' type='hidden' />
 		</form>
 	</div>
 
@@ -126,10 +105,10 @@
 			[% userlabel = form.field('username').label('Email address') %]
 			[% form.field('username').render %]
 			[% form.field('password').render %]
-			
+
 			[% rememberlabel = form.field('remember').label('Remember me') %]
 			[% form.field('remember').render %]
-			
+
 			[% submitbutton = form.field('submit').value('Sign in with Stemmaweb') %]
 			[% form.field('submit').render %]
 		</form>
