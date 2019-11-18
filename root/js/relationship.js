@@ -1337,7 +1337,7 @@ function add_emendation(emenddata) {
       .text(r.text);
   });
 
-    // TODO add sequences maybe?
+  // TODO add sequences maybe?
 }
 
 function detach_node(readings) {
@@ -1784,13 +1784,35 @@ var keyCommands = {
     'key': 'c',
     'description': 'Concatenate a sequence of readings into a single reading',
     'function': function() {
-      // C for Compress; TODO get rid of dialog altogether
+      // C for Compress
       if ($('#svgenlargement').data('display_normalised')) {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
-        $('#action-concat').prop('checked', true);
-        $('#multipleselect-form').dialog('open');
+        // TODO prevent further keyCommands until finished.
+        dialog_background('#error-display')
+        var ncpath = getTextURL('compress');
+        // We need to gin up a form to serialize.
+        var cform = $('<form>')
+        $.each(readings_selected, function(index, value) {
+          cform.append($('<input>').attr(
+            "type", "hidden").attr(
+            "name", "readings[]").attr(
+            "value", readingdata[value]['id']));
+        });
+        var form_values = cform.serialize();
+        $.post(ncpath, form_values, function(data) {
+          if (data.nodes) {
+            compress_nodes(data.nodes);
+          }
+          if (data.status === 'warn') {
+            var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
+            $('#error-display').empty().append(dataerror);
+          } else {
+            unselect_all_readings();
+          }
+          $("#dialog_overlay").hide();
+        });
       }
     }
   },
@@ -1803,7 +1825,7 @@ var keyCommands = {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
-        $('#action-detach').prop('checked', true);
+        $('#action-detach').val('on');
         $('#multipleselect-form').dialog('open');
       }
     }
@@ -1965,11 +1987,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     errordiv = '#delete-status';
   } else if ($('#multipleselect-form').dialog('isOpen')) {
     errordiv = '#multipleselect-form-status';
-    if (ajaxSettings.url == getTextURL('duplicate')) {
-      error += '<br>The reading cannot be duplicated.</p>';
-    } else {
-      error += '<br>The readings cannot be concatenated.</p>';
-    }
+    error += '<br>The reading cannot be duplicated.</p>';
   } else if ($('#reading-form').dialog('isOpen')) {
     // reading box
     error += '<br>The reading cannot be altered.</p>';
@@ -2197,73 +2215,39 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       width: 250,
       modal: true,
       buttons: [{
-        text: "Cancel",
-        click: function() {
-          $('#multipleselect-form-status').empty();
-          $(this).dialog("close");
+          text: "Cancel",
+          click: function() {
+            $('#multipleselect-form-status').empty();
+            $(this).dialog("close");
+          }
+        },
+        {
+          text: "Detach",
+          id: "detach_btn",
+          click: function(evt) {
+            var self = $(this);
+            var mybuttons = $(evt.target).closest('button').parent().find('button');
+            mybuttons.button('disable');
+            var form_values = $('#detach_collated_form').serialize();
+            var ncpath = getTextURL('duplicate');
+            $.post(ncpath, form_values, function(data) {
+              unselect_all_readings();
+              detach_node(data);
+              mybuttons.button("enable");
+              self.dialog("close");
+            });
+          }
         }
-      }, {
-        text: "Detach",
-        id: "detach_btn",
-        click: function(evt) {
-          var self = $(this);
-          var mybuttons = $(evt.target).closest('button').parent().find('button');
-          mybuttons.button('disable');
-          var form_values = $('#detach_collated_form').serialize();
-          var ncpath = getTextURL('duplicate');
-          $.post(ncpath, form_values, function(data) {
-            unselect_all_readings();
-            detach_node(data);
-            mybuttons.button("enable");
-            self.dialog("close");
-          });
-        }
-      }, {
-        text: "Concatenate",
-        id: "concat_btn",
-        click: function(evt) {
-          var self = $(this);
-          var mybuttons = $(evt.target).closest('button').parent().find('button');
-          mybuttons.button('disable');
-
-          var ncpath = getTextURL('compress');
-          var form_values = $('#detach_collated_form').serialize();
-          // $.each($('#detach_collated_form input').filter(function() {return this.getAttribute("name") === "readings[]"}), function( i, v ) {vals.push(i)}); vals
-
-          $.post(ncpath, form_values, function(data) {
-            mybuttons.button('enable');
-            if (data.nodes) {
-              compress_nodes(data.nodes);
-            }
-            if (data.status === 'warn') {
-              var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
-              $('#multipleselect-form-status').empty().append(dataerror);
-            } else {
-              self.dialog('close');
-            }
-          });
-        }
-      }],
+      ],
       create: function(event, ui) {
         var buttonset = $(this).parent().find('.ui-dialog-buttonset').css('width', '100%');
         buttonset.find("button:contains('Cancel')").css('float', 'right');
         $('#action-detach').change(function() {
-          if ($('#action-detach')[0].checked) {
+          if ($('#action-detach').val() == 'on') {
             $('#detach_collated_form').show();
             $('#multipleselect-form-text').show();
 
             $('#detach_btn').show();
-            $('#concat_btn').hide();
-          }
-        });
-
-        $('#action-concat').change(function() {
-          if ($('#action-concat')[0].checked) {
-            $('#detach_collated_form').hide();
-            $('#multipleselect-form-text').hide();
-
-            $('#detach_btn').hide();
-            $('#concat_btn').show();
           }
         });
       },
@@ -2271,18 +2255,11 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $(this).dialog("option", "width", 200);
         dialog_background('#multipleselect-form-status');
 
-        if ($('#action-concat')[0].checked) {
-          $('#detach_collated_form').hide();
-          $('#multipleselect-form-text').hide();
-
-          $('#detach_btn').hide();
-          $('#concat_btn').show();
-        } else {
+        if ($('#action-detach').val() == 'on') {
           $('#detach_collated_form').show();
           $('#multipleselect-form-text').show();
 
           $('#detach_btn').show();
-          $('#concat_btn').hide();
         }
 
         // Populate the forms with the currently selected readings
@@ -2310,6 +2287,8 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $('#multiple_selected_readings').attr('value', readings_selected.join(','));
       },
       close: function() {
+        marquee.unselect();
+        $('#action-detach').val('off');
         $("#dialog_overlay").hide();
       }
     });
@@ -2676,6 +2655,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       OK: function() {
         $(this).dialog("close");
       },
+    },
+    close: function() {
+      marquee.unselect();
     }
   });
 

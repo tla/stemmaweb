@@ -131,19 +131,11 @@
     </div>
   </div>
 
-  <div id="multipleselect-form" title="Multiple nodes selected...">
+  <div id="multipleselect-form" title="Detach single or multiple nodes selected...">
     <div id="multipleselect-form-status"></div>
 
-    Detach or concatenate?<br>
-
     <form autocomplete="off">
-      <label>
-        <input id="action-detach" checked name='option' type='radio' /> Detach
-      </label>
-
-      <label>
-        <input id="action-concat" name='option' type='radio' /> Concatenate
-      </label>
+      <input type="hidden" id="action-detach" name='option' value='off' />
     </form>
 
     <div id="multipleselect-form-text">Select witness(es) to detach:</div>
