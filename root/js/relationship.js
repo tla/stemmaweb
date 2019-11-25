@@ -74,6 +74,12 @@ function update_reading(rdata) {
   return nid;
 }
 
+// Utility function to sort a group of readings by rank.
+function sortByRank(a, b) {
+  if (readingdata[a]["rank"] === readingdata[b]["rank"]) return 0;
+  return readingdata[a]["rank"] < readingdata[b]["rank"] ? -1 : 1;
+}
+
 function update_reading_display(node_id) {
   // Grab the reading data from which we update
   var rdata = readingdata[node_id];
@@ -1800,6 +1806,7 @@ var keyCommands = {
         dialog_background('#error-display')
         var ncpath = getTextURL('compress');
         // We need to gin up a form to serialize.
+        readings_selected.sort(sortByRank);
         var cform = $('<form>')
         $.each(readings_selected, function(index, value) {
           cform.append($('<input>').attr(
@@ -2268,10 +2275,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $('#detach_collated_form').empty();
         var witnesses = [];
 
-        function sortByRank(a, b) {
-          if (readingdata[a]["rank"] === readingdata[b]["rank"]) return 0;
-          return readingdata[a]["rank"] < readingdata[b]["rank"] ? -1 : 1;
-        };
         readings_selected.sort(sortByRank);
         $.each(readings_selected, function(index, value) {
           $('#detach_collated_form').append($('<input>').attr(
@@ -2289,8 +2292,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $('#multiple_selected_readings').attr('value', readings_selected.join(','));
       },
       close: function() {
-        marquee.unselect();
-        $('#action-detach').val('off');
         $("#dialog_overlay").hide();
       }
     });
@@ -2657,9 +2658,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       OK: function() {
         $(this).dialog("close");
       },
-    },
-    close: function() {
-      marquee.unselect();
     }
   });
 
