@@ -2767,7 +2767,7 @@ function loadSVG(normalised) {
 
   if (normalised) {
     // We are switching to the normalised view
-    ncpath += '&' + $('#normalize-for-type').serialize();
+    ncpath += '?' + $('#normalize-for-type').serialize();
     buttonText = "Expand graph";
   } else {
     // We are switching back to the expanded view

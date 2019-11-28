@@ -53,6 +53,10 @@ sub firstsection :Chained('text') :PathPart('') :Args(0) {
 
     # Redirect this to the first section.
     my $first = $c->stash->{tradition}->{sections}->[0]->{id};
+    unless (defined($first)) {
+        $c->log->warn("No first section ID found for $textid");
+        $first = '';
+    }
     $c->res->redirect($c->uri_for(sprintf("/relation/%s/%s", $textid, $first)));
 }
 
