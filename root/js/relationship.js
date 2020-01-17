@@ -47,6 +47,12 @@ function update_readingdata(rdata) {
   $.each(rdata, function(k, v) {
     readingdata[k] = v;
     rid2node[v['id']] = k;
+    // Throw in an extra entry for START and END nodes
+    if (k === '__START__' || k === '__END__') {
+      var jqid = '#' + k + ' title';
+      var rid = parseInt($(jqid).text());
+      rid2node[rid] = k;
+    }
   });
 }
 
@@ -66,6 +72,12 @@ function update_reading(rdata) {
   readingdata[nid] = rdata;
   rid2node[rid] = nid;
   return nid;
+}
+
+// Utility function to sort a group of readings by rank.
+function sortByRank(a, b) {
+  if (readingdata[a]["rank"] === readingdata[b]["rank"]) return 0;
+  return readingdata[a]["rank"] < readingdata[b]["rank"] ? -1 : 1;
 }
 
 function update_reading_display(node_id) {
@@ -415,10 +427,10 @@ var zoomBehavior = d3.zoom()
 
 // A function to d3-load some SVG
 d3.selection.prototype.appendSVG = function(SVGString) {
-    return this.select(function() {
-        return this.appendChild(document.importNode(new DOMParser()
-        .parseFromString(SVGString, 'application/xml').documentElement, true));
-    });
+  return this.select(function() {
+    return this.appendChild(document.importNode(new DOMParser()
+      .parseFromString(SVGString, 'application/xml').documentElement, true));
+  });
 };
 
 // MAIN INITIALISATION FUNCTION
@@ -493,11 +505,11 @@ function svgEnlargementLoaded() {
     var startNode = d3svg.select(startSelector)
     var startY = parseInt(startNode.attr('cy'));
     // scroll to ((height of SVG - center of start)/scale) - (height of window / 2)
-    initialScrollTop = (ghigh + startY)/initialScale - (chigh/2);
+    initialScrollTop = (ghigh + startY) / initialScale - (chigh / 2);
     if (text_direction === 'RL') {
       // Calculate the left scroll - SVG end point minus width
       var startX = parseInt(startNode.attr('cx'));
-      initialScrollLeft = (startX*initialScale) - gwit;
+      initialScrollLeft = (startX * initialScale) - gwit;
     } else {
       initialScrollLeft = 0;
     }
@@ -505,24 +517,28 @@ function svgEnlargementLoaded() {
 
   // Make the zoom slider
   slider = d3.select("body").append("p").append("input")
-              .datum({})
-              .attr("id", "slider")
-              .attr("type", "range")
-              .attr("value", initialScale)
-              .attr("min", zoomBehavior.scaleExtent()[0])
-              .attr("max", zoomBehavior.scaleExtent()[1])
-              .attr("step", (zoomBehavior.scaleExtent()[1] - zoomBehavior.scaleExtent()[0]) / 100)
-              .attr("orient", "vertical") // for Firefox
-              .on("input", function(d) {
-                zoomBehavior.scaleTo(d3svg, d3.select(this).property("value"));
-              });
+    .datum({})
+    .attr("id", "slider")
+    .attr("type", "range")
+    .attr("value", initialScale)
+    .attr("min", zoomBehavior.scaleExtent()[0])
+    .attr("max", zoomBehavior.scaleExtent()[1])
+    .attr("step", (zoomBehavior.scaleExtent()[1] - zoomBehavior.scaleExtent()[0]) / 100)
+    .attr("orient", "vertical") // for Firefox
+    .on("input", function(d) {
+      zoomBehavior.scaleTo(d3svg, d3.select(this).property("value"));
+    });
 
   // d3svg.style("transform-origin", "top left");
   d3svg.attr("transform", "scale(" + initialScale + ")");
   d3svg.call(zoomBehavior);
 
   // Scroll to our starting position
-  svg_container.scrollTo({'top': initialScrollTop, 'left': initialScrollLeft, 'behavior': 'auto'});
+  svg_container.scrollTo({
+    'top': initialScrollTop,
+    'left': initialScrollLeft,
+    'behavior': 'auto'
+  });
 
   //document.getElementsByClassName('hasSVG')[1].style.transform = "scale(" + global_graph_scale + ")";
   //$('#svgenlargement').scrollTop(ghigh*(global_graph_scale/2));
@@ -581,6 +597,10 @@ function svgEnlargementLoaded() {
       $('#svgenlargement ellipse').each(function(i, el) {
         color_inactive(el)
       });
+      $.getJSON(getTextURL('emendations'), function(data) {
+        add_emendation(data);
+      });
+
       $('#loading_overlay').hide();
     });
   });
@@ -625,7 +645,9 @@ function zoomer() {
     if (text_direction == 'BI') {
       // Locked pan to centre of X Axis
       var gwit = svg_root_element.getBoundingClientRect().width;
-      crect.scrollTo({left: (gwit - crect.width)/ 2});
+      crect.scrollTo({
+        left: (gwit - crect.width) / 2
+      });
       // Panning zoom in Y Axis
       console.log("Mouse coords at " + coords[1]);
       var ghighA = svg_root_element.getBoundingClientRect().height; // Real height
@@ -641,7 +663,9 @@ function zoomer() {
       // Get the scale factor of the internal width vs. DOM with of the SVG
       var scrollScale = svg_root.getBoundingClientRect().width / svg_root.getBBox().width;
       // Apply this factor to the SVG center point, offsetting half the width of the box
-      svg_root.parentNode.scrollTo({left: (svgpt.x * scrollScale) - (crect.width / 2)})
+      svg_root.parentNode.scrollTo({
+        left: (svgpt.x * scrollScale) - (crect.width / 2)
+      })
     }
 
   }
@@ -668,17 +692,10 @@ function add_relations(callback_fn) {
   $.getJSON(textrelpath, function(data) {
     $.each(data, function(index, rel_info) {
       var type_index = $.inArray(rel_info.type, rel_types);
-      var source_svg = rid2node[rel_info.source];
-      var target_svg = rid2node[rel_info.target];
-      var source_found = get_ellipse(source_svg);
-      var target_found = get_ellipse(target_svg);
-      var emphasis = rel_info.is_significant;
+      var source_found = get_ellipse(rel_info.source);
+      var target_found = get_ellipse(rel_info.target);
       if (type_index != -1 && source_found.size() && target_found.size()) {
-        var relation = relation_manager.create(source_svg, target_svg, type_index, emphasis);
-        // Save the relationship data too.
-        $.each(rel_info, function(k, v) {
-          relation.data(k, v);
-        });
+        var relation = relation_manager.create(rel_info);
         if (editable) {
           var node_obj = get_node_obj(rel_info.source);
           node_obj.set_selectable(false);
@@ -687,6 +704,9 @@ function add_relations(callback_fn) {
           node_obj.set_selectable(false);
           node_obj.ellipse.data('node_obj', null);
         }
+      } else {
+        // Either the source, target, or type wasn't found
+        console.log("Error creating database relation " + rel_info);
       }
     });
     callback_fn.call();
@@ -1085,7 +1105,10 @@ function relation_factory() {
     var relation_id = get_relation_id(source_node_id, target_node_id);
     var relation = $(jq(relation_id));
     if (relation.size() == 0) {
-      draw_relation(source_node_id, target_node_id, self.temp_color);
+      draw_relation(source_node_id, target_node_id, {
+        color: self.temp_color,
+        class: 'temporary'
+      });
     } else {
       self.color_memo = relation.children('path').attr('stroke');
       relation.children('path').attr('stroke', self.temp_color);
@@ -1102,10 +1125,24 @@ function relation_factory() {
       temporary = null;
     }
   }
-  this.create = function(source_node_id, target_node_id, color_index, emphasis) {
-    //TODO: Protect from (color_)index out of bound..
+  this.create = function(rel_info) {
+    // Get our info from the relation struct
+    var source_node_id = rid2node[rel_info.source];
+    var target_node_id = rid2node[rel_info.target];
+    var rel_types = $('#keymap').data('relations');
+    var color_index = $.inArray(rel_info.type, rel_types);;
+    var emphasis = rel_info.is_significant;
+    // TODO: Protect from (color_)index out of bound..
     var relation_color = self.relation_colors[color_index];
-    var relation = draw_relation(source_node_id, target_node_id, relation_color, emphasis);
+    // Make the relation DOM object
+    var relation = draw_relation(source_node_id, target_node_id, {
+      color: relation_color,
+      emphasis: emphasis
+    });
+    // Save the relationship data into the DOM object.
+    $.each(rel_info, function(k, v) {
+      relation.data(k, v);
+    });
     get_node_obj(source_node_id).update_elements();
     get_node_obj(target_node_id).update_elements();
     // Set the relationship info box on click.
@@ -1197,7 +1234,11 @@ function get_related_nodes(relation_id) {
   return srctotarg.split('-___-');
 }
 
-function draw_relation(source_id, target_id, relation_color, emphasis) {
+function draw_relation(source_id, target_id, opts) {
+  var cssclass = 'relation';
+  if (opts.class) {
+    cssclass += ' ' + opts.class;
+  }
   var source_ellipse = get_ellipse(source_id);
   var target_ellipse = get_ellipse(target_id);
   var relation_id = get_relation_id(source_id, target_id);
@@ -1209,14 +1250,14 @@ function draw_relation(source_id, target_id, relation_color, emphasis) {
   var ex = parseInt(target_ellipse.attr('cx'));
   var ey = parseInt(target_ellipse.attr('cy'));
   var relation = svg.group($("#svgenlargement svg g"), {
-    'class': 'relation',
+    'class': cssclass,
     'id': relation_id
   });
   svg.title(relation, source_id + '->' + target_id);
-  var stroke_width = emphasis === "yes" ? 6 : emphasis === "maybe" ? 4 : 2;
+  var stroke_width = opts.emphasis === "yes" ? 6 : opts.emphasis === "maybe" ? 4 : 2;
   svg.path(relation, path.move(sx, sy).curveC(sx + (2 * rx), sy, ex + (2 * rx), ey, ex, ey), {
     fill: 'none',
-    stroke: relation_color,
+    stroke: opts.color,
     strokeWidth: stroke_width
   });
   var relation_element = $('#svgenlargement .relation').filter(':last');
@@ -1238,6 +1279,78 @@ function delete_relation(form_values) {
     dataType: 'json',
     type: 'DELETE'
   });
+}
+
+function add_emendation(emenddata) {
+  // Set some useful reduce functions
+  const floor = (acc, cval) => acc < cval ? acc : cval;
+  const ceiling = (acc, cval) => acc > cval ? acc : cval;
+
+  // Data is a set of readings and a set of sequences. For each reading
+  // we make an SVG group consisting of a rect and a text element.
+  emenddata.readings.forEach(function(r) {
+    // Initialize the d3 element
+    var enode = d3svg.select('#graph0')
+      .selectAll('#e' + r.id)
+      .data([r])
+      .enter()
+      .append('g')
+      .attr('id', 'e' + r.id);
+    enode.append('rect')
+      .attr('x', function(d) {
+        var startNodes = Object.entries(readingdata)
+          .filter(x => x[1].rank === d.rank).map(x => x[0]);
+        var startCX = startNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
+        var startRX = startNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
+        return startCX - startRX;
+      })
+      .attr('width', function(d) {
+        // Find the last rank that this emendation covers
+        var endrank = emenddata.sequences.filter(x => x.source === d.id)
+          .map(x => readingdata[rid2node[x.target]].rank).reduce(floor);
+        endrank = endrank - 1;
+        // Find the end of the widest / leftmost node at that rank
+        var endNodes = Object.entries(readingdata)
+          .filter(x => x[1].rank === endrank).map(x => x[0]);
+        var endCX = endNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
+        var endRX = endNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
+        return endCX + endRX - parseFloat(d3.select(this).attr('x'));
+      })
+      .attr('y', function(d) {
+        // Find the last rank that this emendation covers
+        var endrank = emenddata.sequences.filter(x => x.source === d.id)
+          .map(x => readingdata[rid2node[x.target]].rank).reduce(floor);
+        endrank = endrank - 1;
+        // Find the highest of all the nodes covered
+        var coveredNodes = Object.entries(readingdata)
+          .filter(x => x[1].rank >= d.rank && x[1].rank <= endrank).map(x => x[0]);
+        var highestY = coveredNodes.map(x => parseFloat(get_ellipse(x).attr('cy'))).reduce(floor);
+        return highestY - 100;
+      })
+      .attr('height', 36)
+      .attr('rx', '5')
+      .attr('ry', '5')
+      .attr('fill', 'white')
+      .attr('opacity', '0.75')
+      .attr('stroke', 'red')
+      .attr('strokeWidth', 1);
+    enode.append('text')
+      .attr('x', function() {
+        var rx = parseFloat(enode.select('rect').attr('x'));
+        var rw = parseFloat(enode.select('rect').attr('width'));
+        return rx + rw / 2;
+      })
+      .attr('y', function() {
+        var ry = parseFloat(enode.select('rect').attr('y'));
+        return ry + 22;
+      })
+      .attr('text-anchor', 'middle')
+      .attr('font-family', 'Times,serif')
+      .attr('font-size', '14.00')
+      .text(r.text);
+  });
+
+  // TODO add sequences maybe?
 }
 
 function detach_node(readings) {
@@ -1373,46 +1486,66 @@ function merge_nodes(source_node_id, target_node_id, consequences) {
   if (consequences.status != null && consequences.status == 'ok') {
     merge_node(source_node_id, target_node_id);
     if (consequences.checkalign != null) {
+      // Remove all prior checkmerge button groups
+      $('[id*="nomerge"]').parent().remove();
+      // Remove all leftover temp relations
+      $('.checkalign').remove();
       $.each(consequences.checkalign, function(index, node_ids) {
-        var temp_relation = draw_relation(node_ids[0], node_ids[1], "#89a02c");
-        var sy = parseInt(temp_relation.children('path').attr('d').split('C')[0].split(',')[1]);
-        var ey = parseInt(temp_relation.children('path').attr('d').split(' ')[2].split(',')[1]);
-        var yC = ey + ((sy - ey) / 2);
-        // TODO: compute xC to be always the same distance to the amplitude of the curve
-        var xC = parseInt(temp_relation.children('path').attr('d').split(' ')[1].split(',')[0]);
-        var svg = $('#svgenlargement').children('svg').svg('get');
-        parent_g = svg.group($('#svgenlargement svg g'));
         var ids_text = node_ids[0] + '-' + node_ids[1];
         var merge_id = 'merge-' + ids_text;
-        var yes = svg.image(parent_g, xC, (yC - 8), 16, 16, merge_button_yes, {
-          id: merge_id
-        });
-        var no = svg.image(parent_g, (xC + 20), (yC - 8), 16, 16, merge_button_no, {
-          id: 'no' + merge_id
-        });
-        $(yes).hover(function() {
-          $(this).addClass('draggable')
-        }, function() {
-          $(this).removeClass('draggable')
-        });
-        $(no).hover(function() {
-          $(this).addClass('draggable')
-        }, function() {
-          $(this).removeClass('draggable')
-        });
-        $(yes).click(function(evt) {
-          merge_node(rid2node[node_ids[0]], rid2node[node_ids[1]]);
-          temp_relation.remove();
-          $(evt.target).parent().remove();
-          //notify backend
-          var ncpath = getTextURL('merge');
-          var form_values = "source=" + node_ids[0] + "&target=" + node_ids[1] + "&single=true";
-          $.post(ncpath, form_values);
-        });
-        $(no).click(function(evt) {
-          temp_relation.remove();
-          $(evt.target).parent().remove();
-        });
+        // Make a checkmerge button if there isn't one already, for this pair
+        if ($('#' + merge_id).length == 0) {
+          var temp_relation = draw_relation(node_ids[0], node_ids[1], {
+            color: "#89a02c",
+            class: "checkalign"
+          });
+          var sy = parseInt(temp_relation.children('path').attr('d').split('C')[0].split(',')[1]);
+          var ey = parseInt(temp_relation.children('path').attr('d').split(' ')[2].split(',')[1]);
+          var yC = ey + ((sy - ey) / 2);
+          // TODO: compute xC to be always the same distance to the amplitude of the curve
+          var xC = parseInt(temp_relation.children('path').attr('d').split(' ')[1].split(',')[0]);
+          var svg = $('#svgenlargement').children('svg').svg('get');
+          parent_g = svg.group($('#svgenlargement svg g'));
+          var yes = svg.image(parent_g, xC, (yC - 8), 16, 16, merge_button_yes, {
+            id: merge_id
+          });
+          var no = svg.image(parent_g, (xC + 20), (yC - 8), 16, 16, merge_button_no, {
+            id: 'no' + merge_id
+          });
+          $(yes).hover(function() {
+            $(this).addClass('draggable')
+            // Indicate which nodes are active
+            get_ellipse(node_ids[0]).attr('fill', '#9999ff');
+            get_ellipse(node_ids[1]).attr('fill', '#9999ff');
+          }, function() {
+            $(this).removeClass('draggable');
+            var colorme = $('#update_workspace_button').data('locked') ? color_active : color_inactive;
+            colorme(get_ellipse(node_ids[0]));
+            colorme(get_ellipse(node_ids[1]));
+          });
+          $(no).hover(function() {
+            $(this).addClass('draggable')
+          }, function() {
+            $(this).removeClass('draggable')
+          });
+          $(yes).click(function(evt) {
+            // node_ids[0] is the one that goes away
+            merge_node(rid2node[node_ids[0]], rid2node[node_ids[1]]);
+            temp_relation.remove();
+            $(evt.target).parent().remove();
+            // remove any suggestions that involve the removed node
+            $('[id*="-' + node_ids[0] + '"]').parent().remove();
+            $('.checkalign[id*="' + rid2node[node_ids[0]] + '"]').remove();
+            //notify backend
+            var ncpath = getTextURL('merge');
+            var form_values = "source=" + node_ids[0] + "&target=" + node_ids[1] + "&single=true";
+            $.post(ncpath, form_values);
+          });
+          $(no).click(function(evt) {
+            temp_relation.remove();
+            $(evt.target).parent().remove();
+          });
+        }
       });
     }
   }
@@ -1664,13 +1797,36 @@ var keyCommands = {
     'key': 'c',
     'description': 'Concatenate a sequence of readings into a single reading',
     'function': function() {
-      // C for Compress; TODO get rid of dialog altogether
+      // C for Compress
       if ($('#svgenlargement').data('display_normalised')) {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
-        $('#action-concat').prop('checked', true);
-        $('#multipleselect-form').dialog('open');
+        // TODO prevent further keyCommands until finished.
+        dialog_background('#error-display')
+        var ncpath = getTextURL('compress');
+        // We need to gin up a form to serialize.
+        readings_selected.sort(sortByRank);
+        var cform = $('<form>')
+        $.each(readings_selected, function(index, value) {
+          cform.append($('<input>').attr(
+            "type", "hidden").attr(
+            "name", "readings[]").attr(
+            "value", readingdata[value]['id']));
+        });
+        var form_values = cform.serialize();
+        $.post(ncpath, form_values, function(data) {
+          if (data.nodes) {
+            compress_nodes(data.nodes);
+          }
+          if (data.status === 'warn') {
+            var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
+            $('#error-display').empty().append(dataerror);
+          } else {
+            unselect_all_readings();
+          }
+          $("#dialog_overlay").hide();
+        });
       }
     }
   },
@@ -1683,8 +1839,18 @@ var keyCommands = {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
-        $('#action-detach').prop('checked', true);
+        $('#action-detach').val('on');
         $('#multipleselect-form').dialog('open');
+      }
+    }
+  },
+  '101': {
+    'key': 'e',
+    'description': 'Provide an emendation at the selected text position',
+    'function': function() {
+      // E for Emend
+      if (readings_selected.length > 0) {
+        $('#emend').dialog('open');
       }
     }
   },
@@ -1835,11 +2001,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     errordiv = '#delete-status';
   } else if ($('#multipleselect-form').dialog('isOpen')) {
     errordiv = '#multipleselect-form-status';
-    if (ajaxSettings.url == getTextURL('duplicate')) {
-      error += '<br>The reading cannot be duplicated.</p>';
-    } else {
-      error += '<br>The readings cannot be concatenated.</p>';
-    }
+    error += '<br>The reading cannot be duplicated.</p>';
   } else if ($('#reading-form').dialog('isOpen')) {
     // reading box
     error += '<br>The reading cannot be altered.</p>';
@@ -1862,6 +2024,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   } else if ($('#normal-form-propagate').dialog('isOpen')) {
     error += '<br>The readings cannot be updated.';
     errordiv = '#normal-form-propagate-status';
+  } else if ($('#emend').dialog('isOpen')) {
+    error += '<br>The text cannot be emended.';
+    errordiv = '#emend-status';
   } else {
     // Probably a keystroke action
     error += '<br>The action cannot be performed.</p>';
@@ -1954,26 +2119,27 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           var form_values = get_relation_querystring();
           var ncpath = getTextURL('relationships');
           var jqjson = $.post(ncpath, form_values, function(data) {
+            // If we were handed a 304 response, there won't be data.
+            if (data) {
+              $.each(data['relationships'], function(item, rel_info) {
+                var source_found = get_ellipse(rel_info.source);
+                var target_found = get_ellipse(rel_info.target);
+                var relation_found = $.inArray(rel_info.type, $('#keymap').data('relations'));
+                if (source_found.size() && target_found.size() && relation_found > -1) {
+                  var relation = relation_manager.create(rel_info);
+                } else {
+                  console.log("Error adding returned relation " + rel_info);
+                }
+              });
+              // Stash any changed readings.
+              $.each(data['readings'], function(i, rdgdata) {
+                update_reading(rdgdata);
+              });
+            }
             // Stash the new relationships.
-            $.each(data['relationships'], function(item, source_target) {
-              var source_found = get_ellipse(source_target[0]);
-              var target_found = get_ellipse(source_target[1]);
-              var relation_found = $.inArray(source_target[2], $('#keymap').data('relations'));
-              if (source_found.size() && target_found.size() && relation_found > -1) {
-                var emphasis = $('#is_significant option:selected').attr('value');
-                var relation = relation_manager.create(source_target[0], source_target[1], relation_found, emphasis);
-                $.each($('#merge_node_form').serializeArray(), function(i, k) {
-                  relation.data(k.name, k.value);
-                });
-              }
-            });
-            // Stash any changed readings.
-            $.each(data['readings'], function(i, rdgdata) {
-              update_reading(rdgdata);
-            });
             mybuttons.button('enable');
             // See if we need to display a warning.
-            if (data.status === 'warn') {
+            if (data && data.status === 'warn') {
               var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
               $('#dialog-form-status').empty().append(dataerror);
             } else {
@@ -1989,9 +2155,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       create: function(event, ui) {
         $(this).data('relation_drawn', false);
         $('#rel_type').data('changed_after_open', false);
-        $.each(relationship_types, function(index, typedef) {
-          $('#rel_type').append($('<option />').attr("value", typedef.name).text(typedef.name));
-        });
         $.each(relationship_scopes, function(index, value) {
           $('#scope').append($('<option />').attr("value", value).text(value));
         });
@@ -2061,73 +2224,39 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       width: 250,
       modal: true,
       buttons: [{
-        text: "Cancel",
-        click: function() {
-          $('#multipleselect-form-status').empty();
-          $(this).dialog("close");
+          text: "Cancel",
+          click: function() {
+            $('#multipleselect-form-status').empty();
+            $(this).dialog("close");
+          }
+        },
+        {
+          text: "Detach",
+          id: "detach_btn",
+          click: function(evt) {
+            var self = $(this);
+            var mybuttons = $(evt.target).closest('button').parent().find('button');
+            mybuttons.button('disable');
+            var form_values = $('#detach_collated_form').serialize();
+            var ncpath = getTextURL('duplicate');
+            $.post(ncpath, form_values, function(data) {
+              unselect_all_readings();
+              detach_node(data);
+              mybuttons.button("enable");
+              self.dialog("close");
+            });
+          }
         }
-      }, {
-        text: "Detach",
-        id: "detach_btn",
-        click: function(evt) {
-          var self = $(this);
-          var mybuttons = $(evt.target).closest('button').parent().find('button');
-          mybuttons.button('disable');
-          var form_values = $('#detach_collated_form').serialize();
-          var ncpath = getTextURL('duplicate');
-          $.post(ncpath, form_values, function(data) {
-            unselect_all_readings();
-            detach_node(data);
-            mybuttons.button("enable");
-            self.dialog("close");
-          });
-        }
-      }, {
-        text: "Concatenate",
-        id: "concat_btn",
-        click: function(evt) {
-          var self = $(this);
-          var mybuttons = $(evt.target).closest('button').parent().find('button');
-          mybuttons.button('disable');
-
-          var ncpath = getTextURL('compress');
-          var form_values = $('#detach_collated_form').serialize();
-          // $.each($('#detach_collated_form input').filter(function() {return this.getAttribute("name") === "readings[]"}), function( i, v ) {vals.push(i)}); vals
-
-          $.post(ncpath, form_values, function(data) {
-            mybuttons.button('enable');
-            if (data.nodes) {
-              compress_nodes(data.nodes);
-            }
-            if (data.status === 'warn') {
-              var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
-              $('#multipleselect-form-status').empty().append(dataerror);
-            } else {
-              self.dialog('close');
-            }
-          });
-        }
-      }],
+      ],
       create: function(event, ui) {
         var buttonset = $(this).parent().find('.ui-dialog-buttonset').css('width', '100%');
         buttonset.find("button:contains('Cancel')").css('float', 'right');
         $('#action-detach').change(function() {
-          if ($('#action-detach')[0].checked) {
+          if ($('#action-detach').val() == 'on') {
             $('#detach_collated_form').show();
             $('#multipleselect-form-text').show();
 
             $('#detach_btn').show();
-            $('#concat_btn').hide();
-          }
-        });
-
-        $('#action-concat').change(function() {
-          if ($('#action-concat')[0].checked) {
-            $('#detach_collated_form').hide();
-            $('#multipleselect-form-text').hide();
-
-            $('#detach_btn').hide();
-            $('#concat_btn').show();
           }
         });
       },
@@ -2135,28 +2264,17 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $(this).dialog("option", "width", 200);
         dialog_background('#multipleselect-form-status');
 
-        if ($('#action-concat')[0].checked) {
-          $('#detach_collated_form').hide();
-          $('#multipleselect-form-text').hide();
-
-          $('#detach_btn').hide();
-          $('#concat_btn').show();
-        } else {
+        if ($('#action-detach').val() == 'on') {
           $('#detach_collated_form').show();
           $('#multipleselect-form-text').show();
 
           $('#detach_btn').show();
-          $('#concat_btn').hide();
         }
 
         // Populate the forms with the currently selected readings
         $('#detach_collated_form').empty();
         var witnesses = [];
 
-        function sortByRank(a, b) {
-          if (readingdata[a]["rank"] === readingdata[b]["rank"]) return 0;
-          return readingdata[a]["rank"] < readingdata[b]["rank"] ? -1 : 1;
-        };
         readings_selected.sort(sortByRank);
         $.each(readings_selected, function(index, value) {
           $('#detach_collated_form').append($('<input>').attr(
@@ -2451,9 +2569,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
               var this_nodeid = update_reading(rdg);
               update_reading_display(this_nodeid);
             });
-            $('#normal-form-propagate').dialog('close');
           });
-        })
+        });
+        $('#normal-form-propagate').dialog('close');
       },
       Cancel: function(evt) {
         $('#normal-form-propagate').dialog('close');
@@ -2487,6 +2605,48 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     }
   });
 
+  $('#emend').dialog({
+    autoOpen: false,
+    width: 350,
+    modal: true,
+    buttons: {
+      OK: function(evt) {
+        var mybuttons = $(evt.target).closest('button').parent().find('button');
+        mybuttons.button('disable');
+        var ncpath = getTextURL('emend');
+        $.post(ncpath, $('#emend_form').serialize(), function(data) {
+          // Data will be a reading and several sequences
+          add_emendation(data);
+          mybuttons.button('enable');
+          $('#emend').dialog('close');
+        });
+      },
+      Cancel: function(evt) {
+        $('#emend').dialog('close');
+      }
+    },
+    open: function() {
+      dialog_background('#emend-status');
+      // Populate the hidden from/to ranks
+      var minRank = readingdata['__END__'].rank;
+      var maxRank = 0;
+      $.each(readings_selected, function(i, rdgid) {
+        var myRank = readingdata[rdgid].rank;
+        if (minRank > myRank) {
+          minRank = myRank;
+        }
+        if (maxRank < myRank) {
+          maxRank = myRank;
+        }
+      });
+      $('#emend-from').val(minRank);
+      $('#emend-to').val(maxRank + 1);
+    },
+    close: function() {
+      $('#dialog_overlay').hide();
+    }
+  });
+
 
   // Set up the error message dialog, for results from keystroke commands without their own
   // dialog boxes
@@ -2510,6 +2670,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     if ($(this).data('locked') == true) {
       d3svg.on(".drag", null);
       d3svg.call(zoomBehavior); // JMB turn zoom function on
+      unselect_all_readings();
       $('#svgenlargement ellipse').each(function(index) {
         if ($(this).data('node_obj') != null) {
           $(this).data('node_obj').ungreyout_edges();

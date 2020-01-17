@@ -131,19 +131,11 @@
     </div>
   </div>
 
-  <div id="multipleselect-form" title="Multiple nodes selected...">
+  <div id="multipleselect-form" title="Detach single or multiple nodes selected...">
     <div id="multipleselect-form-status"></div>
 
-    Detach or concatenate?<br>
-
     <form autocomplete="off">
-      <label>
-        <input id="action-detach" checked name='option' type='radio' /> Detach
-      </label>
-
-      <label>
-        <input id="action-concat" name='option' type='radio' /> Concatenate
-      </label>
+      <input type="hidden" id="action-detach" name='option' value='off' />
     </form>
 
     <div id="multipleselect-form-text">Select witness(es) to detach:</div>
@@ -221,6 +213,18 @@
     </form>
   </div>
 
+  <div id="emend" title="Emend the text">
+    <div id="emend-status"></div>
+    <form id="emend_form" action="#">
+      <p>Emend the text at the selected position</p>
+      <input type="hidden" name="fromRank" id="emend-from">
+      <input type="hidden" name="toRank" id="emend-to">
+      <label for="emend-text">Text to appear at this point: </label>
+      <input type="text" name="text" id="emend-text"><br>
+      <label for="emend-authority">Who proposes this emendation: </label>
+      <input type="text" name="authority" id="emend-authority"><br>
+    </form>
+  </div>
 
   <div id="section-text" title="Running text view">
     <div id="section-text-status"></div>

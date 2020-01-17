@@ -351,7 +351,7 @@ sub relationships :Chained('section') :PathPart :Args(0) {
                         'Content-Type' => 'application/json',
                         'Content'      => encode_json($reqopts)
                     );
-                    push(@relpairs, map { [ $_->{source}, $_->{target}, $_->{type} ] } @{ $result->{relations} });
+                    push(@relpairs, @{ $result->{relations} });
                     push(@changed_readings, @{ $result->{readings} });
                 }
             } catch (stemmaweb::Error $e ) {
@@ -399,8 +399,8 @@ sub relationships :Chained('section') :PathPart :Args(0) {
                 my $result;
                 try {
                     $result = $m->ajax(
-                        'delete',
-                        "/tradition/$textid/relation",
+                        'post',
+                        "/tradition/$textid/relation/remove",
                         'Content-Type' => 'application/json',
                         'Content'      => encode_json($opts)
                     );
@@ -462,9 +462,9 @@ sub _reading_struct {
     map { $struct->{$_} = $reading->{$_} } keys %read_write_keys;
 
     # Set known IDs on start/end nodes, that match what will be in the SVG
-    if ($reading->{is_start} == JSON::true) {
+    if (exists $reading->{is_start} && $reading->{is_start} == JSON::true) {
         $struct->{id} = '__START__';
-    } elsif ($reading->{is_end} == JSON::true) {
+    } elsif (exists $reading->{is_end} && $reading->{is_end} == JSON::true) {
         $struct->{id} = '__END__';
     } else {
         $struct->{svg_id} = 'n' . $reading->{id};
@@ -503,6 +503,9 @@ sub readings :Chained('section') :PathPart :Args(0) {
     # Get the extra information we need
     my $ret = {};
     foreach my $rdg (@$rdglist) {
+        # Exclude emendations
+        next if $rdg->{is_emendation};
+        # Modify the stemmarest reading into a stemmaweb one
         my $struct = _reading_struct($rdg);
 
         # The struct we return needs to be keyed on SVG node ID.
@@ -722,6 +725,87 @@ sub copynormal :Chained('section') :PathPart :Args(2) {
     $c->forward('View::JSON');
 }
 
+=head2 emendations
+
+  GET relation/$textid/$sectionid/emendations
+
+ Returns a list of emendations for a given section.
+
+=cut
+
+sub emendations :Chained('section') :PathPart :Args(0) {
+    my ($self, $c) = @_;
+    my $textid = $c->stash->{'textid'};
+    my $sectid = $c->stash->{'sectid'};
+    my $m = $c->model('Directory');
+    if ($c->request->method eq 'GET') {
+        try {
+            my $resp = $m->ajax(
+                'get', "/tradition/$textid/section/$sectid/emendations");
+            $c->stash->{result} = {
+                readings => [map { _reading_struct($_) } @{$resp->{readings}}],
+                sequences => $resp->{sequences}
+            };
+        }
+        catch (stemmaweb::Error $e) {
+            return json_error($c, $e->status, $e->message);
+        }
+    } else {
+        json_error($c, 405, "Use GET instead");
+    }
+    $c->forward('View::JSON');
+}
+
+=head2 emend
+
+  POST relation/$textid/$sectionid/emend
+
+Accepts form data containing the following:
+- fromRank
+- toRank
+- text
+- authority
+
+Adds an emendation to the text at the given location. On success,
+returns the new reading and the sequence links to the neighbour readings.
+
+=cut
+
+sub emend :Chained('section') :PathPart :Args(0) {
+    my ($self, $c) = @_;
+    my $textid = $c->stash->{'textid'};
+    my $sectid = $c->stash->{'sectid'};
+    my $m = $c->model('Directory');
+    if ($c->request->method eq 'POST') {
+
+        # Auth check
+        if ($c->stash->{'permission'} ne 'full') {
+            json_error($c, 403,
+                'You do not have permission to modify this tradition.');
+        }
+
+        # The proposed emendation object should be a JSONification
+        # of the form params.
+        try {
+            my $resp = $m->ajax(
+                'post', "/tradition/$textid/section/$sectid/emend",
+                'Content-Type' => 'application/json',
+                'Content'      => encode_json($c->request->params)
+            );
+            $c->stash->{result} = {
+                readings => [map { _reading_struct($_) } @{$resp->{readings}}],
+                sequences => $resp->{sequences}
+            }
+        }
+        catch (stemmaweb::Error $e) {
+            return json_error($c, $e->status, $e->message);
+        }
+    } else {
+        json_error($c, 405, "Use POST instead");
+    }
+    $c->forward('View::JSON');
+}
+
 =head2 compress
 
  POST relation/$textid/$sectionid/compress { data }
@@ -933,74 +1017,14 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
                 'You do not have permission to modify this tradition.');
         }
 
-        # Sort out which readings need to be duplicated from the set given, and
-        # ensure that all the given wits bear each relevant reading.
-        # TODO I think stemmarest handles this check
-        my @readings;
-        foreach my $rid ($c->request->param('readings[]')) {
-            try {
-                my $rdginfo = $m->ajax('get', "/reading/$rid");
-                push(@readings, $rdginfo);
-            }
-            catch (stemmaweb::Error $e ) {
-                return json_error($c, $e->status, $e->message);
-            }
-        }
-
-        my %wits = ();
-        map { $wits{$_} = 1 } $c->request->param('witnesses[]');
-        my %rdgranks = ();
-        foreach my $rdg (@readings) {
-            my $rid     = $rdg->{id};
-            my $numwits = 0;
-            foreach my $rwit (@{ $rdg->{witnesses} }) {
-                $numwits++ if exists $wits{$rwit};
-            }
-            next
-              unless $numwits;   # Disregard readings with none of our witnesses
-            if ($numwits < keys(%wits)) {
-
-                # TODO decide if this should really be an error
-                json_error($c, 400,
-"Reading $rid contains some but not all of the specified witnesses."
-                );
-            } elsif (exists $rdgranks{ $rdg->{rank} }) {
-                json_error($c, 400,
-"More than one reading would be detached along with $rid at rank "
-                      . $rdg->{rank});
-            } else {
-                $rdgranks{ $rdg->{rank} } = $rid;
-            }
-        }
-
-        # Now check that the readings make a single sequence.
-        my $prior;
-        foreach my $rank (sort { $a <=> $b } keys %rdgranks) {
-            my $rid = $rdgranks{$rank};
-            if ($prior) {
-
-                # Check that there is only one path between $prior and $rdg.
-                foreach my $wit (keys %wits) {
-                    my $prdg;
-                    try {
-                        $prdg = $m->ajax('get', "/reading/$rid/prior/$wit");
-                    }
-                    catch (stemmaweb::Error $e) {
-                        json_error($c, $e->status, $e->message);
-                    }
-                    json_error($c, 400,
-                        "Diverging witness paths from $prior to $rid at $wit")
-                      unless $prdg->{id} eq $prior;
-                }
-            }
-            $prior = $rid;
-        }
-
-        # If we got this far, do the deed.
-        my $url = sprintf("/reading/%s/duplicate", $readings[0]->{id});
+        # Pass all the listed readings to stemmarest and let it sort
+        # out the logic of what can be duplicated
+        my @readings = $c->request->param('readings[]');
+        my @wits = $c->request->param('witnesses[]');
+        my $url = sprintf("/reading/%s/duplicate", $readings[0]);
         my $req = {
-            readings  => [ values %rdgranks ],
-            witnesses => [ keys %wits ]
+            readings  => \@readings,
+            witnesses => \@wits
         };
         my $response;
         try {
@@ -1156,7 +1180,7 @@ sub assemble_warnings {
     return $result;
 }
 
-=head2 assemble_warnings
+=head2 assemble_failures
 
 Make a single warning message from a set of failed operations. Returns a status code + message.
 

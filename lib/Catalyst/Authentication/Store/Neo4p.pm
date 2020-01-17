@@ -3,6 +3,7 @@ use strictures 2;
 package Catalyst::Authentication::Store::Neo4p;
 use Moose;
 use JSON qw/ decode_json to_json /;
+use TryCatch;
 
 use aliased 'Catalyst::Authentication::Store::Neo4p::User';
 use Carp qw( croak );
@@ -70,11 +71,17 @@ sub auto_create_user {
 
     my $new_user = User->new(user_data => $userinfo);
 
-    $c->model($self->model_name)->ajax(
-        'put', '/user/' . $new_user->id . '/',
-        'Content-Type' => 'application/json',
-        'Content'      => to_json($new_user->to_hash)
-    );
+    try {
+        $c->model($self->model_name)->ajax(
+            'put', '/user/' . $new_user->id . '/',
+            'Content-Type' => 'application/json',
+            'Content'      => to_json($new_user->to_hash)
+        );
+    } catch (stemmaweb::Error $e) {
+        $c->stash->{error_msg} = $e->message;
+        $new_user = undef;
+    }
+    return $new_user;
 }
 
 1;
