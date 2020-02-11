@@ -504,23 +504,23 @@ function upload_collation(upload_url) {
     }
 
     if (ok4upload) {
-    post_xhr2(upload_url, data, function(ret) {
-      if (ret.tradId) {
-        $('#upload-collation-dialog').dialog('close');
-        // Reload the directory with the new text selected.
-        textOnLoad = ret.tradId;
-        refreshDirectory();
-      } else if (ret.parentId) {
-        $('#upload-collation-dialog').dialog('close');
-        // Load the tradition to which we just uploaded.
-        var ourTradId = $('#upload_for_tradition').val();
-        var ourTradName = $('#upload_for_tradition :checked').text();
-        loadTradition(ourTradId, ourTradName, 1);
-      } else if (ret.error) {
-        $('#upload_status').empty().append(
-          $('<span>').attr('class', 'error').append(ret.error));
-      }
-    }, 'json');
+      post_xhr2(upload_url, data, function(ret) {
+        if (ret.tradId) {
+          $('#upload-collation-dialog').dialog('close');
+          // Reload the directory with the new text selected.
+          textOnLoad = ret.tradId;
+          refreshDirectory();
+        } else if (ret.parentId) {
+          $('#upload-collation-dialog').dialog('close');
+          // Load the tradition to which we just uploaded.
+          var ourTradId = $('#upload_for_tradition').val();
+          var ourTradName = $('#upload_for_tradition :checked').text();
+          loadTradition(ourTradId, ourTradName, 1);
+        } else if (ret.error) {
+          $('#upload_status').empty().append(
+            $('<span>').attr('class', 'error').append(ret.error));
+        }
+      }, 'json');
     }
   };
   reader.onerror = function(evt) {
