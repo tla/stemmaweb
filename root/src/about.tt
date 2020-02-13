@@ -13,7 +13,7 @@
         <h2>Tools available</h2>
         <p>At present the Stemmaweb tools comprise the following:</p>
 
-        <h3>Uploader ("Add a new text tradition")</h3>
+        <h3>Uploader ("Add a new text tradition or section")</h3>
         <p>Any logged-in user may upload a text collation in one of several forms:</p>
         <ul>
           <li>Spreadsheet collation (Excel file, CSV file, or tab-separated values). Witness sigla should appear in the first row, one per column; the text of each witness should occur in sequence in the appropriate column, with collated words/readings lined up according to row. CSV and tab-separated value files are assumed to be Unicode, in the UTF-8 encoding.</li>

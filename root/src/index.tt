@@ -25,7 +25,7 @@
       <div id="directory"></div>
 [% IF c.user_exists -%]
       <div class="button" id="new_trad_button" onClick="$('#upload-collation-dialog').dialog('open')">
-        <span>Add a new text tradition</span>
+        <span>Add a new text tradition or section</span>
       </div>
 [% END -%]
     </div>
