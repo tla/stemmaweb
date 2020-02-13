@@ -468,10 +468,42 @@ function upload_collation(upload_url) {
     var data = new FormData();
     $.each($('#new_tradition').serializeArray(), function(i, o) {
       if (o.name != 'uploadtype') {
-        data.append(o.name, o.value);
+        data.append(o.name, o.value.trim());
       }
     });
     data.append('file', newfile);
+
+    var error_msg = ""
+    var ok4upload = false;
+    if (data.get('name') != '') {
+      ok4upload = true;
+      console.log("Ok for upload. The title inserted in the form is '" + data.get('name') + "'.");
+    }
+    else if (data.get('filetype') != 'graphml') {
+      error_msg = "Error: Non-graphml imports need a title from the input field. Insert the name of the text/tradition in the form, please. (Your selected file type is '" + data.get('filetype') + "').";
+      console.log(error_msg);
+      $('#upload_status').empty().append(
+        $('<span>').attr('class', 'error').append(error_msg));
+    } else {
+      // console.log("Title input field is empty. Is there a title in the graphml file?");
+      var graphml_title = "";
+      var xmlDoc = $.parseXML( evt.target.result );
+      var name_id = $(xmlDoc).find('key[attr\\.name=name]').attr('id');
+      graphml_title = $(xmlDoc).find('data[key=' + name_id + ']').first().text().trim();
+      // TODO: what is the second data field with the same name_id for? Cases where to use that one?
+
+      if (graphml_title.length > 0) {
+        ok4upload = true;
+        console.log("Ok for upload. Your title in the file is '" + graphml_title + "'.");
+      } else {
+        error_msg = "Error: title neither in input field nor inside the file."
+        console.log(error_msg);
+        $('#upload_status').empty().append(
+          $('<span>').attr('class', 'error').append(error_msg));
+      }
+    }
+
+    if (ok4upload) {
     post_xhr2(upload_url, data, function(ret) {
       if (ret.tradId) {
         $('#upload-collation-dialog').dialog('close');
@@ -489,6 +521,7 @@ function upload_collation(upload_url) {
           $('<span>').attr('class', 'error').append(ret.error));
       }
     }, 'json');
+    }
   };
   reader.onerror = function(evt) {
     var err_resp = 'File read error';
