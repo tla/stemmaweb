@@ -706,7 +706,7 @@ function add_relations(callback_fn) {
         }
       } else {
         // Either the source, target, or type wasn't found
-        console.log("Error creating database relation " + rel_info);
+        console.log("Error creating database relation: "); console.log(rel_info);
       }
     });
     callback_fn.call();
