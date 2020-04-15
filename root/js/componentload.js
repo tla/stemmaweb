@@ -138,7 +138,11 @@ function load_textinfo() {
   $('#' + selectedTextID).empty().append(selectedTextInfo.name);
   // Witnesses
   $('#witness_num').empty().append(selectedTextInfo.witnesses.length);
-  $('#witness_list').empty().append(selectedTextInfo.witnesses.join(', '));
+  var witnessString = selectedTextInfo.witnesses.join(', ');
+  if (witnessString.length > 128) {
+    witnessString = witnessString.substring(0, 128) + '...';
+  }
+  $('#witness_list').empty().append(witnessString);
   // Who the owner is
   $('#owner_id').empty().append('no one');
   if (selectedTextInfo.owner) {
