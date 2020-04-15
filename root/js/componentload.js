@@ -137,7 +137,7 @@ function load_textinfo() {
   $('.texttitle').empty().append(selectedTextInfo.name);
   $('#' + selectedTextID).empty().append(selectedTextInfo.name);
   // Witnesses
-  $('#witness_num').empty().append(selectedTextInfo.witnesses.size);
+  $('#witness_num').empty().append(selectedTextInfo.witnesses.length);
   $('#witness_list').empty().append(selectedTextInfo.witnesses.join(', '));
   // Who the owner is
   $('#owner_id').empty().append('no one');
