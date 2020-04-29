@@ -256,6 +256,61 @@ sub download :Chained('section') :PathPart :Args(0) {
     $c->detach($self->action_for("../download"));
 }
 
+
+=head2 relationtype
+=cut
+sub relationtype :Chained('text') :PathPart :Args(0) {
+  my ($self, $c) = @_;
+  my $textid = $c->stash->{textid};
+  my $m = $c->model('Directory');
+  my $reltype = $c->request->param('name');
+  if ($reltype ne "") {
+    if ($c->request->method eq 'GET') {
+        try {
+            $c->stash->{'result'} =
+              $m->ajax('get', "/tradition/$textid/relationtype/$reltype");
+        }
+        catch (stemmaweb::Error $e ) {
+            return json_error($c, $e->status, $e->message);
+        }
+    } elsif ($c->request->method eq 'POST') {
+        try {
+            my $params = $c->req->params;
+            $m->ajax(
+              'put', "/tradition/$textid/relationtype/$reltype",
+              'Content-Type' => 'application/json',
+              Content        => JSON::encode_json($params)
+            );
+            $c->stash->{result} = { 'status' => 'ok' };
+            $c->forward('View::JSON');
+        }
+        catch (stemmaweb::Error $e ) {
+            return json_error($c, $e->status, $e->message);
+        }
+    } elsif ($c->request->method eq 'DELETE') {
+        try {
+            # if relationship type exists in the database, send delete request to server
+            # otherwise (hardcoded), deletion will be handled on the client side
+            my $definedtypes = $m->ajax('get', "/tradition/$textid/relationtypes");
+            foreach my $type (@$definedtypes) {
+                if ($reltype eq $type->{name}) {
+                    $m->ajax('delete', "/tradition/$textid/relationtype/$reltype");
+                }
+            }
+            $c->stash->{result} = { 'status' => 'ok' };
+            $c->forward('View::JSON');
+        }
+        catch (stemmaweb::Error $e) {
+            return json_error($c, $e->status, "Relation type '". $reltype . "' -> " . $e->message);
+        }
+    }
+  } else {
+      $c->log->warn("Empty relation type");
+  }
+}
+
+
+
 =head2 relationships
 
  GET relation/$textid/$sectid/relationships

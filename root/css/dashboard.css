@@ -203,14 +203,14 @@
   margin: 10px;
 }
 
-#section_list {
+#section_list, #relation_list {
   list-style-type: none;
   margin: 0;
   padding: 3px;
   background-color: white;
 }
 
-#section_list li {
+#section_list li, #relation_list li {
   margin: 0 3px 3px 3px;
   padding: 0.4em;
   padding-left: 1.5em;
