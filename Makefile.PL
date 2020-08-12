@@ -60,6 +60,7 @@ requires 'strictures' => '2';
 requires 'Throwable::X';
 requires 'TryCatch';
 requires 'URI::Escape';
+requires 'XML::LibXML';
 requires 'namespace::autoclean';
 requires 'strictures';
 
