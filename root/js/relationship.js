@@ -2788,6 +2788,8 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     modal: true,
     buttons: {
       OK: function() {
+        // Hide the overlay in case it was shown
+        $("#dialog_overlay").hide();
         $(this).dialog("close");
       },
     }
@@ -2919,6 +2921,7 @@ function loadSVG(normalised) {
     }
     // Reload the SVG
     $('#svgenlargement').empty().append(svgData.documentElement)
+    // TODO center the SVG vertically
     svgEnlargementLoaded();
   });
 }
