@@ -94,6 +94,12 @@ function update_reading(rdata) {
   return nid;
 }
 
+// Utility function to sort a group of readings by rank.
+function sortByRank(a, b) {
+  if (readingdata[a]["rank"] === readingdata[b]["rank"]) return 0;
+  return readingdata[a]["rank"] < readingdata[b]["rank"] ? -1 : 1;
+}
+
 function update_reading_display(node_id) {
   // Grab the reading data from which we update
   var rdata = readingdata[node_id];
@@ -1300,60 +1306,76 @@ function delete_relation(form_values) {
   });
 }
 
-function add_emendation(data) {
-  // Data is a set of readings and a set of sequences.
-  $.each(data['readings'], function(i, e) {
-    // Set some useful utility functions
-    const floor = (acc, cval) => acc < cval ? acc : cval;
-    const ceiling = (acc, cval) => acc > cval ? acc : cval;
-    // Find the rank span, so we can set the width of the emendation node
-    var startrank = e.rank;
-    var endrank = data.sequences.filter(x => x.source === e.id)
-      .map(x => readingdata[rid2node[x.target]].rank).reduce(floor);
-    endrank = endrank - 1;
+function add_emendation(emenddata) {
+  // Set some useful reduce functions
+  const floor = (acc, cval) => acc < cval ? acc : cval;
+  const ceiling = (acc, cval) => acc > cval ? acc : cval;
 
-    // Find the nodes we are "covering" based on the rank span
-    var startNodes = Object.entries(readingdata)
-      .filter(x => x[1].rank === startrank).map(x => x[0]);
-    var endNodes = Object.entries(readingdata)
-      .filter(x => x[1].rank === endrank).map(x => x[0]);
-    var coveredNodes = Object.entries(readingdata)
-      .filter(x => x[1].rank >= startrank && x[1].rank <= endrank).map(x => x[0]);
-    // Get the X value for the new node
-    var startCX = startNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
-    var startRX = startNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
-    var startingX = startCX - startRX;
-
-    // Get the width of the new node
-    var endCX = endNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
-    var endRX = endNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
-    var width = endCX + endRX - startingX;
-
-    // Get the Y value for the new node
-    var highestY = coveredNodes.map(x => parseFloat(get_ellipse(x).attr('cy'))).reduce(floor);
-    var startingY = highestY - 100;
-
-    // Add the emendation node
-    var svg = $(svg_root).svg('get');
-    var g = svg.group(svg_root_element, 'e' + e.id);
-    // Set the center 90 px above the highest center
-    // Set the width to ending-starting X
-    svg.rect(g, startingX, startingY, width, 36, 5, 5, {
-      fill: 'white',
-      opacity: '0.75',
-      stroke: 'red',
-      strokeWidth: 1
-    });
-    // Set the text center to the middle of the rect
-    svg.text(g, startingX + width / 2, startingY + 20, e.text, {
-      'text-anchor': 'middle',
-      'font-family': 'Times,serif',
-      'font-size': '14.00'
-    });
-
-    // TODO add sequences maybe?
-
+  // Data is a set of readings and a set of sequences. For each reading
+  // we make an SVG group consisting of a rect and a text element.
+  emenddata.readings.forEach(function(r) {
+    // Initialize the d3 element
+    var enode = d3svg.select('#graph0')
+      .selectAll('#e' + r.id)
+      .data([r])
+      .enter()
+      .append('g')
+      .attr('id', 'e' + r.id);
+    enode.append('rect')
+      .attr('x', function(d) {
+        var startNodes = Object.entries(readingdata)
+          .filter(x => x[1].rank === d.rank).map(x => x[0]);
+        var startCX = startNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
+        var startRX = startNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
+        return startCX - startRX;
+      })
+      .attr('width', function(d) {
+        // Find the last rank that this emendation covers
+        var endrank = emenddata.sequences.filter(x => x.source === d.id)
+          .map(x => readingdata[rid2node[x.target]].rank).reduce(floor);
+        endrank = endrank - 1;
+        // Find the end of the widest / leftmost node at that rank
+        var endNodes = Object.entries(readingdata)
+          .filter(x => x[1].rank === endrank).map(x => x[0]);
+        var endCX = endNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
+        var endRX = endNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
+        return endCX + endRX - parseFloat(d3.select(this).attr('x'));
+      })
+      .attr('y', function(d) {
+        // Find the last rank that this emendation covers
+        var endrank = emenddata.sequences.filter(x => x.source === d.id)
+          .map(x => readingdata[rid2node[x.target]].rank).reduce(floor);
+        endrank = endrank - 1;
+        // Find the highest of all the nodes covered
+        var coveredNodes = Object.entries(readingdata)
+          .filter(x => x[1].rank >= d.rank && x[1].rank <= endrank).map(x => x[0]);
+        var highestY = coveredNodes.map(x => parseFloat(get_ellipse(x).attr('cy'))).reduce(floor);
+        return highestY - 100;
+      })
+      .attr('height', 36)
+      .attr('rx', '5')
+      .attr('ry', '5')
+      .attr('fill', 'white')
+      .attr('opacity', '0.75')
+      .attr('stroke', 'red')
+      .attr('strokeWidth', 1);
+    enode.append('text')
+      .attr('x', function() {
+        var rx = parseFloat(enode.select('rect').attr('x'));
+        var rw = parseFloat(enode.select('rect').attr('width'));
+        return rx + rw / 2;
+      })
+      .attr('y', function() {
+        var ry = parseFloat(enode.select('rect').attr('y'));
+        return ry + 22;
+      })
+      .attr('text-anchor', 'middle')
+      .attr('font-family', 'Times,serif')
+      .attr('font-size', '14.00')
+      .text(r.text);
   });
+
+  // TODO add sequences maybe?
 }
 
 function detach_node(readings) {
@@ -1800,13 +1822,36 @@ var keyCommands = {
     'key': 'c',
     'description': 'Concatenate a sequence of readings into a single reading',
     'function': function() {
-      // C for Compress; TODO get rid of dialog altogether
+      // C for Compress
       if ($('#svgenlargement').data('display_normalised')) {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
-        $('#action-concat').prop('checked', true);
-        $('#multipleselect-form').dialog('open');
+        // TODO prevent further keyCommands until finished.
+        dialog_background('#error-display')
+        var ncpath = getTextURL('compress');
+        // We need to gin up a form to serialize.
+        readings_selected.sort(sortByRank);
+        var cform = $('<form>')
+        $.each(readings_selected, function(index, value) {
+          cform.append($('<input>').attr(
+            "type", "hidden").attr(
+            "name", "readings[]").attr(
+            "value", readingdata[value]['id']));
+        });
+        var form_values = cform.serialize();
+        $.post(ncpath, form_values, function(data) {
+          if (data.nodes) {
+            compress_nodes(data.nodes);
+          }
+          if (data.status === 'warn') {
+            var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
+            $('#error-display').empty().append(dataerror);
+          } else {
+            unselect_all_readings();
+          }
+          $("#dialog_overlay").hide();
+        });
       }
     }
   },
@@ -1819,7 +1864,7 @@ var keyCommands = {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
-        $('#action-detach').prop('checked', true);
+        $('#action-detach').val('on');
         $('#multipleselect-form').dialog('open');
       }
     }
@@ -1998,11 +2043,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     errordiv = '#delete-status';
   } else if ($('#multipleselect-form').dialog('isOpen')) {
     errordiv = '#multipleselect-form-status';
-    if (ajaxSettings.url == getTextURL('duplicate')) {
-      error += '<br>The reading cannot be duplicated.</p>';
-    } else {
-      error += '<br>The readings cannot be concatenated.</p>';
-    }
+    error += '<br>The reading cannot be duplicated.</p>';
   } else if ($('#reading-form').dialog('isOpen')) {
     // reading box
     error += '<br>The reading cannot be altered.</p>';
@@ -2228,73 +2269,39 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       width: 250,
       modal: true,
       buttons: [{
-        text: "Cancel",
-        click: function() {
-          $('#multipleselect-form-status').empty();
-          $(this).dialog("close");
+          text: "Cancel",
+          click: function() {
+            $('#multipleselect-form-status').empty();
+            $(this).dialog("close");
+          }
+        },
+        {
+          text: "Detach",
+          id: "detach_btn",
+          click: function(evt) {
+            var self = $(this);
+            var mybuttons = $(evt.target).closest('button').parent().find('button');
+            mybuttons.button('disable');
+            var form_values = $('#detach_collated_form').serialize();
+            var ncpath = getTextURL('duplicate');
+            $.post(ncpath, form_values, function(data) {
+              unselect_all_readings();
+              detach_node(data);
+              mybuttons.button("enable");
+              self.dialog("close");
+            });
+          }
         }
-      }, {
-        text: "Detach",
-        id: "detach_btn",
-        click: function(evt) {
-          var self = $(this);
-          var mybuttons = $(evt.target).closest('button').parent().find('button');
-          mybuttons.button('disable');
-          var form_values = $('#detach_collated_form').serialize();
-          var ncpath = getTextURL('duplicate');
-          $.post(ncpath, form_values, function(data) {
-            unselect_all_readings();
-            detach_node(data);
-            mybuttons.button("enable");
-            self.dialog("close");
-          });
-        }
-      }, {
-        text: "Concatenate",
-        id: "concat_btn",
-        click: function(evt) {
-          var self = $(this);
-          var mybuttons = $(evt.target).closest('button').parent().find('button');
-          mybuttons.button('disable');
-
-          var ncpath = getTextURL('compress');
-          var form_values = $('#detach_collated_form').serialize();
-          // $.each($('#detach_collated_form input').filter(function() {return this.getAttribute("name") === "readings[]"}), function( i, v ) {vals.push(i)}); vals
-
-          $.post(ncpath, form_values, function(data) {
-            mybuttons.button('enable');
-            if (data.nodes) {
-              compress_nodes(data.nodes);
-            }
-            if (data.status === 'warn') {
-              var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
-              $('#multipleselect-form-status').empty().append(dataerror);
-            } else {
-              self.dialog('close');
-            }
-          });
-        }
-      }],
+      ],
       create: function(event, ui) {
         var buttonset = $(this).parent().find('.ui-dialog-buttonset').css('width', '100%');
         buttonset.find("button:contains('Cancel')").css('float', 'right');
         $('#action-detach').change(function() {
-          if ($('#action-detach')[0].checked) {
+          if ($('#action-detach').val() == 'on') {
             $('#detach_collated_form').show();
             $('#multipleselect-form-text').show();
 
             $('#detach_btn').show();
-            $('#concat_btn').hide();
-          }
-        });
-
-        $('#action-concat').change(function() {
-          if ($('#action-concat')[0].checked) {
-            $('#detach_collated_form').hide();
-            $('#multipleselect-form-text').hide();
-
-            $('#detach_btn').hide();
-            $('#concat_btn').show();
           }
         });
       },
@@ -2302,28 +2309,17 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $(this).dialog("option", "width", 200);
         dialog_background('#multipleselect-form-status');
 
-        if ($('#action-concat')[0].checked) {
-          $('#detach_collated_form').hide();
-          $('#multipleselect-form-text').hide();
-
-          $('#detach_btn').hide();
-          $('#concat_btn').show();
-        } else {
+        if ($('#action-detach').val() == 'on') {
           $('#detach_collated_form').show();
           $('#multipleselect-form-text').show();
 
           $('#detach_btn').show();
-          $('#concat_btn').hide();
         }
 
         // Populate the forms with the currently selected readings
         $('#detach_collated_form').empty();
         var witnesses = [];
 
-        function sortByRank(a, b) {
-          if (readingdata[a]["rank"] === readingdata[b]["rank"]) return 0;
-          return readingdata[a]["rank"] < readingdata[b]["rank"] ? -1 : 1;
-        };
         readings_selected.sort(sortByRank);
         $.each(readings_selected, function(index, value) {
           $('#detach_collated_form').append($('<input>').attr(
@@ -2804,9 +2800,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     $(this).hide();
     mouse_scale = svg_root_element.getScreenCTM().a;
     if ($(this).data('locked') == true) {
-      unselect_all_readings();
       d3svg.on(".drag", null);
       d3svg.call(zoomBehavior); // JMB turn zoom function on
+      unselect_all_readings();
       $('#svgenlargement ellipse').each(function(index) {
         if ($(this).data('node_obj') != null) {
           $(this).data('node_obj').ungreyout_edges();
@@ -2903,7 +2899,7 @@ function loadSVG(normalised) {
 
   if (normalised) {
     // We are switching to the normalised view
-    ncpath += '&' + $('#normalize-for-type').serialize();
+    ncpath += '?' + $('#normalize-for-type').serialize();
     buttonText = "Expand graph";
   } else {
     // We are switching back to the expanded view

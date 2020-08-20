@@ -214,7 +214,8 @@ sub _make_upload_request {
     ## the Neo4J db expects. This involves passing through the
     ## tempfile upload and filling in some defaults.
     my $upload = $c->req->upload('file');
-    my $fileargs = [ $upload->tempname, $upload->filename ];
+    # The original filename might have non-ASCII characters in it.
+    my $fileargs = [ $upload->tempname, encode_utf8($upload->filename) ];
     if ($upload->type) {
         push(@$fileargs, 'Content-Type', $upload->type);
     }

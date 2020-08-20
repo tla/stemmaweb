@@ -1,5 +1,4 @@
 /* Index page components */
-
 #directory_container {
   background: none repeat scroll 0 0 rgba(255, 255, 255, 0.75);
   float: left;
@@ -74,7 +73,7 @@
 }
 
 #stemma_graph img {
-  margin-top: expression(( 450 - this.height) / 2);
+  margin-top: expression((450 - this.height) / 2);
 }
 
 #stemma_graph svg {}
