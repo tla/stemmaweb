@@ -51,7 +51,7 @@ sub new_db {
 		$host .= ':' . $n4jurl->port unless $n4jurl->port == 80;
 		# Now add the credentials
 		$ua->ssl_opts( 'verify_hostname' => 0 );
-		$ua->credentials( $host, $dircfg->{basic_auth}->{realm}, 
+		$ua->credentials( $host, $dircfg->{basic_auth}->{realm},
 			$dircfg->{basic_auth}->{user}, $dircfg->{basic_auth}->{pass} );
 	}
 	## Users that should exist in the beginning
@@ -77,7 +77,7 @@ sub new_db {
 	    my $trads = djson( $tres );
 	    foreach my $tr ( @$trads ) {
 	      my $res = $ua->delete( "$n4jurl/tradition/" . $tr->{id} );
-	      die errorout("Could not delete tradition " . $tr->{id}, $res) 
+	      die errorout("Could not delete tradition " . $tr->{id}, $res)
 	      	unless $res->code == 200;
 	    }
 	  }
@@ -93,7 +93,7 @@ sub new_db {
 	}
 
 	# TODO create openid user
-	
+
 	my $created = {public => [], private => []};
 
 	# Add the traditions
@@ -110,8 +110,12 @@ sub new_db {
 	my $t1id = djson( $res )->{tradId};
 	push(@{$created->{private}}, $t1id);
 
+    my $t1stemma = {
+        identifier => 'stemma',
+        dot => filejstr("$datadir/besoin_stemweb.dot")
+    };
 	$res = $ua->post( "$n4jurl/tradition/$t1id/stemma", 'Content-Type' => 'application/json',
-	  Content => filejstr("$datadir/besoin_stemweb.dot") );
+	  Content => to_json({ dot => filejstr("$datadir/besoin_stemweb.dot") }));
 	die errorout("Besoin stemma could not be added", $res) unless $res->code == 201;
 
 	# 1a. TODO something owned by the OpenID user
@@ -130,7 +134,7 @@ sub new_db {
 	my $t2id = djson( $res )->{tradId};
 	push(@{$created->{public}}, $t2id);
 	$res = $ua->post( "$n4jurl/tradition/$t2id/stemma", 'Content-Type' => 'application/json',
-	  Content => filejstr("$datadir/florilegium.dot") );
+	  Content => to_json({ dot => filejstr("$datadir/florilegium.dot") }));
 	die errorout("Florilegium stemma could not be added", $res) unless $res->code == 201;
 
 	# 3. John verse
@@ -146,7 +150,7 @@ sub new_db {
 	$res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t3data);
 	die errorout("John verse tradition could not be created", $res) unless $res->code == 201;
 	push(@{$created->{public}}, djson( $res )->{tradId});
-	
+
 
 	# 4. Sapientia / collation correction
 	my $t4data = [

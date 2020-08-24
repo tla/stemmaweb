@@ -1,6 +1,7 @@
 package stemmaweb::Controller::Stemweb;
 use Moose;
 use namespace::autoclean;
+use Date::Parse;
 use Encode qw/ decode_utf8 /;
 use File::Which;
 use JSON;
@@ -180,37 +181,49 @@ sub _process_stemweb_result {
 
     # Find the specified tradition and check its job ID.
     # No permission check because Stemweb won't have a user cookie.
-    my $m         = $c->model('Directory');
+    my $m = $c->model('Directory');
+    my $textid = $answer->{textid};
     my $textinfo = load_tradition($c, $textid, 1);
     unless ($textinfo) {
         return _json_error($c, 400,
             "No tradition found with ID " . $answer->{textid});
     }
     if ($answer->{status} == 0) {
-        my $stemmata;
-        if (exists($textinfo->{from_jobid})
-            && $textinfo->{from_jobid} eq $answer->{jobid}) {
-            try {
-                # Here we have not yet recorded a result. We need to
-                # - parse the Newick into a list of graph objects
-                # - convert them to dot
-                # - upload them to stemmarest using PUT with a unique name and job ID
-                # - save the server result into @$stemmata
-                # - clear the tradition's stemweb_jobid
-            }
-            catch (stemmaweb::Error $e ) {
-                return _json_error($c, $e->status, $e->message);
-            }
-            catch {
-                return _json_error($c, 500, $@);
+        my $stemmata = [];
+        # Get the resulting Newick trees, separate them and give them names
+        my $newickspecs = {};
+        my $title = sprintf("%s %d", $answer->{algorithm}, str2time($answer->{start_time}));
+        my $ct = 0;
+        foreach my $tree (split(/\s*;\s*/, $answer->{result})) {
+            $newickspecs->{$title . "_$ct"} = $tree;
+        }
+        if (exists($textinfo->{stemweb_jobid})
+            && $textinfo->{stemweb_jobid} eq $answer->{jobid}) {
+            foreach my $s (keys %$newickspecs) {
+                my $req = {
+                    identifier => $s,
+                    newick => $newickspecs->{$s},
+                    from_jobid => $answer->{jobid}
+                };
+                try {
+                    push(@$stemmata, $m->ajax(
+                        'post', "/tradition/$textid/stemma",
+                        'Content-Type' => 'application/json',
+                        Content        => JSON::encode_json($req)
+                    ));
+                } catch (stemmaweb::Error $e) {
+                    return _json_error($c, $e->status, $e->message);
+                } catch {
+                    return _json_error($c, 500, $@);
+                }
             }
         } else {
-
-            # It may be that we already received a callback meanwhile.
+            # It may be that we already received a callback meanwhile
+            # and deleted the tradition jobid.
             # Check all stemmata for the given jobid and return them.
             @$stemmata =
-              grep { exists $_->{stemweb_jobid} &&
-                     $_->{stemweb_jobid} eq $answer->{jobid} }
+              grep { exists $_->{from_jobid} &&
+                     $_->{from_jobid} eq $answer->{jobid} }
               $textinfo->{stemmata};
         }
         if (@$stemmata) {
@@ -218,15 +231,14 @@ sub _process_stemweb_result {
             # If we got here, success!
             $c->stash->{'result'} = {
                 'status'   => 'success',
-                'stemmata' => \@stemmata
+                'stemmata' => $stemmata
             };
         } else {
-
-            # Hm, no stemmata found on this tradition with this jobid.
-            # Clear the tradition jobid so that the user can try again.
+            # Hm, either there was a mismatch between this tradition's
+            # job ID and the one returned in the answer, or
             if ($textinfo->{stemweb_jobid}) {
                 try {
-                    _set_stemweb_jobid($textid, undef);
+                    _set_stemweb_jobid($m, $textid, undef);
                 } catch (stemmaweb::Error $e ) {
                     return _json_error($c, $e->status, $e->message);
                 }
@@ -240,8 +252,11 @@ sub _process_stemweb_result {
     } else {
 
         # Failure. Clear the job ID so that the user can try again.
-        $tradition->_clear_stemweb_jobid;
-        $m->save($tradition);
+        try {
+            _set_stemweb_jobid($m, $textid, undef);
+        } catch (stemmaweb::Error $e ) {
+            return _json_error($c, $e->status, $e->message);
+        }
         $c->stash->{'result'} =
           { 'status' => 'failed', 'message' => $answer->{result} };
     }
@@ -268,7 +283,7 @@ the following:
 
 sub request :Local :Args(0) {
     my ($self, $c) = @_;
-
+    my $m = $c->model('Directory');
     # Look up the relevant tradition and check permissions.
     my $reqparams = $c->req->params;
     my $tid       = delete $reqparams->{tradition};
@@ -333,10 +348,10 @@ sub request :Local :Args(0) {
             return _json_error($c, $e->status,
                 "Could not generate TSV data: " . $e->message);
         }
-
+        $stemweb_request->{data} = $tsv;
         # Call to the appropriate URL with the request parameters.
         my $ua = LWP::UserAgent->new();
-        # $c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) );
+        $c->log->debug( 'Sending request to Stemweb: ' . to_json( $stemweb_request ) );
         my $resp = $ua->post(
             $self->stemweb_url . "/algorithms/process/$algorithm/",
             'Content-Type' => 'application/json; charset=utf-8',
@@ -349,12 +364,11 @@ sub request :Local :Args(0) {
                   . decode_utf8($resp->content));
             my $stemweb_response = decode_json($resp->content);
             try {
-                $t->set_stemweb_jobid($stemweb_response->{jobid});
+                _set_stemweb_jobid($m, $tid, $stemweb_response->{jobid});
             }
             catch (stemmaweb::Error $e ) {
-                return _json_error($c, 429, $e->message);
+                return _json_error($c, $e->status, $e->message);
             }
-            $c->model('Directory')->save($t);
             $c->stash->{'result'} = $stemweb_response;
             $c->forward('View::JSON');
         } elsif ($resp->code == 500
