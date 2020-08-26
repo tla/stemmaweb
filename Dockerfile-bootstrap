@@ -61,7 +61,7 @@ RUN cpanm \
 
 # Then get the modules referenced directly in the Makefile.PL
 WORKDIR /tmp
-COPY sources/Makefile.PL /tmp
+COPY Makefile.PL /tmp
 RUN grep requires Makefile.PL | \
     cut -d ' ' -f 2 | \
     sed -e 's/;//' | \

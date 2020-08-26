@@ -7,6 +7,7 @@ on:
       - master
     paths:
       - Makefile.PL
+      - Dockerfile-bootstrap
     
 env:
   # TODO: Change variable to your image's name.
