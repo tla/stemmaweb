@@ -7,7 +7,7 @@ use Config::Any;
 use Digest;
 use JSON qw/to_json from_json/;
 use LWP::UserAgent;
-use URI::URL;
+use URI;
 
 # Define our helpers
 
@@ -40,7 +40,7 @@ sub new_db {
 	# Get the URL
 	my $cfg = Config::Any->load_stems({stems => ['stemmaweb'], use_ext => 1})->[0];
 	my $dircfg = $cfg->{'stemmaweb.conf'}->{Model}->{Directory};
-	my $n4jurl = new URI::URL $dircfg->{tradition_repo};
+	my $n4jurl = URI->new($dircfg->{tradition_repo});
 
 	# Add the users
 	my $ua = LWP::UserAgent->new();
