@@ -195,7 +195,7 @@ sub _process_stemweb_result {
         my $title = sprintf("%s %d", $answer->{algorithm}, str2time($answer->{start_time}));
         my $ct = 0;
         foreach my $tree (split(/\s*;\s*/, $answer->{result})) {
-            $newickspecs->{$title . "_$ct"} = $tree;
+            $newickspecs->{$title . "_$ct"} = "$tree;";
         }
         if (exists($textinfo->{stemweb_jobid})
             && $textinfo->{stemweb_jobid} eq $answer->{jobid}) {
