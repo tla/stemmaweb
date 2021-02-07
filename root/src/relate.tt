@@ -250,6 +250,27 @@
     <div id="section-form-status"></div>
   </div>
 
+  <!-- Relation type management dialog box -->
+  <div id="relation-edit-dialog" title="Relation type management">
+    <div id="relation_edit_status"></div>
+    <h4><span class="texttitle"></span> Relation type list</h4>
+      <form id="relation-edit-form">
+        <table>
+          <tr><td><label for="relation_name">Name:</label></td><td><label for="relation_desc">Description:</label></td></tr>
+          <tr>
+            <td valign="top" style="width:40%" >
+              <input id="relation_name" name="name" type="text" value="Add new relation name" autocomplete="off" style="width:95%" onclick="if (this.value == 'Add new relation name') {this.value = ''};" onkeydown="this.click(); unselect_relation_list()"; onkeyup="on_relationname_changed()" />
+              <br>
+              <select multiple="multiple" id="relation_list" class="relation-type-list" style="width:100%; height:200px" onchange="display_relation_type(this);"></select>
+            </td>
+            <td valign="top">
+              <textarea id="relation_desc" name="description" class=".ui-widget input" style="width:300px;height:120px" onclick="if (this.value == 'Add description') {this.value = ''};" onkeydown="this.click()"; onkeyup="update_relation_desc(this);">Add description</textarea>
+            </td>
+          </tr>
+        </table>
+      </form>
+  </div>
+
   <div id="error-display" title="Error">
   </div>
 
@@ -259,8 +280,12 @@
     <ul id="keymaplist">
       <li></li>
     </ul>
-  <!--hr>
-  <p>Edit</p -->
+    <br/>
+    [% IF permission == 'full' %]
+      <div class="button textcontrol editcontrol" id="edit_relations_button" onClick="$('#relation-edit-dialog').dialog('open')">
+        <span>Edit</span>
+      </div>
+    [% END %]
   </div>
   <div id="keystroke_menu">
   </div>

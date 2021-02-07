@@ -1968,6 +1968,51 @@ function get_relation_querystring() {
   return form_values;
 }
 
+function display_relation_type(el) {
+    $('#relation_name').val(el.value);
+    $('#relation_desc').val(relationship_types.find(r => r.name === el.value).description);
+    setAddButtonDisabled();
+    setDeleteButtonDisabled();
+}
+
+function update_relation_desc(el) {
+    var relname = $('#relation_name').val();
+    var myrel = relationship_types.find(r => r.name === relname);
+    if ( myrel ) { myrel.description = $('#relation_desc').val(); }
+    setAddButtonDisabled();
+}
+
+function on_relationname_changed(el) {
+    unselect_relation_list();
+    setAddButtonDisabled();
+    setDeleteButtonDisabled();
+}
+
+function unselect_relation_list() {
+    $('#relation_list').val([]);
+}
+
+function setAddButtonDisabled() {
+    // Disable 'add' button if relation name contains space or if already in our list
+    var relname = $('#relation_name').val();
+    var alreadyListed = false;
+    if (relname ) {
+        alreadyListed = relationship_types.find(r => r.name === relname.trim()) ;
+    };
+    var emptyDesc = Boolean ( ( $('#relation_desc').val().trim() == "" ) || ( $('#relation_desc').val().trim() == "Add description" ));
+    var mydisable = Boolean( ! relname || relname.trim().includes(' ') || alreadyListed  || emptyDesc );
+    var action = mydisable ? 'disable' : 'enable';
+    $('#relationtype_add_button').button(action);
+}
+
+function setDeleteButtonDisabled() {
+    // Disable 'delete' button if no relation selected
+    var mydisable = ! $('#relation_list').val();
+    var action = mydisable ? 'disable' : 'enable';
+    $('#relationtype_delete_button').button(action);
+}
+
+
 // Now get to work on the document.
 // First error handling...
 $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
@@ -2516,6 +2561,123 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     close: function() {
       $("#dialog_overlay").hide();
     }
+  });
+
+  // Set up the relation type edit dialog
+  $('#relation-edit-dialog').dialog({
+    autoOpen: false,
+    modal: true,
+    width: 600,
+    height: 400,
+    buttons: {
+      add: {
+        text: 'Add new',
+        id: 'relationtype_add_button',
+        click: function(evt) {
+            $("#relation_edit_status").empty();
+            var mybuttons = $(evt.target).closest('button').parent().find('button');
+            mybuttons.button('disable');
+            var myrel = $('#relation_name').val().trim();
+            var mydesc = $('#relation_desc').val().trim();
+            if (  ! relationship_types.find(r => r.name === myrel) &&
+                  ( myrel != "Add new relation name" ) &&
+                  ( mydesc != "Add description" ) &&
+                  ( myrel.length * mydesc.length > 0 ) ) {
+                var form_values = $('#relation-edit-form').serialize();
+                $.ajax({
+                  url: 'relationtype',
+                  data: form_values,
+                  success: function(data) {
+                    // Display as new list element
+                    $('.relation-type-list').append($('<option />').attr("value", myrel).text(myrel));
+                    $('#relation_list option:last').attr("selected", "selected");
+                    $('#relation_list').focus();
+                    // Add as data element
+                    relationship_types.push({name:myrel, description:mydesc});
+                    add_relations(function() {}); // update keymap
+                    setAddButtonDisabled();
+                  },
+                  dataType: 'json',
+                  type: 'POST'
+                });
+            }
+            mybuttons.button("enable");
+          }
+      },
+      delete: {
+        text: 'Delete',
+        id: 'relationtype_delete_button',
+        click: function(evt) {
+          $("#relation_edit_status").empty();
+          if ($('#relation_list').val()) {
+            var mybuttons = $(evt.target).closest('button').parent().find('button');
+            mybuttons.button('disable');
+            if (confirm("This operation cannot be undone. Continue?")) {
+                $.each($('#relation_list').val(), function(index, value) {
+                  $('#relation_name').val(value);
+                  var form_values = $('#relation-edit-form').serialize();
+                  $.ajax({
+                    url: 'relationtype',
+                    data: form_values,
+                    success: function(data) {
+                        // Remove the affected list element
+                        $('.relation-type-list option[value = ' + value + ']').remove();
+                        $('#keymaplist li:contains(' + value + ')').remove();
+                        // Remove the affected data
+                        var toRemove = -1;
+                        $.each(relationship_types, function(i) {
+                          if (this.name === value) {
+                            toRemove = i;
+                          }
+                        })
+                        relationship_types.splice(toRemove, 1);
+                    },
+                    dataType: 'json',
+                    type: 'DELETE'
+                  });
+                  $('#relation_name').val('');
+                  $('#relation_desc').val('');
+                });
+            }
+            mybuttons.button("enable");
+          }
+        }
+      },
+      Save: function(evt) {
+        $("#relation_edit_status").empty();
+        if ($('#relation_list').val()) {
+          var mybuttons = $(evt.target).closest('button').parent().find('button');
+          mybuttons.button('disable');
+          $.each($('#relation_list').val(), function(index, value) {
+            $('#relation_name').val(value);
+            var myrel = relationship_types.find(r => r.name === value);
+            if ( myrel ) { $('#relation_desc').val(myrel.description); }
+            var form_values = $('#relation-edit-form').serialize();
+            $.ajax({
+              url: 'relationtype',
+              data: form_values,
+              success: function(data) {
+                // update keymap
+                add_relations(function() {});
+              },
+              dataType: 'json',
+              type: 'POST'
+            });
+          });
+          mybuttons.button("enable");
+        }
+      },
+      close: {
+        text: 'Close',
+        click: function() {
+          $('#relation-edit-dialog').dialog('close');
+        }
+      },
+    },
+    open: function() {
+      // Clear any prior error messages
+      $('#relation_edit_status').empty();
+    },
   });
 
   // Set up the download dialog

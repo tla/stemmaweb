@@ -30,7 +30,7 @@ function refreshDirectory() {
           var tname = $(this).text();
 		  if (tid === selectedTextID) {
 			  $('#upload_for_tradition').append($('<option>')
-			  	.attr('value', tid).attr('selected', 'selected').text(tname));		  	
+			  	.attr('value', tid).attr('selected', 'selected').text(tname));
 		  } else {
 			  $('#upload_for_tradition').append($('<option>').attr('value', tid).text(tname));
 		  }
@@ -597,6 +597,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     } else {
       error += '<br>The section cannot be modified.</p>';
     }
+  } else if ($('#relation-edit-dialog').dialog('isOpen')) {
+    error += '<br>The relation type cannot be modified.</p>';
+    errordiv = '#relation_edit_status';     
   } else if (ajaxSettings.url.indexOf('textinfo') > -1 && ajaxSettings.type == 'GET') {
     $('#textinfo_waitbox').hide();
     $('#textinfo_container').show();
