@@ -214,6 +214,7 @@
             <option value="collatex">CollateX XML</option>
             <option value="cxjson">CollateX JSON</option>
             <option value="graphml">StemmaRest GraphML</option>
+            <option value="stemmaweb">Legacy Stemmaweb GraphML</option>
           </select><br>
         </div>
         <div class="controlgroup new_section">

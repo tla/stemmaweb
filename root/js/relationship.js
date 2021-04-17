@@ -25,6 +25,10 @@ function arrayUnique(array) {
   return a;
 };
 
+function getTraditionURL(which) {
+  return basepath + textid + '/' + which;
+}
+
 function getTextURL(which) {
   return basepath + textid + '/' + sectid + '/' + which;
 }
@@ -36,6 +40,22 @@ function getReadingURL(reading_id) {
 // Make an XML ID into a valid selector
 function jq(myid) {
   return '#' + myid.replace(/(:|\.)/g, '\\$1');
+}
+
+// Serialize a form to a JSON object. Assumes no duplication of field names.
+function serializeJSON(formid) {
+  var serials = $('#' + formid).serializeArray();
+  var result = {};
+  $.each(serials, function(i, datum) {
+    // Is it a checkbox?
+    var selector = '#' + formid + ' *[name="' + datum.name + '"]'
+    if ($(selector).attr('type') === 'checkbox') {
+      result[datum.name] = datum.value === "on";
+    } else {
+      result[datum.name] = datum.value;
+    }
+  });
+  return result;
 }
 
 // Our controller often returns a map of SVG node ID -> reading data,
@@ -671,16 +691,21 @@ function zoomer() {
   }
 }
 
-function add_relations(callback_fn) {
+function populate_relationtype_keymap() {
   // Add the relationship types to the keymap list
-  $('#keymaplist').empty();
+  $('.keymaplist').empty();
   $.each(relationship_types, function(index, typedef) {
     li_elm = $('<li class="key">').css("border-color",
       relation_manager.relation_colors[index]).text(typedef.name);
+    li_elm.data('name', typedef.name);
     li_elm.append($('<div>').attr('class', 'key_tip_container').append(
       $('<div>').attr('class', 'key_tip').text(typedef.description)));
-    $('#keymaplist').append(li_elm);
+    $('.keymaplist').append(li_elm);
   });
+}
+
+function add_relations(callback_fn) {
+  populate_relationtype_keymap();
   // Save this list of names to the outer element data so that the relationship
   // factory can access it
   var rel_types = $.map(relationship_types, function(t) {
@@ -1968,6 +1993,23 @@ function get_relation_querystring() {
   return form_values;
 }
 
+function populate_rtform(rtname) {
+  var rtdata = relationship_types.find(function(el) {
+    return el.name === rtname
+  });
+  $.each(rtdata, function(k, v) {
+    // Find the field that corresponds to the key
+    var field = k.replace('is_', '');
+    var fieldid = '#relation_type_' + field;
+    if (typeof v === "boolean") {
+      $(fieldid).prop("checked", v);
+    } else {
+      $(fieldid).val(v);
+    }
+  });
+  $('.relation-type-button').button('enable');
+}
+
 // Now get to work on the document.
 // First error handling...
 $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
@@ -2027,6 +2069,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   } else if ($('#emend').dialog('isOpen')) {
     error += '<br>The text cannot be emended.';
     errordiv = '#emend-status';
+  } else if ($('#relation-type-dialog').dialog('isOpen')) {
+    error += '<br>The relation type cannot be modified.';
+    errordiv = '#relation-type-status';
   } else {
     // Probably a keystroke action
     error += '<br>The action cannot be performed.</p>';
@@ -2647,6 +2692,93 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     }
   });
 
+  // Set up the relation type editing dialog
+  $('#relation-type-dialog').dialog({
+    autoOpen: false,
+    width: 450,
+    modal: true,
+    buttons: {
+      delete: {
+        text: "Delete type",
+        class: 'relation-type-button',
+        click: function() {
+          $('.relation-type-button').button('disable');
+          var reltypename = $('#relation_type_name').text();
+          var ncpath = getTraditionURL('relationtype/' + reltypename);
+          $.ajax({
+            url: ncpath,
+            success: function(data) {
+              // Remove the data in relationship_types
+              var ridx = relationship_types.findIndex(function(el) {
+                return el.name === data.name
+              });
+              relationship_types.splice(ridx, 1);
+              // Re-display the keymap list
+              populate_relationtype_keymap();
+            },
+            dataType: 'json',
+            type: 'DELETE'
+          });
+        }
+      },
+      change: {
+        text: "Update type",
+        class: 'relation-type-button',
+        click: function() {
+          $('.relation-type-button').button('disable');
+          var reltypename = $('#relation_type_name').text();
+          var ncpath = getTraditionURL('relationtype/' + reltypename);
+          var rtdata = serializeJSON('relation-type-edit');
+          $.ajax({
+            url: ncpath,
+            success: function(data) {
+              // Re-enable the buttons
+              $('.relation-type-button').button('enable');
+              // Replace the data in relationship_types
+              var ridx = relationship_types.findIndex(function(el) {
+                el.name === reltypename
+              });
+              if (ridx === -1) {
+                relationship_types.push(data);
+              } else {
+                relationship_types.splice(ridx, 1, data);
+              }
+              // Re-display the keymap list
+              populate_relationtype_keymap();
+            },
+            data: JSON.stringify(rtdata),
+            dataType: 'json',
+            type: 'PUT'
+          })
+        }
+      },
+      new: {
+        text: "Create new",
+        class: 'relation-type-button',
+        click: function() {
+          // TODO Add a new entry to the list and populate dummy values
+        }
+      },
+      Close: function() {
+        $('#relation-type-dialog').dialog('close');
+      }
+    },
+    open: function() {
+      dialog_background('#relation-type-status');
+      // Make the list of relation types in the dialog clickable
+      $('#relation-type-list li').each(function() {
+        var name = $(this).data('name');
+        $(this).click(function() {
+          populate_rtform(name);
+        });
+      });
+      // Clear the form
+      document.getElementById('relation-type-edit').reset();
+    },
+    close: function() {
+      $('#dialog_overlay').hide();
+    }
+  });
 
   // Set up the error message dialog, for results from keystroke commands without their own
   // dialog boxes
@@ -2656,6 +2788,8 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     modal: true,
     buttons: {
       OK: function() {
+        // Hide the overlay in case it was shown
+        $("#dialog_overlay").hide();
         $(this).dialog("close");
       },
     }
@@ -2787,6 +2921,7 @@ function loadSVG(normalised) {
     }
     // Reload the SVG
     $('#svgenlargement').empty().append(svgData.documentElement)
+    // TODO center the SVG vertically
     svgEnlargementLoaded();
   });
 }

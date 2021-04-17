@@ -96,64 +96,11 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     # Stash the relationship definitions.
     $c->stash->{'relationship_scopes'} = to_json([qw(local document)]);
     $c->stash->{'ternary_values'}      = to_json([qw(yes maybe no)]);
-    # Set some defaults for backwards compatibility
-    my $reltypeinfo = [
-        {
-            name => 'orthographic',
-            description =>
-              'These are the same reading, neither unusually spelled.'
-        },
-        {
-            name        => 'punctuation',
-            description => 'These are the same reading apart from punctuation.'
-        },
-        {
-            name        => 'spelling',
-            description => 'These are the same reading, spelled differently.'
-        },
-        {
-            name => 'grammatical',
-            description =>
-'These readings share a root (lemma), but have different parts of speech (morphologies).'
-        },
-        {
-            name => 'lexical',
-            description =>
-'These readings share a part of speech (morphology), but have different roots (lemmata).'
-        },
-        {
-            name => 'uncertain',
-            description =>
-'These readings are related, but a clear category cannot be assigned.'
-        },
-        {
-            name => 'other',
-            description =>
-'These readings are related in a way not covered by the existing types.'
-        },
-        {
-            name => 'transposition',
-            description =>
-'This is the same (or nearly the same) reading in a different location.'
-        },
-        {
-            name => 'repetition',
-            description =>
-              'This is a reading that was repeated in one or more witnesses.'
-        },
-    ];
-    # Add / override the types associated with this tradition
+    # Add the types associated with this tradition
+    my $reltypeinfo = [];
     my $textid = $c->stash->{textid};
     try {
-        my $definedtypes = $m->ajax('get', "/tradition/$textid/relationtypes");
-        foreach my $type (@$definedtypes) {
-            my @existing = grep { $_->{name} eq $type->{name} } @$reltypeinfo;
-            if (@existing) {
-                $existing[0]->{description} = $type->{description};
-            } else {
-                push(@$reltypeinfo, { name => $type->{name}, description => $type->{description} });
-            }
-        }
+        $reltypeinfo = $m->ajax('get', "/tradition/$textid/relationtypes");
     } catch (stemmaweb::Error $e ) {
         return json_error($c, $e->status, $e->message);
     }

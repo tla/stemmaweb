@@ -246,6 +246,19 @@ span.apimore {
   font-size: 80%;
 }
 
+#rtype-edit {
+  color: #488dd2;
+  text-decoration: underline;
+  margin-left: 10px;
+}
+
+#dialog_picker {
+    float: left;
+}
+#dialog_picked {
+    float: left;
+}
+
 .draggable {
   cursor: pointer;
 }

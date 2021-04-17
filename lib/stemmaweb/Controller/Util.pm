@@ -45,7 +45,7 @@ sub _check_permission {
 
 # Helper to load and check the permissions on a tradition
 sub load_tradition {
-    my ($c, $textid) = @_;
+    my ($c, $textid, $skip_permission) = @_;
     my $m = $c->model('Directory');
     my $textinfo;
     my $sections;
@@ -56,7 +56,8 @@ sub load_tradition {
     catch (stemmaweb::Error $e ) {
         return json_error($c, $e->status, $e->message);
     }
-    $textinfo->{permission} = _check_permission($c, $textinfo);
+    $textinfo->{permission} = _check_permission($c, $textinfo)
+        unless $skip_permission;
     return $textinfo;
 }
 

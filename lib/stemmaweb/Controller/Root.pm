@@ -294,6 +294,7 @@ sub textinfo :Local :Args(1) {
           unless $ok eq 'full';
         my $user   = $c->user->get_object;
         my $params = $c->req->params;
+        $DB::single = 1;
         if (!$user->is_admin && exists $params->{owner}) {
             return json_error($c, 403,
                 "Only admin users can change tradition ownership");
