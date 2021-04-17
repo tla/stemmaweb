@@ -6,7 +6,7 @@ on:
   push:
     # Publish an image every time a new version tag is pushed.
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - '*'
     
 env:
   IMAGE_NAME: stemmaweb
