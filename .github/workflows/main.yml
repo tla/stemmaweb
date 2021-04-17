@@ -1,0 +1,43 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Docker image release
+
+on:
+  push:
+    # Publish an image every time a new version tag is pushed.
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+    
+env:
+  IMAGE_NAME: stemmaweb
+
+jobs:
+  # Push bootstrap image to GitHub Packages.
+  push:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image
+        run: docker build . --tag $IMAGE_NAME
+
+      - name: Log into registry
+        run: echo "${{ secrets.DOCKERHUB_PW }}" | docker login docker.pkg.github.com -u chrysaphi --password-stdin
+
+      - name: Push image
+        run: |
+          IMAGE_ID=dhuniwien/$IMAGE_NAME
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          # Check what we are pushing
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          # Do the push
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+          # Use Docker `latest` tag convention
+          docker tag $IMAGE_NAME $IMAGE_ID:latest
+          docker push $IMAGE_ID:latest
