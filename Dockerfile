@@ -1,5 +1,5 @@
 # start from the bootstrap image
-FROM docker.pkg.github.com/tla/stemmaweb/stemmaweb-bootstrap:latest
+FROM ghcr.io/tla/stemmaweb-bootstrap:latest
 
 WORKDIR /var/www/stemmaweb
 COPY . /var/www/stemmaweb/
