@@ -279,7 +279,7 @@ Returns and updates information about a particular text.
 
 sub textinfo :Local :Args(1) {
     my ($self, $c, $textid) = @_;
-    my $textinfo = load_tradition($c, $textid);
+    my $textinfo = load_tradition($c, $textid, {load_stemmata => 1});
     return unless $textinfo;
     my $ok = $textinfo->{permission};
     return json_error($c, 403,
@@ -294,7 +294,6 @@ sub textinfo :Local :Args(1) {
           unless $ok eq 'full';
         my $user   = $c->user->get_object;
         my $params = $c->req->params;
-        $DB::single = 1;
         if (!$user->is_admin && exists $params->{owner}) {
             return json_error($c, 403,
                 "Only admin users can change tradition ownership");
@@ -318,17 +317,6 @@ sub textinfo :Local :Args(1) {
         return json_error($c, 405, "Disallowed HTTP method " . $c->req->method);
     }
 
-    # Add the witness information
-    my @witnesses =
-      map { $_->{sigil} } @{ $m->ajax('get', "/tradition/$textid/witnesses") };
-    $textinfo->{witnesses} = \@witnesses;
-
-    # Add the stemma information that exists, if any
-    my @stemmata;
-    foreach my $stemma (@{ $m->ajax('get', "/tradition/$textid/stemmata") }) {
-        push(@stemmata, stemmaweb::Controller::Stemma::stemma_info($stemma));
-    }
-    $textinfo->{stemmata} = \@stemmata;
     $c->stash->{'result'} = $textinfo;
     $c->forward('View::JSON');
 }

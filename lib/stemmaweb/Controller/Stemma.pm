@@ -7,7 +7,7 @@ use warnings;
 use Encode qw/ encode_utf8 /;
 use TryCatch;
 use stemmaweb::Controller::Util
-  qw/ load_tradition load_stemma json_error json_bool /;
+  qw/ load_tradition stemma_info json_error json_bool /;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -21,28 +21,6 @@ Catalyst Controller.
 
 =head1 METHODS
 
-=cut
-
-# Helper method to bundle the newline-stripped stemma SVG and its identifying info.
-sub stemma_info {
-    my ($stemmadata) = @_;
-    my $sinfo = {
-        name     => $stemmadata->{identifier},
-        directed => json_bool(!$stemmadata->{is_undirected}),
-        svg      => _as_svg($stemmadata, 'nonewline')
-    };
-    return $sinfo;
-}
-
-sub _as_svg {
-    my ($stemmadata, $nonewline) = @_;
-
-    # Make a fully-fledged T::T::Stemma object from the info we have
-    my $ssvg;
-    $ssvg = load_stemma($stemmadata)->as_svg();
-    $ssvg =~ s/\n/ /mg if $nonewline;
-    return $ssvg;
-}
 
 =head2 index
 

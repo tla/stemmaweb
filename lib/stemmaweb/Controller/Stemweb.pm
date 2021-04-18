@@ -10,7 +10,7 @@ use LWP::UserAgent;
 use Safe::Isa;
 use Scalar::Util qw/ looks_like_number /;
 use stemmaweb::Controller::Util
-  qw/ load_tradition json_error json_bool section_metadata /;
+  qw/ load_tradition stemma_info json_error json_bool section_metadata /;
 use stemmaweb::Model::StemmaUtil qw/ character_input phylip_pars /;
 use TryCatch;
 use URI;
@@ -183,13 +183,14 @@ sub _process_stemweb_result {
     # No permission check because Stemweb won't have a user cookie.
     my $m = $c->model('Directory');
     my $textid = $answer->{textid};
-    my $textinfo = load_tradition($c, $textid, 1);
+    my $textinfo = load_tradition($c, $textid,
+        {skip_permission => 1, load_stemmata => 1});
     unless ($textinfo) {
         return _json_error($c, 400,
             "No tradition found with ID " . $answer->{textid});
     }
     if ($answer->{status} == 0) {
-        my $stemmata = [];
+        my @stemmata;
         # Get the resulting Newick trees, separate them and give them names
         my $newickspecs = {};
         my $title = sprintf("%s %d", $answer->{algorithm}, str2time($answer->{start_time}));
@@ -206,11 +207,12 @@ sub _process_stemweb_result {
                     from_jobid => $answer->{jobid}
                 };
                 try {
-                    push(@$stemmata, $m->ajax(
+                    my $returned = $m->ajax(
                         'post', "/tradition/$textid/stemma",
                         'Content-Type' => 'application/json',
                         Content        => JSON::encode_json($req)
-                    ));
+                    );
+                    push(@stemmata, stemma_info($returned));
                 } catch (stemmaweb::Error $e) {
                     return _json_error($c, $e->status, $e->message);
                 } catch {
@@ -221,24 +223,23 @@ sub _process_stemweb_result {
             # It may be that we already received a callback meanwhile
             # and deleted the tradition jobid.
             # Check all stemmata for the given jobid and return them.
-            @$stemmata =
+            @stemmata =
               grep { exists $_->{from_jobid} &&
                      $_->{from_jobid} eq $answer->{jobid} }
-              $textinfo->{stemmata};
+              @{$textinfo->{stemmata}};
         }
-        if (@$stemmata) {
-
+        if (@stemmata) {
             # If we got here, success!
             $c->stash->{'result'} = {
                 'status'   => 'success',
-                'stemmata' => $stemmata
+                'stemmata' => \@stemmata,
             };
         } else {
             # Hm, either there was a mismatch between this tradition's
             # job ID and the one returned in the answer, or
             if ($textinfo->{stemweb_jobid}) {
                 try {
-                    _set_stemweb_jobid($m, $textid, undef);
+                    _set_stemweb_jobid($m, $textid, -1);
                 } catch (stemmaweb::Error $e ) {
                     return _json_error($c, $e->status, $e->message);
                 }
@@ -253,7 +254,7 @@ sub _process_stemweb_result {
 
         # Failure. Clear the job ID so that the user can try again.
         try {
-            _set_stemweb_jobid($m, $textid, undef);
+            _set_stemweb_jobid($m, $textid, -1);
         } catch (stemmaweb::Error $e ) {
             return _json_error($c, $e->status, $e->message);
         }
