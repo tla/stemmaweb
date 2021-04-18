@@ -6,8 +6,8 @@ on:
     tags:
       - '[0-9]*'
 env:
-  IMAGE_NAME: stemmaweb
-  VERSION: $(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+  IMAGE_NAME: dhuniwien/stemmaweb
+  VERSION: ${{ echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' }}
 
 jobs:
   # Push bootstrap image to GitHub Packages.
@@ -31,4 +31,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: dhuniwien/stemmaweb:${VERSION},dhuniwien/stemmaweb:latest
+          tags: ${{ env.IMAGE_NAME }}:${{ env.VERSION }},${{ env.IMAGE_NAME }}:latest
