@@ -18,10 +18,12 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build image
-        run: docker build . --tag $IMAGE_NAME
+        run: |
+          echo ${{ github_token }} | docker login https://docker.pkg.github.com -u ${GITHUB_ACTOR} --password-stdin
+          docker build . --tag $IMAGE_NAME
 
-      - name: Log into registry
-        run: echo "${{ secrets.DOCKERHUB_PW }}" | docker login docker.pkg.github.com -u chrysaphi --password-stdin
+      - name: Log into DockerHub
+        run: echo "${{ secrets.DOCKERHUB_PW }}" | docker login docker.pkg.github.com -u ${{ secrets.DOCKERHUB_USER }} --password-stdin
 
       - name: Push image
         run: |
