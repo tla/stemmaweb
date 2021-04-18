@@ -19,7 +19,7 @@ jobs:
 
       - name: Build image
         run: |
-          echo ${{ github_token }} | docker login https://docker.pkg.github.com -u ${GITHUB_ACTOR} --password-stdin
+          echo ${GITHUB_TOKEN} | docker login https://docker.pkg.github.com -u ${GITHUB_ACTOR} --password-stdin
           docker build . --tag $IMAGE_NAME
 
       - name: Log into DockerHub
