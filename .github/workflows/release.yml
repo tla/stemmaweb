@@ -16,14 +16,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      
+      - name: Log into local registry
+        uses: docker/login-action@v1
+        with:
+          registry: docker.pkg.github.com
+          username: ${{ github.repository_owner }}
+          password: ${GITHUB_TOKEN}
 
       - name: Build image
-        run: |
-          echo ${GITHUB_TOKEN} | docker login https://docker.pkg.github.com -u ${GITHUB_ACTOR} --password-stdin
-          docker build . --tag $IMAGE_NAME
+        run: docker build . --tag $IMAGE_NAME
 
       - name: Log into DockerHub
-        run: echo "${{ secrets.DOCKERHUB_PW }}" | docker login docker.pkg.github.com -u ${{ secrets.DOCKERHUB_USER }} --password-stdin
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PW }}
 
       - name: Push image
         run: |
