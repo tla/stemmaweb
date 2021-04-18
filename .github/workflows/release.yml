@@ -23,6 +23,7 @@ jobs:
           registry: docker.pkg.github.com
           username: ${{ github.repository_owner }}
           password: ${GITHUB_TOKEN}
+          logout: false
 
       - name: Build image
         run: docker build . --tag $IMAGE_NAME
@@ -32,6 +33,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PW }}
+          logout: false
 
       - name: Push image
         run: |
