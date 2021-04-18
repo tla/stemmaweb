@@ -1,4 +1,4 @@
-name: Docker push
+name: Build and push tagged
 
 on:
   push:
@@ -17,14 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
-      - name: Log into local registry
-        uses: docker/login-action@v1
-        with:
-          registry: docker.pkg.github.com
-          username: ${{ github.repository_owner }}
-          password: ${GITHUB_TOKEN}
-          logout: false
-
       - name: Build image
         run: docker build . --tag $IMAGE_NAME
 
