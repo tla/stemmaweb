@@ -10,7 +10,7 @@ use XML::LibXML::XPathContext;
 use vars qw/ @EXPORT /;
 
 @EXPORT =
-  qw/ load_tradition load_stemma section_metadata json_error json_bool /;
+  qw/ load_tradition stemma_info section_metadata json_error json_bool /;
 
 =head1 NAME
 
@@ -45,7 +45,7 @@ sub _check_permission {
 
 # Helper to load and check the permissions on a tradition
 sub load_tradition {
-    my ($c, $textid) = @_;
+    my ($c, $textid, $opts) = @_;
     my $m = $c->model('Directory');
     my $textinfo;
     my $sections;
@@ -56,8 +56,40 @@ sub load_tradition {
     catch (stemmaweb::Error $e ) {
         return json_error($c, $e->status, $e->message);
     }
-    $textinfo->{permission} = _check_permission($c, $textinfo);
+    $textinfo->{permission} = _check_permission($c, $textinfo)
+        unless $opts->{skip_permission};
+    # Ask for the witness info if we need it
+    if ($opts->{load_stemmata}) {
+        # Add the stemma information that exists, if any
+        my @stemmata;
+        foreach my $stemma (@{ $m->ajax('get', "/tradition/$textid/stemmata") }) {
+            push(@stemmata, stemma_info($stemma));
+        }
+        $textinfo->{stemmata} = \@stemmata;
+    }
     return $textinfo;
+}
+
+# Helper methods to bundle the newline-stripped stemma SVG and its identifying info.
+sub stemma_info {
+    my ($stemmadata) = @_;
+    my $sinfo = {
+        name     => $stemmadata->{identifier},
+        directed => json_bool(!$stemmadata->{is_undirected}),
+        svg      => _as_svg($stemmadata, 'nonewline'),
+        from_jobid => $stemmadata->{from_jobid}
+    };
+    return $sinfo;
+}
+
+sub _as_svg {
+    my ($stemmadata, $nonewline) = @_;
+
+    # Make a fully-fledged T::T::Stemma object from the info we have
+    my $ssvg;
+    $ssvg = load_stemma($stemmadata)->as_svg();
+    $ssvg =~ s/\n/ /mg if $nonewline;
+    return $ssvg;
 }
 
 sub load_stemma {

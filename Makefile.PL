@@ -14,7 +14,7 @@ requires 'Config::General';
 # See Catalyst::Plugin::ConfigLoader for supported formats
 
 # Catalyst libraries
-requires 'Catalyst::Runtime' => '5.90002';
+requires 'Catalyst::Runtime' => '5.90126';
 requires 'Catalyst::Plugin::Cache';
 requires 'Catalyst::Plugin::ConfigLoader';
 requires 'Catalyst::Plugin::StackTrace';
@@ -60,6 +60,7 @@ requires 'strictures' => '2';
 requires 'Throwable::X';
 requires 'TryCatch';
 requires 'URI::Escape';
+requires 'XML::LibXML';
 requires 'namespace::autoclean';
 requires 'strictures';
 

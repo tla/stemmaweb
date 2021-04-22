@@ -25,6 +25,10 @@ function arrayUnique(array) {
   return a;
 };
 
+function getTraditionURL(which) {
+  return basepath + textid + '/' + which;
+}
+
 function getTextURL(which) {
   return basepath + textid + '/' + sectid + '/' + which;
 }
@@ -36,6 +40,22 @@ function getReadingURL(reading_id) {
 // Make an XML ID into a valid selector
 function jq(myid) {
   return '#' + myid.replace(/(:|\.)/g, '\\$1');
+}
+
+// Serialize a form to a JSON object. Assumes no duplication of field names.
+function serializeJSON(formid) {
+  var serials = $('#' + formid).serializeArray();
+  var result = {};
+  $.each(serials, function(i, datum) {
+    // Is it a checkbox?
+    var selector = '#' + formid + ' *[name="' + datum.name + '"]'
+    if ($(selector).attr('type') === 'checkbox') {
+      result[datum.name] = datum.value === "on";
+    } else {
+      result[datum.name] = datum.value;
+    }
+  });
+  return result;
 }
 
 // Our controller often returns a map of SVG node ID -> reading data,
@@ -72,6 +92,12 @@ function update_reading(rdata) {
   readingdata[nid] = rdata;
   rid2node[rid] = nid;
   return nid;
+}
+
+// Utility function to sort a group of readings by rank.
+function sortByRank(a, b) {
+  if (readingdata[a]["rank"] === readingdata[b]["rank"]) return 0;
+  return readingdata[a]["rank"] < readingdata[b]["rank"] ? -1 : 1;
 }
 
 function update_reading_display(node_id) {
@@ -665,16 +691,21 @@ function zoomer() {
   }
 }
 
-function add_relations(callback_fn) {
+function populate_relationtype_keymap() {
   // Add the relationship types to the keymap list
-  $('#keymaplist').empty();
+  $('.keymaplist').empty();
   $.each(relationship_types, function(index, typedef) {
     li_elm = $('<li class="key">').css("border-color",
       relation_manager.relation_colors[index]).text(typedef.name);
+    li_elm.data('name', typedef.name);
     li_elm.append($('<div>').attr('class', 'key_tip_container').append(
       $('<div>').attr('class', 'key_tip').text(typedef.description)));
-    $('#keymaplist').append(li_elm);
+    $('.keymaplist').append(li_elm);
   });
+}
+
+function add_relations(callback_fn) {
+  populate_relationtype_keymap();
   // Save this list of names to the outer element data so that the relationship
   // factory can access it
   var rel_types = $.map(relationship_types, function(t) {
@@ -1791,13 +1822,36 @@ var keyCommands = {
     'key': 'c',
     'description': 'Concatenate a sequence of readings into a single reading',
     'function': function() {
-      // C for Compress; TODO get rid of dialog altogether
+      // C for Compress
       if ($('#svgenlargement').data('display_normalised')) {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
-        $('#action-concat').prop('checked', true);
-        $('#multipleselect-form').dialog('open');
+        // TODO prevent further keyCommands until finished.
+        dialog_background('#error-display')
+        var ncpath = getTextURL('compress');
+        // We need to gin up a form to serialize.
+        readings_selected.sort(sortByRank);
+        var cform = $('<form>')
+        $.each(readings_selected, function(index, value) {
+          cform.append($('<input>').attr(
+            "type", "hidden").attr(
+            "name", "readings[]").attr(
+            "value", readingdata[value]['id']));
+        });
+        var form_values = cform.serialize();
+        $.post(ncpath, form_values, function(data) {
+          if (data.nodes) {
+            compress_nodes(data.nodes);
+          }
+          if (data.status === 'warn') {
+            var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
+            $('#error-display').empty().append(dataerror);
+          } else {
+            unselect_all_readings();
+          }
+          $("#dialog_overlay").hide();
+        });
       }
     }
   },
@@ -1810,7 +1864,7 @@ var keyCommands = {
         $('#error-display').append('<p class="caution">The graph topology cannot be altered in normalized view.</p>');
         $('#error-display').dialog('open');
       } else if (readings_selected.length > 0) {
-        $('#action-detach').prop('checked', true);
+        $('#action-detach').val('on');
         $('#multipleselect-form').dialog('open');
       }
     }
@@ -1939,6 +1993,23 @@ function get_relation_querystring() {
   return form_values;
 }
 
+function populate_rtform(rtname) {
+  var rtdata = relationship_types.find(function(el) {
+    return el.name === rtname
+  });
+  $.each(rtdata, function(k, v) {
+    // Find the field that corresponds to the key
+    var field = k.replace('is_', '');
+    var fieldid = '#relation_type_' + field;
+    if (typeof v === "boolean") {
+      $(fieldid).prop("checked", v);
+    } else {
+      $(fieldid).val(v);
+    }
+  });
+  $('.relation-type-button').button('enable');
+}
+
 // Now get to work on the document.
 // First error handling...
 $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
@@ -1972,11 +2043,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     errordiv = '#delete-status';
   } else if ($('#multipleselect-form').dialog('isOpen')) {
     errordiv = '#multipleselect-form-status';
-    if (ajaxSettings.url == getTextURL('duplicate')) {
-      error += '<br>The reading cannot be duplicated.</p>';
-    } else {
-      error += '<br>The readings cannot be concatenated.</p>';
-    }
+    error += '<br>The reading cannot be duplicated.</p>';
   } else if ($('#reading-form').dialog('isOpen')) {
     // reading box
     error += '<br>The reading cannot be altered.</p>';
@@ -2002,6 +2069,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   } else if ($('#emend').dialog('isOpen')) {
     error += '<br>The text cannot be emended.';
     errordiv = '#emend-status';
+  } else if ($('#relation-type-dialog').dialog('isOpen')) {
+    error += '<br>The relation type cannot be modified.';
+    errordiv = '#relation-type-status';
   } else {
     // Probably a keystroke action
     error += '<br>The action cannot be performed.</p>';
@@ -2199,73 +2269,39 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       width: 250,
       modal: true,
       buttons: [{
-        text: "Cancel",
-        click: function() {
-          $('#multipleselect-form-status').empty();
-          $(this).dialog("close");
+          text: "Cancel",
+          click: function() {
+            $('#multipleselect-form-status').empty();
+            $(this).dialog("close");
+          }
+        },
+        {
+          text: "Detach",
+          id: "detach_btn",
+          click: function(evt) {
+            var self = $(this);
+            var mybuttons = $(evt.target).closest('button').parent().find('button');
+            mybuttons.button('disable');
+            var form_values = $('#detach_collated_form').serialize();
+            var ncpath = getTextURL('duplicate');
+            $.post(ncpath, form_values, function(data) {
+              unselect_all_readings();
+              detach_node(data);
+              mybuttons.button("enable");
+              self.dialog("close");
+            });
+          }
         }
-      }, {
-        text: "Detach",
-        id: "detach_btn",
-        click: function(evt) {
-          var self = $(this);
-          var mybuttons = $(evt.target).closest('button').parent().find('button');
-          mybuttons.button('disable');
-          var form_values = $('#detach_collated_form').serialize();
-          var ncpath = getTextURL('duplicate');
-          $.post(ncpath, form_values, function(data) {
-            unselect_all_readings();
-            detach_node(data);
-            mybuttons.button("enable");
-            self.dialog("close");
-          });
-        }
-      }, {
-        text: "Concatenate",
-        id: "concat_btn",
-        click: function(evt) {
-          var self = $(this);
-          var mybuttons = $(evt.target).closest('button').parent().find('button');
-          mybuttons.button('disable');
-
-          var ncpath = getTextURL('compress');
-          var form_values = $('#detach_collated_form').serialize();
-          // $.each($('#detach_collated_form input').filter(function() {return this.getAttribute("name") === "readings[]"}), function( i, v ) {vals.push(i)}); vals
-
-          $.post(ncpath, form_values, function(data) {
-            mybuttons.button('enable');
-            if (data.nodes) {
-              compress_nodes(data.nodes);
-            }
-            if (data.status === 'warn') {
-              var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
-              $('#multipleselect-form-status').empty().append(dataerror);
-            } else {
-              self.dialog('close');
-            }
-          });
-        }
-      }],
+      ],
       create: function(event, ui) {
         var buttonset = $(this).parent().find('.ui-dialog-buttonset').css('width', '100%');
         buttonset.find("button:contains('Cancel')").css('float', 'right');
         $('#action-detach').change(function() {
-          if ($('#action-detach')[0].checked) {
+          if ($('#action-detach').val() == 'on') {
             $('#detach_collated_form').show();
             $('#multipleselect-form-text').show();
 
             $('#detach_btn').show();
-            $('#concat_btn').hide();
-          }
-        });
-
-        $('#action-concat').change(function() {
-          if ($('#action-concat')[0].checked) {
-            $('#detach_collated_form').hide();
-            $('#multipleselect-form-text').hide();
-
-            $('#detach_btn').hide();
-            $('#concat_btn').show();
           }
         });
       },
@@ -2273,28 +2309,17 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $(this).dialog("option", "width", 200);
         dialog_background('#multipleselect-form-status');
 
-        if ($('#action-concat')[0].checked) {
-          $('#detach_collated_form').hide();
-          $('#multipleselect-form-text').hide();
-
-          $('#detach_btn').hide();
-          $('#concat_btn').show();
-        } else {
+        if ($('#action-detach').val() == 'on') {
           $('#detach_collated_form').show();
           $('#multipleselect-form-text').show();
 
           $('#detach_btn').show();
-          $('#concat_btn').hide();
         }
 
         // Populate the forms with the currently selected readings
         $('#detach_collated_form').empty();
         var witnesses = [];
 
-        function sortByRank(a, b) {
-          if (readingdata[a]["rank"] === readingdata[b]["rank"]) return 0;
-          return readingdata[a]["rank"] < readingdata[b]["rank"] ? -1 : 1;
-        };
         readings_selected.sort(sortByRank);
         $.each(readings_selected, function(index, value) {
           $('#detach_collated_form').append($('<input>').attr(
@@ -2667,6 +2692,93 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     }
   });
 
+  // Set up the relation type editing dialog
+  $('#relation-type-dialog').dialog({
+    autoOpen: false,
+    width: 450,
+    modal: true,
+    buttons: {
+      delete: {
+        text: "Delete type",
+        class: 'relation-type-button',
+        click: function() {
+          $('.relation-type-button').button('disable');
+          var reltypename = $('#relation_type_name').text();
+          var ncpath = getTraditionURL('relationtype/' + reltypename);
+          $.ajax({
+            url: ncpath,
+            success: function(data) {
+              // Remove the data in relationship_types
+              var ridx = relationship_types.findIndex(function(el) {
+                return el.name === data.name
+              });
+              relationship_types.splice(ridx, 1);
+              // Re-display the keymap list
+              populate_relationtype_keymap();
+            },
+            dataType: 'json',
+            type: 'DELETE'
+          });
+        }
+      },
+      change: {
+        text: "Update type",
+        class: 'relation-type-button',
+        click: function() {
+          $('.relation-type-button').button('disable');
+          var reltypename = $('#relation_type_name').text();
+          var ncpath = getTraditionURL('relationtype/' + reltypename);
+          var rtdata = serializeJSON('relation-type-edit');
+          $.ajax({
+            url: ncpath,
+            success: function(data) {
+              // Re-enable the buttons
+              $('.relation-type-button').button('enable');
+              // Replace the data in relationship_types
+              var ridx = relationship_types.findIndex(function(el) {
+                el.name === reltypename
+              });
+              if (ridx === -1) {
+                relationship_types.push(data);
+              } else {
+                relationship_types.splice(ridx, 1, data);
+              }
+              // Re-display the keymap list
+              populate_relationtype_keymap();
+            },
+            data: JSON.stringify(rtdata),
+            dataType: 'json',
+            type: 'PUT'
+          })
+        }
+      },
+      new: {
+        text: "Create new",
+        class: 'relation-type-button',
+        click: function() {
+          // TODO Add a new entry to the list and populate dummy values
+        }
+      },
+      Close: function() {
+        $('#relation-type-dialog').dialog('close');
+      }
+    },
+    open: function() {
+      dialog_background('#relation-type-status');
+      // Make the list of relation types in the dialog clickable
+      $('#relation-type-list li').each(function() {
+        var name = $(this).data('name');
+        $(this).click(function() {
+          populate_rtform(name);
+        });
+      });
+      // Clear the form
+      document.getElementById('relation-type-edit').reset();
+    },
+    close: function() {
+      $('#dialog_overlay').hide();
+    }
+  });
 
   // Set up the error message dialog, for results from keystroke commands without their own
   // dialog boxes
@@ -2676,6 +2788,8 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     modal: true,
     buttons: {
       OK: function() {
+        // Hide the overlay in case it was shown
+        $("#dialog_overlay").hide();
         $(this).dialog("close");
       },
     }
@@ -2688,7 +2802,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     $(this).hide();
     mouse_scale = svg_root_element.getScreenCTM().a;
     if ($(this).data('locked') == true) {
-      unselect_all_readings();
       d3svg.on(".drag", null);
       d3svg.call(zoomBehavior); // JMB turn zoom function on
       unselect_all_readings();
@@ -2788,7 +2901,7 @@ function loadSVG(normalised) {
 
   if (normalised) {
     // We are switching to the normalised view
-    ncpath += '&' + $('#normalize-for-type').serialize();
+    ncpath += '?' + $('#normalize-for-type').serialize();
     buttonText = "Expand graph";
   } else {
     // We are switching back to the expanded view
@@ -2808,6 +2921,7 @@ function loadSVG(normalised) {
     }
     // Reload the SVG
     $('#svgenlargement').empty().append(svgData.documentElement)
+    // TODO center the SVG vertically
     svgEnlargementLoaded();
   });
 }

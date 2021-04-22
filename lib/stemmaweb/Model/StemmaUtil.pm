@@ -14,7 +14,7 @@ use Graph::Reader::Dot;
 use IPC::Run qw/ run binary /;
 use stemmaweb::Error;
 @EXPORT_OK = qw/ read_graph display_graph editable_graph
-	character_input phylip_pars parse_newick newick_to_svg /;
+	character_input phylip_pars parse_newick /;
 
 =head1 NAME
 
@@ -216,118 +216,6 @@ sub _by_vertex {
 	return $a->[0].$a->[1] cmp $b->[0].$b->[1];
 }
 
-=head2 character_input( $tradition, $opts )
-
-Returns a character matrix string suitable for Phylip programs, which
-corresponds to the given alignment table. Options include:
-
-=over
-
-=item * exclude_layer - Exclude layered witnesses from the character input,
-using only the 'main' text of the witnesses in the tradition.
-
-=item * collapse - A reference to an array of relationship names that should
-be treated as equivalent for the purposes of generating the character matrix.
-
-=back
-
-=cut
-
-sub character_input {
-    my ( $tradition, $opts ) = @_;
-    my $table = $tradition->collation->alignment_table;
-    if( $opts->{exclude_layer} ) {
-    	# Filter out all alignment table rows that do not correspond
-    	# to a named witness - these are the layered witnesses.
-    	my $newtable = { alignment => [], length => $table->{length} };
-    	foreach my $row ( @{$table->{alignment}} ) {
-    		if( $tradition->has_witness( $row->{witness} ) ) {
-    			push( @{$newtable->{alignment}}, $row );
-    		}
-    	}
-    	$table = $newtable;
-    }
-    my $character_matrix = _make_character_matrix( $table, $opts );
-    my $input = '';
-    my $rows = scalar @{$character_matrix};
-    my $columns = scalar @{$character_matrix->[0]} - 1;
-    $input .= "\t$rows\t$columns\n";
-    foreach my $row ( @{$character_matrix} ) {
-        $input .= join( '', @$row ) . "\n";
-    }
-    return $input;
-}
-
-sub _make_character_matrix {
-    my( $table, $opts ) = @_;
-    # Push the names of the witnesses to initialize the rows of the matrix.
-    my @matrix = map { [ _normalize_witname( $_->{'witness'} ) ] }
-    				@{$table->{'alignment'}};
-    foreach my $token_index ( 0 .. $table->{'length'} - 1) {
-        my @pos_tokens = map { $_->{'tokens'}->[$token_index] }
-        						@{$table->{'alignment'}};
-        my @pos_readings = map { $_ ? $_->{'t'} : $_ } @pos_tokens;
-        my @chars = _convert_characters( \@pos_readings, $opts );
-        foreach my $idx ( 0 .. $#matrix ) {
-            push( @{$matrix[$idx]}, $chars[$idx] );
-        }
-    }
-    return \@matrix;
-}
-
-# Helper function to make the witness name something legal for pars
-
-sub _normalize_witname {
-    my( $witname ) = @_;
-    $witname =~ s/\s+/ /g;
-    $witname =~ s/[\[\]\(\)\:;,]//g;
-    $witname = substr( $witname, 0, 10 );
-    return sprintf( "%-10s", $witname );
-}
-
-sub _convert_characters {
-    my( $row, $opts ) = @_;
-    # This is a simple algorithm that treats every reading as different.
-    # Eventually we will want to be able to specify how relationships
-    # affect the character matrix.
-    my %unique = ( '__UNDEF__' => 'X',
-                   '#LACUNA#'  => '?',
-                 );
-    my %equivalent;
-    my %count;
-    my $ctr = 0;
-    foreach my $rdg ( @$row ) {
-    	next unless $rdg;
-    	next if $rdg->is_lacuna;
-		next if exists $unique{$rdg->text};
-		if( ref( $opts->{'collapse'} ) eq 'ARRAY' ) {
-			my @exclude_types = @{$opts->{'collapse'}};
-			my @set = $rdg->related_readings( sub { my $rel = shift;
-				$rel->colocated && grep { $rel->type eq $_ } @exclude_types } );
-			push( @set, $rdg );
-			my $char = chr( 65 + $ctr++ );
-			map { $unique{$_->text} = $char } @set;
-			$count{$rdg->text} += scalar @set;
-		} else {
-			$unique{$rdg->text} = chr( 65 + $ctr++ );
-			$count{$rdg->text}++;
-		}
-    }
-    # Try to keep variants under 8 by lacunizing any singletons.
-    if( scalar( keys %unique ) > 8 ) {
-		foreach my $word ( keys %count ) {
-			if( $count{$word} == 1 ) {
-				$unique{$word} = '?';
-			}
-		}
-    }
-    my %u = reverse %unique;
-    if( scalar( keys %u ) > 8 ) {
-        warn "Have more than 8 variants on this location; phylip will break";
-    }
-    my @chars = map { $_ ? $unique{$_->text} : $unique{'__UNDEF__' } } @$row;
-    return @chars;
-}
 
 =head2 phylip_pars( $character_matrix )
 
@@ -452,28 +340,6 @@ sub _add_tree_children {
         $graph->add_path( $parent, $child ) if defined $parent;
         _add_tree_children( $graph, $classes, $child, $c->get_children() );
     }
-}
-
-=head2 newick_to_svg( $newick_string )
-
-Uses the FigTree utility (if installed) to transform the given Newick tree(s)
-into a graph visualization.
-
-=cut
-
-sub newick_to_svg {
-	my $newick = shift;
-    my $program = File::Which::which( 'figtree' );
-    unless( -x $program ) {
-		throw( "FigTree commandline utility not found in path" );
-    }
-    my $svg;
-    my $nfile = File::Temp->new();
-    print $nfile $newick;
-    close $nfile;
-	my @cmd = ( $program, '-graphic', 'SVG', $nfile );
-    run( \@cmd, ">", binary(), \$svg );
-    return decode_utf8( $svg );
 }
 
 sub throw {

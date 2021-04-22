@@ -7,7 +7,7 @@ use warnings;
 use Encode qw/ encode_utf8 /;
 use TryCatch;
 use stemmaweb::Controller::Util
-  qw/ load_tradition load_stemma json_error json_bool /;
+  qw/ load_tradition stemma_info json_error json_bool /;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -21,28 +21,6 @@ Catalyst Controller.
 
 =head1 METHODS
 
-=cut
-
-# Helper method to bundle the newline-stripped stemma SVG and its identifying info.
-sub stemma_info {
-    my ($stemmadata) = @_;
-    my $sinfo = {
-        name     => $stemmadata->{identifier},
-        directed => json_bool(!$stemmadata->{is_undirected}),
-        svg      => _as_svg($stemmadata, 'nonewline')
-    };
-    return $sinfo;
-}
-
-sub _as_svg {
-    my ($stemmadata, $nonewline) = @_;
-
-    # Make a fully-fledged T::T::Stemma object from the info we have
-    my $ssvg;
-    $ssvg = load_stemma($stemmadata)->as_svg();
-    $ssvg =~ s/\n/ /mg if $nonewline;
-    return $ssvg;
-}
 
 =head2 index
 
@@ -167,6 +145,9 @@ information structure for the new stemma.
 
 sub reroot :Local :Args(2) {
     my ($self, $c, $textid, $stemmaid) = @_;
+    if ($c->request->method ne 'POST') {
+        json_error($c, 405, "Call this method with POST");
+    }
     my $textinfo = load_tradition($c, $textid);
     if ($textinfo->{permission} eq 'full') {
         my $location = sprintf("/tradition/%s/stemma/%s/reorient/%s",
@@ -179,6 +160,43 @@ sub reroot :Local :Args(2) {
         catch (stemmaweb::Error $e ) {
             return json_error($c, $e->status, $e->message);
         }
+    } else {
+        return json_error($c, 403,
+            'You do not have permission to update stemmata for this tradition');
+    }
+}
+
+=head2 delete
+
+ POST /stemma/delete/$textid/$stemmaid
+
+Deletes the stemma with the given identifier.
+Returns a list of the remaining stemmata (if any) for this text.
+
+=cut
+
+sub delete :Local :Args(2) {
+    my ($self, $c, $textid, $stemmaid) = @_;
+    if ($c->request->method ne 'POST') {
+        json_error($c, 405, "Call this method with POST");
+    }
+    my $m = $c->model('Directory');
+    my $textinfo = load_tradition($c, $textid);
+    if ($textinfo->{permission} eq 'full') {
+        # Delete the requested stemma
+        my $location = sprintf("/tradition/%s/stemma/%s", $textid, $stemmaid);
+        my @remaining;
+        try {
+            $m->ajax('delete', $location);
+            foreach my $stemma (@{ $m->ajax('get', "/tradition/$textid/stemmata") }) {
+                push(@remaining, stemma_info($stemma));
+            }
+        } catch (stemmaweb::Error $e) {
+            return json_error($c, $e->status, $e->message);
+        }
+        # Return the remaining stemmata
+        $c->stash->{'result'} = \@remaining;
+        $c->forward('View::JSON');
     } else {
         return json_error($c, 403,
             'You do not have permission to update stemmata for this tradition');

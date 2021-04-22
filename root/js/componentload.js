@@ -28,12 +28,12 @@ function refreshDirectory() {
         $(".canmod").each(function() {
           var tid = $(this).attr('id');
           var tname = $(this).text();
-		  if (tid === selectedTextID) {
-			  $('#upload_for_tradition').append($('<option>')
-			  	.attr('value', tid).attr('selected', 'selected').text(tname));		  	
-		  } else {
-			  $('#upload_for_tradition').append($('<option>').attr('value', tid).text(tname));
-		  }
+          if (tid === selectedTextID) {
+            $('#upload_for_tradition').append($('<option>')
+              .attr('value', tid).attr('selected', 'selected').text(tname));
+          } else {
+            $('#upload_for_tradition').append($('<option>').attr('value', tid).text(tname));
+          }
         });
       }
     }
@@ -189,6 +189,7 @@ function load_stemma(idx) {
   selectedStemmaSequence = idx;
   show_stemmapager(selectedTextEditable);
   $('#stemma_edit_button').hide();
+  $('#stemma_delete_button').hide();
   $('#stexaminer_button').hide();
   $('#stemma_identifier').empty();
   // Add the relevant Stemweb functionality
@@ -200,6 +201,7 @@ function load_stemma(idx) {
     var stemmadata = stemmata[idx];
     if (selectedTextEditable) {
       $('#stemma_edit_button').show();
+      $('#stemma_delete_button').show();
     }
     if (stemmadata.directed) {
       // Stexaminer submit action
@@ -391,6 +393,27 @@ function set_stemma_interactive(svg_element) {
   }
 }
 
+function confirm_delete_stemma(seq) {
+  // Get the stemma identifier
+  var stemmaid = stemmata[seq].name;
+  // First confirm that the user wants to proceed
+  var really = confirm("This will delete the stemma " + stemmaid + " permanently. Are you sure?")
+  if (really) {
+    var requrl = _get_url(["stemma", "delete", selectedTextID, stemmaid]);
+    $.post(requrl, function(remaining) {
+      // The remaining stemmata are returned; save them and display
+      // the first one, if it exists.
+      stemmata = remaining;
+      if (stemmata.length) {
+        selectedStemmaSequence = 0;
+      } else {
+        selectedStemmaSequence = -1;
+      }
+      load_stemma(selectedStemmaSequence);
+    });
+  }
+}
+
 // Event to enable the upload button when a file has been selected
 function file_selected(e) {
   if (e.files.length == 1) {
@@ -468,27 +491,59 @@ function upload_collation(upload_url) {
     var data = new FormData();
     $.each($('#new_tradition').serializeArray(), function(i, o) {
       if (o.name != 'uploadtype') {
-        data.append(o.name, o.value);
+        data.append(o.name, o.value.trim());
       }
     });
     data.append('file', newfile);
-    post_xhr2(upload_url, data, function(ret) {
-      if (ret.tradId) {
-        $('#upload-collation-dialog').dialog('close');
-        // Reload the directory with the new text selected.
-        textOnLoad = ret.tradId;
-        refreshDirectory();
-      } else if (ret.parentId) {
-        $('#upload-collation-dialog').dialog('close');
-        // Load the tradition to which we just uploaded.
-        var ourTradId = $('#upload_for_tradition').val();
-        var ourTradName = $('#upload_for_tradition :checked').text();
-        loadTradition(ourTradId, ourTradName, 1);
-      } else if (ret.error) {
+
+    var error_msg = ""
+    var ok4upload = false;
+    if (data.get('name') != '') {
+      ok4upload = true;
+      console.log("Ok for upload. The title inserted in the form is '" + data.get('name') + "'.");
+    } else if (data.get('filetype') != 'graphml') {
+      error_msg = "Error: Non-graphml imports need a title from the input field. Insert the name of the text/tradition in the form, please. (Your selected file type is '" + data.get('filetype') + "').";
+      console.log(error_msg);
+      $('#upload_status').empty().append(
+        $('<span>').attr('class', 'error').append(error_msg));
+    } else {
+      // console.log("Title input field is empty. Is there a title in the graphml file?");
+      var graphml_title = "";
+      var xmlDoc = $.parseXML(evt.target.result);
+      var name_id = $(xmlDoc).find('key[attr\\.name=name]').attr('id');
+      graphml_title = $(xmlDoc).find('data[key=' + name_id + ']').first().text().trim();
+      // TODO: what is the second data field with the same name_id for? Cases where to use that one?
+
+      if (graphml_title.length > 0) {
+        ok4upload = true;
+        console.log("Ok for upload. Your title in the file is '" + graphml_title + "'.");
+      } else {
+        error_msg = "Error: title neither in input field nor inside the file."
+        console.log(error_msg);
         $('#upload_status').empty().append(
-          $('<span>').attr('class', 'error').append(ret.error));
+          $('<span>').attr('class', 'error').append(error_msg));
       }
-    }, 'json');
+    }
+
+    if (ok4upload) {
+      post_xhr2(upload_url, data, function(ret) {
+        if (ret.tradId) {
+          $('#upload-collation-dialog').dialog('close');
+          // Reload the directory with the new text selected.
+          textOnLoad = ret.tradId;
+          refreshDirectory();
+        } else if (ret.parentId) {
+          $('#upload-collation-dialog').dialog('close');
+          // Load the tradition to which we just uploaded.
+          var ourTradId = $('#upload_for_tradition').val();
+          var ourTradName = $('#upload_for_tradition :checked').text();
+          loadTradition(ourTradId, ourTradName, 1);
+        } else if (ret.error) {
+          $('#upload_status').empty().append(
+            $('<span>').attr('class', 'error').append(ret.error));
+        }
+      }, 'json');
+    }
   };
   reader.onerror = function(evt) {
     var err_resp = 'File read error';
@@ -568,7 +623,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     $('#textinfo_waitbox').hide();
     $('#textinfo_container').show();
     errordiv = "#textinfo_load_status";
-  } else if (ajaxSettings.url.indexOf('stemma/reroot') > -1 && ajaxSettings.type == 'POST') {
+  } else if (ajaxSettings.url.indexOf('stemma') > -1 && ajaxSettings.type == 'POST') {
     errordiv = "#stemma_load_status";
   }
 
@@ -839,7 +894,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     open: function(evt) {
       $('#stemweb_run_status').empty();
       $('#stemweb_tradition').attr('value', selectedTextID);
-      if (selectedTextInfo.stemweb_jobid == 0) {
+      if (!selectedTextInfo.stemweb_jobid) {
         $('#stemweb_merge_reltypes').empty();
         $.each(selectedTextInfo.reltypes, function(i, r) {
           var relation_opt = $('<option>').attr('value', r).append(r);

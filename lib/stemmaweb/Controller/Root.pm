@@ -214,7 +214,8 @@ sub _make_upload_request {
     ## the Neo4J db expects. This involves passing through the
     ## tempfile upload and filling in some defaults.
     my $upload = $c->req->upload('file');
-    my $fileargs = [ $upload->tempname, $upload->filename ];
+    # The original filename might have non-ASCII characters in it.
+    my $fileargs = [ $upload->tempname, encode_utf8($upload->filename) ];
     if ($upload->type) {
         push(@$fileargs, 'Content-Type', $upload->type);
     }
@@ -278,7 +279,7 @@ Returns and updates information about a particular text.
 
 sub textinfo :Local :Args(1) {
     my ($self, $c, $textid) = @_;
-    my $textinfo = load_tradition($c, $textid);
+    my $textinfo = load_tradition($c, $textid, {load_stemmata => 1});
     return unless $textinfo;
     my $ok = $textinfo->{permission};
     return json_error($c, 403,
@@ -316,17 +317,6 @@ sub textinfo :Local :Args(1) {
         return json_error($c, 405, "Disallowed HTTP method " . $c->req->method);
     }
 
-    # Add the witness information
-    my @witnesses =
-      map { $_->{sigil} } @{ $m->ajax('get', "/tradition/$textid/witnesses") };
-    $textinfo->{witnesses} = \@witnesses;
-
-    # Add the stemma information that exists, if any
-    my @stemmata;
-    foreach my $stemma (@{ $m->ajax('get', "/tradition/$textid/stemmata") }) {
-        push(@stemmata, stemmaweb::Controller::Stemma::stemma_info($stemma));
-    }
-    $textinfo->{stemmata} = \@stemmata;
     $c->stash->{'result'} = $textinfo;
     $c->forward('View::JSON');
 }
