@@ -28,14 +28,15 @@
         <p>For any text tradition you own, you may associate one or more stemma hypotheses to the tradition. Currently the way to specify a stemma is in "dot" format, as documented within the interface for the "Add/edit stemma" buttons.</p>
 
         <h3>Stemma generation via <a href="https://github.com/Stemweb/Stemweb">Stemweb</a> ("Run a Stemweb algorithm")</h3>
-        <p>Given an uploaded collation, it is possible to generate a stemma hypothesis using one of several algorithms. This feature, Stemweb, is a service provided by researchers at the HIIT (Helsinki Institute for Information Technology). The algorithms currently available include:
+        <p>Given an uploaded collation, it is possible to generate a stemma hypothesis using one of several algorithms. This feature, Stemweb, is a service originally provided by researchers at the HIIT (Helsinki Institute for Information Technology) and now maintained by the DH group at the University of Vienna. The algorithms currently available include:
           <!-- TODO generate this list from the docs API! -->
           <ul>
-            <li><a href="http://cosco.hiit.fi/Articles/icdm2011.pdf">Semstem</a>: latent tree structure analysis</li>
-            <li><a href="http://cosco.hiit.fi/Articles/ecai06.pdf">RHM</a>: compression-based analysis</li>
-            <li><a href="http://en.wikipedia.org/wiki/Neighbor-net">Neighbor-Net</a>: based on neighbor-joining, recommended for highly 'contaminated' traditions</li>
+            <li><a href="https://wiki.helsinki.fi/display/stemmatology/PHYLIP">Phylip Pars</a>: tree construction based on overall <a href="https://wiki.helsinki.fi/display/stemmatology/Method%2C+maximum+parsimony">maximum parsimony</a></li>
+            <li><a href="https://wiki.helsinki.fi/display/stemmatology/RHM">RHM</a>: compression-based analysis</li>
+            <li><a href="https://wiki.helsinki.fi/display/stemmatology/Neighbour+joining">Neighbor Joining</a>: tree construction based on sequential joining of nearest neighbours</li>
+            <li><a href="https://wiki.helsinki.fi/display/stemmatology/NeighborNet">NeighborNet</a>: based on neighbor-joining, recommended for highly 'contaminated' traditions</li>
           </ul>
-          Both the Semstem and RHM algorithms require a single parameter, "iterations", to specify the number of times the analysis should be run to arrive at a consensus model. A higher number produces a more certain result, but requires a longer time to run. Suggested minimums are 50 iterations for Semstem and 1000000 iterations for RHM.
+          The RHM algorithm requires a single parameter, "iterations", to specify the number of times the analysis should be run to arrive at a consensus model. A higher number produces a more certain result, but requires a longer time to run. A suggested minimum is 1000000 iterations.
         </p>
         <p>All of these algorithms run "asynchronously" - when the owner of a tradition makes a request for a generated tree, the result can take some minutes (or even hours, depending on the complexity of the tradition) to return. When a request has been made, the owner can check its progress using the same button; if the stemma has meanwhile been calculated, it will be loaded. If the owner leaves the Stemmaweb site and the stemma is calculated meanwhile, it will appear when Stemmaweb is next used.</p>
         <p>Generated stemmas are not oriented - they have no inferred root or origin. This means that, in order to examine the texual variants against a generated stemma (see "Stexaminer" below), a root must first be chosen. This can be done simply by clicking a node in the returned graph, and choosing the option to use that node as the root. Any stemma may be re-rooted any number of times.</p>

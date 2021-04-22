@@ -894,7 +894,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     open: function(evt) {
       $('#stemweb_run_status').empty();
       $('#stemweb_tradition').attr('value', selectedTextID);
-      if (selectedTextInfo.stemweb_jobid == 0) {
+      if (!selectedTextInfo.stemweb_jobid) {
         $('#stemweb_merge_reltypes').empty();
         $.each(selectedTextInfo.reltypes, function(i, r) {
           var relation_opt = $('<option>').attr('value', r).append(r);
