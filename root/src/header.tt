@@ -3,7 +3,7 @@
 <html>
   <head>
     <META http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="[% c.uri_for( '/favicon.ico' ) %]">
     <link type='text/css' href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet'>
     <link type="text/css" href="[% c.uri_for('/css/cupertino/jquery-ui-1.11.4.css') %]" rel="stylesheet" />
     <link type="text/css" href="[% c.uri_for('/css/jquery.multiselect.css') %]" rel="stylesheet" />

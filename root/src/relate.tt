@@ -63,7 +63,7 @@
         <span>Download section</span>
       </div>
       <div class="button button-inline" id="select_normalised"
-           onclick="showLoadingScreen(); loadSVG(!$('#svgEnlargementLoaded').data('display_normalised'))">
+           onclick="showLoadingScreen(); loadSVG(!$('#svgenlargement').data('display_normalised'))">
         <span>Normalise for</span>
       </div>
       <select id="normalize-for-type" class="relation-type-list" name="normalise"></select>
