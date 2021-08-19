@@ -479,9 +479,56 @@ sub download :Local :Args(0) {
         }
     }
     catch (stemmaweb::Error $e ) {
-        return json_error($c, $e->status, $e->message);
+          return json_error($c, $e->status, $e->message);
     }
     $c->forward($view);
+}
+
+=head2 apientry
+
+Pass-through gateway to the Stemmarest API
+
+=cut
+
+sub api :Chained('/') :PathPart('api') :CaptureArgs(1) {
+    my ($self, $c, $textid) = @_;
+    # Do the ACL checks here
+    my $textinfo = load_tradition($c, $textid);
+
+    # Did something go wrong? An error message will be in the stash
+    $c->detach() if (exists $c->stash->{'result'});
+    unless ($textinfo->{permission}) {
+        json_error($c, 403, "You do not have permission to view this text");
+        $c->detach();
+    }
+
+    $c->log->debug("Entered API check, got text id $textid");
+    $c->stash->{'textid'}     = $textid;
+    $c->stash->{'tradition'}  = $textinfo;
+    $c->stash->{'permission'} = $textinfo->{permission};
+}
+
+sub apiPass :Chained('api') :PathPart('') :Args {
+    my ($self, $c, @pathparts) = @_;
+    $c->log->debug("Got the following path parts: @pathparts");
+    my $method = lc($c->req->method);
+    ## Check the permission we have
+    if ($method ne 'get' && $c->stash->{'permission'} ne 'full') {
+        json_error($c, 403, "You do not have permission to modify this text");
+        $c->detach();
+    }
+
+    ## Dispatch the call and return the results
+    ## TODO at the moment this only works for JSON calls without any
+    ## query parameters or body; fix that someday maybe
+    try {
+        my $apiurl = join('/', 'tradition', $c->stash->{textid}, @pathparts);
+        $c->stash->{'result'} = $c->model('Directory')->ajax($method, "/$apiurl");
+    } catch (stemmaweb::Error $e) {
+        return json_error($c, $e->status, $e->message);
+    }
+
+    $c->forward('View::JSON');
 }
 
 =head2 default
