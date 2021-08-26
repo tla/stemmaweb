@@ -1,4 +1,3 @@
-db/
 .DS_Store
 .vscode
-munge.pl
+node_modules
