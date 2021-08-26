@@ -11,4 +11,18 @@ A `docker-compose.yml` file is included in this directory, which will launch Ste
 Development / installation
 ------------
 
-To create test 
+You will need an instance of Stemmarest running somewhere. The easiest is to run it from Docker:
+
+    docker run -d --name stemmarest -p 8080:8080 dhuniwien/stemmarest:latest
+
+Once that is done, you can add test data using the script `t/init_test_data.sh`; this script depends on the presence of the `jq` program to parse JSON responses from Stemmarest.
+
+To install the necessary dependencies, run
+
+    yarn install
+
+from this directory, and
+
+    yarn start
+
+to start the server. You can then access it at http://localhost:3000/. 
