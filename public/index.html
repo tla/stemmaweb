@@ -1,0 +1,24 @@
+<html>
+<head>
+  <title>This is a test page</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="text/javascript">
+  function fetchTraditions() {
+    fetch ('/api/traditions')
+    .then(resp => resp.json())
+    .then(data => {
+      data.forEach(el => {
+        var litem = document.createElement("li");
+        litem.appendChild(document.createTextNode(el.name));
+        document.getElementById("traditionList").appendChild(litem);
+      }
+    )})};
+  </script>
+</head>
+<body>
+  <p>Hello to all the world. Here is some text.</p>
+  <button onClick="fetchTraditions()">Click me</button><br>
+  <ul id="traditionList">
+  </ul>
+</body>
+</html>
