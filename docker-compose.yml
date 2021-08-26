@@ -1,0 +1,20 @@
+version: '3'
+services:
+  stemmarest:
+    image: "dhuniwien/stemmarest:latest"
+
+  stemmaweb:
+    build: 
+      context: .
+      dockerfile: Dockerfile-fcgi
+    volumes:
+      - ./stemmaweb.conf:/var/www/stemmaweb/stemmaweb.conf
+
+  nginx:
+    image: "nginx:latest"
+    depends_on:
+      - stemmaweb
+    ports:
+      - 5000:80
+    volumes:
+      - ./nginx-conf:/etc/nginx/conf.d

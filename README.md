@@ -6,9 +6,9 @@ Stemmaweb is a web application, developed in Perl (using the Catalyst framework)
 
 Trying it out
 ------------
-A Dockerfile is included in the repository, which will set up a test version of Stemmaweb on an Ubuntu 14.04 LTS virtual server, listening on port 3000. If you want to install a production version, read on below.
+A `docker-compose.yml` file is included in this directory, which will launch Stemmaweb behind an nginx proxy listening on port 5000. It may be necessary to obtain your own development API keys for Google and reCAPTcha authentication, in order to create user accounts.
 
-Installation 
+Installation
 ------------
 
 To run Stemmaweb you need a working Perl installation (5.12 or above)
@@ -27,7 +27,7 @@ set up to run the standalone service:
 * Install the following Perl modules:
   * App::cpanminus
   * Module::Install::Catalyst
-* Install the dependencies for Stemmaweb from this directory: 
+* Install the dependencies for Stemmaweb from this directory:
 
 		cd /PATH/TO/stemmaweb && cpanm -S --installdeps .
 * Make a test database (which relies on SQLite being installed) and test the installation at http://localhost:3000/ :
@@ -47,5 +47,5 @@ set up to run the standalone service:
 			</dbi_attrs>
 		</extra_args>
 		</model_args>
-		
+
 * (Optionally) configure Stemmaweb to run under FastCGI, Starman, or any other Catalyst-compatible application framework. See http://www.catalystframework.org for more information. The provided stemmaweb.psgi was written to work with Starman running behind Apache on a specified non-root URL path.
