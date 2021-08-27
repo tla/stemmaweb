@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. .env.local
+. .env
 
 echo Creating test user
 curl --silent --request PUT --header 'Content-Type: application/json' --data '{ "role":"user", "id":"user@example.org", "email":"user@example.org", "passphrase":"0NT3bCujDh6wvf5UTfXsjmlRhyEG6xvT1/kgiZPyjGk"}' $STEMMAREST_ENDPOINT/user/user@example.org

@@ -2,13 +2,11 @@ var express = require('express');
 var router = express.Router();
 var bodyParser = require('body-parser');
 var fetch = require('node-fetch');
-// Figure out how to do this properly
-// require('dotenv').config();
-const STEMMAREST_ENDPOINT = 'http://localhost:8080/stemmarest'
+
+const baseurl = process.env.STEMMAREST_ENDPOINT + "/";
 
 /* Handle any request starting with /api */
 router.all('/*', (req, res) => {
-  const baseurl = STEMMAREST_ENDPOINT + "/";
   console.log(baseurl);
   const params = {
     method: req.method,
