@@ -15,9 +15,13 @@ You will need an instance of Stemmarest running somewhere. The easiest is to run
 
     docker run -d --name stemmarest -p 8080:8080 dhuniwien/stemmarest:latest
 
-Once that is done, you can add test data using the script `t/init_test_data.sh`; this script depends on the presence of the `jq` program to parse JSON responses from Stemmarest.
+Once that is done, you should create a `.env` file in this directory that indicates in the `STEMMAREST_ENDPOINT` variable where the Stemmarest server can be reached; for example, after running the Docker command above, the contents of the file should be 
 
-To install the necessary dependencies, run
+    STEMMAREST_ENDPOINT=http://localhost:8080/stemmarest
+
+Now you can add test data to your Stemmarest instance using the script `t/init_test_data.sh`; please note that this script depends on the presence of the `jq` program to parse JSON responses from Stemmarest.
+
+To install the necessary dependencies for the Stemmaweb server, run
 
     yarn install
 
