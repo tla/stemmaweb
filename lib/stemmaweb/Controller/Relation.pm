@@ -101,8 +101,8 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     my $textid = $c->stash->{textid};
     try {
         $reltypeinfo = $m->ajax('get', "/tradition/$textid/relationtypes");
-        # If there aren't any relations defined, set some defaults
-        if (scalar @$reltypeinfo == 0) {
+        # If there aren't any relations defined, and we have edit rights, set some defaults
+        if (scalar @$reltypeinfo == 0 && $c->stash->{permission} eq 'full') {
             foreach my $default (qw/spelling grammatical lexical
                                     transposition uncertain other/) {
                 my $reltypemodel = {'name' => $default,
