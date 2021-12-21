@@ -101,6 +101,19 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     my $textid = $c->stash->{textid};
     try {
         $reltypeinfo = $m->ajax('get', "/tradition/$textid/relationtypes");
+        # If there aren't any relations defined, set some defaults
+        if (scalar @$reltypeinfo == 0) {
+            foreach my $default (qw/spelling grammatical lexical
+                                    transposition uncertain other/) {
+                my $reltypemodel = {'name' => $default,
+                                    'defaultsettings' => JSON::true};
+                $m->ajax('put', "/tradition/$textid/relationtype/$default",
+                         'Content-Type' => 'application/json',
+                         'Content'      => encode_json($reltypemodel));
+            }
+            # Now load them again
+            $reltypeinfo = $m->ajax('get', "/tradition/$textid/relationtypes");
+        }
     } catch (stemmaweb::Error $e ) {
         return json_error($c, $e->status, $e->message);
     }
