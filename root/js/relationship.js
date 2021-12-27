@@ -42,22 +42,6 @@ function jq(myid) {
   return '#' + myid.replace(/(:|\.)/g, '\\$1');
 }
 
-// Serialize a form to a JSON object. Assumes no duplication of field names.
-function serializeJSON(formid) {
-  var serials = $('#' + formid).serializeArray();
-  var result = {};
-  $.each(serials, function(i, datum) {
-    // Is it a checkbox?
-    var selector = '#' + formid + ' *[name="' + datum.name + '"]'
-    if ($(selector).attr('type') === 'checkbox') {
-      result[datum.name] = datum.value === "on";
-    } else {
-      result[datum.name] = datum.value;
-    }
-  });
-  return result;
-}
-
 // Our controller often returns a map of SVG node ID -> reading data,
 // including database ID. This is a set of helper functions to keep
 // the list of keys in readingdata in sync with the DB -> SVG ID map.
@@ -692,16 +676,30 @@ function zoomer() {
 }
 
 function populate_relationtype_keymap() {
-  // Add the relationship types to the keymap list
+  // Add the relationship types to the keymap list and to option lists
+  // First, sort relation types by bindlevel
+  const by_bindlevel = (a, b) => { return a.bindlevel - b.bindlevel; }
+  relationship_types.sort(by_bindlevel);
   $('.keymaplist').empty();
-  $.each(relationship_types, function(index, typedef) {
-    li_elm = $('<li class="key">').css("border-color",
-      relation_manager.relation_colors[index]).text(typedef.name);
-    li_elm.data('name', typedef.name);
-    li_elm.append($('<div>').attr('class', 'key_tip_container').append(
-      $('<div>').attr('class', 'key_tip').text(typedef.description)));
-    $('.keymaplist').append(li_elm);
-  });
+  $('.relation-type-list').empty();
+  // If we have relation types, fill them in; otherwise hide the box
+  if (relationship_types.length > 0) {
+    $.each(relationship_types, function(index, typedef) {
+      // The keymap
+      li_elm = $('<li class="key">').css("border-color",
+        relation_manager.relation_colors[index]).text(typedef.name);
+      li_elm.data('name', typedef.name);
+      li_elm.append($('<div>').attr('class', 'key_tip_container').append(
+        $('<div>').attr('class', 'key_tip').text(typedef.description)));
+      $('.keymaplist').append(li_elm);
+      // The picklists
+      $('.relation-type-list').append($('<option />').attr(
+        "value", typedef.name).text(typedef.name));
+
+    });
+  } else {
+    $('#keymap').hide();
+  }
 }
 
 function add_relations(callback_fn) {
@@ -1993,20 +1991,27 @@ function get_relation_querystring() {
   return form_values;
 }
 
+// Populate the relation type editing form with the current values for
+// the given relation type, or reset it if the type given is "". But don't
+// do anything if the type is not recognised.
 function populate_rtform(rtname) {
   var rtdata = relationship_types.find(function(el) {
     return el.name === rtname
   });
-  $.each(rtdata, function(k, v) {
-    // Find the field that corresponds to the key
-    var field = k.replace('is_', '');
-    var fieldid = '#relation_type_' + field;
-    if (typeof v === "boolean") {
-      $(fieldid).prop("checked", v);
-    } else {
-      $(fieldid).val(v);
-    }
-  });
+  if (rtdata) {
+    $.each(rtdata, function(k, v) {
+      // Find the field that corresponds to the key
+      var field = k.replace('is_', '');
+      var fieldid = '#rtype_' + field;
+      if (typeof v === "boolean") {
+        $(fieldid).prop("checked", v);
+      } else {
+        $(fieldid).val(v);
+      }
+    });
+  } else if (rtname === "") {
+    $("#relation-type-edit").trigger("reset");
+  }
   $('.relation-type-button').button('enable');
 }
 
@@ -2693,6 +2698,18 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   });
 
   // Set up the relation type editing dialog
+  $('#rtype_name').on('input', function() {
+    var inputVal = this.value;
+    // console.log("Triggered with " + inputVal);
+    if (relationship_types.some( x => x.name === inputVal )) {
+      // Populate values for this type
+      populate_rtform(inputVal);
+      // Make the 'create' button an 'update' button
+      $('.relation-type-change-button').button({'label': 'Update type'});
+    } else {
+      $('.relation-type-change-button').button({'label': 'Create type'})
+    }
+  });
   $('#relation-type-dialog').dialog({
     autoOpen: false,
     width: 450,
@@ -2703,8 +2720,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         class: 'relation-type-button',
         click: function() {
           $('.relation-type-button').button('disable');
-          var reltypename = $('#relation_type_name').text();
-          var ncpath = getTraditionURL('relationtype/' + reltypename);
+          $('#relation-type-status').empty()
+          var reltypename = $('#rtype_name').val();
+          var ncpath = getTextURL('relationtype/' + reltypename);
           $.ajax({
             url: ncpath,
             success: function(data) {
@@ -2715,6 +2733,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
               relationship_types.splice(ridx, 1);
               // Re-display the keymap list
               populate_relationtype_keymap();
+              populate_rtform("");
             },
             dataType: 'json',
             type: 'DELETE'
@@ -2722,13 +2741,14 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         }
       },
       change: {
-        text: "Update type",
-        class: 'relation-type-button',
+        text: "Create type",
+        class: 'relation-type-button relation-type-change-button',
         click: function() {
           $('.relation-type-button').button('disable');
-          var reltypename = $('#relation_type_name').text();
-          var ncpath = getTraditionURL('relationtype/' + reltypename);
-          var rtdata = serializeJSON('relation-type-edit');
+          $('#relation-type-status').empty()
+          var reltypename = $('#rtype_name').val();
+          var ncpath = getTextURL('relationtype/' + reltypename);
+          var rtdata = $('#relation-type-edit').serialize();
           $.ajax({
             url: ncpath,
             success: function(data) {
@@ -2736,7 +2756,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
               $('.relation-type-button').button('enable');
               // Replace the data in relationship_types
               var ridx = relationship_types.findIndex(function(el) {
-                el.name === reltypename
+                return el.name === data.name
               });
               if (ridx === -1) {
                 relationship_types.push(data);
@@ -2746,17 +2766,10 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
               // Re-display the keymap list
               populate_relationtype_keymap();
             },
-            data: JSON.stringify(rtdata),
+            data: rtdata,
             dataType: 'json',
             type: 'PUT'
           })
-        }
-      },
-      new: {
-        text: "Create new",
-        class: 'relation-type-button',
-        click: function() {
-          // TODO Add a new entry to the list and populate dummy values
         }
       },
       Close: function() {
@@ -2765,6 +2778,8 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     },
     open: function() {
       dialog_background('#relation-type-status');
+      // Clear out any prior values in the form
+      populate_rtform("");
       // Make the list of relation types in the dialog clickable
       $('#relation-type-list li').each(function() {
         var name = $(this).data('name');

@@ -383,6 +383,76 @@ sub relationships :Chained('section') :PathPart :Args(0) {
     $c->forward('View::JSON');
 }
 
+=head2 relationtype
+
+ PUT relation/$textid/relationtype/$typename { REQUEST }
+ DELETE relation/$textid/relationtype/$typename
+
+Creates, updates, or deletes the relation type of the given name to have the
+given properties. The relation type create/update request looks like:
+
+  {
+   "name":"grammatical"
+   "description":"These readings share a root (lemma), but have different parts of speech (morphologies).",
+   "bindlevel":2,
+   "is_weak":false,
+   "is_colocation":true,
+   "is_transitive":true,
+   "is_generalizable":true,
+   "use_regular":true,
+  }
+
+=cut
+
+sub relationtype :Chained('section') :PathPart :Args(1) {
+    my ($self, $c, $rtypename) = @_;
+    # Auth check. This can't be called with GET, so all calls need an auth check.
+    if ($c->stash->{'permission'} ne 'full') {
+        json_error($c, 403,
+            'You do not have permission to modify this tradition.');
+    }
+    my $textid = $c->stash->{textid};
+    my $m = $c->model('Directory');
+    my $ajaxurl = "/tradition/$textid/relationtype/$rtypename";
+    my $method = lc($c->request->method);
+    my @params = ($method, $ajaxurl);
+    # use Data::Dumper;
+    # $c->log->info(Dumper($c->request->params));
+    if ($method eq 'put') {
+        # Convert the params into the expected JSON params and explicitly
+        # falsify any that aren't set
+        my @bools = qw/ is_colocation is_weak is_transitive is_generalizable
+                        use_regular /;
+        my $relreq = {};
+        foreach my $k (keys %{$c->req->params}) {
+            if (($k =~ /^is_/ || $k =~ /^use_/) && $c->req->param($k) eq 'on') {
+                $relreq->{$k} = JSON::true;
+            } else {
+                $relreq->{$k} = $c->req->param($k);
+            }
+        }
+        foreach my $k (@bools) {
+            if (!exists $relreq->{$k}) {
+                $relreq->{$k} = JSON::false;
+            }
+        }
+        # Explicitly falsify any of the booleans that aren't on
+        # Serialize the request and add it to @params
+        push(@params, 'Content-Type', 'application/json');
+        push(@params, 'Content', encode_json($relreq));
+    } elsif ($method ne 'delete') {
+        # The request is invalid, bounce it.
+        json_error($c, 405, "Accepted methods are PUT and DELETE");
+    }
+    try {
+        $c->stash->{result} = $m->ajax(@params);
+    }
+    catch (stemmaweb::Error $e ) {
+        return json_error($c, $e->status, $e->message);
+    }
+    $c->forward('View::JSON');
+}
+
 =head2 readings
 
  GET relation/$textid/section/$sectionid/readings
