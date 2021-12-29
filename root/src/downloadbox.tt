@@ -18,7 +18,7 @@
           <option value="TSV">Tab-separated values (collation only)</option>
           <option value="dot">Graphviz dot format (collation and relationships)</option>
           <option value="SVG">SVG graph display (collation and relationships)</option>
-          <option value="GraphML">Native GraphML XML format</option>
+          <option value="GraphML">Native GraphML ZIP format</option>
           <!-- option value="tei_ps" -->
           <!-- option value="tei_dea" -->
         </select><br>

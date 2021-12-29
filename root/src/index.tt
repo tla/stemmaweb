@@ -216,7 +216,7 @@
             <option value="cte">CTE export (TEI double-endpoint attachment)</option>
             <option value="collatex">CollateX XML</option>
             <option value="cxjson">CollateX JSON</option>
-            <option value="graphml">StemmaRest GraphML</option>
+            <option value="graphml">Native GraphML Zip</option>
             <option value="stemmaweb">Legacy Stemmaweb GraphML</option>
           </select><br>
         </div>
