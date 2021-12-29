@@ -13,7 +13,6 @@ RUN apk update \
     zlib-dev \
     expat \
     graphviz \
-    libssl1.1 \
     tzdata \
     wget \
     gmp \
@@ -30,7 +29,7 @@ RUN apk update \
 
 # download, compile and install Phylip Pars
 WORKDIR /tmp
-RUN wget http://evolution.gs.washington.edu/phylip/download/phylip-3.697.tar.gz \
+RUN wget --no-check-certificate http://evolution.gs.washington.edu/phylip/download/phylip-3.697.tar.gz \
  && tar -xzvf phylip-3.697.tar.gz
 WORKDIR /tmp/phylip-3.697/src
 RUN make -f Makefile.unx install \
