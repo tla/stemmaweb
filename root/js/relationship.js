@@ -8,26 +8,12 @@ var readingdata = {};
 var rid2node = {};
 var readings_selected = [];
 
-jQuery.removeFromArray = function(value, arr) {
-  return jQuery.grep(arr, function(elem, index) {
-    return elem !== value;
-  });
-};
-
-function arrayUnique(array) {
-  var a = array.concat();
-  for (var i = 0; i < a.length; ++i) {
-    for (var j = i + 1; j < a.length; ++j) {
-      if (a[i] === a[j])
-        a.splice(j--, 1);
-    }
+function removeFromArray(value, arr) {
+  var idx = arr.indexOf(value);
+  if (idx > -1) {
+    arr.splice[idx, 1]
   }
-  return a;
 };
-
-function getTraditionURL(which) {
-  return basepath + textid + '/' + which;
-}
 
 function getTextURL(which) {
   return basepath + textid + '/' + sectid + '/' + which;
@@ -84,6 +70,7 @@ function sortByRank(a, b) {
   return readingdata[a]["rank"] < readingdata[b]["rank"] ? -1 : 1;
 }
 
+// TODO add text decoration for emendations
 function update_reading_display(node_id) {
   // Grab the reading data from which we update
   var rdata = readingdata[node_id];
@@ -202,6 +189,7 @@ function stringify_wordform(tag) {
   return ''
 }
 
+// TODO pick some colors for emendations
 function color_inactive(el) {
   var svg_id = $(el).parent().attr('id');
   var reading_info = readingdata[svg_id];
@@ -215,6 +203,11 @@ function color_inactive(el) {
       $(el).attr({
         stroke: 'red',
         fill: '#f36d6f'
+      });
+    }
+    if (reading_info['is_emendation']) {
+      $(el).attr({
+        stroke: 'purple'
       });
     }
   }
@@ -346,14 +339,14 @@ var selectionRect = {
 };
 
 function dragStart() {
-  console.log("dragStart");
+  // console.log("dragStart");
   var p = d3.mouse(this);
   selectionRect.init(p[0], p[1]);
   selectionRect.removePrevious();
 }
 
 function dragMove() {
-  console.log("dragMove");
+  // console.log("dragMove");
   var p = d3.mouse(this);
   selectionRect.update(p[0], p[1]);
   //    attributesText
@@ -361,11 +354,11 @@ function dragMove() {
 }
 
 function dragEnd() {
-  console.log("dragEnd");
+  // console.log("dragEnd");
   var finalAttributes = selectionRect.getCurrentAttributes();
   console.dir(finalAttributes);
   if (finalAttributes.x2 - finalAttributes.x1 > 1 && finalAttributes.y2 - finalAttributes.y1 > 1) {
-    console.log("range selected");
+    // console.log("range selected");
     // range selected
     d3.event.sourceEvent.preventDefault();
     selectionRect.focus();
@@ -392,8 +385,8 @@ function dragEnd() {
       //select any node with its center inside the marquee
       if (cx > finalAttributes.x1 && cx < finalAttributes.x2) {
         if (transf_cy > negys2 && transf_cy < negys1) {
-          console.log("Ellipse at " + cx + ", " + transf_cy + ". Testing on y between " + negys1 + " and " + negys2 + ".");
-          console.log("Testing on x between " + finalAttributes.x1 + " and " + finalAttributes.x2 + ".");
+          // console.log("Ellipse at " + cx + ", " + transf_cy + ". Testing on y between " + negys1 + " and " + negys2 + ".");
+          // console.log("Testing on x between " + finalAttributes.x1 + " and " + finalAttributes.x2 + ".");
           // Take note of the selected reading(s) and applicable witness(es)
           // so we can populate the multipleselect-form
           readings_selected.push($(this).parent().attr('id'));
@@ -408,7 +401,7 @@ function dragEnd() {
     // END OF SELECTION GRABBER
     selectionRect.remove();
   } else {
-    console.log("single point");
+    // console.log("single point");
     // single point selected
     selectionRect.remove();
     // trigger click event manually
@@ -653,14 +646,14 @@ function zoomer() {
         left: (gwit - crect.width) / 2
       });
       // Panning zoom in Y Axis
-      console.log("Mouse coords at " + coords[1]);
+      // console.log("Mouse coords at " + coords[1]);
       var ghighA = svg_root_element.getBoundingClientRect().height; // Real height
       var ghighB = svg_root_element.getBBox().height; // Internal height
       var yval = coords[1] //This gives us INTERNAL Y coord
       var percy = yval / ghighB //This gives us the % of the way along the Y axis
       var realy = percy * ghighA
-      console.log("True graph height is " + ghighA + ", internal height is " + ghighB);
-      console.log("Internal Y is " + yval + ", percent is " + percy + ", real point to scroll to is " + realy);
+      // console.log("True graph height is " + ghighA + ", internal height is " + ghighB);
+      // console.log("Internal Y is " + yval + ", percent is " + percy + ", real point to scroll to is " + realy);
       $("div #svgenlargement").scrollTop(realy - percUD);
     } else {
       // Panning zoom in X Axis, no need to change Y axis
@@ -1310,16 +1303,20 @@ function add_emendation(emenddata) {
   const ceiling = (acc, cval) => acc > cval ? acc : cval;
 
   // Data is a set of readings and a set of sequences. For each reading
-  // we make an SVG group consisting of a rect and a text element.
+  // we make an SVG group consisting of an ellipse and a text element.
+  var svgmap = {};
   emenddata.readings.forEach(function(r) {
+    // Mark the reading as an emendation and add it to our data structure
+    r['is_emendation'] = true;
+    svgmap['n' + r.id] = r;
     // Initialize the d3 element
     var enode = d3svg.select('#graph0')
-      .selectAll('#e' + r.id)
+      .selectAll('#n' + r.id)
       .data([r])
       .enter()
       .append('g')
-      .attr('id', 'e' + r.id);
-    enode.append('rect')
+      .attr('id', 'n' + r.id);
+    enode.append('ellipse')
       .attr('x', function(d) {
         var startNodes = Object.entries(readingdata)
           .filter(x => x[1].rank === d.rank).map(x => x[0]);
@@ -1355,16 +1352,16 @@ function add_emendation(emenddata) {
       .attr('ry', '5')
       .attr('fill', 'white')
       .attr('opacity', '0.75')
-      .attr('stroke', 'red')
+      .attr('stroke', 'purple')
       .attr('strokeWidth', 1);
     enode.append('text')
       .attr('x', function() {
-        var rx = parseFloat(enode.select('rect').attr('x'));
-        var rw = parseFloat(enode.select('rect').attr('width'));
+        var rx = parseFloat(enode.select('ellipse').attr('x'));
+        var rw = parseFloat(enode.select('ellipse').attr('width'));
         return rx + rw / 2;
       })
       .attr('y', function() {
-        var ry = parseFloat(enode.select('rect').attr('y'));
+        var ry = parseFloat(enode.select('ellipse').attr('y'));
         return ry + 22;
       })
       .attr('text-anchor', 'middle')
@@ -1372,6 +1369,8 @@ function add_emendation(emenddata) {
       .attr('font-size', '14.00')
       .text(r.text);
   });
+  // Add the emendations to our readingdata
+  update_readingdata(svgmap);
 
   // TODO add sequences maybe?
 }
@@ -1391,8 +1390,7 @@ function detach_node(readings) {
   $.each(readings, function(node_id, reading) {
     $.each(reading.witnesses, function(index, witness) {
       var orig_svg_id = rid2node[reading.orig_reading];
-      var witnesses = readingdata[orig_svg_id].witnesses;
-      readingdata[orig_svg_id].witnesses = $.removeFromArray(witness, witnesses);
+      removeFromArray(witness, readingdata[orig_svg_id].witnesses);
     });
   });
 
@@ -1414,9 +1412,9 @@ function detach_node(readings) {
         detached_edges.push(detached_edge);
         $.each(detached_edge.witnesses, function(index, witness) {
           if (detached_edge.is_incoming == true) {
-            incoming_remaining = $.removeFromArray(witness, incoming_remaining);
+            removeFromArray(witness, incoming_remaining);
           } else {
-            outgoing_remaining = $.removeFromArray(witness, outgoing_remaining);
+            removeFromArray(witness, outgoing_remaining);
           }
         });
       }
@@ -2323,18 +2321,16 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
 
         // Populate the forms with the currently selected readings
         $('#detach_collated_form').empty();
-        var witnesses = [];
+        var witnesses = Set();
 
         readings_selected.sort(sortByRank);
         $.each(readings_selected, function(index, value) {
           $('#detach_collated_form').append($('<input>').attr(
             "type", "hidden").attr("name", "readings[]").attr(
             "value", readingdata[value]['id']));
-          var this_witnesses = readingdata[value]['witnesses'];
-          witnesses = arrayUnique(witnesses.concat(this_witnesses));
-
+          readingdata[value]['witnesses'].forEach( el => witnesses.add(el));
         });
-        $.each(witnesses, function(index, value) {
+        witnesses.forEach( function(value) {
           $('#detach_collated_form').append(
             '<input type="checkbox" name="witnesses[]" value="' + value +
             '">' + value + '<br>');

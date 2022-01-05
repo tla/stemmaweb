@@ -248,13 +248,12 @@ sub _make_upload_request {
         ## Distinguish the type of Excel file.
         $filetype = 'xlsx';
     }
-    # We have to UTF-8 encode all the form values ourselves.
-    # TODO See what happens if the filename is non-ASCII!
     my $newopts = {
         'userId'   => $c->user->id,
         'filetype' => $filetype,
         'file'     => $fileargs
     };
+    # We have to UTF-8 encode all the form values ourselves.
     foreach my $opt (qw/ name language direction public /) {
         if ($c->req->param($opt)) {
             $newopts->{$opt} = encode_utf8($c->req->param($opt));
