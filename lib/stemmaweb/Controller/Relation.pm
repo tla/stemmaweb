@@ -486,10 +486,8 @@ my %read_write_keys = (
 );
 
 # Return a JSONable struct of the useful keys.  Keys meant to be writable
-# have a true value; read-only keys have a false value. If the SVG ID for
-# the reading differs from the database ID, an additional key 'svg_id' will
-# be put in the hash; this can be used or removed before return to the client.
-#   { 'n123' => {id => '123', text => 'foo', is_lemma => JSON::False, ... }}
+# have a true value; read-only keys have a false value.
+#   {id => '123', text => 'foo', is_lemma => JSON::False, ... }
 sub _reading_struct {
     my ($reading) = @_;
     my $struct = {};
@@ -500,8 +498,6 @@ sub _reading_struct {
         $struct->{id} = '__START__';
     } elsif (exists $reading->{is_end} && $reading->{is_end} == JSON::true) {
         $struct->{id} = '__END__';
-    } else {
-        $struct->{svg_id} = 'n' . $reading->{id};
     }
 
     # Calculate is_meta
@@ -537,14 +533,10 @@ sub readings :Chained('section') :PathPart :Args(0) {
     # Get the extra information we need
     my $ret = {};
     foreach my $rdg (@$rdglist) {
-        # Exclude emendations
-        next if $rdg->{is_emendation};
         # Modify the stemmarest reading into a stemmaweb one
+        # and use its ID as key
         my $struct = _reading_struct($rdg);
-
-        # The struct we return needs to be keyed on SVG node ID.
-        my $nid = delete $struct->{svg_id};
-        $ret->{ $nid ? $nid : $struct->{id} } = $struct;
+        $ret->{ $struct->{id} } = $struct;
     }
     $c->stash->{result} = $ret;
     $c->forward('View::JSON');
@@ -584,9 +576,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
         return json_error($c, $e->status, $e->message);
     }
     if ($c->request->method eq 'GET') {
-        my $result = _reading_struct($orig_reading);
-        delete $result->{svg_id};
-        $c->stash->{'result'} = $result;
+        $c->stash->{'result'} = _reading_struct($orig_reading);
     } elsif ($c->request->method eq 'POST') {
 
         # Auth check
@@ -1079,11 +1069,9 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
         $c->stash->{result} = { DELETED => \@deleted_rels };
         foreach my $r (@{ $response->{readings} }) {
             my $rinfo = _reading_struct($r);
-            my $nid = delete $rinfo->{svg_id};
-
             # Add in the orig_reading information that was passed back
             $rinfo->{orig_reading} = $r->{orig_reading};
-            $c->stash->{result}->{$nid} = $rinfo;
+            $c->stash->{result}->{$rinfo->{id}} = $rinfo;
         }
     } else {
         json_error($c, 405, "Use POST instead");
@@ -1186,8 +1174,6 @@ sub split :Chained('section') :PathPart :Args(0) {
         $c->stash->{result}->{relationships} = $response->{sequences};
         foreach my $r (@{ $response->{readings} }) {
             my $rinfo = _reading_struct($r);
-            delete $rinfo->{svg_id};
-
             # Add in the orig_reading information that was passed back
             $rinfo->{orig_reading} = $r->{orig_reading};
             $c->stash->{result}->{ $r->{id} } = $rinfo;
