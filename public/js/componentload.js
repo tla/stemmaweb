@@ -12,3 +12,9 @@ function fetchTraditions() {
     tlist.attr("tradId", d => d.id)
       .text(d => d.name);
   })};
+
+function testD3Graphviz() {
+  d3.select("#graph")
+   .graphviz()
+    .renderDot('digraph {a -> b -> c}');
+}
