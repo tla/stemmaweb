@@ -1,8 +1,7 @@
-function edges_of(ellipse) {
+function edges_of(ellipse, direction) {
   var edges = new Array();
   var node_id = ellipse.parent().attr('id');
-  // This is a nasty hack, manually correlating SVG ID to DB ID
-  var reading_id = node_id.replace('n', '');
+  var reading_id = ellipse.prev('title').text();
   var edge_outgoing_pattern = new RegExp('^' + reading_id + '-');
   var edge_incoming_pattern = new RegExp(reading_id + '$');
   $.each($('#svgenlargement .edge'), function(index) {
@@ -10,12 +9,15 @@ function edges_of(ellipse) {
     if (edge_outgoing_pattern.test(title) || edge_incoming_pattern.test(title)) {
       var edge = new Edge($(this));
       edge.node_id = node_id;
-      if (edge_incoming_pattern.test(title)) {
-        edge.is_incoming = true;
-      }
+      edge.is_incoming = edge_incoming_pattern.test(title);
       edges.push(edge);
     }
   });
+  if (direction === 'incoming') {
+      return edges.filter( e => e.is_incoming );
+  } else if (direction === 'outgoing') {
+      return edges.filter( e => !e.is_incoming );
+  }
   return edges;
 }
 
@@ -27,8 +29,8 @@ function Edge(g_elem) {
   this.witnesses = g_elem.children('text').text().split(/,\s*/);
   this.is_incoming = false;
   // This is a nasty hack, manually correlating SVG ID to DB ID
-  this.start_node_id = 'n' + g_elem.children('title').text().split('-')[0];
-  this.end_node_id = 'n' + g_elem.children('title').text().split('>')[1];
+  this.start_node_id = rid2node(g_elem.children('title').text().split('-')[0]);
+  this.end_node_id = rid2node(g_elem.children('title').text().split('>')[1]);
 
   this.detach_witnesses = function(witnesses_to_detach) {
     var detached = [];
@@ -58,12 +60,8 @@ function Edge(g_elem) {
   }
 
   this.create_label = function(witnesses) {
-    var label = '';
-    $.each(witnesses, function(index, witness) {
-      label = label + witness + ', ';
-    });
-    label = label.replace(/, $/, '');
-    return label;
+    witnesses.sort();
+    return witnesses.join(', ');
   }
 
   this.clone_for = function(witnesses) {

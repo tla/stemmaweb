@@ -24,6 +24,7 @@
     <script type="text/javascript" src="[% c.uri_for('/js/Sortable.min.js') %]"></script>
     <script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
     <script type="text/javascript" src="https://d3js.org/d3-selection-multi.v1.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/d3-clone/build/d3-clone.min.js"></script>
 [% IF applicationjs -%]
     <script type="text/javascript" src="[% applicationjs %]?v=[% vstr %]"></script>
 [% END -%]

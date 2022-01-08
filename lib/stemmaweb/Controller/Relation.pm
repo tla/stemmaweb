@@ -470,48 +470,14 @@ this dictionary will look like:
 =cut
 
 my %read_write_keys = (
-    'id'              => 0,
     'text'            => 1,
-    'rank'            => 0,
-    'is_meta'         => 0,
     'grammar_invalid' => 1,
     'is_lemma'        => 1,
     'is_nonsense'     => 1,
     'normal_form'     => 1,
-    'join_prior'      => 0,
-    'join_next'       => 0,
     'annotation'      => 1,
     'display'         => 1,
-    'witnesses'       => 0
 );
-
-# Return a JSONable struct of the useful keys.  Keys meant to be writable
-# have a true value; read-only keys have a false value.
-#   {id => '123', text => 'foo', is_lemma => JSON::False, ... }
-sub _reading_struct {
-    my ($reading) = @_;
-    my $struct = {};
-    map { $struct->{$_} = $reading->{$_} } keys %read_write_keys;
-
-    # Set known IDs on start/end nodes, that match what will be in the SVG
-    if (exists $reading->{is_start} && $reading->{is_start} == JSON::true) {
-        $struct->{id} = '__START__';
-    } elsif (exists $reading->{is_end} && $reading->{is_end} == JSON::true) {
-        $struct->{id} = '__END__';
-    }
-
-    # Calculate is_meta
-    $struct->{is_meta} =
-         $reading->{is_start}
-      || $reading->{is_end}
-      || $reading->{is_lacuna}
-      || $reading->{is_ph};
-
-    # Set the normal form if necessary
-    $struct->{normal_form} = $reading->{normal_form} || $reading->{text};
-
-    return $struct;
-}
 
 sub readings :Chained('section') :PathPart :Args(0) {
     my ($self, $c) = @_;
@@ -533,10 +499,7 @@ sub readings :Chained('section') :PathPart :Args(0) {
     # Get the extra information we need
     my $ret = {};
     foreach my $rdg (@$rdglist) {
-        # Modify the stemmarest reading into a stemmaweb one
-        # and use its ID as key
-        my $struct = _reading_struct($rdg);
-        $ret->{ $struct->{id} } = $struct;
+        $ret->{ $rdg->{id} } = $rdg;
     }
     $c->stash->{result} = $ret;
     $c->forward('View::JSON');
@@ -576,7 +539,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
         return json_error($c, $e->status, $e->message);
     }
     if ($c->request->method eq 'GET') {
-        $c->stash->{'result'} = _reading_struct($orig_reading);
+        $c->stash->{'result'} = $orig_reading;
     } elsif ($c->request->method eq 'POST') {
 
         # Auth check
@@ -632,7 +595,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
         # If our reading is there multiple times from multiple updates,
         # the last version will be kept.
         my $changelist = {};
-        map { $changelist->{$_->{id}} = _reading_struct($_) } @changed;
+        map { $changelist->{$_->{id}} = $_ } @changed;
 
         $c->stash->{result} = { readings => [ values(%$changelist) ] };
     } else {
@@ -737,9 +700,7 @@ sub copynormal :Chained('section') :PathPart :Args(2) {
         # Do the deed
         try {
             my $url = "/reading/$reading/normaliseRelated/$reltype";
-            my $resp = $m->ajax('post', $url);
-            my $changelist = [ map { _reading_struct($_) } @$resp];
-            $c->stash->{result} = $changelist;
+            $c->stash->{result} = $m->ajax('post', $url);
         } catch (stemmaweb::Error $e) {
             return json_error($c, $e->status, $e->message);
         }
@@ -767,7 +728,7 @@ sub emendations :Chained('section') :PathPart :Args(0) {
             my $resp = $m->ajax(
                 'get', "/tradition/$textid/section/$sectid/emendations");
             $c->stash->{result} = {
-                readings => [map { _reading_struct($_) } @{$resp->{readings}}],
+                readings => $resp->{readings},
                 sequences => $resp->{sequences}
             };
         }
@@ -817,7 +778,7 @@ sub emend :Chained('section') :PathPart :Args(0) {
                 'Content'      => encode_json($c->request->params)
             );
             $c->stash->{result} = {
-                readings => [map { _reading_struct($_) } @{$resp->{readings}}],
+                readings => $resp->{readings},
                 sequences => $resp->{sequences}
             }
         }
@@ -863,31 +824,33 @@ sub compress :Chained('section') :PathPart :Args(0) {
         my $first = shift @rids;
 
         my @nodes = ($first);
-        my $result = { status => 'ok' };
+        my $lastresult;
         try {
             while (scalar @rids) {
                 my $rid = shift @rids;
-                $m->ajax(
+                $lastresult = $m->ajax(
                     'post', "/reading/$first/concatenate/$rid",
                     'Content-Type' => 'application/json',
                     'Content'      => encode_json({ character => " " })
                 );
                 push(@nodes, $rid);
             }
+            # Return the list of nodes we merged
+            $lastresult->{merged} = \@nodes
         }
         catch (stemmaweb::Error $e ) {
-
-            # If we have merged anything we should say so in the
-            # response, but note a warning too.
+            # If nothing has been merged, just error out
             return json_error($c, $e->status, $e->message)
               if scalar(@nodes) == 1;
-            $result->{status} = 'warn';
-            $result->{warning} = $e->message;
+            # If we have merged anything we should still return a
+            # response, but note a warning too.
+            $lastresult->{status} = 'warn';
+            $lastresult->{warning} = $e->message;
+            $lastresult->{merged} = \@nodes;
         }
-        $result->{nodes} = \@nodes;
 
         # Return what we have.
-        $c->stash->{result} = $result;
+        $c->stash->{result} = $lastresult;
         $c->forward('View::JSON');
     } else {
         json_error($c, 405, "Use POST instead");
@@ -937,6 +900,7 @@ sub merge :Chained('section') :PathPart :Args(0) {
         my $rdg_rank = $section_end;
         my @succeeded;
         my $failed = {};
+        my $response = { status => 'ok' };
         foreach my $second (@rest) {
             try {
                 ## Figure out the range of ranks we are dealing with
@@ -949,7 +913,8 @@ sub merge :Chained('section') :PathPart :Args(0) {
                 $rdg_rank = $srank < $rdg_rank ? $srank : $rdg_rank;
                 $extent = $magnitude > $extent ? $magnitude : $extent;
                 ## Do the merge
-                $m->ajax('post', "/reading/$main/merge/$second");
+                my $thisresult = $m->ajax('post', "/reading/$main/merge/$second");
+                _combine_merge_results($response, $thisresult);
                 push(@succeeded, $second);
             }
             catch (stemmaweb::Error $e) {
@@ -957,7 +922,6 @@ sub merge :Chained('section') :PathPart :Args(0) {
             }
         }
 
-        my $response = { status => 'ok' };
         if (keys %$failed) {
             # Don't do the mergeability check, just return the results.
             if (@succeeded) {
@@ -1003,6 +967,35 @@ sub merge :Chained('section') :PathPart :Args(0) {
     } else {
         json_error($c, 405, "Use POST instead");
     }
+}
+
+# Helper function to return the cumulative update from multiple merges
+# - one reading, with the latest text, rank, etc.
+# - all relations that were newly created as a result of the merge
+# - the latest version of all sequence links that were altered or created
+#   as a result of the merge
+sub _combine_merge_results {
+    my( $cumulative, $last ) = @_;
+    # Take over the latest reading info
+    $cumulative->{readings} = $last->{readings};
+    # Add on the latest relation info
+    my $rels = $cumulative->{relations} || [];
+    foreach my $rdgrel (@{$last->{relations}}) {
+        push(@$rels, $rdgrel);
+    }
+    $cumulative->{relations} = $rels;
+    # Replace any sequences with updated ones from the last run
+    my %seqstrings;
+    map { $seqstrings{_seqstr($_)} = $_ } @{$cumulative->{sequences}};
+    foreach my $rdgseq (@{$last->{sequences}}) {
+        $seqstrings{_seqstr($rdgseq)} = $rdgseq;
+    }
+    $cumulative->{sequences} = values %seqstrings;
+}
+
+sub _seqstr {
+    my $rs = shift;
+    return $rs->{source} . '-[' . $rs->{type} . ']->' . $rs->{target};
 }
 
 =head2 duplicate
@@ -1068,10 +1061,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
           @{ $response->{relations} };
         $c->stash->{result} = { DELETED => \@deleted_rels };
         foreach my $r (@{ $response->{readings} }) {
-            my $rinfo = _reading_struct($r);
-            # Add in the orig_reading information that was passed back
-            $rinfo->{orig_reading} = $r->{orig_reading};
-            $c->stash->{result}->{$rinfo->{id}} = $rinfo;
+            $c->stash->{result}->{$r->{id}} = $r;
         }
     } else {
         json_error($c, 405, "Use POST instead");
@@ -1173,10 +1163,7 @@ sub split :Chained('section') :PathPart :Args(0) {
         # uses database IDs.
         $c->stash->{result}->{relationships} = $response->{sequences};
         foreach my $r (@{ $response->{readings} }) {
-            my $rinfo = _reading_struct($r);
-            # Add in the orig_reading information that was passed back
-            $rinfo->{orig_reading} = $r->{orig_reading};
-            $c->stash->{result}->{ $r->{id} } = $rinfo;
+            $c->stash->{result}->{ $r->{id} } = $r;
         }
 
     } else {

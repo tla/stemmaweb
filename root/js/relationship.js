@@ -1,11 +1,13 @@
 var MARGIN = 30;
 var svg_root = null;
-var svg_root_element = null;
+var svg_main_graph = null;
 var start_element_height = 0;
 var global_zoomstart_yes = false;
 var reltypes = {};
 var readingdata = {};
 var readings_selected = [];
+var start_id;
+var end_id;
 
 function removeFromArray(value, arr) {
   var idx = arr.indexOf(value);
@@ -25,22 +27,6 @@ function getReadingURL(reading_id) {
 // Make an XML ID into a valid selector
 function jq(myid) {
   return '#' + myid.replace(/(:|\.)/g, '\\$1');
-}
-
-// Our controller often returns a map of SVG node ID -> reading data,
-// including database ID. This is a set of helper functions to keep
-// the list of keys in readingdata in sync with the DB -> SVG ID map.
-
-// rdata here is a hash of SVG ID -> reading info.
-function update_readingdata(rdata) {
-  $.each(rdata, function(k, v) {
-    readingdata[k] = v;
-    // Throw in an extra entry for START and END nodes
-    if (k === '__START__' || k === '__END__') {
-      var jqid = '#' + k + ' title';
-      var rid = parseInt($(jqid).text());
-    }
-  });
 }
 
 // Get the SVG node for the given reading ID using browser XPath.
@@ -69,11 +55,32 @@ function node2rid(nid) {
   return r ? r.textContent : r;
 }
 
+// Update the browser data when we get reading updates from the server
+// rdata here is a hash of reading ID -> reading info.
+function update_readingdata(rdata) {
+  // Put the data on in the D3 way
+  d3svg.selectAll('g.node')
+    .data(Object.values(rdata),
+        function(d) {return d ? rid2node(d.id) : this.id});
+  // Put the data in the legacy external hash
+  Object.entries(rdata).forEach(([k, v]) => {
+    readingdata[k] = v;
+    // Throw in an extra entry for START and END nodes
+    let key = v['is_start'] ? '__START__' : v['is_end'] ? '__END__' : ''
+    if (key) {
+      readingdata[key] = v;
+    }
+  });
+}
+
 // rdata here is the info for an individual reading.
-// Return the SVG node ID for further visual processing.
 function update_reading(rdata) {
   var rid = rdata['id'];
+  // Update the d3 version of the data
+  d3.select(jq(rid2node(rid))).data([rdata]);
+  // ...and the legacy hash
   readingdata[rid] = rdata;
+  // Return the SVG node ID for further visual processing.
   return rid2node(rid);
 }
 
@@ -86,53 +93,47 @@ function sortByRank(a, b) {
 
 // TODO add text decoration for emendations
 function update_reading_display(node_id) {
-  // Grab the reading data from which we update
-  var rdata = readingdata[node2rid(node_id)];
-  // Get the elements of the node. These are JQuery objects
-  var ellipse = get_ellipse(node_id);
-  var g = ellipse.parent();
-  // ...but this is a DOM object
-  var text = g.find('text').get(0);
-  // and this is an array of DOM objects.
-  var normalifexists = g.find('text[fill="grey"]');
-  // Do we need to display a normal form?
-  if (rdata.normal_form !== rdata.text) {
-    // See if the element has a normal form specified
-    var normal;
-    if (normalifexists.length == 0) {
-      // We are going to need to resize the ellipse and shove up the existing text element(s) to accommodate
-      ellipse.attr("ry", "25.4118");
-      text.setAttribute("y", parseFloat(ellipse.attr("cy")) - 3.8);
-      normal = text.cloneNode();
-      text.after(normal);
-      normal.setAttribute("y", parseFloat(ellipse.attr("cy")) + 10.2);
-      normal.setAttribute("fill", "grey");
-    } else {
-      normal = normalifexists.get(0);
-    }
-    // Center this text node, if it isn't already.
-    normal.setAttribute("text-anchor", "middle");
-    normal.setAttribute("x", ellipse.attr("cx"));
-    // and reset the content.
-    normal.textContent = rdata.normal_form;
-  } else if (normalifexists.length > 0) {
-    // We should shrink the ellipse and remove the normal form.
-    ellipse.attr("ry", "18");
-    text.setAttribute("y", parseFloat(ellipse.attr("cy")) + 2);
-    normalifexists.get(0).remove();
+  var theGroup = d3.select(jq(node_id));
+  var theShape = theGroup.select('ellipse');
+  var theText = theGroup.select('text');
+
+  // Display the necessary text node(s)
+  var rdata = theGroup.data()[0];
+  var ellipseText = [rdata.text];
+  if (rdata.normal_form && rdata.normal_form !== rdata.text) {
+    ellipseText.push(rdata.normal_form);
   }
-  // Can / should we reset the reading text?
-  if (rdata['display'] && rdata.display.indexOf('<') > -1) {
-    // We can't reset the text element.
-    console.log("Not resetting text value for node " + node_id);
-  } else {
-    // Center the old text node too.
-    text.setAttribute("text-anchor", "middle");
-    text.setAttribute("x", ellipse.attr("cx"));
-    // Now replace the text.
-    var newText = rdata.display ? rdata.display : rdata.text;
-    text.textContent = newText;
+  var allTextNodes = theGroup.selectAll('text')
+    .data(ellipseText);
+  var normalNode = allTextNodes.enter()
+    .appendClone(theText)
+    .attr('y', parseFloat(theShape.attr("cy")) + 10.2)
+    .attr('fill', 'grey');
+  // If we just appended a node, we have to enlarge the ellipse and
+  // move the original text node up
+  if (normalNode.size()) {
+    theText.attr("y", parseFloat(theShape.attr("cy")) - 3.8);
+    theShape.attr("ry", "25.4118");
   }
+  //
+  normalNode.merge(allTextNodes)
+    .attr("text-anchor", "middle")
+    .attr("x", theShape.attr("cx"))
+    .text(d => d);
+  // Do we need to remove a normal form?
+  var normalGone = allTextNodes.exit().remove();
+  if (normalGone.size()) {
+    // Resize the ellipse and move the main text node down
+    theShape.attr("ry", "18");
+    theText.attr("y", parseFloat(theShape.attr("cy")) + 2)
+  }
+  // Resize the ellipse as necessary along the X axis
+  var maxLength = 0;
+  allTextNodes.each(function(d) {
+      let tl = this.textContent.length;
+      if (tl > maxLength) { maxLength = tl; }
+  });
+  theShape.attr('rx', 4.5 * maxLength);
 }
 
 function delete_reading(nodeid) {
@@ -202,48 +203,23 @@ function stringify_wordform(tag) {
 // TODO pick some colors for emendations
 function color_inactive(el) {
   var svg_id = $(el).parent().attr('id');
-  var reading_info = readingdata[node2rid(svg_id)];
-  // If the reading is a lemma, color it red; otherwise color it green.
-  $(el).attr({
-    stroke: 'green',
-    fill: '#b3f36d'
-  });
-  if (reading_info) {
-    if (reading_info['is_lemma']) {
-      $(el).attr({
-        stroke: 'red',
-        fill: '#f36d6f'
-      });
-    }
-    if (reading_info['is_emendation']) {
-      $(el).attr({
-        stroke: 'purple'
-      });
-    }
-  }
+  d3.select(jq(svg_id))
+    .select('ellipse')
+    .attr('stroke', d => (d && d.is_lemma) ? 'red' : 'green')
+    .attr('fill', d => (d && d.is_lemma) ? '#f36d6f' : '#b3f36d');
 }
 
 function color_active(el) {
   var svg_id = $(el).parent().attr('id');
-  var reading_info = readingdata[node2rid(svg_id)];
-  // If the reading is currently selected, color it accordingly; otherwise
-  // red for lemma and white for not.
-  if (readings_selected.indexOf(svg_id) > -1) {
-    $(el).attr({
-      stroke: 'black',
-      fill: '#9999ff'
+  d3.select(jq(svg_id))
+    .select('ellipse')
+    .attr('stroke', d => (d && d.is_lemma) ? 'red' : 'black')
+    .attr('fill', d => {
+        if (readings_selected.indexOf(svg_id) > -1) {
+            return '#9999ff';
+        }
+        return (d && d.is_lemma) ? '#ffdddd' : '#fff';
     });
-  } else if (reading_info && reading_info['is_lemma']) {
-    $(el).attr({
-      stroke: 'red',
-      fill: '#ffdddd'
-    });
-  } else {
-    $(el).attr({
-      stroke: 'black',
-      fill: '#fff'
-    });
-  }
 }
 
 function showLoadingScreen() {
@@ -444,20 +420,7 @@ d3.selection.prototype.appendSVG = function(SVGString) {
 // Initialize the SVG once it exists
 function svgEnlargementLoaded() {
   //Give some visual evidence that we are working
-  $('#loading_overlay').show();
-  lo_height = $("#enlargement_container").outerHeight();
-  lo_width = $("#enlargement_container").outerWidth();
-  $("#loading_overlay").height(lo_height);
-  $("#loading_overlay").width(lo_width);
-  $("#loading_overlay").offset($("#enlargement_container").offset());
-  // $("#loading_message").offset(
-  //   { 'top': lo_height / 2 - $("#loading_message").height() / 2,
-  //     'left': lo_width / 2 - $("#loading_message").width() / 2 });
-  $('#loading_message').position({
-    my: 'center',
-    at: 'top + ' + $('#loading_message').height(),
-    of: '#loading_overlay'
-  });
+  // showLoadingScreen();
   if (editable) {
     // Show the update toggle button.
     $('#update_workspace_button').data('locked', false);
@@ -465,8 +428,8 @@ function svgEnlargementLoaded() {
   }
   // Set our SVG root elements
   var svg_container = document.getElementById('svgenlargement');
-  svg_root_element = document.getElementById('graph0');
-  svg_root = svg_root_element.parentNode;
+  svg_main_graph = document.getElementById('graph0');
+  svg_root = svg_main_graph.parentNode;
 
   // Get the SVG into d3 for manipulation
   d3svg = d3.select("svg");
@@ -483,8 +446,8 @@ function svgEnlargementLoaded() {
 
   //JMB - BBox gets us the real (internal coords) size of the graph, as opposed to getBoundingClientRect which would show the on-screen value
   // This section mainly calculates the starting zoom. Transform origin, unlike in earlier versions, always remains as "top left". -JMB
-  var ghigh = svg_root_element.getBBox().height;
-  var gwit = svg_root_element.getBBox().width;
+  var ghigh = svg_main_graph.getBBox().height;
+  var gwit = svg_main_graph.getBBox().width;
   var chigh = svg_container.getBoundingClientRect().height;
   var cwit = svg_container.getBoundingClientRect().width;
 
@@ -548,16 +511,18 @@ function svgEnlargementLoaded() {
   });
 
   //some use of call backs to ensure successive execution
-  $.getJSON(getTextURL('readings'), function(data) {
-    update_readingdata(data);
-    add_relations(function() {
-      $('#svgenlargement ellipse').parent().dblclick(node_dblclick_listener);
-      $('#svgenlargement ellipse').each(function(i, el) {
-        color_inactive(el)
+  d3.json(getTextURL('readings'))
+    .then(data => {
+      // Hook the reading data to the respective SVG group elements
+      update_readingdata(data);
+      add_relations(function() {
+        $('#svgenlargement ellipse').parent().dblclick(node_dblclick_listener);
+        $('#svgenlargement ellipse').each(function(i, el) {
+          color_inactive(el)
+        });
+        $('#loading_overlay').hide();
       });
-      $('#loading_overlay').hide();
     });
-  });
 }
 
 // JMB: d3 zoom function
@@ -598,14 +563,14 @@ function zoomer() {
     //global_zoomstart_yes
     if (text_direction == 'BI') {
       // Locked pan to centre of X Axis
-      var gwit = svg_root_element.getBoundingClientRect().width;
+      var gwit = svg_main_graph.getBoundingClientRect().width;
       crect.scrollTo({
         left: (gwit - crect.width) / 2
       });
       // Panning zoom in Y Axis
       // console.log("Mouse coords at " + coords[1]);
-      var ghighA = svg_root_element.getBoundingClientRect().height; // Real height
-      var ghighB = svg_root_element.getBBox().height; // Internal height
+      var ghighA = svg_main_graph.getBoundingClientRect().height; // Real height
+      var ghighB = svg_main_graph.getBBox().height; // Internal height
       var yval = coords[1] //This gives us INTERNAL Y coord
       var percy = yval / ghighB //This gives us the % of the way along the Y axis
       var realy = percy * ghighA
@@ -1175,7 +1140,7 @@ function relation_factory() {
     var p = svg_root.createSVGPoint();
     p.x = xs + ((xe - xs) * 1.1);
     p.y = ye - ((ye - ys) / 2);
-    var ctm = svg_root_element.getScreenCTM();
+    var ctm = svg_main_graph.getScreenCTM();
     var nx = p.matrixTransform(ctm).x;
     var ny = p.matrixTransform(ctm).y;
     var dialog_aria = $("div[aria-labelledby='ui-dialog-title-delete-form']");
@@ -1262,6 +1227,12 @@ function delete_relation(form_values) {
   });
 }
 
+// Redisplay emendations:
+// get
+// g.select('ellipse').remove()
+// g.insert('rect', 'text').attr('x', cx-rx).attr('y', cy-ry).attr('width', rx*2).attr('height', ry*2).attr('rx', 5).attr('ry', 5).attr('fill', '#ffdddd').attr('stroke', 'red')
+
+
 function add_emendation(emenddata) {
   // Set some useful reduce functions
   const floor = (acc, cval) => acc < cval ? acc : cval;
@@ -1281,6 +1252,7 @@ function add_emendation(emenddata) {
       .enter()
       .append('g')
       .attr('id', svgid);
+    enode.append('title').text(r.id);
     enode.append('rect')
       .attr('x', function(d) { // Place the node at the same rank as its fellows
         var startNodes = Object.entries(readingdata)
@@ -1333,9 +1305,9 @@ function add_emendation(emenddata) {
       .attr('font-family', 'Times,serif')
       .attr('font-size', '14.00')
       .text(r.text);
+    // Add the emendation to our legacy readingdata
+    update_reading(r);
   });
-  // Add the emendations to our readingdata
-  update_readingdata(added);
 
   // TODO add sequences maybe?
 }
@@ -1350,7 +1322,7 @@ function detach_node(readings) {
     delete readings['DELETED'];
   }
   // add new node(s)
-  update_readingdata(readings);
+  Object.values(readings).forEach(x => update_reading(x));
   // remove from existing readings the witnesses for the new nodes/readings
   $.each(readings, function(node_id, reading) {
     $.each(reading.witnesses, function(index, witness) {
@@ -1542,81 +1514,63 @@ function merge_nodes(source_node_id, target_node_id, consequences) {
 }
 
 // This takes SVG node IDs
-function merge_node(source_node_id, target_node_id, compressing) {
-  $.each(edges_of(get_ellipse(source_node_id)), function(index, edge) {
-    if (edge.is_incoming == true) {
-      edge.attach_endpoint(target_node_id);
+function merge_node(todelete_id, tokeep_id, compressing) {
+  edges_of(get_ellipse(todelete_id)).forEach(edge => {
+    if (edge.is_incoming) {
+      edge.attach_endpoint(tokeep_id);
     } else {
-      edge.attach_startpoint(target_node_id, compressing);
+      edge.attach_startpoint(tokeep_id, compressing);
     }
   });
   if (!compressing) {
     // Add source node witnesses to target node
     // TODO see if we can get this info from the server
     // NOTE: this may need to be more complex to account for witness layers
-    $.each(readingdata[node2rid(source_node_id)].witnesses, function(i, d) {
-      readingdata[node2rid(target_node_id)].witnesses.push(d)
+    $.each(readingdata[node2rid(todelete_id)].witnesses, function(i, d) {
+      readingdata[node2rid(tokeep_id)].witnesses.push(d)
     });
   }
-  delete_reading(source_node_id);
+  // Remove from legacy readingdata
+  delete_reading(todelete_id);
   // Remove any relation paths that belonged to this node
-  var relselector = 'g.relation[id*="' + source_node_id + '"]';
+  var relselector = 'g.relation[id*="' + todelete_id + '"]';
   $(relselector).remove();
   // Remove the SVG node itself
-  $(jq(source_node_id)).remove();
+  $(jq(todelete_id)).remove();
 }
 
 // This takes SVG node IDs
-function merge_left(source_node_id, target_node_id) {
-  $.each(edges_of(get_ellipse(source_node_id)), function(index, edge) {
-    if (edge.is_incoming == true) {
-      edge.attach_endpoint(target_node_id);
-    }
-  });
-  $(jq(source_node_id)).remove();
+function merge_left(todelete_id, tokeep_id) {
+  edges_of(get_ellipse(todelete_id), 'incoming').forEach(
+      edge => edge.attach_endpoint(tokeep_id));
+  delete_reading(todelete_id);
+  $(jq(todelete_id)).remove();
 }
 
 // This calls merge_node, as topologically it is doing basically the same thing.
-function compress_nodes(readings) {
-  //add text of other readings to 1st reading
+function compress_nodes(data) {
+  var readings = data['merged'];
+  var remaining_reading = data['readings'][0];
+  // Save the data and update the content of the first reading node
+  update_reading_display(update_reading(remaining_reading));
 
-  // Get the ellipse elements for our given reading IDs
+  // Get the ellipse elements for all affected reading IDs
   var ellipses = readings.map(x => get_ellipse(rid2node(x)));
 
+  // This should be the ellipse for the node we just updated
   var first = ellipses[0];
-  var first_title = first.parent().find('text')[0];
-  var last_edges = edges_of(ellipses[readings.length - 1]);
-  for (var i = 0; i < last_edges.length; i++) {
-    if (last_edges[i].is_incoming == false) {
-      var last = last_edges[i];
-    }
-  }
+  var d3first = d3.select(jq(first.parent().attr('id')));
 
+  // Find the new center point for the first node
   var total = parseInt(first[0].getAttribute('cx'), 10);
-
   for (var i = 1; i < readings.length; i++) {
     var cur = ellipses[i];
-    var cur_title = cur.parent().find('text')[0];
-
-    first_title.textContent += " " + cur_title.textContent;
     total += parseInt(cur[0].getAttribute('cx'), 10);
   };
-
   var avg = Math.round(total / readings.length);
-
-  // Reattach last external edge to new to-be-merged node: NB: We
-  // can't to this after the removal as startpoint wants the cx etc
-  // of the ellipse the edge is moving from..
-  //    last.attach_startpoint(readings[0]);
-
-
-  // do this once:
-  var x = parseInt(first[0].getAttribute('cx'), 10);
-  first[0].setAttribute('rx', 4.5 * first_title.textContent.length);
-
   if (text_direction !== "BI") {
-    first[0].setAttribute('cx', avg);
-    first_title.setAttribute('x', first[0].getAttribute('cx'));
+    d3first.selectAll('*[cx]').attr('cx', avg);
+    d3first.selectAll('*[x]').attr('x', avg);
   }
 
   //merge then delete all others
@@ -1624,6 +1578,7 @@ function compress_nodes(readings) {
     var node = ellipses[i];
     var edgeid = readings[i - 1] + '->' + readings[i];
 
+    // This is finding the incoming (intermediate) edge by "1234->5678" title
     var titles = svg_root.getElementsByTagName('title');
     var titlesArray = [].slice.call(titles);
 
@@ -1641,26 +1596,21 @@ function compress_nodes(readings) {
       merge_left(rid2node(readings[i]), rid2node(readings[0]));
     }
 
+    // Remove the intermediate edge
     if (title && title.parentNode) {
       title.parentNode.remove();
     }
   }
 
-  /* Fix size of arrows to node for LR/RL texts. */
+  // The merge_node / merge_left call will have taken care of outgoing edges;
+  // now we have to fix the incoming edges to the new position of the combined
+  // node (unless it is running top to bottom, and the ellipse didn't move)
   if (text_direction !== "BI") {
-    /* This is the remaining node; find the incoming edge, which is now the
+    /* This is the remaining node; find the incoming edge(s), which are now the
      * wrong size */
-    var first_edge;
-    var first_edges = edges_of(first);
+    var first_edges = edges_of(first, 'incoming');
 
-    for (var i = 0; i < first_edges.length; i++) {
-      if (first_edges[i].is_incoming == true) {
-        first_edge = first_edges[i];
-        break;
-      }
-    }
-
-    if (first_edge) {
+    first_edges.forEach( first_edge => {
       //arrow
       var polygon = first_edge.g_elem.children('polygon');
 
@@ -1708,7 +1658,7 @@ function compress_nodes(readings) {
           end_point_arrowhead.reposition(dx, 0);
         }
       }
-    }
+    });
   }
 
   get_node_obj(readings[0]).update_elements();
@@ -1732,9 +1682,9 @@ function readings_equivalent(source, target) {
 }
 
 // function scrollToEnd() {
-//   var stateTf = svg_root_element.getCTM().inverse();
+//   var stateTf = svg_main_graph.getCTM().inverse();
 //
-//   var elem_width = Math.floor(svg_root_element.getBoundingClientRect().width);
+//   var elem_width = Math.floor(svg_main_graph.getBoundingClientRect().width);
 //   var vbdim = svg_root.viewBox.baseVal;
 //
 //   var x = vbdim.width - elem_width;
@@ -1743,9 +1693,9 @@ function readings_equivalent(source, target) {
 // }
 //
 // function placeMiddle() {
-//   var stateTf = svg_root_element.getCTM().inverse();
+//   var stateTf = svg_main_graph.getCTM().inverse();
 //
-//   var elem_width = Math.floor(svg_root_element.getBoundingClientRect().width);
+//   var elem_width = Math.floor(svg_main_graph.getBoundingClientRect().width);
 //   var vbdim = svg_root.viewBox.baseVal;
 //
 //   var x = Math.floor((vbdim.width - elem_width) / 2);
@@ -1809,8 +1759,9 @@ var keyCommands = {
         });
         var form_values = cform.serialize();
         $.post(ncpath, form_values, function(data) {
-          if (data.nodes) {
-            compress_nodes(data.nodes);
+          if (data.merged) {
+            // Do the visual munging
+            compress_nodes(data);
           }
           if (data.status === 'warn') {
             var dataerror = $('<p>').attr('class', 'caution').text(data.warning);
@@ -2081,7 +2032,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       .data('x', event.clientX)
       .data('y', event.clientY)
       .data('scrollLeft', this.scrollLeft)
-    stateTf = svg_root_element.getCTM().inverse();
+    stateTf = svg_main_graph.getCTM().inverse();
     var p = svg_root.createSVGPoint();
     p.x = event.clientX;
     p.y = event.clientY;
@@ -2792,7 +2743,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       return;
     }
     $(this).hide();
-    mouse_scale = svg_root_element.getScreenCTM().a;
+    mouse_scale = svg_main_graph.getScreenCTM().a;
     if ($(this).data('locked') == true) {
       d3svg.on(".drag", null);
       d3svg.call(zoomBehavior); // JMB turn zoom function on
@@ -2813,7 +2764,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       document.getElementById('graph0').style.transformOrigin = 'top left';
       var left = $('#enlargement').offset().left;
       var right = left + $('#enlargement').width();
-      var tf = svg_root_element.getScreenCTM().inverse();
+      var tf = svg_main_graph.getScreenCTM().inverse();
       var p = svg_root.createSVGPoint();
       p.x = left;
       p.y = 100;
@@ -2893,7 +2844,7 @@ function loadSVG(normalised) {
     ncpath += '?' + $('#normalize-for-type').serialize();
     // Record the actual normalisation we are using
     $('#svgenlargement').data('display_normalised',
-        $('#normalize-for-type').val());
+      $('#normalize-for-type').val());
     buttonText = "Expand graph";
   } else {
     // We are switching back to the expanded view
