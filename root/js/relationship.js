@@ -12,7 +12,7 @@ var end_id;
 function removeFromArray(value, arr) {
   var idx = arr.indexOf(value);
   if (idx > -1) {
-    arr.splice[idx, 1]
+    arr.splice(idx, 1)
   }
 };
 
@@ -1321,9 +1321,8 @@ function detach_node(readings) {
     });
     delete readings['DELETED'];
   }
-  // add new node(s)
-  Object.values(readings).forEach(x => update_reading(x));
   // remove from existing readings the witnesses for the new nodes/readings
+  // TODO get this from the server and d3ify it
   $.each(readings, function(node_id, reading) {
     $.each(reading.witnesses, function(index, witness) {
       removeFromArray(witness, readingdata[reading.orig_reading].witnesses);
@@ -1405,7 +1404,7 @@ function detach_node(readings) {
     }
 
     // Add the node and all new edges into the graph
-    var graph_root = $('#svgenlargement svg g.graph');
+    var graph_root = $(svg_main_graph);
     graph_root.append(duplicate_node);
     $.each(detached_edges, function(index, edge) {
       // TODO use returned sequence information to set the real
@@ -1435,6 +1434,10 @@ function detach_node(readings) {
     } else {
       new_node.reposition(0, 70);
     }
+
+    // add new node(s) in the data
+    Object.values(readings).forEach(x => update_reading(x));
+
   });
 
 }
