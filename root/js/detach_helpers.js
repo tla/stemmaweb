@@ -85,12 +85,14 @@ function Edge(g_elem) {
   }
 
   this.attach_endpoint = function(target_node_id) {
-    // first let's find out if the startpoint might also be linked to the target already
-    // in that case we need to remove this edge and transfer the witnesses to the
-    // appropriate edge of the target_node
+    // first let's find out if the startpoint might also be linked to the
+    // target already via another edge
+    // in that case we need to remove this edge and transfer the witnesses
+    // to the appropriate edge of the target_node
     $.each(edges_of(get_ellipse(target_node_id)), function(index, target_edge) {
       if ((self != null) && (target_edge.is_incoming == true)) {
-        if (self.start_node_id == target_edge.start_node_id) {
+        if (self.start_node_id == target_edge.start_node_id
+            && self.end_node_id != target_edge.end_node_id) {
           target_edge.attach_witnesses(self.witnesses);
           self.g_elem.remove();
           self = null;
@@ -105,17 +107,16 @@ function Edge(g_elem) {
         // var path_segments = self.g_elem.children('path')[0].pathSegList;
         // var edge_path = new svgpath( path_segments.getItem(path_segments.numberOfItems - 1), self.g_elem.children('path') );
         var path = self.g_elem.children('path')[0];
-        var path_element_object = new path_element_class(path, true);
+        var path_element_object = new path_element_class(path, false);
         var edge_path = new svgpath(path_element_object, self.g_elem.children('path'));
         var target_ellipse = get_ellipse(target_node_id);
         var target_cx = parseFloat(target_ellipse.attr('cx'));
         var target_cy = parseFloat(target_ellipse.attr('cy'));
         var target_rx = parseFloat(target_ellipse.attr('rx'));
-        var source_ellipse = get_ellipse(self.end_node_id);
-        var source_cx = parseFloat(source_ellipse.attr('cx'));
-        var source_cy = parseFloat(source_ellipse.attr('cy'));
-        var source_rx = parseFloat(source_ellipse.attr('rx'));
-        var dx = (target_cx - target_rx) - (source_cx - source_rx);
+        var curr_pos = polygon[0].getBBox();
+        var source_cx = curr_pos.x + (curr_pos.width / 2);
+        var source_cy = curr_pos.y + (curr_pos.height / 2);
+        var dx = (target_cx - target_rx) - (source_cx);
         var dy = (target_cy - source_cy);
         end_point_arrowhead.reposition(dx, dy);
         // TODO this does a wrong thing and leave a dangling path
@@ -150,13 +151,9 @@ function Edge(g_elem) {
       var target_cx = parseFloat(target_ellipse.attr('cx'));
       var target_cy = parseFloat(target_ellipse.attr('cy'));
       var target_rx = parseFloat(target_ellipse.attr('rx'));
-      var source_ellipse = get_ellipse(self.start_node_id);
-      var source_cx = parseFloat(source_ellipse.attr('cx'));
-      var source_cy = parseFloat(source_ellipse.attr('cy'));
-      var source_rx = parseFloat(source_ellipse.attr('rx'));
 
-      var dx = (target_cx + target_rx) - (source_cx + source_rx);
-      var dy = (target_cy - source_cy);
+      var dx = (target_cx + target_rx) - (edge_path.x);
+      var dy = (target_cy - edge_path.y);
       edge_path.reposition(dx, dy);
 
       if (compressing && text_direction === 'RL') {

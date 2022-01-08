@@ -969,7 +969,7 @@ function svgpath(path_element, svg_element) {
   this.x = this.path.x;
   this.y = this.path.y;
 
-  this.reposition = function(dx, dy) {
+  this.reposition = function(dx, dy, which) {
     this.x = this.x + dx;
     this.y = this.y + dy;
     this.path.x = this.x;
@@ -1552,7 +1552,8 @@ function compress_nodes(data) {
   var readings = data['merged'];
   var remaining_reading = data['readings'][0];
   // Save the data and update the content of the first reading node
-  update_reading_display(update_reading(remaining_reading));
+  var rnode = update_reading(remaining_reading);
+  update_reading_display(rnode);
 
   // Get the ellipse elements for all affected reading IDs
   var ellipses = readings.map(x => get_ellipse(rid2node(x)));
@@ -1591,9 +1592,9 @@ function compress_nodes(data) {
 
     // only merge start on the last one, else, we get ourselves confused!
     if (readings[i] == readings[readings.length - 1]) {
-      merge_node(rid2node(readings[i]), rid2node(readings[0]), true);
+      merge_node(rid2node(readings[i]), rnode, true);
     } else {
-      merge_left(rid2node(readings[i]), rid2node(readings[0]));
+      merge_left(rid2node(readings[i]), rnode);
     }
 
     // Remove the intermediate edge
@@ -1608,57 +1609,7 @@ function compress_nodes(data) {
   if (text_direction !== "BI") {
     /* This is the remaining node; find the incoming edge(s), which are now the
      * wrong size */
-    var first_edges = edges_of(first, 'incoming');
-
-    first_edges.forEach( first_edge => {
-      //arrow
-      var polygon = first_edge.g_elem.children('polygon');
-
-      if (polygon.size() > 0) {
-        //the line
-        var edge_elem = first_edge.g_elem.children('path')[0];
-
-        var d = edge_elem.getAttribute('d');
-        //https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
-        //This 'Curveto' property determines how long the line is.
-        //The Syntax is C c1x,c1y c2x,c2y x,y where x,y are where the
-        //path ends.
-        var c_attr = d.match(/C\s?(\S+) (\S+) (\S+)/);
-
-        var c_x = parseInt(first[0].getAttribute('cx'), 10);
-        var r_x = parseInt(first[0].getAttribute('rx'), 10);
-
-        var x;
-        if (text_direction === 'LR') {
-          //line ends to the left of the ellipse,
-          //so its center minus its radius
-          x = c_x - r_x;
-        } else if (text_direction === 'RL') {
-          //line ends to the right of the ellipse,
-          //so its center plus its radius
-          x = c_x + r_x;
-        }
-
-        if (c_attr.length >= 4) {
-          var full = c_attr.shift();
-
-          var end_point = c_attr[2].split(',');
-          var end_x = parseInt(end_point[0]);
-          var end_y = parseInt(end_point[1]);
-          //how much do we need to move the arrow by?
-          //this is the same amount we'll be moving its line
-          var dx = x - end_x;
-
-          //build the new 'C' property. We only changed 'x' here
-          var new_cattr = "C" + c_attr[0] + " " + c_attr[1] + " " + x + "," + end_y;
-          edge_elem.setAttribute('d', d.replace(full, new_cattr));
-
-          //and moe the arrow
-          var end_point_arrowhead = new svgshape(polygon);
-          end_point_arrowhead.reposition(dx, 0);
-        }
-      }
-    });
+    edges_of(first, 'incoming').forEach(edge => edge.attach_endpoint(rnode));
   }
 
   get_node_obj(readings[0]).update_elements();
