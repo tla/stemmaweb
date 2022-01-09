@@ -854,6 +854,10 @@ function node_obj(ellipse) {
   }
 
   this.mouseup_listener = function(evt) {
+    $('body').unbind('mousemove');
+    $('body').unbind('mouseup');
+    self.ellipse.attr('fill', '#9999ff');
+    self.reset_elements();
     if ($('ellipse[fill="#ffccff"]').size() > 0) {
       var source_node_id = $(self.ellipse).parent().attr('id');
       var source_node_text = readingdata[node2rid(source_node_id)].text
@@ -867,10 +871,6 @@ function node_obj(ellipse) {
       $('#dialog-form').data('binary', true);
       $('#dialog-form').dialog('open');
     };
-    $('body').unbind('mousemove');
-    $('body').unbind('mouseup');
-    self.ellipse.attr('fill', '#9999ff');
-    self.reset_elements();
   }
 
   this.cpos = function() {
@@ -1129,11 +1129,11 @@ function relation_factory() {
     "#DB3453", "#48456A", "#ABDFCE", "#502E35", "#E761AE"
   ];
 
-  this.create_temporary = function(source_node_id, target_node_id) {
-    var relation_id = get_relation_id(source_node_id, target_node_id);
+  this.create_temporary = function(source_id, target_id) {
+    var relation_id = get_relation_id(source_id, target_id);
     var relation = $(jq(relation_id));
     if (relation.size() == 0) {
-      draw_relation(source_node_id, target_node_id, {
+      draw_relation(source_id, target_id, {
         color: self.temp_color,
         class: 'temporary'
       });
@@ -1155,15 +1155,15 @@ function relation_factory() {
   }
   this.create = function(rel_info) {
     // Get our info from the relation struct
-    var source_node_id = rel_info.source;
-    var target_node_id = rel_info.target;
+    var source_id = rel_info.source;
+    var target_id = rel_info.target;
     var rel_types = $('#keymap').data('relations');
     var color_index = $.inArray(rel_info.type, rel_types);;
     var emphasis = rel_info.is_significant;
     // TODO: Protect from (color_)index out of bound..
     var relation_color = self.relation_colors[color_index];
     // Make the relation DOM object
-    var relation = draw_relation(source_node_id, target_node_id, {
+    var relation = draw_relation(source_id, target_id, {
       color: relation_color,
       emphasis: emphasis
     });
@@ -1171,8 +1171,8 @@ function relation_factory() {
     $.each(rel_info, function(k, v) {
       relation.data(k, v);
     });
-    get_node_obj(rid2node(source_node_id)).update_elements();
-    get_node_obj(rid2node(target_node_id)).update_elements();
+    get_node_obj(rid2node(source_id)).update_elements();
+    get_node_obj(rid2node(target_id)).update_elements();
     // Set the relationship info box on click.
     relation.children('path').css({
       'cursor': 'pointer'
@@ -2215,7 +2215,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           var source_id = node2rid(nid);
           var target_id = $('#target_node_id').val();
           if (source_id !== target_id) {
-            relation_manager.create_temporary(nid, rid2node(target_id));
+            relation_manager.create_temporary(source_id, target_id);
           }
         });
         // Show the merge button if applicable
