@@ -14,9 +14,9 @@ function edges_of(ellipse, direction) {
     }
   });
   if (direction === 'incoming') {
-      return edges.filter( e => e.is_incoming );
+    return edges.filter(e => e.is_incoming);
   } else if (direction === 'outgoing') {
-      return edges.filter( e => !e.is_incoming );
+    return edges.filter(e => !e.is_incoming);
   }
   return edges;
 }
@@ -79,7 +79,11 @@ function Edge(g_elem) {
 
   this.attach_witnesses = function(witnesses) {
     self.witnesses = self.witnesses.concat(witnesses);
-    self.g_elem.children('text').children('textPath').text(self.create_label(self.witnesses));
+    var text_elem = self.g_elem.children('text');
+    if (text_direction != 'BI') {
+      text_elem = text_elem.children('textPath');
+    }
+    text_elem.text(self.create_label(self.witnesses));
     var edge_weight = 0.8 + (0.2 * self.witnesses.length);
     self.g_elem.children('path').attr('stroke-width', edge_weight);
   }
@@ -91,8 +95,8 @@ function Edge(g_elem) {
     // to the appropriate edge of the target_node
     $.each(edges_of(get_ellipse(target_node_id)), function(index, target_edge) {
       if ((self != null) && (target_edge.is_incoming == true)) {
-        if (self.start_node_id == target_edge.start_node_id
-            && self.end_node_id != target_edge.end_node_id) {
+        if (self.start_node_id == target_edge.start_node_id &&
+          self.end_node_id != target_edge.end_node_id) {
           target_edge.attach_witnesses(self.witnesses);
           self.g_elem.remove();
           self = null;
@@ -118,7 +122,9 @@ function Edge(g_elem) {
         var dy = (target_cy - source_cy);
         end_point_arrowhead.reposition(dx, dy);
         edge_path.reposition(dx, dy);
-        offset_sequence_label(g_elem[0]);
+        if (text_direction !== 'BI') {
+          offset_sequence_label(g_elem[0]);
+        }
         g_elem.children('title').text(g_elem.children('title').text().replace(self.end_node_id, target_node_id));
       }
     }
@@ -159,7 +165,9 @@ function Edge(g_elem) {
       } else if (compressing && text_direction === 'BI') {
         edge_path.reposition(-target_rx / 2, 0);
       }
-      offset_sequence_label(g_elem[0]);
+      if (text_direction !== 'BI') {
+        offset_sequence_label(g_elem[0]);
+      }
 
       self.g_elem.children('title').text(self.g_elem.children('title').text().replace(self.start_node_id, target_node_id));
     }

@@ -61,7 +61,9 @@ function update_readingdata(rdata) {
   // Put the data on in the D3 way
   d3svg.selectAll('g.node')
     .data(Object.values(rdata),
-        function(d) {return d ? rid2node(d.id) : this.id});
+      function(d) {
+        return d ? rid2node(d.id) : this.id
+      });
   // Put the data in the legacy external hash
   Object.entries(rdata).forEach(([k, v]) => {
     readingdata[k] = v;
@@ -93,12 +95,18 @@ function sortByRank(a, b) {
 
 // TODO add text decoration for emendations
 function update_reading_display(node_id) {
+  // Get our components
   var theGroup = d3.select(jq(node_id));
   var theShape = theGroup.select('ellipse');
   var theText = theGroup.select('text');
+  var rdata = theGroup.datum();
 
+  // If we have to deal with HTML display text, don't
+  if (rdata.display && rdata.display !== rdata.text) {
+    alert("Not updating display of formatted reading");
+    return;
+  }
   // Display the necessary text node(s)
-  var rdata = theGroup.data()[0];
   var ellipseText = [rdata.text];
   if (rdata.normal_form && rdata.normal_form !== rdata.text) {
     ellipseText.push(rdata.normal_form);
@@ -130,8 +138,10 @@ function update_reading_display(node_id) {
   // Resize the ellipse as necessary along the X axis
   var maxLength = 0;
   allTextNodes.each(function(d) {
-      let tl = this.textContent.length;
-      if (tl > maxLength) { maxLength = tl; }
+    let tl = this.textContent.length;
+    if (tl > maxLength) {
+      maxLength = tl;
+    }
   });
   theShape.attr('rx', 4.5 * maxLength);
 }
@@ -200,25 +210,29 @@ function stringify_wordform(tag) {
   return ''
 }
 
-// TODO pick some colors for emendations
 function color_inactive(el) {
   var svg_id = $(el).parent().attr('id');
-  d3.select(jq(svg_id))
-    .select('ellipse')
+  var nsel = d3.select(jq(svg_id));
+  // Is it a normal reading...
+  nsel.select('ellipse')
     .attr('stroke', d => (d && d.is_lemma) ? 'red' : 'green')
     .attr('fill', d => (d && d.is_lemma) ? '#f36d6f' : '#b3f36d');
+  // ...or an emendation?
+  nsel.select('rect')
+    .attr('stroke', 'blue')
+    .attr('fill', d => (d && d.is_lemma) ? '#f36d6f' : '#6d6ff3');
 }
 
 function color_active(el) {
   var svg_id = $(el).parent().attr('id');
   d3.select(jq(svg_id))
-    .select('ellipse')
-    .attr('stroke', d => (d && d.is_lemma) ? 'red' : 'black')
+    .select('ellipse,rect')
+    .attr('stroke', d => (d && d.is_emendation) ? 'blue' : (d && d.is_lemma) ? 'red' : 'black')
     .attr('fill', d => {
-        if (readings_selected.indexOf(svg_id) > -1) {
-            return '#9999ff';
-        }
-        return (d && d.is_lemma) ? '#ffdddd' : '#fff';
+      if (readings_selected.indexOf(svg_id) > -1) {
+        return '#9999ff';
+      }
+      return (d && d.is_lemma) ? '#ffdddd' : '#fff';
     });
 }
 
@@ -268,22 +282,8 @@ var selectionRect = {
       height: height
     };
   },
-  getCurrentAttributes: function() {
-    // use plus sign to convert string into number
-    var x = +this.element.attr("x");
-    var y = +this.element.attr("y");
-    var width = +this.element.attr("width");
-    var height = +this.element.attr("height");
-    return {
-      x1: x,
-      y1: y,
-      x2: x + width,
-      y2: y + height
-    };
-  },
-  getCurrentAttributesAsText: function() {
-    var attrs = this.getCurrentAttributes();
-    return "x1: " + attrs.x1 + " x2: " + attrs.x2 + " y1: " + attrs.y1 + " y2: " + attrs.y2;
+  getBoundingRect: function() {
+    return this.element.node().getBoundingClientRect();
   },
   init: function(newX, newY) {
     d3svg = d3.select("svg");
@@ -335,54 +335,33 @@ function dragMove() {
   // console.log("dragMove");
   var p = d3.mouse(this);
   selectionRect.update(p[0], p[1]);
-  //    attributesText
-  //    	.text(selectionRect.getCurrentAttributesAsText());
 }
 
 function dragEnd() {
-  // console.log("dragEnd");
-  var finalAttributes = selectionRect.getCurrentAttributes();
-  console.dir(finalAttributes);
-  if (finalAttributes.x2 - finalAttributes.x1 > 1 && finalAttributes.y2 - finalAttributes.y1 > 1) {
-    // console.log("range selected");
-    // range selected
+  var finalBound = selectionRect.getBoundingRect();
+  if (finalBound.width > 1 && finalBound.height > 1) {
     d3.event.sourceEvent.preventDefault();
     selectionRect.focus();
-    // GET SELECTIONS WITH MARQUEE
     unselect_all_readings();
-    ghigh = document.getElementsByClassName('graph')[0].getBBox().height;
-    negys1 = (0 - finalAttributes.y1) + ghigh;
-    negys2 = (0 - finalAttributes.y2) + ghigh;
-    //Y coordinates of nodes count upwards
-    $('#svgenlargement ellipse').each(function(index) {
-      var cx = parseInt($(this).attr('cx'));
-      var cy = parseInt($(this).attr('cy'));
-      var transf_cy = 0 - cy
-
-      // This needs somehow to move to node or even to shapes! #repositioned
-      // We should ask something more aling the lines of: nodes.each { |item| node.selected? }
-      //JMB: I have no idea what this bit does
-      var org_translate = $(this).parent().data('repositioned');
-      if (org_translate != null) {
-        cx = cx + org_translate[0];
-        cy = cy + org_translate[1];
-      }
-
-      //select any node with its center inside the marquee
-      if (cx > finalAttributes.x1 && cx < finalAttributes.x2) {
-        if (transf_cy > negys2 && transf_cy < negys1) {
-          // console.log("Ellipse at " + cx + ", " + transf_cy + ". Testing on y between " + negys1 + " and " + negys2 + ".");
-          // console.log("Testing on x between " + finalAttributes.x1 + " and " + finalAttributes.x2 + ".");
-          // Take note of the selected reading(s) and applicable witness(es)
-          // so we can populate the multipleselect-form
-          readings_selected.push($(this).parent().attr('id'));
+    d3.selectAll('#graph0 .node')
+      .each(function(d) {
+        // n.b. We aren't using d yet but we should be, for the reading ID
+        // Get the coordinates of our shape
+        let ourShape = d3.select(this).select('ellipse,rect').node();
+        if (!ourShape) {
+          return;
         }
-      }
-    });
+        let ourGeometry = ourShape.getBoundingClientRect();
+        let cx = ourGeometry.x + (ourGeometry.width / 2);
+        let cy = ourGeometry.y + (ourGeometry.height / 2);
+        if (cx > finalBound.left && cx < finalBound.right) {
+          if (cy > finalBound.top && cy < finalBound.bottom) {
+            readings_selected.push(this.getAttribute('id'));
+          }
+        }
+      });
 
-    $.each(readings_selected, function(i, reading) {
-      color_active(get_ellipse(reading));
-    });
+    readings_selected.forEach(r => color_active(get_ellipse(r)));
 
     // END OF SELECTION GRABBER
     selectionRect.remove();
@@ -511,8 +490,13 @@ function svgEnlargementLoaded() {
   });
 
   // Attach all our sequence labels as textPath elements
-  var sequenceEdges = d3svg.selectAll("g.edge")
-    .each( function() {attach_sequence_label(this)});
+  // if we have a horizontal text
+  if (text_direction !== 'BI') {
+    var sequenceEdges = d3svg.selectAll("g.edge")
+      .each(function() {
+        attach_sequence_label(this)
+      });
+  }
 
   //some use of call backs to ensure successive execution
   d3.json(getTextURL('readings'))
@@ -527,76 +511,91 @@ function svgEnlargementLoaded() {
         $('#loading_overlay').hide();
       });
     });
+  d3.json(getTextURL('emendations'))
+    .then(data => transform_emendations(data));
 }
 
-// Do the invisible path offset for the sequence edge labels
+// Make the offset shadow path and the textPath elements for the
+// sequence edge labels
 function attach_sequence_label(el) {
-    // Extract the label content
-    var textNode = el.getElementsByTagName('text')[0];
-    if (!textNode) {
-        return;
-    }
+  // Extract the label content
+  var textNode = el.getElementsByTagName('text')[0];
+  if (!textNode) {
+    return;
+  }
 
-    // Extract the path data and shift it up by 5px
-    var orig_path = el.getElementsByTagName('path')[0];
-    var path_data = orig_path.getPathData();
-    path_data.forEach( c => {
-        c.values.forEach((v, i) => {
-            if (i % 2) {
-                c.values[i] = v - 5;
-            }
-        });
-    });
-
-    // Set up some more attributes for our shadow path
-    var our_id = el.getAttribute('id') + 'text';
-    var path_label = textNode.textContent;
-    var sel = d3.select(el);
-    sel.select('path')
-      .attr('class', 'sequence')
-      .clone()
-      .attr('class', 'shadow')
-      .attr('id', our_id)
-      .attr('fill', 'none')
-      .attr('stroke', '#ffffff')
-      .attr('stroke-width', 0);
-    sel.select('text')
-      .attr('text-anchor', null)
-      .attr('x', null)
-      .attr('y', null)
-      .text(null)
-      .append('textPath')
-      .attr('href', '#' + our_id)
-      .text(path_label);
-    offset_sequence_label(el);
+  // Set up the static attributes
+  var our_id = el.getAttribute('id') + 'text';
+  var path_label = textNode.textContent;
+  var sel = d3.select(el);
+  sel.select('path')
+    .attr('class', 'sequence')
+    .clone()
+    .attr('class', 'shadow')
+    .attr('id', our_id)
+    .attr('fill', 'none')
+    .attr('stroke', '#ffffff')
+    .attr('stroke-width', 0);
+  sel.select('text')
+    .attr('text-anchor', null)
+    .attr('x', null)
+    .attr('y', null)
+    .text(null)
+    .append('textPath')
+    .attr('href', '#' + our_id)
+    .attr('side', () => text_direction === 'LR' ? 'left' : 'right')
+    .text(path_label);
+  // Set up the dynamic attributes
+  offset_sequence_label(el);
 }
 
 // Use this when the textPath already exists, to adjust its offset
 // when the path and shadow path have been modified
 function offset_sequence_label(edge) {
-    var orig_path = edge.getElementsByTagName('path')[0];
-    var shadow_path = edge.getElementsByTagName('path')[1];
-    var text_el = edge.getElementsByTagName('text')[0];
-    var textpath_el = edge.getElementsByTagName('textPath')[0];
-    if (!shadow_path || !textpath_el) {
-        console.log("Called adjust_sequence_label on a node without a sequence label");
-        return;
-    }
-    // Offset the shadow path
-    var path_data = orig_path.getPathData();
-    path_data.forEach( c => {
-        c.values.forEach((v, i) => {
-            if (i % 2) {
-                c.values[i] = v - 5;
-            }
-        });
+  var orig_path = edge.getElementsByTagName('path')[0];
+  var shadow_path = edge.getElementsByTagName('path')[1];
+  var text_el = edge.getElementsByTagName('text')[0];
+  var textpath_el = edge.getElementsByTagName('textPath')[0];
+  if (!shadow_path || !textpath_el) {
+    console.log("Called adjust_sequence_label on a node without a sequence label");
+    return;
+  }
+  // Offset the shadow path
+  var path_data = orig_path.getPathData();
+  path_data.forEach(c => {
+    c.values.forEach((v, i) => {
+      if (i % 2) {
+        c.values[i] = v - 5;
+      }
     });
-    shadow_path.setPathData(path_data);
+  });
+  shadow_path.setPathData(path_data);
 
-    // Offset the text label
-    var startOffset = (shadow_path.getTotalLength()
-        - text_el.getBBox().width) / 2;
-    textpath_el.setAttribute('startOffset', startOffset);
+  // Offset the text label
+  var startOffset = (shadow_path.getTotalLength() -
+    text_el.getBBox().width) / 2;
+  textpath_el.setAttribute('startOffset', startOffset);
+}
+
+// Turn all emendations into rect elements instead
+function transform_emendations(edata) {
+  edata.readings.forEach(r => {
+    let enode = d3.select(jq(rid2node(r.id)));
+    let endata = enode.datum();
+    // Update the data to include extra emendation info
+    Object.keys(r).forEach(k => endata[k] = r[k]);
+    // Change the node shape
+    let ene = enode.select('ellipse');
+    let enr = enode.insert('rect', 'ellipse')
+      .attr('x', ene.attr('cx') - ene.attr('rx'))
+      .attr('y', ene.attr('cy') - ene.attr('ry'))
+      .attr('width', ene.attr('rx') * 2)
+      .attr('height', ene.attr('ry') * 2)
+      .attr('rx', 5)
+      .attr('ry', 5);
+    ene.remove();
+    color_inactive(enr.node());
+  });
 }
 
 // JMB: d3 zoom function
@@ -731,6 +730,7 @@ function get_ellipse(nid) {
   // Try to get the ellipse with the given ID; otherwise treat it as a
   // reading ID and try to get the relevant node ID
   var result = $(jq(nid) + ' ellipse');
+  result = result.add(jq(nid) + ' rect');
   if (result.length) {
     return result;
   }
@@ -764,6 +764,7 @@ function unselect_all_readings() {
 }
 
 function node_obj(ellipse) {
+  // n.b. the "ellipse" might be a rect, if it is an emendation node
   this.ellipse = ellipse;
   var self = this;
 
@@ -778,7 +779,7 @@ function node_obj(ellipse) {
   }
 
   this.set_selectable = function(clickable) {
-    color_active($(self.ellipse));
+    color_active(self.ellipse);
     if (clickable && editable) {
       $(self.ellipse).parent().hover(this.enter_node, this.leave_node);
       $(self.ellipse).parent().mousedown(function(evt) {
@@ -873,6 +874,14 @@ function node_obj(ellipse) {
   }
 
   this.cpos = function() {
+    // Are we an emendation (rect)?
+    if (self.ellipse[0].tagName === 'rect') {
+      return {
+        x: self.ellipse.attr('x') + (self.ellipse.attr('width') / 2),
+        y: self.ellipse.attr('y') + (self.ellipse.attr('height') / 2)
+      }
+    }
+    // We are a normal reading (ellipse)
     return {
       x: self.ellipse.attr('cx'),
       y: self.ellipse.attr('cy')
@@ -1146,8 +1155,8 @@ function relation_factory() {
   }
   this.create = function(rel_info) {
     // Get our info from the relation struct
-    var source_node_id = rid2node(rel_info.source);
-    var target_node_id = rid2node(rel_info.target);
+    var source_node_id = rel_info.source;
+    var target_node_id = rel_info.target;
     var rel_types = $('#keymap').data('relations');
     var color_index = $.inArray(rel_info.type, rel_types);;
     var emphasis = rel_info.is_significant;
@@ -1162,8 +1171,8 @@ function relation_factory() {
     $.each(rel_info, function(k, v) {
       relation.data(k, v);
     });
-    get_node_obj(source_node_id).update_elements();
-    get_node_obj(target_node_id).update_elements();
+    get_node_obj(rid2node(source_node_id)).update_elements();
+    get_node_obj(rid2node(target_node_id)).update_elements();
     // Set the relationship info box on click.
     relation.children('path').css({
       'cursor': 'pointer'
@@ -1171,10 +1180,8 @@ function relation_factory() {
     relation.children('path').click(function(event) {
       var related_nodes = get_related_nodes(relation.attr('id'));
       // Form values need to be database IDs
-      var source_node_id = readingdata[node2rid(related_nodes[0])]['id'];
-      var target_node_id = readingdata[node2rid(related_nodes[1])]['id'];
-      $('#delete_source_node_id').val(source_node_id);
-      $('#delete_target_node_id').val(target_node_id);
+      $('#delete_source_node_id').val(related_nodes[0]);
+      $('#delete_target_node_id').val(related_nodes[1]);
       self.showinfo(relation);
     });
     return relation;
@@ -1234,15 +1241,9 @@ function relation_factory() {
 }
 
 // Utility function to create/return the ID of a relation link between
-// a source and target.
+// a source and target reading.
 function get_relation_id(source_id, target_id) {
-  // Make sure we are dealing with SVG node IDs
-  if (source_id in readingdata) {
-    source_id = rid2node(source_id)
-  }
-  if (target_id in readingdata) {
-    target_id = rid2node(target_id)
-  }
+  // This is keyed on reading IDs
   var idlist = [source_id, target_id];
   idlist.sort();
   return 'relation-' + idlist[0] + '-___-' + idlist[1];
@@ -1259,8 +1260,8 @@ function draw_relation(source_id, target_id, opts) {
   if (opts.class) {
     cssclass += ' ' + opts.class;
   }
-  var source_ellipse = get_ellipse(source_id);
-  var target_ellipse = get_ellipse(target_id);
+  var source_ellipse = get_ellipse(rid2node(source_id));
+  var target_ellipse = get_ellipse(rid2node(target_id));
   var relation_id = get_relation_id(source_id, target_id);
   var svg = $('#svgenlargement').children('svg').svg().svg('get');
   var path = svg.createPath();
@@ -1309,81 +1310,93 @@ function delete_relation(form_values) {
 
 function add_emendation(emenddata) {
   // Set some useful reduce functions
-  const floor = (acc, cval) => acc < cval ? acc : cval;
-  const ceiling = (acc, cval) => acc > cval ? acc : cval;
+  const floor = (acc, cval) => (cval !== null) && (cval < acc) ? cval : acc;
+  const ceiling = (acc, cval) => (cval !== null) && (cval > acc) ? cval : acc;
 
   // Data is a set of readings and a set of sequences. For each reading
   // we make an SVG group consisting of an ellipse and a text element.
-  var added = {};
   emenddata.readings.forEach(function(r) {
-    // Add the reading to our data structure
-    added[r.id] = r;
-    // Initialize the d3 element
+    // Determine the node ID and the min and max ranks
     let svgid = 'ne' + r.id;
-    var enode = d3svg.select('#graph0')
+    let frids = emenddata.sequences.map(x => x.target).filter(x => x != r.id);
+    let franks = new Array();
+    let posLeft = 0;
+    d3.selectAll('#graph0 .node')
+      .filter(d => d && frids.includes(d.id))
+      .each(d => franks.push(d.rank));
+    let maxrank = franks.reduce(floor) - 1;
+    // Initialize the d3 element
+    let enode = d3.select('#graph0')
       .selectAll('g#' + svgid)
       .data([r], d => d.id)
       .enter()
       .append('g')
-      .attr('id', svgid);
+      .attr('id', svgid)
+      .attr('class', 'node');
     enode.append('title').text(r.id);
-    enode.append('rect')
+    let eshape = enode.append('rect')
       .attr('x', function(d) { // Place the node at the same rank as its fellows
-        var startNodes = Object.entries(readingdata)
-          .filter(x => x[1].rank === d.rank).map(x => rid2node(x[0]));
-        var startCX = startNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
-        var startRX = startNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
-        return startCX - startRX;
+        let startNodes = new Array();
+        let pointsLeft = new Array();
+        d3.selectAll('#graph0 .node')
+          .filter(d2 => d2 && !d2.is_emendation && d2.rank === d.rank)
+          .each(function() {
+            let shape = get_ellipse(this.getAttribute('id'));
+            pointsLeft.push(parseFloat(shape.attr('cx')) - parseFloat(shape.attr('rx')));
+          });
+        posLeft = pointsLeft.reduce(floor);
+        return posLeft;
       })
       .attr('width', function(d) {
-        // Find the last rank that this emendation covers
-        var endrank = emenddata.sequences.filter(x => x.source === d.id)
-          .map(x => readingdata[x.target].rank).reduce(floor);
-        endrank = endrank - 1;
-        // Find the end of the widest / leftmost node at that rank
-        var endNodes = Object.entries(readingdata)
-          .filter(x => x[1].rank === endrank).map(x => rid2node(x[0]));
-        var endCX = endNodes.map(x => parseFloat(get_ellipse(x).attr('cx'))).reduce(floor);
-        var endRX = endNodes.map(x => parseFloat(get_ellipse(x).attr('rx'))).reduce(ceiling);
-        return endCX + endRX - parseFloat(d3.select(this).attr('x'));
+        // Find the end of the widest / rightmost node at the max rank
+        let pointsRight = new Array();
+        d3.selectAll('#graph0 .node')
+          .filter(d2 => d2 && !d2.is_emendation && d2.rank === maxrank)
+          .each(function() {
+            let shape = get_ellipse(this.getAttribute('id'));
+            pointsRight.push(parseFloat(shape.attr('cx')) + parseFloat(shape.attr('rx')));
+          });
+        return pointsRight.reduce(ceiling) - posLeft;
       })
       .attr('y', function(d) {
-        // Find the last rank that this emendation covers
-        var endrank = emenddata.sequences.filter(x => x.source === d.id)
-          .map(x => readingdata[x.target].rank).reduce(floor);
-        endrank = endrank - 1;
-        // Find the highest of all the nodes covered
-        var coveredNodes = Object.entries(readingdata)
-          .filter(x => x[1].rank >= d.rank && x[1].rank <= endrank).map(x => node2rid(x[0]));
+        // Find the top-placed node covered by the emendation
+        let coveredNodes = new Array();
+        d3.selectAll('#graph0 .node')
+          .filter(d2 => d2 && d2.rank >= d.rank && d2.rank <= maxrank && !d2.is_emendation)
+          .each(d2 => coveredNodes.push(rid2node(d2.id)));
         var highestY = coveredNodes.map(x => parseFloat(get_ellipse(x).attr('cy'))).reduce(floor);
-        return highestY - 100;
+        return highestY - 90;
+        // n.b. we might have to expand the viewport upward to accommodate this
       })
       .attr('height', 36)
       .attr('rx', '5')
       .attr('ry', '5')
-      .attr('fill', 'white')
-      .attr('opacity', '0.75')
-      .attr('stroke', 'purple')
-      .attr('strokeWidth', 1);
     enode.append('text')
       .attr('x', function() {
-        var rx = parseFloat(enode.select('ellipse').attr('x'));
-        var rw = parseFloat(enode.select('ellipse').attr('width'));
+        let rx = parseFloat(eshape.attr('x'));
+        let rw = parseFloat(eshape.attr('width'));
         return rx + rw / 2;
       })
       .attr('y', function() {
-        var ry = parseFloat(enode.select('ellipse').attr('y'));
+        let ry = parseFloat(eshape.attr('y'));
         return ry + 22;
       })
       .attr('text-anchor', 'middle')
       .attr('font-family', 'Times,serif')
       .attr('font-size', '14.00')
       .text(r.text);
+    // TODO add the authority info, maybe when we allow edits
+    // Color the node appropriately. I think we can only be in
+    // active mode at this point.
+    color_active(eshape.node());
+
+    // Make it selectable
+    $(eshape.node()).data('node_obj', new node_obj($(eshape.node())));
+    $(eshape.node()).data('node_obj').set_selectable(true);
     // Add the emendation to our legacy readingdata
-    update_reading(r);
+    readingdata[r.id] = r;
   });
 
-  // TODO add sequences maybe?
 }
 
 function detach_node(readings) {
@@ -1573,10 +1586,10 @@ function merge_nodes(source_node_id, target_node_id, consequences) {
             var form_values = "source=" + rdg_ids[0] + "&target=" + rdg_ids[1] + "&single=true";
             // Make the request
             $.post(ncpath, form_values, function(data) {
-                merge_node(node_ids[0], node_ids[1]);
-                // remove any suggestions that involve the removed node
-                $('[id*="-' + rdg_ids[0] + '"]').parent().remove();
-                $('.checkalign[id*="' + node_ids[0] + '"]').remove();
+              merge_node(node_ids[0], node_ids[1]);
+              // remove any suggestions that involve the removed node
+              $('[id*="-' + rdg_ids[0] + '"]').parent().remove();
+              $('.checkalign[id*="' + node_ids[0] + '"]').remove();
             });
             // Whether it succeeded or not, remove the buttons and line
             temp_relation.remove();
@@ -1621,7 +1634,7 @@ function merge_node(todelete_id, tokeep_id, compressing) {
 // This takes SVG node IDs
 function merge_left(todelete_id, tokeep_id) {
   edges_of(get_ellipse(todelete_id), 'incoming').forEach(
-      edge => edge.attach_endpoint(tokeep_id));
+    edge => edge.attach_endpoint(tokeep_id));
   delete_reading(todelete_id);
   $(jq(todelete_id)).remove();
 }
@@ -2778,12 +2791,18 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       d3svg.on(".drag", null);
       d3svg.call(zoomBehavior); // JMB turn zoom function on
       unselect_all_readings();
-      $('#svgenlargement ellipse').each(function(index) {
-        if ($(this).data('node_obj') != null) {
-          $(this).data('node_obj').ungreyout_edges();
-          $(this).data('node_obj').set_selectable(false);
-          color_inactive($(this));
-          $(this).data('node_obj', null);
+      $('#svgenlargement .node').each(function(index) {
+        let ourId = $(this).attr('id');
+        let ourShape = get_ellipse(ourId);
+        if (!ourShape) {
+          return true;
+        }
+        let ourObj = get_node_obj(ourId);
+        if (ourObj != null) {
+          ourObj.ungreyout_edges();
+          ourObj.set_selectable(false);
+          color_inactive(ourShape);
+          ourShape.data('node_obj', null);
         }
       });
       $(this).data('locked', false);
@@ -2801,23 +2820,18 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
       var cx_min = p.matrixTransform(tf).x;
       p.x = right;
       var cx_max = p.matrixTransform(tf).x;
-      $('#svgenlargement ellipse').each(function(index) {
-        if ($(this).data('node_obj') == null) {
-          $(this).data('node_obj', new node_obj($(this)));
-        } else {
-          $(this).data('node_obj').set_selectable(true);
+      $('#svgenlargement .node').each(function(index) {
+        let ourId = $(this).attr('id');
+        let ourShape = get_ellipse(ourId);
+        if (!ourShape) {
+          return true;
         }
-        $(this).data('node_obj').greyout_edges();
-        /*$('#svgenlargement ellipse').each( function( index ) {
-            var cx = parseInt( $(this).attr('cx') );
-            if( cx > cx_min && cx < cx_max) {
-                if( $(this).data( 'node_obj' ) == null ) {
-                    $(this).data( 'node_obj', new node_obj( $(this) ) );
-                } else {
-                    $(this).data( 'node_obj' ).set_selectable( true );
-                }
-                $(this).data( 'node_obj' ).greyout_edges();
-            }*/
+        if (ourShape.data('node_obj') == null) {
+          ourShape.data('node_obj', new node_obj(ourShape));
+        } else {
+          ourShape.data('node_obj').set_selectable(true);
+        }
+        ourShape.data('node_obj').greyout_edges();
       });
       $(this).css('background-position', '0px 0px');
       $(this).data('locked', true);
