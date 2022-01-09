@@ -79,7 +79,7 @@ function Edge(g_elem) {
 
   this.attach_witnesses = function(witnesses) {
     self.witnesses = self.witnesses.concat(witnesses);
-    self.g_elem.children('text').text(self.create_label(self.witnesses));
+    self.g_elem.children('text').children('textPath').text(self.create_label(self.witnesses));
     var edge_weight = 0.8 + (0.2 * self.witnesses.length);
     self.g_elem.children('path').attr('stroke-width', edge_weight);
   }
@@ -104,8 +104,6 @@ function Edge(g_elem) {
       var polygon = self.g_elem.children('polygon');
       if (polygon.size() > 0) {
         var end_point_arrowhead = new svgshape(polygon);
-        // var path_segments = self.g_elem.children('path')[0].pathSegList;
-        // var edge_path = new svgpath( path_segments.getItem(path_segments.numberOfItems - 1), self.g_elem.children('path') );
         var path = self.g_elem.children('path')[0];
         var path_element_object = new path_element_class(path, false);
         var edge_path = new svgpath(path_element_object, self.g_elem.children('path'));
@@ -119,8 +117,8 @@ function Edge(g_elem) {
         var dx = (target_cx - target_rx) - (source_cx);
         var dy = (target_cy - source_cy);
         end_point_arrowhead.reposition(dx, dy);
-        // TODO this does a wrong thing and leave a dangling path
         edge_path.reposition(dx, dy);
+        offset_sequence_label(g_elem[0]);
         g_elem.children('title').text(g_elem.children('title').text().replace(self.end_node_id, target_node_id));
       }
     }
@@ -161,7 +159,7 @@ function Edge(g_elem) {
       } else if (compressing && text_direction === 'BI') {
         edge_path.reposition(-target_rx / 2, 0);
       }
-
+      offset_sequence_label(g_elem[0]);
 
       self.g_elem.children('title').text(self.g_elem.children('title').text().replace(self.start_node_id, target_node_id));
     }

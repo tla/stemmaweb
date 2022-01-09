@@ -510,6 +510,10 @@ function svgEnlargementLoaded() {
     'behavior': 'auto'
   });
 
+  // Attach all our sequence labels as textPath elements
+  var sequenceEdges = d3svg.selectAll("g.edge")
+    .each( function() {attach_sequence_label(this)});
+
   //some use of call backs to ensure successive execution
   d3.json(getTextURL('readings'))
     .then(data => {
@@ -523,6 +527,76 @@ function svgEnlargementLoaded() {
         $('#loading_overlay').hide();
       });
     });
+}
+
+// Do the invisible path offset for the sequence edge labels
+function attach_sequence_label(el) {
+    // Extract the label content
+    var textNode = el.getElementsByTagName('text')[0];
+    if (!textNode) {
+        return;
+    }
+
+    // Extract the path data and shift it up by 5px
+    var orig_path = el.getElementsByTagName('path')[0];
+    var path_data = orig_path.getPathData();
+    path_data.forEach( c => {
+        c.values.forEach((v, i) => {
+            if (i % 2) {
+                c.values[i] = v - 5;
+            }
+        });
+    });
+
+    // Set up some more attributes for our shadow path
+    var our_id = el.getAttribute('id') + 'text';
+    var path_label = textNode.textContent;
+    var sel = d3.select(el);
+    sel.select('path')
+      .attr('class', 'sequence')
+      .clone()
+      .attr('class', 'shadow')
+      .attr('id', our_id)
+      .attr('fill', 'none')
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 0);
+    sel.select('text')
+      .attr('text-anchor', null)
+      .attr('x', null)
+      .attr('y', null)
+      .text(null)
+      .append('textPath')
+      .attr('href', '#' + our_id)
+      .text(path_label);
+    offset_sequence_label(el);
+}
+
+// Use this when the textPath already exists, to adjust its offset
+// when the path and shadow path have been modified
+function offset_sequence_label(edge) {
+    var orig_path = edge.getElementsByTagName('path')[0];
+    var shadow_path = edge.getElementsByTagName('path')[1];
+    var text_el = edge.getElementsByTagName('text')[0];
+    var textpath_el = edge.getElementsByTagName('textPath')[0];
+    if (!shadow_path || !textpath_el) {
+        console.log("Called adjust_sequence_label on a node without a sequence label");
+        return;
+    }
+    // Offset the shadow path
+    var path_data = orig_path.getPathData();
+    path_data.forEach( c => {
+        c.values.forEach((v, i) => {
+            if (i % 2) {
+                c.values[i] = v - 5;
+            }
+        });
+    });
+    shadow_path.setPathData(path_data);
+
+    // Offset the text label
+    var startOffset = (shadow_path.getTotalLength()
+        - text_el.getBBox().width) / 2;
+    textpath_el.setAttribute('startOffset', startOffset);
 }
 
 // JMB: d3 zoom function
@@ -1495,16 +1569,18 @@ function merge_nodes(source_node_id, target_node_id, consequences) {
           });
           $(yes).click(function(evt) {
             // node_ids[0] is the one that goes away
-            merge_node(node_ids[0], node_ids[1]);
-            temp_relation.remove();
-            $(evt.target).parent().remove();
-            // remove any suggestions that involve the removed node
-            $('[id*="-' + rdg_ids[0] + '"]').parent().remove();
-            $('.checkalign[id*="' + node_ids[0] + '"]').remove();
-            //notify backend
             var ncpath = getTextURL('merge');
             var form_values = "source=" + rdg_ids[0] + "&target=" + rdg_ids[1] + "&single=true";
-            $.post(ncpath, form_values);
+            // Make the request
+            $.post(ncpath, form_values, function(data) {
+                merge_node(node_ids[0], node_ids[1]);
+                // remove any suggestions that involve the removed node
+                $('[id*="-' + rdg_ids[0] + '"]').parent().remove();
+                $('.checkalign[id*="' + node_ids[0] + '"]').remove();
+            });
+            // Whether it succeeded or not, remove the buttons and line
+            temp_relation.remove();
+            $(evt.target).parent().remove();
           });
           $(no).click(function(evt) {
             temp_relation.remove();
