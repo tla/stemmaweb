@@ -510,9 +510,9 @@ function svgEnlargementLoaded() {
         });
         $('#loading_overlay').hide();
       });
+      d3.json(getTextURL('emendations'))
+        .then(data => transform_emendations(data));
     });
-  d3.json(getTextURL('emendations'))
-    .then(data => transform_emendations(data));
 }
 
 // Make the offset shadow path and the textPath elements for the
