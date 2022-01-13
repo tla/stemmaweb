@@ -14,7 +14,18 @@ function fetchTraditions() {
   })};
 
 function testD3Graphviz() {
-  d3.select("#graph")
-   .graphviz()
-    .renderDot('digraph {a -> b -> c}');
-}
+  fetch( 'api/tradition/577e139f-1829-414a-a54c-ad3a2447282f/stemmata' )
+  .then( resp => resp.json() )
+  .then( data => {
+    d3.select( "#graph" )
+      .graphviz()
+      .renderDot( data[0].dot );
+    console.log( data[0].dot );
+    console.log( data )
+  })
+};
+
+// d3.select("#graph")
+//  .graphviz()
+//   .renderDot('digraph {a -> b -> c}');
+// }
