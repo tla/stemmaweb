@@ -664,67 +664,153 @@ function zoomer() {
 }
 
 function populate_relationtype_keymap() {
+  // If there aren't any relationship types, hide the keymap list and return
+  if (relationship_types.length == 0) {
+    document.getElementById('keymap').hidden = true;
+    return;
+  }
+  document.getElementById('keymap').hidden = false;
+
   // Add the relationship types to the keymap list and to option lists
   // First, sort relation types by bindlevel
   const by_bindlevel = (a, b) => {
     return a.bindlevel - b.bindlevel;
   }
   relationship_types.sort(by_bindlevel);
-  $('.keymaplist').empty();
-  $('.relation-type-list').empty();
-  // If we have relation types, fill them in; otherwise hide the box
-  if (relationship_types.length > 0) {
-    $.each(relationship_types, function(index, typedef) {
-      // The keymap
-      li_elm = $('<li class="key">').css("border-color",
-        relation_manager.relation_colors[index]).text(typedef.name);
-      li_elm.data('name', typedef.name);
-      li_elm.append($('<div>').attr('class', 'key_tip_container').append(
-        $('<div>').attr('class', 'key_tip').text(typedef.description)));
-      $('.keymaplist').append(li_elm);
-      // The picklists
-      $('.relation-type-list').append($('<option />').attr(
-        "value", typedef.name).text(typedef.name));
+  // Set an arbitrary color for each relation type
+  let relation_colors = new Set(["#5CCCCC", "#67E667", "#F9FE72", "#6B90D4",
+    "#FF7673", "#E467B3", "#AA67D5", "#8370D8", "#FFC173", "#EC652F",
+    "#DB3453", "#48456A", "#ABDFCE", "#502E35", "#E761AE"
+  ]);
+  relationship_types.forEach(x => {
+    if ('assigned_color' in x) {
+      relation_colors.delete(x.assigned_color)
+    }
+  });
+  relationship_types.forEach(x => {
+    if (!('assigned_color' in x)) {
+      let ac = relation_colors.values().next().value;
+      x['assigned_color'] = ac;
+      relation_colors.delete(ac);
+    }
+  });
 
-    });
-  } else {
-    $('#keymap').hide();
-  }
+  // Now that each relationship type has a color, (re)create the keymaplist.
+  // The colors need to stay constant, but the ordering should always be by
+  // bind level.
+  d3.select('.keymaplist').selectAll('li')
+    .data(relationship_types, d => d.name)
+    .join(enter => enter.append('li')
+      .attr('class', 'key')
+      .style('border-color', d => d.assigned_color)
+      .text(d => d.name)
+      .append('div')
+      .attr('class', 'key_tip_container')
+      .append('div')
+      .attr('class', 'key_tip')
+      .text(d => d.name),
+      update => update,
+      exit => exit.remove());
+
+  // and set up all the relation type list options
+  let relation_namelist = relationship_types.map(x => x.name)
+  d3.selectAll('.relation-type-list')
+    .selectAll('option')
+    .data(relation_namelist)
+    .join(
+      enter => enter.append('option').attr('value', d => d).text(d => d),
+      update => update.attr('value', d => d).text(d => d),
+      exit => exit.remove()
+    );
 }
 
 function add_relations(callback_fn) {
   populate_relationtype_keymap();
   // Save this list of names to the outer element data so that the relationship
   // factory can access it
-  var rel_types = $.map(relationship_types, function(t) {
-    return t.name
-  });
-  $('#keymap').data('relations', rel_types);
+  var rel_types = relationship_types.map(t => t.name);
   // Now fetch the relationships themselves and add them to the graph
   var textrelpath = getTextURL('relationships');
-  $.getJSON(textrelpath, function(data) {
-    $.each(data, function(index, rel_info) {
-      var type_index = $.inArray(rel_info.type, rel_types);
-      var source_found = rid2node(rel_info.source);
-      var target_found = rid2node(rel_info.target);
-      if (type_index != -1 && source_found && target_found) {
-        var relation = relation_manager.create(rel_info);
-        if (editable) {
-          var node_obj = get_node_obj(source_found);
-          node_obj.set_selectable(false);
-          node_obj.ellipse.data('node_obj', null);
-          node_obj = get_node_obj(target_found);
-          node_obj.set_selectable(false);
-          node_obj.ellipse.data('node_obj', null);
-        }
-      } else {
-        // Either the source, target, or type wasn't found
-        console.log("Error creating database relation " + rel_info);
-      }
+  d3.json(textrelpath)
+    .then(data => {
+      rels = d3.select('#graph0').selectAll('g.relation')
+        .data(data, d => d.id)
+        .enter()
+        .insert('g', 'g.node')
+        .attr('id', d => "relation-" + d.source + "-___-" + d.target)
+        .attr('class', 'relation');
+      rels.append('title').text(d => d.source + "->" + d.target);
+      rels.append('path')
+        .attr('fill', 'none')
+        .attr('stroke', d => relationship_types.find(x => x.name === d.type).assigned_color)
+        .attr('stroke-width', d => d.is_significant === "yes" ? 6 :
+          d.is_significant === "maybe" ? 4 : 2)
+        .attr('d', d => {
+          let source_el = d3.select(jq(rid2node(d.source))).select('ellipse');
+          let target_el = d3.select(jq(rid2node(d.target))).select('ellipse');
+          let rx = parseFloat(source_el.attr('rx'));
+          let sx = parseFloat(source_el.attr('cx')) + rx;
+          let ex = parseFloat(target_el.attr('cx')) + parseFloat(target_el.attr('rx'));
+          let sy = parseFloat(source_el.attr('cy'));
+          let ey = parseFloat(target_el.attr('cy'));
+          let p = d3.path()
+          p.moveTo(sx, sy);
+          p.bezierCurveTo(sx + rx, sy, ex + rx, ey, ex, ey)
+          return p;
+        })
+        .style('cursor', 'pointer')
+        .on('click', function(d) {
+          // Form values need to be database IDs
+          $('#delete_source_node_id').val(d.source);
+          $('#delete_target_node_id').val(d.target);
+          $('#delete_relation_type').text(d.type);
+          $('#delete_relation_scope').text(d.scope);
+          $('#delete_relation_attributes').empty();
+          var significance = ' is not ';
+          if (d.is_significant === 'yes') {
+            significance = ' is ';
+          } else if (d.is_significant === 'maybe') {
+            significance = ' might be ';
+          }
+          $('#delete_relation_attributes').append(
+            "This relationship" + significance + "stemmatically significant<br/>");
+          if (d.a_derivable_from_b) {
+            $('#delete_relation_attributes').append(
+              "'" + d.source_text + "' derivable from '" + d.target_text + "'<br/>");
+          }
+          if (d.b_derivable_from_a) {
+            $('#delete_relation_attributes').append(
+              "'" + d.target_text + "' derivable from '" + d.source_text + "'<br/>");
+          }
+          if (d.non_independent) {
+            $('#delete_relation_attributes').append(
+              "Variance unlikely to arise coincidentally<br/>");
+          }
+          if (d.note) {
+            $('#delete_relation_note').text('note: ' + d.note);
+          }
+          var points = this.getPathData();
+          var xs = parseFloat(points[0].values[0]);
+          var xe = parseFloat(points[1].values[0]);
+          var ys = parseFloat(points[0].values[1]);
+          var ye = parseFloat(points[1].values[5]);
+          var p = svg_root.createSVGPoint();
+          p.x = xs + ((xe - xs) * 1.1);
+          p.y = ye - ((ye - ys) / 2);
+          var ctm = svg_main_graph.getScreenCTM();
+          var nx = p.matrixTransform(ctm).x;
+          var ny = p.matrixTransform(ctm).y;
+          var dialog_aria = $("div[aria-labelledby='ui-dialog-title-delete-form']");
+          $('#delete-form').dialog('open');
+          dialog_aria.offset({
+            left: nx,
+            top: ny
+          });
+        })
+      callback_fn.call();
     });
-    callback_fn.call();
-  });
 }
+
 
 function get_ellipse(nid) {
   // Try to get the ellipse with the given ID; otherwise treat it as a
@@ -1254,37 +1340,6 @@ function get_related_nodes(relation_id) {
   return srctotarg.split('-___-');
 }
 
-// This expects an SVG ID
-function draw_relation(source_id, target_id, opts) {
-  var cssclass = 'relation';
-  if (opts.class) {
-    cssclass += ' ' + opts.class;
-  }
-  var source_ellipse = get_ellipse(rid2node(source_id));
-  var target_ellipse = get_ellipse(rid2node(target_id));
-  var relation_id = get_relation_id(source_id, target_id);
-  var svg = $('#svgenlargement').children('svg').svg().svg('get');
-  var path = svg.createPath();
-  var sx = parseInt(source_ellipse.attr('cx'));
-  var rx = parseInt(source_ellipse.attr('rx'));
-  var sy = parseInt(source_ellipse.attr('cy'));
-  var ex = parseInt(target_ellipse.attr('cx'));
-  var ey = parseInt(target_ellipse.attr('cy'));
-  var relation = svg.group($("#svgenlargement svg g"), {
-    'class': cssclass,
-    'id': relation_id
-  });
-  svg.title(relation, source_id + '->' + target_id);
-  var stroke_width = opts.emphasis === "yes" ? 6 : opts.emphasis === "maybe" ? 4 : 2;
-  svg.path(relation, path.move(sx, sy).curveC(sx + (2 * rx), sy, ex + (2 * rx), ey, ex, ey), {
-    fill: 'none',
-    stroke: opts.color,
-    strokeWidth: stroke_width
-  });
-  var relation_element = $('#svgenlargement .relation').filter(':last');
-  relation_element.insertBefore($('#svgenlargement g g').filter(':first'));
-  return relation_element;
-}
 
 function delete_relation(form_values) {
   var ncpath = getTextURL('relationships');
@@ -2732,7 +2787,8 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
               if (ridx === -1) {
                 relationship_types.push(data);
               } else {
-                relationship_types.splice(ridx, 1, data);
+                Object.keys(data).each(
+                  k => relationship_types[ridx][k] = data[k]);
               }
               // Re-display the keymap list
               populate_relationtype_keymap();

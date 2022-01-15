@@ -285,7 +285,6 @@
 
   <div id="keymap">
     <ul class="keymaplist">
-      <li></li>
     </ul>
 [% IF permission == 'full' -%]
   <hr>
