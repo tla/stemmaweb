@@ -86,10 +86,21 @@ function loadTradition(textid, textname, editable) {
     $('#dl_tradition').attr('href', _get_url(["download", textid]));
     $('#dl_tradition').attr('download', selectedTextInfo.name + '.xml');
     $('#download_tradition').attr('value', textid);
+    if (selectedTextInfo.sections.length == 1) {
+      $('#dl_choose_sections').hide();
+    } else {
+      $('#dl_choose_sections').show();
+    }
+    $('.relation-type-list').empty().append($('<option />').attr("value", "").text("(None)"));
+    $.each(selectedTextInfo.reltypes, function(i, r) {
+      $('#download_conflate').append($('<option />')
+        .attr("value", r).text(r));
+    });
     // Set up everything that needs a section list
     load_sections(true);
   });
 }
+
 
 // Fill in the section list wherever it belongs, including (if requested)
 // the sortable list.
@@ -891,12 +902,15 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   // Set up the download dialog
   $('#download-dialog').dialog({
     autoOpen: false,
-    height: 150,
+    height: 200,
     width: 500,
     modal: true,
     buttons: {
       Download: function(evt) {
         var dlurl = _get_url(["download"]);
+        if ($('#download_conflate').val() === "") {
+          $('#download_conflate').prop('disabled', true);
+        }
         dlurl += '?' + $('#download_form').serialize();
         window.location = dlurl;
       },
@@ -904,6 +918,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $('#download-dialog').dialog('close');
       }
     },
+    open: function() {
+      $('#download_conflate').prop('disabled', false);
+    }
   });
 
   $('#upload-collation-dialog').dialog({

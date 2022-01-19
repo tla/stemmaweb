@@ -672,6 +672,7 @@ function populate_relationtype_keymap() {
   relationship_types.sort(by_bindlevel);
   $('.keymaplist').empty();
   $('.relation-type-list').empty();
+  $('.relation-type-list').append($('<option />').attr("value", "").text("(None)"));
   // If we have relation types, fill them in; otherwise hide the box
   if (relationship_types.length > 0) {
     $.each(relationship_types, function(index, typedef) {
@@ -2543,6 +2544,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     buttons: {
       Download: function(evt) {
         var ncpath = getTextURL('download');
+        if ($('#download_conflate').val() === "") {
+          $('#download_conflate').prop('disabled', true);
+        }
         ncpath += '?' + $('#download_form').serialize();
         window.location = ncpath;
       },
@@ -2556,6 +2560,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     },
     open: function() {
       dialog_background('#download_status');
+      $('#download_conflate').prop('disabled', false);
     },
     close: function() {
       $("#dialog_overlay").hide();
