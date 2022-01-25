@@ -725,92 +725,151 @@ function populate_relationtype_keymap() {
 }
 
 function add_relations(callback_fn) {
+  // Start by populating the keymap and assigning the colors
   populate_relationtype_keymap();
-  // Save this list of names to the outer element data so that the relationship
-  // factory can access it
-  var rel_types = relationship_types.map(t => t.name);
   // Now fetch the relationships themselves and add them to the graph
   var textrelpath = getTextURL('relationships');
   d3.json(textrelpath)
     .then(data => {
+      // Bind the data to the enter selection and draw the paths
       rels = d3.select('#graph0').selectAll('g.relation')
         .data(data, d => d.id)
         .enter()
-        .insert('g', 'g.node')
-        .attr('id', d => "relation-" + d.source + "-___-" + d.target)
-        .attr('class', 'relation');
-      rels.append('title').text(d => d.source + "->" + d.target);
-      rels.append('path')
-        .attr('fill', 'none')
-        .attr('stroke', d => relationship_types.find(x => x.name === d.type).assigned_color)
-        .attr('stroke-width', d => d.is_significant === "yes" ? 6 :
-          d.is_significant === "maybe" ? 4 : 2)
-        .attr('d', d => {
-          let source_el = d3.select(jq(rid2node(d.source))).select('ellipse');
-          let target_el = d3.select(jq(rid2node(d.target))).select('ellipse');
-          let rx = parseFloat(source_el.attr('rx'));
-          let sx = parseFloat(source_el.attr('cx')) + rx;
-          let ex = parseFloat(target_el.attr('cx')) + parseFloat(target_el.attr('rx'));
-          let sy = parseFloat(source_el.attr('cy'));
-          let ey = parseFloat(target_el.attr('cy'));
-          let p = d3.path()
-          p.moveTo(sx, sy);
-          p.bezierCurveTo(sx + rx, sy, ex + rx, ey, ex, ey)
-          return p;
-        })
-        .style('cursor', 'pointer')
-        .on('click', function(d) {
-          // Form values need to be database IDs
-          $('#delete_source_node_id').val(d.source);
-          $('#delete_target_node_id').val(d.target);
-          $('#delete_relation_type').text(d.type);
-          $('#delete_relation_scope').text(d.scope);
-          $('#delete_relation_attributes').empty();
-          var significance = ' is not ';
-          if (d.is_significant === 'yes') {
-            significance = ' is ';
-          } else if (d.is_significant === 'maybe') {
-            significance = ' might be ';
-          }
-          $('#delete_relation_attributes').append(
-            "This relationship" + significance + "stemmatically significant<br/>");
-          if (d.a_derivable_from_b) {
-            $('#delete_relation_attributes').append(
-              "'" + d.source_text + "' derivable from '" + d.target_text + "'<br/>");
-          }
-          if (d.b_derivable_from_a) {
-            $('#delete_relation_attributes').append(
-              "'" + d.target_text + "' derivable from '" + d.source_text + "'<br/>");
-          }
-          if (d.non_independent) {
-            $('#delete_relation_attributes').append(
-              "Variance unlikely to arise coincidentally<br/>");
-          }
-          if (d.note) {
-            $('#delete_relation_note').text('note: ' + d.note);
-          }
-          var points = this.getPathData();
-          var xs = parseFloat(points[0].values[0]);
-          var xe = parseFloat(points[1].values[0]);
-          var ys = parseFloat(points[0].values[1]);
-          var ye = parseFloat(points[1].values[5]);
-          var p = svg_root.createSVGPoint();
-          p.x = xs + ((xe - xs) * 1.1);
-          p.y = ye - ((ye - ys) / 2);
-          var ctm = svg_main_graph.getScreenCTM();
-          var nx = p.matrixTransform(ctm).x;
-          var ny = p.matrixTransform(ctm).y;
-          var dialog_aria = $("div[aria-labelledby='ui-dialog-title-delete-form']");
-          $('#delete-form').dialog('open');
-          dialog_aria.offset({
-            left: nx,
-            top: ny
-          });
-        })
+        .call(draw_relation);
+
       callback_fn.call();
     });
 }
 
+// This takes an d3 .enter() selection, and a flag to indicate Whether
+// the relation is a temporary/placeholder element.
+function draw_relation(sel, tempclass) {
+  let classList = 'relation';
+  if (tempclass) {
+    classList += ' ' + tempclass;
+  }
+  let rels = sel.insert('g', 'g.node')
+    .attr('id', d => get_relation_id(d.source, d.target))
+    .attr('class', classList);
+  rels.append('title').text(d => d.source + "->" + d.target);
+  rels.append('path')
+    .attr('fill', 'none')
+    .attr('stroke', d => tempclass ? '#FFA14F' :
+      relationship_types.find(x => x.name === d.type).assigned_color)
+    .attr('stroke-width', d => d.is_significant === "yes" ? 6 :
+      d.is_significant === "maybe" ? 4 : 2)
+    .attr('d', d => {
+      let source_el = d3.select(jq(rid2node(d.source))).select('ellipse');
+      let target_el = d3.select(jq(rid2node(d.target))).select('ellipse');
+      let rx = parseFloat(source_el.attr('rx'));
+      let sx = parseFloat(source_el.attr('cx'));
+      let ex = parseFloat(target_el.attr('cx'));
+      let sy = parseFloat(source_el.attr('cy'));
+      let ey = parseFloat(target_el.attr('cy'));
+      let p = d3.path()
+      p.moveTo(sx, sy);
+      p.bezierCurveTo(sx + (2 * rx), sy, ex + (2 * rx), ey, ex, ey)
+      return p;
+    })
+    .style('cursor', 'pointer');
+  if (!tempclass) {
+    // Bind the mouse click action to the paths created
+    rels.selectAll('path').on('click', function(d) {
+      // Form values need to be database IDs
+      $('#delete_source_node_id').val(d.source);
+      $('#delete_target_node_id').val(d.target);
+      $('#delete_relation_type').text(d.type);
+      $('#delete_relation_scope').text(d.scope);
+      $('#delete_relation_attributes').empty();
+      var significance = ' is not ';
+      if (d.is_significant === 'yes') {
+        significance = ' is ';
+      } else if (d.is_significant === 'maybe') {
+        significance = ' might be ';
+      }
+      $('#delete_relation_attributes').append(
+        "This relationship" + significance + "stemmatically significant<br/>");
+      if (d.a_derivable_from_b) {
+        $('#delete_relation_attributes').append(
+          "'" + d.source_text + "' derivable from '" + d.target_text + "'<br/>");
+      }
+      if (d.b_derivable_from_a) {
+        $('#delete_relation_attributes').append(
+          "'" + d.target_text + "' derivable from '" + d.source_text + "'<br/>");
+      }
+      if (d.non_independent) {
+        $('#delete_relation_attributes').append(
+          "Variance unlikely to arise coincidentally<br/>");
+      }
+      if (d.note) {
+        $('#delete_relation_note').text('note: ' + d.note);
+      }
+      var points = this.getPathData();
+      var xs = parseFloat(points[0].values[0]);
+      var xe = parseFloat(points[1].values[0]);
+      var ys = parseFloat(points[0].values[1]);
+      var ye = parseFloat(points[1].values[5]);
+      var p = svg_root.createSVGPoint();
+      p.x = xs + ((xe - xs) * 1.1);
+      p.y = ye - ((ye - ys) / 2);
+      var ctm = svg_main_graph.getScreenCTM();
+      var nx = p.matrixTransform(ctm).x;
+      var ny = p.matrixTransform(ctm).y;
+      var dialog_aria = $("div[aria-labelledby='ui-dialog-title-delete-form']");
+      $('#delete-form').dialog('open');
+      dialog_aria.offset({
+        left: nx,
+        top: ny
+      });
+    })
+  }
+}
+
+// This creates (or re-colors) a temporary relation to display while the
+// user decides whether to make the relation
+function create_temporary(source, target, tempclass) {
+  // Tempclass is, by default, 'temporary'
+  tempclass ||= 'temporary';
+  // See if a relation already exists
+  let relid = get_relation_id(source, target);
+  let existing = document.getElementById(relid) ||
+    document.getElementById(get_relation_id(target, source));
+  if (existing) {
+    d3.select(existing)
+      .classed(tempclass, true)
+      .select('path')
+      .datum(function() {
+        return {
+          color_memo: this.getAttribute('stroke')
+        }
+      })
+      .attr('stroke', '#FFA14F');
+  } else {
+    let newPath = d3.select('#graph0').selectAll('g#' + relid)
+      .data([{
+        source: source,
+        target: target,
+        is_significant: 'no'
+      }])
+      .enter()
+      .call(draw_relation, tempclass);
+    existing = newPath.node();
+  }
+  return existing;
+}
+
+function remove_temporary() {
+  d3.select('g.temporary').each(function() {
+    // See if there is a color memo on the path; if so, reset the color and
+    // if not, remove the relation element
+    let thePath = d3.select(this).select('path')
+    if ('color_memo' in thePath.datum()) {
+      thePath.attr('stroke', thePath.datum().color_memo);
+    } else {
+      d3.select(this).remove();
+    }
+  });
+}
 
 function get_ellipse(nid) {
   // Try to get the ellipse with the given ID; otherwise treat it as a
@@ -1205,129 +1264,8 @@ function get_edge_elements_for(ellipse) {
   return edge_elements;
 }
 
-function relation_factory() {
-  var self = this;
-  this.color_memo = null;
-  //TODO: colors hard coded for now
-  this.temp_color = '#FFA14F';
-  this.relation_colors = ["#5CCCCC", "#67E667", "#F9FE72", "#6B90D4", "#FF7673",
-    "#E467B3", "#AA67D5", "#8370D8", "#FFC173", "#EC652F",
-    "#DB3453", "#48456A", "#ABDFCE", "#502E35", "#E761AE"
-  ];
-
-  this.create_temporary = function(source_id, target_id) {
-    var relation_id = get_relation_id(source_id, target_id);
-    var relation = $(jq(relation_id));
-    if (relation.size() == 0) {
-      draw_relation(source_id, target_id, {
-        color: self.temp_color,
-        class: 'temporary'
-      });
-    } else {
-      self.color_memo = relation.children('path').attr('stroke');
-      relation.children('path').attr('stroke', self.temp_color);
-    }
-  }
-  this.remove_temporary = function() {
-    var path_element = $('#svgenlargement .relation').children('path[stroke="' + self.temp_color + '"]');
-    if (self.color_memo != null) {
-      path_element.attr('stroke', self.color_memo);
-      self.color_memo = null;
-    } else {
-      var temporary = path_element.parent('g').remove();
-      temporary.empty();
-      temporary = null;
-    }
-  }
-  this.create = function(rel_info) {
-    // Get our info from the relation struct
-    var source_id = rel_info.source;
-    var target_id = rel_info.target;
-    var rel_types = $('#keymap').data('relations');
-    var color_index = $.inArray(rel_info.type, rel_types);;
-    var emphasis = rel_info.is_significant;
-    // TODO: Protect from (color_)index out of bound..
-    var relation_color = self.relation_colors[color_index];
-    // Make the relation DOM object
-    var relation = draw_relation(source_id, target_id, {
-      color: relation_color,
-      emphasis: emphasis
-    });
-    // Save the relationship data into the DOM object.
-    $.each(rel_info, function(k, v) {
-      relation.data(k, v);
-    });
-    get_node_obj(rid2node(source_id)).update_elements();
-    get_node_obj(rid2node(target_id)).update_elements();
-    // Set the relationship info box on click.
-    relation.children('path').css({
-      'cursor': 'pointer'
-    });
-    relation.children('path').click(function(event) {
-      var related_nodes = get_related_nodes(relation.attr('id'));
-      // Form values need to be database IDs
-      $('#delete_source_node_id').val(related_nodes[0]);
-      $('#delete_target_node_id').val(related_nodes[1]);
-      self.showinfo(relation);
-    });
-    return relation;
-  }
-  this.showinfo = function(relation) {
-    $('#delete_relation_type').text(relation.data('type'));
-    $('#delete_relation_scope').text(relation.data('scope'));
-    $('#delete_relation_attributes').empty();
-    var significance = ' is not ';
-    if (relation.data('is_significant') === 'yes') {
-      significance = ' is ';
-    } else if (relation.data('is_significant') === 'maybe') {
-      significance = ' might be ';
-    }
-    $('#delete_relation_attributes').append(
-      "This relationship" + significance + "stemmatically significant<br/>");
-    if (relation.data('a_derivable_from_b')) {
-      $('#delete_relation_attributes').append(
-        "'" + relation.data('source_text') + "' derivable from '" + relation.data('target_text') + "'<br/>");
-    }
-    if (relation.data('b_derivable_from_a')) {
-      $('#delete_relation_attributes').append(
-        "'" + relation.data('target_text') + "' derivable from '" + relation.data('source_text') + "'<br/>");
-    }
-    if (relation.data('non_independent')) {
-      $('#delete_relation_attributes').append(
-        "Variance unlikely to arise coincidentally<br/>");
-    }
-    if (relation.data('note')) {
-      $('#delete_relation_note').text('note: ' + relation.data('note'));
-    }
-    var points = relation.children('path').attr('d').slice(1).replace('C', ' ').split(' ');
-    var xs = parseFloat(points[0].split(',')[0]);
-    var xe = parseFloat(points[1].split(',')[0]);
-    var ys = parseFloat(points[0].split(',')[1]);
-    var ye = parseFloat(points[3].split(',')[1]);
-    var p = svg_root.createSVGPoint();
-    p.x = xs + ((xe - xs) * 1.1);
-    p.y = ye - ((ye - ys) / 2);
-    var ctm = svg_main_graph.getScreenCTM();
-    var nx = p.matrixTransform(ctm).x;
-    var ny = p.matrixTransform(ctm).y;
-    var dialog_aria = $("div[aria-labelledby='ui-dialog-title-delete-form']");
-    $('#delete-form').dialog('open');
-    dialog_aria.offset({
-      left: nx,
-      top: ny
-    });
-  }
-  this.remove = function(relation_id) {
-    if (!editable) {
-      return;
-    }
-    var relation = $(jq(relation_id));
-    relation.remove();
-  }
-}
-
-// Utility function to create/return the ID of a relation link between
-// a source and target reading.
+// Utility functions to create/return the ID of a relation link between
+// a source and target reading, and vice versa.
 function get_relation_id(source_id, target_id) {
   // This is keyed on reading IDs
   var idlist = [source_id, target_id];
@@ -1340,15 +1278,15 @@ function get_related_nodes(relation_id) {
   return srctotarg.split('-___-');
 }
 
-
 function delete_relation(form_values) {
   var ncpath = getTextURL('relationships');
   $.ajax({
     url: ncpath,
     data: form_values,
     success: function(data) {
-      $.each(data['relationships'], function(item, source_target) {
-        relation_manager.remove(get_relation_id(source_target[0], source_target[1]));
+      data.relationships.forEach(pair => {
+        let relid = get_relation_id(pair[0], pair[1]);
+        d3.select('g#' + relid).remove();
       });
       $("#delete-form").dialog("close");
     },
@@ -1458,8 +1396,9 @@ function detach_node(readings) {
   // separate out the deleted relationships, discard for now
   if ('DELETED' in readings) {
     // Remove each of the deleted relationship links.
-    $.each(readings['DELETED'], function(idx, pair) {
-      relation_manager.remove(get_relation_id(pair[0], pair[1]));
+    readings.DELETED.forEach(pair => {
+      let relid = get_relation_id(pair[0], pair[1]);
+      d3.select('g#' + relid).remove();
     });
     delete readings['DELETED'];
   }
@@ -1599,61 +1538,78 @@ function merge_nodes(source_node_id, target_node_id, consequences) {
         var merge_id = 'merge-' + ids_text;
         // Make a checkmerge button if there isn't one already, for this pair
         if ($(jq(merge_id)).length == 0) {
-          var temp_relation = draw_relation(node_ids[0], node_ids[1], {
-            color: "#89a02c",
-            class: "checkalign"
-          });
-          var sy = parseInt(temp_relation.children('path').attr('d')
-            .split('C')[0].split(',')[1]);
-          var ey = parseInt(temp_relation.children('path').attr('d')
-            .split(' ')[2].split(',')[1]);
-          var yC = ey + ((sy - ey) / 2);
+          // This returns a d3 selection
+          let temp_relation = create_temporary(rdg_ids[0], rdg_ids[1], 'checkalign')
+          let pathInfo = temp_relation.select('path').node().getPathData();
+          let mVals = pathInfo.find(x => x.type === "M");
+          let cVals = pathInfo.find(x => x.type === "C");
+          let sy = parseInt(mVals.values[1]);
+          let ey = parseInt(cVals.values[cVals.length - 1]);
+          let yC = ey + ((sy - ey) / 2);
           // TODO: compute xC to be always the same distance to the amplitude of the curve
-          var xC = parseInt(temp_relation.children('path').attr('d')
-            .split(' ')[1].split(',')[0]);
-          var svg = $('#svgenlargement').children('svg').svg('get');
-          parent_g = svg.group($('#svgenlargement svg g'));
-          var yes = svg.image(parent_g, xC, (yC - 8), 16, 16, merge_button_yes, {
-            id: merge_id
-          });
-          var no = svg.image(parent_g, (xC + 20), (yC - 8), 16, 16, merge_button_no, {
-            id: 'no' + merge_id
-          });
-          $(yes).hover(function() {
-            $(this).addClass('draggable')
-            // Indicate which nodes are active
-            get_ellipse(node_ids[0]).attr('fill', '#9999ff');
-            get_ellipse(node_ids[1]).attr('fill', '#9999ff');
-          }, function() {
-            $(this).removeClass('draggable');
-            var colorme = $('#update_workspace_button').data('locked') ? color_active : color_inactive;
-            colorme(get_ellipse(node_ids[0]));
-            colorme(get_ellipse(node_ids[1]));
-          });
-          $(no).hover(function() {
-            $(this).addClass('draggable')
-          }, function() {
-            $(this).removeClass('draggable')
-          });
-          $(yes).click(function(evt) {
-            // node_ids[0] is the one that goes away
-            var ncpath = getTextURL('merge');
-            var form_values = "source=" + rdg_ids[0] + "&target=" + rdg_ids[1] + "&single=true";
-            // Make the request
-            $.post(ncpath, form_values, function(data) {
-              merge_node(node_ids[0], node_ids[1]);
-              // remove any suggestions that involve the removed node
-              $('[id*="-' + rdg_ids[0] + '"]').parent().remove();
-              $('.checkalign[id*="' + node_ids[0] + '"]').remove();
+          let xC = parseInt(cVals.values[0]);
+          // Put the images into a suggestion group
+          let sugg = d3.select('#graph0')
+            .append('g')
+            .attr('id', 'suggestion-' + rdg_ids.join('-'))
+            .attr('class', 'suggestion');
+          // The yes button
+          sugg.append('image')
+            .attr('id', merge_id)
+            .attr('x', xC)
+            .attr('y', yC - 8)
+            .attr('width', 16)
+            .attr('height', 16)
+            .attr('href', merge_button_yes)
+            .on('mouseover', function() {
+              d3.select(this).classed('draggable', true);
+              // Indicate which nodes are active
+              get_ellipse(node_ids[0]).attr('fill', '#9999ff');
+              get_ellipse(node_ids[1]).attr('fill', '#9999ff');
+            })
+            .on('mouseout', function() {
+              d3.select(this).classed('draggable', false);
+              var colorme = $('#update_workspace_button').data('locked') ? color_active : color_inactive;
+              colorme(get_ellipse(node_ids[0]));
+              colorme(get_ellipse(node_ids[1]));
+            })
+            .on('click', function(evt) {
+              // node_ids[0] is the one that goes away
+              var ncpath = getTextURL('merge');
+              var form_values = "source=" + rdg_ids[0] + "&target=" + rdg_ids[1] + "&single=true";
+              // Make the request
+              $.post(ncpath, form_values, function(data) {
+                merge_node(node_ids[0], node_ids[1]);
+                // remove any suggestions that involve the removed node
+                d3.select('[id*="-' + rdg_ids[0] + '"]')
+                  .select(this.parentNode)
+                  .remove();
+                d3.select('.checkalign[id*="' + node_ids[0] + '"]')
+                  .select(this.parentNode)
+                  .remove();
+              });
+              // Whether it succeeded or not, remove the buttons and line
+              temp_relation.remove();
+              sugg.remove();
             });
-            // Whether it succeeded or not, remove the buttons and line
-            temp_relation.remove();
-            $(evt.target).parent().remove();
-          });
-          $(no).click(function(evt) {
-            temp_relation.remove();
-            $(evt.target).parent().remove();
-          });
+          // The no button
+          sugg.append('image')
+            .attr('id', 'no' + merge_id)
+            .attr('x', xC + 20)
+            .attr('y', yC - 8)
+            .attr('width', 16)
+            .attr('height', 16)
+            .attr('href', merge_button_no)
+            .on('mouseover', function() {
+              d3.select(this).classed('draggable', true);
+            })
+            .on('mouseout', function() {
+              d3.select(this).classed('draggable', false);
+            })
+            .on('click', function() {
+              temp_relation.remove();
+              sugg.remove();
+            });
         }
       });
     }
@@ -2119,7 +2075,6 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
 }).ready(function() {
 
   timer = null;
-  relation_manager = new relation_factory();
 
   $('#update_workspace_button').data('locked', false);
 
@@ -2191,22 +2146,19 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           var form_values = get_relation_querystring();
           var ncpath = getTextURL('relationships');
           var jqjson = $.post(ncpath, form_values, function(data) {
+            // Remove the temporary relation first to avoid ID collision
+            remove_temporary();
             // If we were handed a 304 response, there won't be data.
             if (data) {
-              $.each(data['relationships'], function(item, rel_info) {
-                var source_found = rid2node(rel_info.source);
-                var target_found = rid2node(rel_info.target);
-                var relation_found = $.inArray(rel_info.type, $('#keymap').data('relations'));
-                if (source_found && target_found && relation_found > -1) {
-                  var relation = relation_manager.create(rel_info);
-                } else {
-                  console.log("Error adding returned relation " + rel_info);
-                }
-              });
+              // Add the relations individually, since we aren't maintaining
+              // a global relation array to merge into.
+              d3.select('#graph0').selectAll('g.ADDING')
+                .data(data.relationships, d => d.id)
+                .enter()
+                .call(draw_relation);
+              d3.select('.ADDING').classed('ADDING', false);
               // Stash any changed readings.
-              $.each(data['readings'], function(i, rdgdata) {
-                update_reading(rdgdata);
-              });
+              data.readings.forEach(r => update_reading(r));
             }
             // Stash the new relationships.
             mybuttons.button('enable');
@@ -2270,7 +2222,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           var source_id = node2rid(nid);
           var target_id = $('#target_node_id').val();
           if (source_id !== target_id) {
-            relation_manager.create_temporary(source_id, target_id);
+            create_temporary(source_id, target_id);
           }
         });
         // Show the merge button if applicable
@@ -2285,7 +2237,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $('#rel_type').data('changed_after_open', false);
       },
       close: function() {
-        relation_manager.remove_temporary();
+        remove_temporary();
         $("#dialog_overlay").hide();
       }
     });
