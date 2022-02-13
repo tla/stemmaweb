@@ -27,6 +27,14 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+echo ...and its stemma
+curl --silent --request POST --header 'Content-Type: application/json' --data @t/data/besoin_stemma_2.json $STEMMAREST_ENDPOINT/tradition/$BESOIN_ID/stemma > /tmp/stemmarest.response
+jq -e ".identifier" /tmp/stemmarest.response
+if [ $? -ne 0 ]; then
+  echo Failed to add Notre besoin stemma
+  exit 1
+fi
+
 echo Uploading Florilegium
 curl --silent --request POST --form name="Florilegium Coislinianum B" --form file=@t/data/florilegium.csv --form filetype=csv --form userId=user@example.org --form language=Greek --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
 FLOR_ID=`jq -e ".tradId" /tmp/stemmarest.response`
