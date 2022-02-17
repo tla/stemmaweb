@@ -7,6 +7,10 @@ router.get('/', function(req, res, next) {
 });
 
 
+router.get('/index_t', function(req, res, next) {
+  res.render('index_t', { title: 'Stemmaweb' });
+});
+
 /* GET color scheme - dev purposes. */
 router.get('/color_scheme', function(req, res, next) {
   res.render( 'color_scheme', { title: 'StemmaWeb | Color Scheme' });
