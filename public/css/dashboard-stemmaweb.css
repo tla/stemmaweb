@@ -1,3 +1,6 @@
+.brand-dark {
+  color: rgba(255, 255, 255, 0.70);
+}
 .bg-light {
   background-image: url("/images/logo_20220114_2006.svg");
   background-position: left bottom;

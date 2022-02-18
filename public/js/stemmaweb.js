@@ -1,10 +1,7 @@
-const tr = d3.transition( 'fadeook' )
-  .delay( 200 )
-  .duration(7050)
-  .ease(d3.easeLinear);
-
-
 ( function() {
+
+    const svg_slide_indicator = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>';
+    const svg_slide_indicator_active = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="12" viewBox="0 0 24 24" fill="rgb(180,180,180)" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>';
 
     function mellow_transition( transition ) {
       return transition
@@ -18,6 +15,12 @@ const tr = d3.transition( 'fadeook' )
         .delay( 0 )
         .duration( 100 )
         .ease( d3.easeLinear );
+    }
+
+    function quick_fade_in( sel ) {
+      return sel.style( 'opacity', 0 )
+        .transition().duration( 500 )
+        .style( 'opacity', 1 )
     }
 
     function fetchTraditions() {
@@ -62,10 +65,16 @@ const tr = d3.transition( 'fadeook' )
           .data( data )
           .enter()
           .append( 'span' )
-            .text( function( d, i ) {
-              return i
+            .html( function( d, i ) {
+              var svg = svg_slide_indicator;
+              if( i == 0 ) {
+                svg = svg_slide_indicator_active;
+              }
+              return svg
             } )
             .on( 'click', function( evt ){
+              d3.selectAll( '#stemma_selector span svg' ).style( 'fill', 'rgb(255,255,255)' );
+              d3.select( this ).select( 'svg' ).style( 'fill', 'rgb(180,180,180)' );
               var next_dot = d3.select( this ).datum().dot;
               graph_area.transition()
                 .call( quick_cut_transition ).style( 'opacity', '0.0' )
@@ -82,7 +91,8 @@ const tr = d3.transition( 'fadeook' )
           .on( 'renderEnd', function() { graph_area.transition().call( mellow_transition ).style( 'opacity', '1.0' ) }  )
           .on( 'initEnd', function() { graph_viz.renderDot( data[0].dot ) } );
       })
-      .then( d3.select( '#tradition_name' ).text( d.name ) )
+      .then( d3.select( '#tradition_name' )
+        .call( quick_fade_in ).text( d.name ) )
       .then( function() {
         d3.select( '#tradition_info' ).selectAll( '*' ).remove();
         [
