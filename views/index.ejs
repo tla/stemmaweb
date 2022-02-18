@@ -94,13 +94,26 @@
         <h2 id="tradition_name">&nbsp;<!-- Tradition title placeholder --></span></h2>
         <div class="btn-toolbar mb-2 mb-md-0">
           <div class="btn-group me-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">Examine Stemma</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">Edit Collation</button>
           </div>
-          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
-            <span data-feather="calendar"></span>
-            This week
-          </button>
+          <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">
+              <span data-feather="download"></span>
+              Tradition
+            </button>
+          </div>
+          <div class="dropdown">
+            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" id="stemma_image_downloadbtn" data-bs-toggle="dropdown">
+              <span data-feather="download"></span>
+              Stemma
+            </button>
+            <div class="dropdown-menu" aria-labelledby="stemma_image_downloadbtn">
+              <a class="dropdown-item" id="download_svg" href="#">.svg</a>
+              <a class="dropdown-item" id="download_png" href="#">.png</a>
+              <a class="dropdown-item" id="download_dot" href="#">.dot</a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -139,6 +152,7 @@
     <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js" integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/@hpcc-js/wasm/dist/index.min.js" type="application/javascript/"></script>
     <script type="text/javascript" src="/js/d3-graphviz.js"></script>
+    <script src="/js/svg2png.js"></script>
     <script src="/js/stemmaweb.js"></script>
 
 
