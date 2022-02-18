@@ -102,11 +102,14 @@
           .on( 'initEnd', function() { graph_viz.renderDot( data[0].dot ) } );
         set_downloads( data[0].dot );
       })
-      .then( d3.select( '#tradition_name' )
-        .call( quick_fade_in ).text( d.name ) )
       .then( function() {
-        // After putting in the stemma and the title of the tradition
-        // we put in the metadata of the stemma.
+        // After putting in the stemma and the title of the tradition,
+        // the buttins, and lastly we put in the metadata of the stemma.
+        d3.select( '#tradition_name' ).call( quick_fade_in ).text( d.name );
+        var buttons = d3.select( '#stemma_buttons' );
+        if( buttons.classed( 'invisible' ) ) {
+          buttons.call( quick_fade_in ).classed( 'invisible', false )
+        }
         d3.select( '#tradition_info' ).selectAll( '*' ).remove();
         [
           [ 'Owner', d.owner ],
