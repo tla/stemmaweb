@@ -1255,7 +1255,7 @@ function get_related_nodes(relation_id) {
   return srctotarg.split('-___-');
 }
 
-// This expects an SVG ID
+// This expects reading IDs
 function draw_relation(source_id, target_id, opts) {
   var cssclass = 'relation';
   if (opts.class) {
@@ -1545,7 +1545,7 @@ function merge_nodes(source_node_id, target_node_id, consequences) {
         var merge_id = 'merge-' + ids_text;
         // Make a checkmerge button if there isn't one already, for this pair
         if ($(jq(merge_id)).length == 0) {
-          var temp_relation = draw_relation(node_ids[0], node_ids[1], {
+          var temp_relation = draw_relation(rdg_ids[0], rdg_ids[1], {
             color: "#89a02c",
             class: "checkalign"
           });

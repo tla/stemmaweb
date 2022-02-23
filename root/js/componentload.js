@@ -518,7 +518,7 @@ function upload_collation(upload_url) {
           // Reload the directory with the new text selected.
           textOnLoad = ret.tradId;
           refreshDirectory();
-        } else if (ret.parentId) {
+        } else if (ret.sectionId) {
           $('#upload-collation-dialog').dialog('close');
           // Load the tradition to which we just uploaded.
           var ourTradId = $('#upload_for_tradition').val();
