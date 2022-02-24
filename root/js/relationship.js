@@ -845,7 +845,9 @@ function create_temporary(source, target, tempclass) {
       })
       .attr('stroke', '#FFA14F');
   } else {
-    let newPath = d3.select('#graph0').selectAll('g#' + relid)
+    // I still don't understand what 'call' actually returns, so I grab
+    // the new element after it has been created
+    d3.select('#graph0').selectAll('g#' + relid)
       .data([{
         source: source,
         target: target,
@@ -853,7 +855,7 @@ function create_temporary(source, target, tempclass) {
       }])
       .enter()
       .call(draw_relation, tempclass);
-    existing = newPath.node();
+    existing = document.getElementById(relid);
   }
   return existing;
 }
@@ -1542,11 +1544,12 @@ function merge_nodes(source_node_id, target_node_id, consequences) {
         if ($(jq(merge_id)).length == 0) {
           // This returns a d3 selection
           let temp_relation = create_temporary(rdg_ids[0], rdg_ids[1], 'checkalign')
-          let pathInfo = temp_relation.select('path').node().getPathData();
+          let pathInfo = temp_relation.querySelector('path').getPathData();
           let mVals = pathInfo.find(x => x.type === "M");
           let cVals = pathInfo.find(x => x.type === "C");
           let sy = parseInt(mVals.values[1]);
-          let ey = parseInt(cVals.values[cVals.length - 1]);
+          let ey = parseInt(cVals.values.pop()); // yes this is destructive,
+                                                 // no we don't currently care
           let yC = ey + ((sy - ey) / 2);
           // TODO: compute xC to be always the same distance to the amplitude of the curve
           let xC = parseInt(cVals.values[0]);
@@ -1583,12 +1586,8 @@ function merge_nodes(source_node_id, target_node_id, consequences) {
               $.post(ncpath, form_values, function(data) {
                 merge_node(node_ids[0], node_ids[1]);
                 // remove any suggestions that involve the removed node
-                d3.select('[id*="-' + rdg_ids[0] + '"]')
-                  .select(this.parentNode)
-                  .remove();
-                d3.select('.checkalign[id*="' + node_ids[0] + '"]')
-                  .select(this.parentNode)
-                  .remove();
+                d3.selectAll('.suggestion[id*="-' + rdg_ids[0] + '"]').remove()
+                d3.selectAll('.checkalign[id*="-' + rdg_ids[0] + '"]').remove()
               });
               // Whether it succeeded or not, remove the buttons and line
               temp_relation.remove();
@@ -2063,7 +2062,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
   }
 
   // Populate the box with the error message
-  $(errordiv).append('<p class="error">Error: ' + error);
+  $(errordiv).empty().append('<p class="error">Error: ' + error);
 
   // Open the dialog explicitly if we need to
   if (errordiv === '#error-display') {
