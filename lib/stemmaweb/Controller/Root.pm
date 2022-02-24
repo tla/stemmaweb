@@ -456,7 +456,7 @@ sub download :Local :Args(0) {
     my $textinfo = load_tradition($c, $textid);
     ## Available formats are graphml, json, csv, tsv, dot. Dot -> SVG
 
-    my $view = $format eq 'dot' ? 'View::Plain' : "View::$format";
+    my $view = $format =~ /(dot|matrix)/ ? 'View::Plain' : "View::$format";
     $c->stash->{'name'}   ||= $textinfo->{name};
     $c->stash->{'download'} = 1;
 

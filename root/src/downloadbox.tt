@@ -1,5 +1,5 @@
   <!-- Data download dialog box -->
-  <div id="download-dialog" title="Download tradition data">
+  <div id="download-dialog" title="Download [% referringpage == 'index' ? 'tradition' : 'section' %] data">
     <div id="download_container">
       <form id="download_form">
         [% IF referringpage == 'index' %]
@@ -8,14 +8,17 @@
         <label for="download_format">Choose a format for download: </label>
         [% IF referringpage == 'index' %]
         <select id="download_format" name="format" onchange="$('#dl_choose_sections').toggle(
-  					$(this).val() == 'JSON' || $(this).val() == 'CSV' || $(this).val() == 'TSV'
-  				)">
+  					$(this).val() == 'JSON' || $(this).val() == 'CSV' || $(this).val() == 'TSV' || $(this).val() == 'matrix'
+  				  ); $('#dl_choose_conflate').toggle(
+          				$(this).val() == 'JSON' || $(this).val() == 'CSV' || $(this).val() == 'TSV' || $(this).val() == 'matrix'
+          				);">
         [% ELSE %]
         <select id="download_format" name="format">
         [% END %]
           <option value="JSON">JSON table (collation only)</option>
           <option value="CSV">Comma-separated values (collation only)</option>
           <option value="TSV">Tab-separated values (collation only)</option>
+          <option value="matrix">Phylip character matrix (collation only)</option>
           <option value="dot">Graphviz dot format (collation and relationships)</option>
           <option value="SVG">SVG graph display (collation and relationships)</option>
           <option value="GraphML">Native GraphML ZIP format</option>
@@ -23,7 +26,7 @@
           <!-- option value="tei_dea" -->
         </select><br>
         [% IF referringpage == "index" %]
-        <div id="dl_choose_sections">
+        <div id="dl_choose_sections" style="margin-top: 5px;">
           <label for="download_start">From section: </label>
           <select id="download_start" name="start_section">
           </select>
@@ -32,6 +35,11 @@
           </select>
         </div><br>
         [% END %]
+        <div id="dl_choose_conflate" style="margin-top: 5px;">
+          <label for="download_conflate">Normalise on: </label>
+          <select id="download_conflate" name="conflate" class="relation-type-list">
+          </select>
+        </div>
       </form>
       <div id="download_status"></div>
     </div>

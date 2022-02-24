@@ -2550,6 +2550,9 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     buttons: {
       Download: function(evt) {
         var ncpath = getTextURL('download');
+        if ($('#download_conflate').val() === "") {
+          $('#download_conflate').prop('disabled', true);
+        }
         ncpath += '?' + $('#download_form').serialize();
         window.location = ncpath;
       },
@@ -2563,6 +2566,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     },
     open: function() {
       dialog_background('#download_status');
+      $('#download_conflate').prop('disabled', false);
     },
     close: function() {
       $("#dialog_overlay").hide();
