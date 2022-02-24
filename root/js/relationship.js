@@ -489,13 +489,18 @@ function svgEnlargementLoaded() {
     'behavior': 'auto'
   });
 
-  // Attach all our sequence labels as textPath elements
-  // if we have a horizontal text
+  // Put all our sequence labels into textPath elements if we have a
+  // horizontal text. Otherwise just make sure that all sequence paths
+  // are classed appropriately.
   if (text_direction !== 'BI') {
     var sequenceEdges = d3svg.selectAll("g.edge")
       .each(function() {
         attach_sequence_label(this)
       });
+  } else {
+    d3svg.selectAll("g.edge")
+      .select('path')
+      .attr('class', 'sequence');
   }
 
   //some use of call backs to ensure successive execution
@@ -552,10 +557,10 @@ function attach_sequence_label(el) {
 // Use this when the textPath already exists, to adjust its offset
 // when the path and shadow path have been modified
 function offset_sequence_label(edge) {
-  var orig_path = edge.getElementsByTagName('path')[0];
-  var shadow_path = edge.getElementsByTagName('path')[1];
-  var text_el = edge.getElementsByTagName('text')[0];
-  var textpath_el = edge.getElementsByTagName('textPath')[0];
+  var orig_path = edge.querySelector('.sequence');
+  var shadow_path = edge.querySelector('.shadow');
+  var text_el = edge.querySelector('text');
+  var textpath_el = text_el.querySelector('textPath');
   if (!shadow_path || !textpath_el) {
     console.log("Called adjust_sequence_label on a node without a sequence label");
     return;
@@ -1244,7 +1249,7 @@ function get_edge_elements_for(ellipse) {
   var node_id = ellipse.parent().attr('id');
   if (!node_id) return edge_elements;
   var reading_id = node2rid(node_id);
-  var edge_in_pattern = new RegExp(reading_id + '$');
+  var edge_in_pattern = new RegExp('>' + reading_id + '$');
   var edge_out_pattern = new RegExp('^' + reading_id + '-');
   $.each($('#svgenlargement .edge,#svgenlargement .relation').children('title'), function(index) {
     var title = $(this).text();
@@ -1253,14 +1258,18 @@ function get_edge_elements_for(ellipse) {
       if (polygon.size() > 0) {
         edge_elements.push(new svgshape(polygon));
       }
-      var path = $(this).siblings('path')[0];
-      var path_element_object = new path_element_class(path, false);
-      edge_elements.push(new svgpath(path_element_object, $(this).siblings('path')));
+      var paths = $(this).siblings('path');
+      paths.each(function(i, path) {
+        var path_element_object = new path_element_class(path, false);
+        edge_elements.push(new svgpath(path_element_object, $(path)));
+      });
     }
     if (edge_out_pattern.test(title)) {
-      var path = $(this).siblings('path')[0];
-      var path_element_object = new path_element_class(path, true);
-      edge_elements.push(new svgpath(path_element_object, $(this).siblings('path')));
+      var paths = $(this).siblings('path');
+      paths.each(function(i, path) {
+        var path_element_object = new path_element_class(path, true);
+        edge_elements.push(new svgpath(path_element_object, $(path)));
+      });
     }
   });
   return edge_elements;
@@ -1408,7 +1417,7 @@ function detach_node(readings) {
   // for the new nodes/readings
   // TODO get this from the server and d3ify it
   for (const [rid, rdata] of Object.entries(readings)) {
-    origdata = readingdata[rdata.orig_reading];
+    let origdata = readingdata[rdata.orig_reading];
     rdata.witnesses.forEach(w => removeFromArray(w, origdata.witnesses));
     update_reading(origdata);
   }
@@ -1416,21 +1425,21 @@ function detach_node(readings) {
 
   // here we remove the sigla of the detached witnesses from the existing
   // graph edges, and create the new edges for the detached readings
-  detached_edges = [];
+  var detached_edges = [];
   for (const [rid, rdata] of Object.entries(readings)) {
     let orig_ellipse = get_ellipse(rid2node(rdata.orig_reading));
     let node_id = 'n' + rid; // set the XML ID for the new node
     let edges = edges_of(orig_ellipse);
     // These are to keep track of the witnesses for which an edge still needs to
     // be detached (since the witness won't be found in a 'majority' label)
-    incoming_remaining = new Set();
-    outgoing_remaining = new Set();
+    let incoming_remaining = new Set();
+    let outgoing_remaining = new Set();
     rdata.witnesses.forEach(w => {
       incoming_remaining.add(w);
       outgoing_remaining.add(w);
     });
     edges.forEach(edge => {
-      detached_edge = edge.detach_witnesses(rdata.witnesses);
+      let detached_edge = edge.detach_witnesses(rdata.witnesses);
       if (detached_edge != null) {
         detached_edges.push(detached_edge);
         detached_edge.witnesses.forEach(w => {
@@ -1443,8 +1452,8 @@ function detach_node(readings) {
       }
     });
     // After detaching we still need to check if for *all* readings
-    // an edge was detached. It may be that a witness was not
-    // explicitly named on an edge but was part of a 'majority' edge
+    // an edge was detached. It may be that some witnesses were not
+    // explicitly named on an edge but were part of a 'majority' edge,
     // in which case we need to duplicate and name that edge after those
     // remaining witnesses.
     if (outgoing_remaining.size) {
@@ -1481,36 +1490,42 @@ function detach_node(readings) {
 
     // Lots of unabstracted knowledge down here :/
     // Clone original node/reading, rename/id it..
-    duplicate_node = orig_ellipse.parent().clone();
+    let duplicate_node = orig_ellipse.parent().clone();
     duplicate_node.attr('id', node_id);
     duplicate_node.children('title').text(rid);
 
     // This needs somehow to move to node or even to shapes! #repositioned
-    duplicate_node_data = orig_ellipse.parent().data('repositioned');
+    let duplicate_node_data = orig_ellipse.parent().data('repositioned');
     if (duplicate_node_data != null) {
       duplicate_node.children('ellipse').parent().data('repositioned', duplicate_node_data);
     }
 
     // Add the node and all new edges into the graph
-    var graph_root = $(svg_main_graph);
+    let graph_root = $(svg_main_graph);
     graph_root.append(duplicate_node);
     detached_edges.forEach(edge => {
       // TODO use returned sequence information to set the real
       // ID on the duplicated edges
-      edge.g_elem.attr('id', (edge.g_elem.attr('id') + 'd'));
-      edge_title = edge.g_elem.children('title').text();
-      edge_weight = 0.8 + (0.2 * edge.witnesses.length);
+      let eid = edge.g_elem.attr('id');
+      edge.g_elem.attr('id', eid + 'd');
+      // We also need to fix the ID for textPaths
+      let etextid = edge.g_elem.children('.shadow').attr('id');
+      edge.g_elem.children('.shadow').attr('id', etextid + 'd');
+      edge.g_elem.find('textPath').attr('href', '#' + etextid + 'd');
+      // Fix the edge title and edge weight
+      let edge_title = edge.g_elem.children('title').text();
+      let edge_weight = 0.8 + (0.2 * edge.witnesses.length);
       edge_title = edge_title.replace(rdata.orig_reading, rid);
       edge.g_elem.children('title').text(edge_title);
-      edge.g_elem.children('path').attr('stroke-width', edge_weight);
+      edge.g_elem.children('path.sequence').attr('stroke-width', edge_weight);
       // Reg unabstracted knowledge: isn't it more elegant to make
       // it edge.append_to( graph_root )?
       graph_root.append(edge.g_elem);
     });
 
     // Make the detached node a real node_obj
-    var ellipse_elem = get_ellipse(node_id);
-    var new_node = new node_obj(ellipse_elem);
+    let ellipse_elem = get_ellipse(node_id);
+    let new_node = new node_obj(ellipse_elem);
     ellipse_elem.data('node_obj', new_node);
 
     // Move the node somewhat up for 'dramatic effect' :-p
@@ -1549,7 +1564,7 @@ function merge_nodes(source_node_id, target_node_id, consequences) {
           let cVals = pathInfo.find(x => x.type === "C");
           let sy = parseInt(mVals.values[1]);
           let ey = parseInt(cVals.values.pop()); // yes this is destructive,
-                                                 // no we don't currently care
+          // no we don't currently care
           let yC = ey + ((sy - ey) / 2);
           // TODO: compute xC to be always the same distance to the amplitude of the curve
           let xC = parseInt(cVals.values[0]);
