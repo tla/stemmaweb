@@ -1402,71 +1402,76 @@ function detach_node(readings) {
     });
     delete readings['DELETED'];
   }
-  // remove from existing readings the witnesses for the new nodes/readings
+  // remove from existing reading data structures the witnesses
+  // for the new nodes/readings
   // TODO get this from the server and d3ify it
-  $.each(readings, function(node_id, reading) {
-    $.each(reading.witnesses, function(index, witness) {
-      removeFromArray(witness, readingdata[reading.orig_reading].witnesses);
-    });
-  });
+  for (const [rid, rdata] of Object.entries(readings)) {
+    origdata = readingdata[rdata.orig_reading];
+    rdata.witnesses.forEach(w => removeFromArray(w, origdata.witnesses));
+    update_reading(origdata);
+  }
 
+
+  // here we remove the sigla of the detached witnesses from the existing
+  // graph edges, and create the new edges for the detached readings
   detached_edges = [];
-
-  // here we detach witnesses from the existing edges accoring to what's being relayed by readings
-  $.each(readings, function(rid, reading) {
-    var orig_ellipse = get_ellipse(rid2node(reading.orig_reading));
-    var node_id = 'n' + rid; // set the XML ID for the new node
-    var edges = edges_of(orig_ellipse);
-    incoming_remaining = [];
-    outgoing_remaining = [];
-    $.each(reading.witnesses, function(index, witness) {
-      incoming_remaining.push(witness);
-      outgoing_remaining.push(witness);
+  for (const [rid, rdata] of Object.entries(readings)) {
+    let orig_ellipse = get_ellipse(rid2node(rdata.orig_reading));
+    let node_id = 'n' + rid; // set the XML ID for the new node
+    let edges = edges_of(orig_ellipse);
+    // These are to keep track of the witnesses for which an edge still needs to
+    // be detached (since the witness won't be found in a 'majority' label)
+    incoming_remaining = new Set();
+    outgoing_remaining = new Set();
+    rdata.witnesses.forEach(w => {
+      incoming_remaining.add(w);
+      outgoing_remaining.add(w);
     });
-    $.each(edges, function(index, edge) {
-      detached_edge = edge.detach_witnesses(reading.witnesses);
+    edges.forEach(edge => {
+      detached_edge = edge.detach_witnesses(rdata.witnesses);
       if (detached_edge != null) {
         detached_edges.push(detached_edge);
-        $.each(detached_edge.witnesses, function(index, witness) {
+        detached_edge.witnesses.forEach(w => {
           if (detached_edge.is_incoming == true) {
-            removeFromArray(witness, incoming_remaining);
+            incoming_remaining.delete(w);
           } else {
-            removeFromArray(witness, outgoing_remaining);
+            outgoing_remaining.delete(w);
           }
         });
       }
     });
-
     // After detaching we still need to check if for *all* readings
     // an edge was detached. It may be that a witness was not
     // explicitly named on an edge but was part of a 'majority' edge
     // in which case we need to duplicate and name that edge after those
     // remaining witnesses.
-    if (outgoing_remaining.length > 0) {
-      $.each(edges, function(index, edge) {
+    if (outgoing_remaining.size) {
+      let outWits = Array.from(outgoing_remaining);
+      edges.forEach(edge => {
         if (edge.get_label() == 'majority' && !edge.is_incoming) {
-          detached_edges.push(edge.clone_for(outgoing_remaining));
+          detached_edges.push(edge.clone_for(outWits));
         }
       });
     }
-    if (incoming_remaining.length > 0) {
-      $.each(edges, function(index, edge) {
+    if (incoming_remaining.size) {
+      let inWits = Array.from(incoming_remaining);
+      edges.forEach(edge => {
         if (edge.get_label() == 'majority' && edge.is_incoming) {
-          detached_edges.push(edge.clone_for(incoming_remaining));
+          detached_edges.push(edge.clone_for(inWits));
         }
       });
     }
-
-    // Finally multiple selected nodes may share edges
-    var copy_array = [];
-    $.each(detached_edges, function(index, edge) {
-      var do_copy = true;
-      $.each(copy_array, function(index, copy_edge) {
+    // Finally deal with the fact that edges might be shared if we
+    // duplicated multiple nodes.
+    let copy_array = [];
+    detached_edges.forEach(edge => {
+      let do_copy = true;
+      copy_array.forEach(copy_edge => {
         if (copy_edge.g_elem.attr('id') == edge.g_elem.attr('id')) {
-          do_copy = false
+          do_copy = false;
         }
       });
-      if (do_copy == true) {
+      if (do_copy) {
         copy_array.push(edge);
       }
     });
@@ -1487,13 +1492,13 @@ function detach_node(readings) {
     // Add the node and all new edges into the graph
     var graph_root = $(svg_main_graph);
     graph_root.append(duplicate_node);
-    $.each(detached_edges, function(index, edge) {
+    detached_edges.forEach(edge => {
       // TODO use returned sequence information to set the real
       // ID on the duplicated edges
       edge.g_elem.attr('id', (edge.g_elem.attr('id') + 'd'));
       edge_title = edge.g_elem.children('title').text();
       edge_weight = 0.8 + (0.2 * edge.witnesses.length);
-      edge_title = edge_title.replace(reading.orig_reading, rid);
+      edge_title = edge_title.replace(rdata.orig_reading, rid);
       edge.g_elem.children('title').text(edge_title);
       edge.g_elem.children('path').attr('stroke-width', edge_weight);
       // Reg unabstracted knowledge: isn't it more elegant to make
@@ -1515,12 +1520,9 @@ function detach_node(readings) {
     } else {
       new_node.reposition(0, 70);
     }
-
-    // add new node(s) in the data
-    Object.values(readings).forEach(x => update_reading(x));
-
-  });
-
+  }
+  // add new node(s) in the data
+  Object.values(readings).forEach(x => update_reading(x));
 }
 
 // This takes SVG node IDs
