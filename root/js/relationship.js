@@ -736,9 +736,13 @@ function add_relations(callback_fn) {
   var textrelpath = getTextURL('relationships');
   d3.json(textrelpath)
     .then(data => {
+      // Filter the relations to make sure both source and target are
+      // present in the current graph view
+      relation_list = data.filter(
+        r => rid2node(r.source) && rid2node(r.target));
       // Bind the data to the enter selection and draw the paths
       rels = d3.select('#graph0').selectAll('g.relation')
-        .data(data, d => d.id)
+        .data(relation_list, d => d.id)
         .enter()
         .call(draw_relation);
 
