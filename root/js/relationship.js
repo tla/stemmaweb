@@ -98,52 +98,96 @@ function update_reading_display(node_id) {
   // Get our components
   var theGroup = d3.select(jq(node_id));
   var theShape = theGroup.select('ellipse');
-  var theText = theGroup.select('text');
   var rdata = theGroup.datum();
 
   // If we have to deal with HTML display text, don't
+  var updateDisplay = true;
   if (rdata.display && rdata.display !== rdata.text) {
-    alert("Not updating display of formatted reading");
-    return;
+    alert("Not updating formatted display of reading");
+    updateDisplay = false;
   }
+  // See which existing text nodes correspond to which reading
+  var displayY = 0;
+  var normalY = 0;
+  var displayT = [];
+  var normalT = [];
+  var fontFamily = null;
+  var fontSize = null;
+  theGroup.selectAll('text')
+    .each( function() {
+      // Make a note of the font in use
+      if (!fontFamily) {
+          fontFamily = this.getAttribute('font-family');
+      }
+      if (!fontSize) {
+          fontSize = this.getAttribute('font-size');
+      }
+      // Sort out display vs. normalised text
+      let yc = parseFloat(this.getAttribute('y'));
+      if (displayY === 0) {
+          displayY = yc;
+      } else if (yc > displayY) {
+          normalY = yc;
+      }
+      if (yc == displayY) { displayT.push(this); }
+      if (yc == normalY) { normalT.push(this); }
+
+    });
   // Display the necessary text node(s)
-  var ellipseText = [rdata.text];
+  // Update the actual text in case it has changed
+  if (updateDisplay) {
+      d3.select(displayT[0])
+        .text(rdata.text);
+  }
+  // See if we need to add a normal form
+  var cy = parseFloat(theShape.attr('cy'));
   if (rdata.normal_form && rdata.normal_form !== rdata.text) {
-    ellipseText.push(rdata.normal_form);
+      if (normalT.length) {
+          // Just update the text of the existing normal form label
+          d3.select(normalT[0])
+            .text(rdata.normal_form);
+      } else {
+          // We have to move the existing text node(s) up, and add
+          // the normal form text
+          theGroup.selectAll('text')
+            .attr('y', cy - 3.8 );
+          theGroup.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('font-family', fontFamily)
+            .attr('font-size', fontSize)
+            .attr('x', theShape.attr('cx'))
+            .attr('y', cy + 10.2)
+            .attr('fill', 'grey')
+            .text(rdata.normal_form)
+            .call(t => normalT.push(t.node()));
+          theShape.attr("ry", "25.4");
+      }
+  } else if (normalT.length) {
+      // We don't need the normal form node anymore. Remove it and
+      // reset the display X attribute(s)
+      d3.select(normalT[0]).remove();
+      theGroup.selectAll('text')
+        .attr('y', cy + 3.7);
+      theShape.attr("ry", 18);
+      normalT = [];
   }
-  var allTextNodes = theGroup.selectAll('text')
-    .data(ellipseText);
-  var normalNode = allTextNodes.enter()
-    .appendClone(theText)
-    .attr('y', parseFloat(theShape.attr("cy")) + 10.2)
-    .attr('fill', 'grey');
-  // If we just appended a node, we have to enlarge the ellipse and
-  // move the original text node up
-  if (normalNode.size()) {
-    theText.attr("y", parseFloat(theShape.attr("cy")) - 3.8);
-    theShape.attr("ry", "25.4118");
-  }
-  //
-  normalNode.merge(allTextNodes)
-    .attr("text-anchor", "middle")
-    .attr("x", theShape.attr("cx"))
-    .text(d => d);
-  // Do we need to remove a normal form?
-  var normalGone = allTextNodes.exit().remove();
-  if (normalGone.size()) {
-    // Resize the ellipse and move the main text node down
-    theShape.attr("ry", "18");
-    theText.attr("y", parseFloat(theShape.attr("cy")) + 2)
-  }
-  // Resize the ellipse as necessary along the X axis
+
+  // Resize the ellipse as necessary along the X axis.
+  // Minimum from Graphviz is 27.
   var maxLength = 0;
-  allTextNodes.each(function(d) {
-    let tl = this.textContent.length;
-    if (tl > maxLength) {
-      maxLength = tl;
+  displayT.forEach( el => maxLength = maxLength + el.getComputedTextLength());
+  if (normalT.length > 0 && normalT[0].getComputedTextLength() > maxLength) {
+      maxLength = normalT[0].getComputedTextLength();
+  }
+  theShape.attr("rx", radiusX(maxLength));
+}
+
+function radiusX(textlen) {
+    let rx = (textlen + 12.5) / 1.26;
+    if (rx < 27) {
+        rx = 27;
     }
-  });
-  theShape.attr('rx', 4.5 * maxLength);
+    return rx;
 }
 
 function delete_reading(nodeid) {
