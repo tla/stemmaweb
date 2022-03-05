@@ -1656,10 +1656,9 @@ function merge_node(todelete_id, tokeep_id, compressing) {
   // Remove from legacy readingdata
   delete_reading(todelete_id);
   // Remove any relation paths that belonged to this node
-  var relselector = 'g.relation[id*="' + todelete_id + '"]';
-  $(relselector).remove();
+  d3.selectAll('.relation[id*="-' + node2rid(todelete_id) + '"]').remove();
   // Remove the SVG node itself
-  $(jq(todelete_id)).remove();
+  d3.select('#' + todelete_id).remove();
 }
 
 // This takes SVG node IDs

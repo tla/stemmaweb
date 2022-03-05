@@ -37,7 +37,7 @@
         [% END %]
         <div id="dl_choose_conflate" style="margin-top: 5px;">
           <label for="download_conflate">Normalise on: </label>
-          <select id="download_conflate" name="conflate" class="relation-type-list">
+          <select id="download_conflate" name="conflate" class="relation-type-list nullable">
           </select>
         </div>
       </form>
