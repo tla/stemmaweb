@@ -114,80 +114,99 @@ function update_reading_display(node_id) {
   var fontFamily = null;
   var fontSize = null;
   theGroup.selectAll('text')
-    .each( function() {
+    .each(function() {
       // Make a note of the font in use
       if (!fontFamily) {
-          fontFamily = this.getAttribute('font-family');
+        fontFamily = this.getAttribute('font-family');
       }
       if (!fontSize) {
-          fontSize = this.getAttribute('font-size');
+        fontSize = this.getAttribute('font-size');
       }
       // Sort out display vs. normalised text
       let yc = parseFloat(this.getAttribute('y'));
       if (displayY === 0) {
-          displayY = yc;
+        displayY = yc;
       } else if (yc > displayY) {
-          normalY = yc;
+        normalY = yc;
       }
-      if (yc == displayY) { displayT.push(this); }
-      if (yc == normalY) { normalT.push(this); }
+      if (yc == displayY) {
+        displayT.push(this);
+      }
+      if (yc == normalY) {
+        normalT.push(this);
+      }
 
     });
+  var origTextLength = maxTextLength(displayT, normalT);
   // Display the necessary text node(s)
   // Update the actual text in case it has changed
   if (updateDisplay) {
-      d3.select(displayT[0])
-        .text(rdata.text);
+    d3.select(displayT[0])
+      .text(rdata.text);
   }
   // See if we need to add a normal form
   var cy = parseFloat(theShape.attr('cy'));
   if (rdata.normal_form && rdata.normal_form !== rdata.text) {
-      if (normalT.length) {
-          // Just update the text of the existing normal form label
-          d3.select(normalT[0])
-            .text(rdata.normal_form);
-      } else {
-          // We have to move the existing text node(s) up, and add
-          // the normal form text
-          theGroup.selectAll('text')
-            .attr('y', cy - 3.8 );
-          theGroup.append('text')
-            .attr('text-anchor', 'middle')
-            .attr('font-family', fontFamily)
-            .attr('font-size', fontSize)
-            .attr('x', theShape.attr('cx'))
-            .attr('y', cy + 10.2)
-            .attr('fill', 'grey')
-            .text(rdata.normal_form)
-            .call(t => normalT.push(t.node()));
-          theShape.attr("ry", "25.4");
-      }
-  } else if (normalT.length) {
-      // We don't need the normal form node anymore. Remove it and
-      // reset the display X attribute(s)
-      d3.select(normalT[0]).remove();
+    if (normalT.length) {
+      // Just update the text of the existing normal form label
+      d3.select(normalT[0])
+        .text(rdata.normal_form);
+    } else {
+      // We have to move the existing text node(s) up, and add
+      // the normal form text
       theGroup.selectAll('text')
-        .attr('y', cy + 3.7);
-      theShape.attr("ry", 18);
-      normalT = [];
+        .attr('y', cy - 3.8);
+      theGroup.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('font-family', fontFamily)
+        .attr('font-size', fontSize)
+        .attr('x', theShape.attr('cx'))
+        .attr('y', cy + 10.2)
+        .attr('fill', 'grey')
+        .text(rdata.normal_form)
+        .call(t => normalT.push(t.node()));
+      theShape.attr("ry", "25.4");
+    }
+  } else if (normalT.length) {
+    // We don't need the normal form node anymore. Remove it and
+    // reset the display X attribute(s)
+    d3.select(normalT[0]).remove();
+    theGroup.selectAll('text')
+      .attr('y', cy + 3.7);
+    theShape.attr("ry", 18);
+    normalT = [];
   }
 
-  // Resize the ellipse as necessary along the X axis.
-  // Minimum from Graphviz is 27.
-  var maxLength = 0;
-  displayT.forEach( el => maxLength = maxLength + el.getComputedTextLength());
-  if (normalT.length > 0 && normalT[0].getComputedTextLength() > maxLength) {
-      maxLength = normalT[0].getComputedTextLength();
+  // Resize the ellipse as necessary along the X axis and reattach
+  // the edge endpoints.
+  var newTextLength = maxTextLength(displayT, normalT);
+  if (newTextLength !== origTextLength) {
+    // Reset the X radius
+    theShape.attr("rx", radiusX(newTextLength));
+    // Re-attach the edges
+    edges_of(get_ellipse(node_id), 'incoming')
+      .forEach(x => x.attach_endpoint(node_id));
+    edges_of(get_ellipse(node_id), 'outgoing')
+      .forEach(x => x.attach_startpoint(node_id));
   }
-  theShape.attr("rx", radiusX(maxLength));
+}
+
+function maxTextLength(display, normal) {
+  var maxLength = 0;
+  display.forEach(el => maxLength = maxLength + el.getComputedTextLength());
+  if (normal.length > 0 && normal[0].getComputedTextLength() > maxLength) {
+    maxLength = normal[0].getComputedTextLength();
+  }
+  return maxLength;
 }
 
 function radiusX(textlen) {
-    let rx = (textlen + 12.5) / 1.26;
-    if (rx < 27) {
-        rx = 27;
-    }
-    return rx;
+  // Minimum from Graphviz is 27.
+  let rx = (textlen + 12.5) / 1.26;
+  if (rx < 27) {
+    rx = 27;
+  }
+  return rx;
 }
 
 function delete_reading(nodeid) {
@@ -914,7 +933,7 @@ function create_temporary(source, target, tempclass) {
 }
 
 function remove_temporary() {
-  d3.select('g.temporary').each(function() {
+  d3.selectAll('g.temporary').each(function() {
     // See if there is a color memo on the path; if so, reset the color and
     // if not, remove the relation element
     let thePath = d3.select(this).select('path')
@@ -972,6 +991,8 @@ function node_obj(ellipse) {
   this.y = 0;
   this.dx = 0;
   this.dy = 0;
+  // TODO This doesn't get updated if a node element gets added, e.g.
+  // a normalisation text element
   this.node_elements = node_elements_for(self.ellipse);
 
   this.get_id = function() {
@@ -1648,6 +1669,7 @@ function merge_nodes(source_node_id, target_node_id, consequences) {
               // Make the request
               $.post(ncpath, form_values, function(data) {
                 merge_node(node_ids[0], node_ids[1]);
+                // TODO de-purple the remaining reading
                 // remove any suggestions that involve the removed node
                 d3.selectAll('.suggestion[id*="-' + rdg_ids[0] + '"]').remove()
                 d3.selectAll('.checkalign[id*="-' + rdg_ids[0] + '"]').remove()

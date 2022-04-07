@@ -168,7 +168,8 @@ function Edge(g_elem) {
     // appropriate edge of the target_node
     edges_of(get_ellipse(target_node_id)).forEach(target_edge => {
       if ((self != null) && (target_edge.is_incoming != true)) {
-        if (self.end_node_id == target_edge.end_node_id) {
+        if (self.end_node_id == target_edge.end_node_id &&
+          self.start_node_id != target_edge.start_node_id) {
           target_edge.attach_witnesses(self.witnesses);
           self.g_elem.remove();
           self = null;
