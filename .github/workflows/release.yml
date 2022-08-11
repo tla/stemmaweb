@@ -45,7 +45,6 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.VERSION }},${{ env.IMAGE_NAME }}:latest
-
       - name: Build and push FCGI image
         id: docker_build_fcgi
         uses: docker/build-push-action@v2
@@ -54,3 +53,9 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.VERSION }}-fcgi,${{ env.IMAGE_NAME }}:fcgi
+  deploy:
+    needs: push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Rancher
+        run: curl -i -X POST "${{ secrets.RANCHERURL }}?action=redeploy" -H "Authorization: Bearer ${{ secrets.RANCHER_BEARER_TOKEN }}"
