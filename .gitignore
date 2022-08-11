@@ -1,4 +1,6 @@
 db/
+blib/
+inc/
 .DS_Store
 .vscode
 munge.pl
