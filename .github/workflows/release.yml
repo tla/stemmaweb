@@ -58,4 +58,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Rancher
-        run: curl -i -X POST "${{ secrets.RANCHERURL }}?action=redeploy" -H "Authorization: Bearer ${{ secrets.RANCHER_BEARER_TOKEN }}"
+        run: |
+          curl -i -X POST "${{ secrets.RANCHERURL }}?action=redeploy" -H "Authorization: Bearer ${{ secrets.RANCHER_BEARER_TOKEN }}"
