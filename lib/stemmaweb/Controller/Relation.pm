@@ -584,7 +584,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
             ## Now update the properties with side effects
             if (defined $changed_lemma) {
                 # Assuming the reading itself changed, it will be in the list
-                my $lresult = $m->ajax('post', "/reading/$reading_id/setlemma?value=$changed_lemma");
+                my $lresult = $m->ajax('post', "/reading/$reading_id/setlemma", ['value' => $changed_lemma]);
                 push(@changed, @$lresult );
             }
         }

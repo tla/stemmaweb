@@ -2,7 +2,7 @@ package stemmaweb::Controller::Root;
 use Moose;
 use namespace::autoclean;
 use Encode qw (encode_utf8);
-use JSON qw ();
+use JSON qw (encode_json);
 use stemmaweb::Controller::Stemma;
 use stemmaweb::Controller::Util
   qw/ load_tradition json_error json_bool section_metadata /;
@@ -306,7 +306,7 @@ sub textinfo :Local :Args(1) {
             $textinfo = $m->ajax(
                 'put', "/tradition/$textid",
                 'Content-Type' => 'application/json',
-                Content        => JSON::encode_json($params)
+                Content        => encode_json($params)
             );
         }
         catch (stemmaweb::Error $e) {
@@ -517,12 +517,23 @@ sub apiPass :Chained('api') :PathPart('') :Args {
         $c->detach();
     }
 
-    ## Dispatch the call and return the results
-    ## TODO at the moment this only works for JSON calls without any
-    ## query parameters or body; fix that someday maybe
+    ## Dispatch the call and return the results.
+    my $apiurl = join('/', 'tradition', $c->stash->{textid}, @pathparts);
+    my @apiargs = (
+        $method,
+        "/$apiurl"
+    );
+    # Pass through any explicit content-type and content on the API request
+    my $ctype = $c->request->header('Content-Type') || '';
+    if ($ctype eq 'application/json' && $c->request->body) {
+        push(@apiargs, 'Content-Type' => $ctype);
+        push(@apiargs, 'Content' => encode_json($c->request->body_data));
+    } elsif ($ctype eq 'application/x-www-form-urlencoded') {
+        push(@apiargs, [ %{$c->request->params} ]);
+    }
+    # Pass through any body from the API request
     try {
-        my $apiurl = join('/', 'tradition', $c->stash->{textid}, @pathparts);
-        $c->stash->{'result'} = $c->model('Directory')->ajax($method, "/$apiurl");
+        $c->stash->{'result'} = $c->model('Directory')->ajax(@apiargs);
     } catch (stemmaweb::Error $e) {
         return json_error($c, $e->status, $e->message);
     }
