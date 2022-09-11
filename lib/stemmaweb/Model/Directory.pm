@@ -38,7 +38,7 @@ sub ajax {
     my $location = shift;
     my @lwpargs  = @_;
     my $url      = $self->tradition_repo . $location;
-    my $ua       = LWP::UserAgent->new();
+    my $ua       = LWP::UserAgent->new(timeout => 3600);
     if ($self->has_basic_auth) {
 
         # Parse out the URL into the hostname / port
