@@ -10,17 +10,14 @@
         .ease( d3.easeLinear );
     }
 
-    function quick_cut_transition( transition ) {
-      return transition
-        .delay( 0 )
-        .duration( 100 )
-        .ease( d3.easeLinear );
-    }
-
     function quick_fade_in( sel ) {
       return sel.style( 'opacity', 0 )
         .transition().duration( 500 )
         .style( 'opacity', 1 )
+    }
+
+    function ellipse_border_to_none( dot ) {
+      return dot.replace( '" {', '" {\n\t node [color=none style=filled fillcolor=white]' )
     }
 
     function fetch_traditions() {
@@ -46,6 +43,44 @@
         links.on( 'click', get_tradition );
       })};
 
+    function render_stemma( d, datum ) {
+      graph_viz.renderDot( ellipse_border_to_none( datum.dot ) ).on( 'end', function() {
+        d3.select('g#graph0').selectAll('.node').on( 'click', fetch_rooted );
+        set_downloads( datum.dot );
+        update_meta( d, datum.identifier )
+      } ) 
+    }
+
+    function update_meta( d, stemma_name ){
+      let access_state = 'public';
+      if( d.is_public == 'false' ){
+        access_state = 'private';
+      }
+      let meta = [
+        [ 'Tradition', d.id ],
+        [ 'Stemma', stemma_name ],
+        [ 'Owner', d.owner ],
+        [ 'Access', access_state ],
+        [ 'Language', d.language ],
+        [ 'Witnesses', d.witnesses ]
+      ]
+      var rows = d3.select( '#tradition_info' )
+        .selectAll("tr")
+        .data( meta )
+        .join("tr")
+        .selectAll("td")
+        .data( function( row )
+          { return row } 
+        )
+        .join("td")
+        .text(d => d)
+    }
+
+    function fetch_rooted() {
+      console.log( 'hello there' );
+      // POST $STEMMAREST_ENDPOINT/tradition/$TRAD_ID/stemma/$STEMMA_NAME/reorient/$SIGIL
+      // /tradition/6401790b-a171-4c05-8788-1d5506e9ee11/stemma
+    }
 
     function get_tradition( evt ) {
       evt.preventDefault();
@@ -61,8 +96,8 @@
         graph_area.select( '*' ).remove();
         var graph_div = graph_area.append( 'div' );
         graph_div.style( 'height', '100%' );
-        // Here we put in the slide indeicators that will allow the user to
-        // switch to different stemmas.
+        // Here we put in the slide indicators that will allow the user to
+        // switch to different stemmata.
         var stemma_selector = d3.select( '#stemma_selector');
         stemma_selector.selectAll( '*' ).remove();
         stemma_selector.selectAll( 'span' )
@@ -81,11 +116,9 @@
               // indicators and render the newly chosen stemma.
               d3.selectAll( '#stemma_selector span svg' ).style( 'fill', 'rgb(255,255,255)' );
               d3.select( this ).select( 'svg' ).style( 'fill', 'rgb(180,180,180)' );
-              var next_dot = d3.select( this ).datum().dot;
-              graph_area.transition()
-                .call( quick_cut_transition ).style( 'opacity', '0.0' )
-                .on( 'end', function() { graph_viz.renderDot( next_dot ) } );
-              set_downloads( next_dot );
+              var datum = d3.select( this ).datum();
+              graph_area.style( 'opacity', '0.0' );
+              render_stemma( d, datum )
             } );
         // The work horse, graphviz puts in the first stemma here,
         // and we have some mild transitions for posh fade in.
@@ -98,29 +131,19 @@
           // It just slows *all* transitions. I wish I knew why the butt ugly
           // 'drop in' has been selected as the default undefaultable transition.
           // .transition( function(){ return mellow_transition( d3.transition() ) } )
-          .on( 'renderEnd', function() { graph_area.transition().call( mellow_transition ).style( 'opacity', '1.0' ) }  )
-          .on( 'initEnd', function() { graph_viz.renderDot( data[0].dot ) } );
-        set_downloads( data[0].dot );
+          .on( 'renderEnd', function() { graph_area.transition().call( mellow_transition ).style( 'opacity', '1.0' ) } )
+          // Render the stemma (also set button values and update metadata)
+          .on( 'initEnd', function() { render_stemma( d, data[0] ) } )
       })
       .then( function() {
-        // After putting in the stemma and the title of the tradition,
-        // the buttins, and lastly we put in the metadata of the stemma.
+        // After we have started the rendering of the stemma 
+        // we fade in the title of the tradition
+        // and the buttons for download etc.
         d3.select( '#tradition_name' ).call( quick_fade_in ).text( d.name );
         var buttons = d3.select( '#stemma_buttons' );
         if( buttons.classed( 'invisible' ) ) {
           buttons.call( quick_fade_in ).classed( 'invisible', false )
         }
-        d3.select( '#tradition_info' ).selectAll( '*' ).remove();
-        [
-          [ 'Owner', d.owner ],
-          [ 'Is public', d.is_public ],
-          [ 'Language', d.language ],
-          [ 'Witnesses', d.witnesses ]
-        ].forEach( function( item ) {
-          var tr = d3.select( '#tradition_info' ).append( 'tr' );
-          tr.append( 'td' ).text( item[0] );
-          tr.append( 'td' ).text( item[1] );
-        } );
       } )
     };
 

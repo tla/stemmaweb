@@ -16,4 +16,9 @@ router.get('/color_scheme', function(req, res, next) {
   res.render( 'color_scheme', { title: 'StemmaWeb | Color Scheme' });
 });
 
+/* GET scratchpad - dev purposes. */
+router.get('/scratchpad', function(req, res, next) {
+  res.render( 'scratchpad', { title: 'StemmaWeb | Developer\'s Scratchpad' });
+});
+
 module.exports = router;
