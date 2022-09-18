@@ -43,15 +43,16 @@
         links.on( 'click', get_tradition );
       })};
 
-    function render_stemma( d, datum ) {
-      graph_viz.renderDot( ellipse_border_to_none( datum.dot ) ).on( 'end', function() {
-        d3.select('g#graph0').selectAll('.node').on( 'click', fetch_rooted );
-        set_downloads( datum.dot );
-        update_meta( d, datum.identifier )
-      } ) 
-    }
-
-    function update_meta( d, stemma_name ){
+      function fetch_rooted( trad_id, stemma_name, sigil ) {
+        sigil = 'svg-0.stemma of Tomas.δ'; // nope
+        sigil = 'δ'; //nope
+        // sigil = 'node14';//nope Method not allowed 404
+        // sigil = 'D'
+        fetch_url = encodeURI( '/api/tradition/' + trad_id + '/stemma/'  + stemma_name + '/reorient/' + sigil );
+        console.log( fetch( fetch_url, { method: 'POST' } ) );
+      }
+  
+      function update_meta( d, stemma_name ){
       let access_state = 'public';
       if( d.is_public == 'false' ){
         access_state = 'private';
@@ -76,10 +77,14 @@
         .text(d => d)
     }
 
-    function fetch_rooted() {
-      console.log( 'hello there' );
-      // POST $STEMMAREST_ENDPOINT/tradition/$TRAD_ID/stemma/$STEMMA_NAME/reorient/$SIGIL
-      // /tradition/6401790b-a171-4c05-8788-1d5506e9ee11/stemma
+    function render_stemma( d, datum ) {
+      graph_viz.renderDot( ellipse_border_to_none( datum.dot ) ).on( 'end', function() {
+        d3.select('g#graph0').selectAll('.node').on( 'click', function( evt ) {
+            fetch_rooted( d.id, datum.identifier, d3.select( this ).datum().key );
+         } );
+        set_downloads( datum.dot );
+        update_meta( d, datum.identifier )
+      } ) 
     }
 
     function get_tradition( evt ) {
@@ -147,7 +152,6 @@
       } )
     };
 
-
     function set_downloads( dot ) {
       d3.select( '#download_dot' ).on( 'click', function( evt ) {
         evt.preventDefault();
@@ -163,7 +167,6 @@
       } )
     }
 
-
     function download( filename, data, mime_type ) {
         const blob = new Blob( [data], {type: mime_type} );
         if( window.navigator.msSaveOrOpenBlob ) {
@@ -178,9 +181,91 @@
         }
     }
 
+    function getStyleSheet( href ) {
+      for (const sheet of document.styleSheets) {
+        if ( sheet.href && sheet.href.endsWith( href ) ) {
+          return sheet;
+        }
+      }
+    }
+
+    function show_new_tradition_partial() {
+      document.getElementById( 'add_tradition_modal_addition_type_choice' ).classList.add( 'hide' );
+      document.getElementById( 'texttradition_literal' ).innerText = 'text / tradition';
+      document.getElementById( 'tradition_literal' ).innerText = 'tradition';
+      document.getElementById( 'add_tradition_partial' ).classList.remove( 'hide' );
+      document.getElementById( 'new_tradition_partial' ).classList.remove( 'hide' )
+    }
+
+    function show_new_section_partial() {
+      document.getElementById( 'add_tradition_modal_addition_type_choice' ).classList.add( 'hide' );
+      document.getElementById( 'texttradition_literal' ).innerText = 'section';
+      document.getElementById( 'tradition_literal' ).innerText = 'section';
+      document.getElementById( 'add_tradition_partial' ).classList.remove( 'hide' );
+      document.getElementById( 'new_section_partial' ).classList.remove( 'hide' )
+    }
 
     // 'Main'
     fetch_traditions();
     feather.replace( { 'aria-hidden': 'true' } )
 
+    // Initialize the add_tradition_modal dialog
+    const add_tradition_modal_elem = document.getElementById('add_tradition_modal');
+    const add_tradition_modal = new bootstrap.Modal( add_tradition_modal_elem );
+    // Make sure the right partial of the form is shown when section or tradition is chosen
+    const button_new_tradition = document.getElementById( 'button_new_tradition' );
+    button_new_tradition.addEventListener( 'click', show_new_tradition_partial );
+    const button_new_section = document.getElementById( 'button_new_section' );
+    button_new_section.addEventListener( 'click', show_new_section_partial );
+    // Make sure, on cancel the form is returned to pristine state
+    add_tradition_modal_elem.addEventListener( 'transitionend', function(evt) {
+      console.log( evt );
+      if ( evt.target==add_tradition_modal_elem && !add_tradition_modal_elem.classList.contains('show') ) {
+        [ 'add_tradition_partial', 
+          'new_tradition_partial', 
+          'new_section_partial' ].forEach( function( elem ) {
+          document.getElementById( elem ).classList.add( 'hide' );
+        });
+        document.getElementById( 'add_tradition_modal_addition_type_choice' ).classList.remove( 'hide' );
+        document.getElementById( 'add_tradition_form' ).classList.remove( 'was-validated' );
+      };
+    });
+
+    // This ensures the add_tradition_modal is placed nicely flush right of the menubar.
+    // TODO: Add responsiveness on resize.
+    const dashboard_stemmaweb_css = getStyleSheet( '/css/dashboard-stemmaweb.css' );
+    let add_tradition_modal_marginleft = window.getComputedStyle( document.getElementById( 'sidebarMenu') ).getPropertyValue( 'width' );
+    dashboard_stemmaweb_css.insertRule( '#add_tradition_modal.modal.fade div.modal-dialog { margin-left: ' + add_tradition_modal_marginleft + '; margin-top: 50px; transform: none; }' );
+
+    // JavaScript for disabling form submissions if there are invalid fields
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    var forms = document.querySelectorAll( '.needs-validation' )
+
+    // Loop over them and prevent submission
+    Array.prototype.slice.call( forms )
+      .forEach( function ( form ) {
+        form.addEventListener( 'submit', function( evt ) {
+          evt.preventDefault()
+          evt.stopPropagation()
+          if( form.checkValidity() ) {
+            // You'd want to send form data here, providing a stub for now.
+            // var formData = new FormData( form );
+            // var xhr = new XMLHttpRequest();
+            // xhr.open( 'POST', 'form_handler.php', true );
+            // xhr.onload = function( xhr_event ) {
+            //   if ( xhr.status == 200 ) {
+            //     console.log( 'succes' );
+            //   } else {
+            //     console.log( 'fail' );
+            //   }
+            // };
+            // xhr.send(formData);
+          }
+          form.classList.add( 'was-validated' )
+        }, false )
+      } )
+
 } )()
+
+
+
