@@ -219,7 +219,6 @@
     button_new_section.addEventListener( 'click', show_new_section_partial );
     // Make sure, on cancel the form is returned to pristine state
     add_tradition_modal_elem.addEventListener( 'transitionend', function(evt) {
-      console.log( evt );
       if ( evt.target==add_tradition_modal_elem && !add_tradition_modal_elem.classList.contains('show') ) {
         [ 'add_tradition_partial', 
           'new_tradition_partial', 
@@ -240,7 +239,6 @@
     // JavaScript for disabling form submissions if there are invalid fields
     // Fetch all the forms we want to apply custom Bootstrap validation styles to
     var forms = document.querySelectorAll( '.needs-validation' )
-
     // Loop over them and prevent submission
     Array.prototype.slice.call( forms )
       .forEach( function ( form ) {
@@ -248,20 +246,22 @@
           evt.preventDefault()
           evt.stopPropagation()
           if( form.checkValidity() ) {
-            // You'd want to send form data here, providing a stub for now.
-            // var formData = new FormData( form );
-            // var xhr = new XMLHttpRequest();
-            // xhr.open( 'POST', 'form_handler.php', true );
-            // xhr.onload = function( xhr_event ) {
-            //   if ( xhr.status == 200 ) {
-            //     console.log( 'succes' );
-            //   } else {
-            //     console.log( 'fail' );
-            //   }
-            // };
-            // xhr.send(formData);
+            var form_data = new FormData(form);
+            // Note that to inspect FormData you have to explode it
+            // console.log( ...form_data )
+            form_data.append( 'file', document.getElementById( 'uploadfile' ).files[0] );
+            fetch('newtradition/', {
+              method: 'POST',
+              body: form_data
+            } ).then(
+              response => console.log( response )
+            ).then(
+              success => console.log(success)
+            ).catch(
+              error => console.log(error)
+            );
           }
-          form.classList.add( 'was-validated' )
+          form.classList.add( 'was-validated' );
         }, false )
       } )
 
