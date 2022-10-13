@@ -2,5 +2,8 @@
 .vscode
 node_modules
 .env*
-scratchpad
+blib
+inc
 HOURS.md
+scratchpad
+scratchpad.ejs
