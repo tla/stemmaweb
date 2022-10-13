@@ -6,4 +6,6 @@ env.read_env()
 
 ENV = env.str("FLASK_ENV", default="production")
 DEBUG = ENV == "development"
-STEMMAREST_ENDPOINT = env.str("STEMMAREST_ENDPOINT", default='http://localhost:8080/stemmarest')
+STEMMAREST_ENDPOINT = env.str(
+    "STEMMAREST_ENDPOINT", default="http://localhost:8080/stemmarest"
+)

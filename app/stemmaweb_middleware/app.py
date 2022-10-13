@@ -1,10 +1,12 @@
-from flask import Flask, render_template
+from flask import Flask
+
 from . import public
 
 
 def create_app(config_object="stemmaweb_middleware.settings"):
     """
-    Create application factory, as explained here: https://flask.pocoo.org/docs/patterns/appfactories/.
+    Create application factory, as explained here:
+    https://flask.pocoo.org/docs/patterns/appfactories/.
 
     :param config_object: The configuration object to use.
     """
@@ -22,4 +24,3 @@ def register_blueprints(app: Flask):
     """
     app.register_blueprint(public.views.blueprint)
     return None
-
