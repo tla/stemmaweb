@@ -29,6 +29,7 @@ flake8-black = "^0.3.3"
 isort = "^5.10.1"
 mypy = "^0.982"
 pytype = "^2022.9.27"
+types-requests = "^2.28.11"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
