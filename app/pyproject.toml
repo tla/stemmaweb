@@ -15,19 +15,19 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-Flask = "^2.2.2"
-pydantic = "^1.10.2"
-gunicorn = "^20.1.0"
 environs = "^9.5.0"
+Flask = "^2.2.2"
+gunicorn = "^20.1.0"
+pydantic = "^1.10.2"
 requests = "^2.28.1"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
 black = "^22.10.0"
 flake8 = "^5.0.4"
 flake8-black = "^0.3.3"
 isort = "^5.10.1"
 mypy = "^0.982"
+pytest = "^5.2"
 pytype = "^2022.9.27"
 types-requests = "^2.28.11"
 
