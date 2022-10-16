@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Callable, TypedDict
+from typing import Any, Callable, Literal, TypedDict
 
 from stemmaweb_middleware.models import UserRole
 
@@ -18,8 +18,16 @@ class Permission(Enum):
 """A dictionary associating a list of permissions with a user role."""
 PermissionsPerRole = dict[UserRole, list[Permission]]
 
-"""Type of the argument based on which a `PermissionsPerRole` is determined."""
-PermissionArguments = dict[str, Any]
+
+class PermissionArguments(TypedDict):
+    """Type of the argument based on which a `PermissionsPerRole` is determined."""
+
+    method: str
+    endpoint: str
+    path_segments: tuple[str, ...]
+    query_params: dict[str, Any]
+    body: dict[str, Any] | None
+
 
 """
 Signature of a function that returns a `PermissionsPerRole` dictionary

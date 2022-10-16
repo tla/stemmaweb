@@ -1,4 +1,4 @@
 """Package encapsulating all the API and HTML routes"""
-from . import public
+from . import api, public
 
-__all__ = ["public"]
+__all__ = ["api", "public"]

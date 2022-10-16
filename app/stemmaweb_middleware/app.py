@@ -1,4 +1,5 @@
 from flask import Flask
+
 from . import controller
 
 
@@ -22,4 +23,6 @@ def register_blueprints(app: Flask):
     :param app: The Flask application object.
     """
     app.register_blueprint(controller.public.routes.blueprint)
+    api_endpoints = app.config["STEMMAWEB_API_ENDPOINTS"]
+    app.register_blueprint(controller.api.routes.blueprint_factory(api_endpoints))
     return None
