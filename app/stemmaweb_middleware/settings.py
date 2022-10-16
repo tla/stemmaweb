@@ -1,6 +1,7 @@
 """Settings passed to the Flask app instance in the app factory."""
 from environs import Env
 
+from stemmaweb_middleware.stemmarest.stemmarest_client import StemmarestClient
 from stemmaweb_middleware.stemmarest.stemmarest_endpoints import StemmarestEndpoints
 
 env = Env()
@@ -12,6 +13,7 @@ DEBUG = ENV == "development"
 STEMMAREST_ENDPOINT = env.str(
     "STEMMAREST_ENDPOINT", default="http://localhost:8080/stemmarest"
 )
+STEMMAREST_CLIENT = StemmarestClient(endpoint=STEMMAREST_ENDPOINT)
 
 STEMMAWEB_HOST = env.str("STEMMAWEB_HOST", default="http://localhost:3000")
 # Endpoints redirected from this host (`STEMMAWEB_HOST`)

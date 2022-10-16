@@ -1,15 +1,22 @@
+import json
+
 from flask import Blueprint, request
+from flask.wrappers import Response
 from werkzeug.routing import Rule
 
+from stemmaweb_middleware.stemmarest import StemmarestClient
 from stemmaweb_middleware.stemmarest.permissions.models import PermissionArguments
 from stemmaweb_middleware.stemmarest.stemmarest_endpoints import StemmarestEndpoints
 
 
-def blueprint_factory(endpoints: StemmarestEndpoints):
+def blueprint_factory(
+    endpoints: StemmarestEndpoints, stemmarest_client: StemmarestClient
+):
     """
     Creates a Flask blueprint to expose the Stemmarest API at `/api/*`.
 
     :param endpoints: `StemmarestEndpoints` object containing endpoint information.
+    :param stemmarest_client: `StemmarestClient` to interact with the Stemmarest API.
     :return: the configured Flask blueprint.
     """
     blueprint = Blueprint("api", __name__)
@@ -29,14 +36,40 @@ def blueprint_factory(endpoints: StemmarestEndpoints):
 
         def handler(**kwargs):
             path_segments = tuple(kwargs.values())
-            permission_args = PermissionArguments(
+            args = PermissionArguments(
                 method=request.method,
                 endpoint=request.path,
                 path_segments=path_segments,
                 query_params=request.args,
                 body=request.json if request.is_json else None,
             )
-            return permission_args
+
+            stemmarest_endpoint = "/" + "/".join(path_segments)
+            try:
+                response = stemmarest_client.request(
+                    path=stemmarest_endpoint,
+                    method=args["method"],
+                    params=args["query_params"],
+                    data=args["body"],
+                )
+
+                return Response(
+                    response=response.content,
+                    status=response.status_code,
+                    mimetype=response.headers.get("Content-Type", None),
+                )
+            except Exception as e:
+                return Response(
+                    response=json.dumps(
+                        dict(
+                            message="An error occurred in the middleware.",
+                            type=f"{type(e).__name__}",
+                            error=str(e),
+                        )
+                    ),
+                    status=500,
+                    mimetype="application/json",
+                )
 
         return handler
 

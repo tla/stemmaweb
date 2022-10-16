@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Callable, Literal, TypedDict
+from typing import Any, Callable, TypedDict
 
 from stemmaweb_middleware.models import UserRole
 

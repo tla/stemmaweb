@@ -24,5 +24,8 @@ def register_blueprints(app: Flask):
     """
     app.register_blueprint(controller.public.routes.blueprint)
     api_endpoints = app.config["STEMMAWEB_API_ENDPOINTS"]
-    app.register_blueprint(controller.api.routes.blueprint_factory(api_endpoints))
+    stemmarest_client = app.config["STEMMAREST_CLIENT"]
+    app.register_blueprint(
+        controller.api.routes.blueprint_factory(api_endpoints, stemmarest_client)
+    )
     return None
