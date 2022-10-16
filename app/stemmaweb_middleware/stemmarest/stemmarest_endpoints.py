@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class StemmarestEndpoint(Enum):
+class StemmarestEndpoint(str, Enum):
     """Enum class to represent Stemmarest API endpoints."""
 
     TRADITIONS = "/traditions"

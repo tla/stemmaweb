@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template
 
-from ..constants import STATIC_FOLDER, TEMPLATE_FOLDER
+from stemmaweb_middleware.constants import STATIC_FOLDER, TEMPLATE_FOLDER
 
 blueprint = Blueprint(
     "public", __name__, static_folder=STATIC_FOLDER, template_folder=TEMPLATE_FOLDER

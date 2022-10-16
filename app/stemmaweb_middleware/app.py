@@ -1,6 +1,5 @@
 from flask import Flask
-
-from . import public
+from . import controller
 
 
 def create_app(config_object="stemmaweb_middleware.settings"):
@@ -22,5 +21,5 @@ def register_blueprints(app: Flask):
 
     :param app: The Flask application object.
     """
-    app.register_blueprint(public.views.blueprint)
+    app.register_blueprint(controller.public.routes.blueprint)
     return None
