@@ -1,7 +1,6 @@
 import requests
 
 from ..utils import url_is_valid
-from .stemmarest_endpoints import StemmarestEndpoint
 
 
 def _expand_endpoint_pattern(endpoint_str: str, path_params: dict[str, str]) -> str:
@@ -44,23 +43,3 @@ class StemmarestClient:
         """
         url = f"{self.endpoint}{path}"
         return requests.request(method, url, **kwargs)
-
-    def typed_request(
-        self,
-        method: str,
-        endpoint: StemmarestEndpoint,
-        path_params: dict[str, str],
-        **kwargs,
-    ) -> requests.Response:
-        """
-        Make a request to the Stemmarest API with a typed endpoint.
-
-        :param method: The HTTP method to use.
-        :param endpoint: The endpoint to request.
-        :param path_params: The parameters to use for endpoint expansion.
-        :param kwargs: Additional keyword arguments to pass to `requests.request`.
-        :return: A `requests.Response` object.
-        """
-        endpoint_str = str(endpoint.value)
-        expanded_endpoint = _expand_endpoint_pattern(endpoint_str, path_params)
-        return self.request(method, expanded_endpoint, **kwargs)
