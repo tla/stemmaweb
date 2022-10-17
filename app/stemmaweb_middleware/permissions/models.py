@@ -109,11 +109,11 @@ class EndpointAccess(pydantic.BaseModel):
     predicate: EndpointAccessPredicate
     if_true: set[Permission]
 
-    def evaluate(self, args: PermissionArguments) -> set[Permission]:
-        if self.predicate(args):
-            return self.if_true
-        else:
-            return set()
+    def to_violation_str(self):
+        res = self.name
+        if self.description is not None:
+            res += f": {self.description}"
+        return res
 
 
 """
@@ -127,7 +127,7 @@ ResponseTransformer = Callable[[Any], Any]
 class PermissionConfig(pydantic.BaseModel):
     """Model to represent a permission"""
 
-    endpoint_access: EndpointAccess | None = None
+    endpoint_access: EndpointAccess
     response_transformer: ResponseTransformer | None = None
 
 

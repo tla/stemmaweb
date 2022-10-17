@@ -1,4 +1,5 @@
 import json
+import re
 
 import flask_login
 from flask import Blueprint, request
@@ -27,6 +28,14 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
         if auth_header is None:
             logger.debug("No Authorization header")
             return None
+
+        # Regex check the correct format "Basic <user_id> <passphrase>"
+        if not re.match(r"^Basic \S+ \S+$", auth_header):
+            logger.debug(
+                f"Authorization header is not in the expected format: '{auth_header}'"
+            )
+            return None
+
         auth_type, user_id, passphrase = auth_header.split(" ")
         if auth_type != "Basic":
             logger.debug(f"Unsupported Authorization type: {auth_type}")
