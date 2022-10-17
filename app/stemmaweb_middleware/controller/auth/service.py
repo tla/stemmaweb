@@ -57,6 +57,9 @@ class StemmarestAuthService:
         :param credentials: Credentials to check.
         :return: The user object if the credentials are valid, `None` otherwise.
         """
-        user_from_response = self.load_user(credentials.id)
+        user_or_none = self.load_user(credentials.id)
+        if user_or_none is None:
+            return None
+        user_from_response: StemmawebUser = user_or_none
         passwords_match = user_from_response.passphrase == credentials.passphrase
         return user_from_response if passwords_match else None

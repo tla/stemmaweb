@@ -4,8 +4,8 @@ from flask import Blueprint, request
 from flask.wrappers import Response
 from werkzeug.routing import Rule
 
+from stemmaweb_middleware.permissions.models import PermissionArguments
 from stemmaweb_middleware.stemmarest import StemmarestClient
-from stemmaweb_middleware.stemmarest.permissions.models import PermissionArguments
 from stemmaweb_middleware.stemmarest.stemmarest_endpoints import StemmarestEndpoints
 
 

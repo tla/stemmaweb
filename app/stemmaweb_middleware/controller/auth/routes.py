@@ -4,6 +4,7 @@ import flask_login
 from flask import Blueprint, request
 from flask.wrappers import Request, Response
 
+import stemmaweb_middleware.permissions as permissions
 from stemmaweb_middleware.extensions import login_manager
 from stemmaweb_middleware.models import AuthUser, StemmawebUser
 from stemmaweb_middleware.stemmarest import StemmarestClient
@@ -22,7 +23,7 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
         user = service.load_user(user_id)
         if user is None:
             return None
-        return AuthUser.from_stemmaweb_user(stemmaweb_user=user)
+        return AuthUser(user)
 
     @login_manager.request_loader
     def load_user_from_request(req: Request) -> AuthUser | None:
@@ -40,12 +41,15 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
             return None
 
         stemmaweb_user: StemmawebUser = user_or_none
-        return AuthUser.from_stemmaweb_user(stemmaweb_user=stemmaweb_user)
+        return AuthUser(stemmaweb_user)
 
     @blueprint.route("/protected", methods=["GET"])
-    @flask_login.login_required
+    @permissions.require_min_user_role(permissions.UserRole.GUEST)
     def protected():
-        return "You are logged in!"
+        auth_user = flask_login.current_user
+        if auth_user is None:
+            return Response(status=401, response="No auth user")
+        return Response(status=200, response=json.dumps(dict(message="Hello, world!")))
 
     @blueprint.route("/register", methods=["POST"])
     def register():
@@ -84,7 +88,7 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
 
         # Login user for this flask session
         user: StemmawebUser = user_or_none
-        auth_user = AuthUser.from_stemmaweb_user(user)
+        auth_user = AuthUser(user)
         flask_login.login_user(auth_user)
 
         return Response(

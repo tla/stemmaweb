@@ -1,16 +1,5 @@
-from enum import Enum
-
 import flask_login
 import pydantic
-
-
-class UserRole(Enum):
-    """Enum class to represent user roles that influence permissions."""
-
-    ADMIN = "admin"
-    USER = "user"
-    GUEST = "guest"
-
 
 # Declarative model validation
 EmailStr = pydantic.EmailStr
@@ -33,30 +22,16 @@ class AuthUser(flask_login.UserMixin):
      properties needed by Flask-Login.
     """
 
-    def __init__(self):
+    def __init__(self, data: StemmawebUser):
+        """
+        Creates a new `AuthUser`.
+
+        :param data: The `StemmawebUser` to wrap.
+        """
         super().__init__()
-        self._data = None
+        self.data = data
+        self.id = data.id
 
-    @property
-    def data(self) -> StemmawebUser:
-        """
-        :return: the app-data of the user
-        """
-        try:
-            return self._data
-        except AttributeError:
-            raise NotImplementedError("No `data` attribute - override `data`") from None
 
-    @staticmethod
-    def from_stemmaweb_user(stemmaweb_user: StemmawebUser) -> "AuthUser":
-        """
-        Constructs an `AuthUser` from a `StemmawebUser`.
-
-        :param stemmaweb_user: the user data
-        :return: an auth user
-        """
-        user = AuthUser()
-        auth_user = AuthUser()
-        setattr(auth_user, "id", stemmaweb_user.id)
-        setattr(auth_user, "_data", user)
-        return auth_user
+# Possible types for `flask_login.current_user`
+CurrentUser = flask_login.AnonymousUserMixin | AuthUser | None
