@@ -2,7 +2,8 @@
   color: rgba(255, 255, 255, 0.70);
 }
 .bg-light {
-  background-image: url("/images/logo_20220114_2006.svg");
+  /* Using `static` prefix to make sure that we use the static folder served by Flask  */
+  background-image: url("/static/images/logo_20220114_2006.svg");
   background-position: left bottom;
   background-repeat: no-repeat;
 }
