@@ -1,8 +1,11 @@
 import json
 
+import flask_login
 from flask import Blueprint, request
-from flask.wrappers import Response
+from flask.wrappers import Request, Response
 
+from stemmaweb_middleware.extensions import login_manager
+from stemmaweb_middleware.models import AuthUser, StemmawebUser
 from stemmaweb_middleware.stemmarest import StemmarestClient
 from stemmaweb_middleware.utils import try_parse_model
 
@@ -13,6 +16,36 @@ from . import service as auth_service
 def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
     blueprint = Blueprint("auth", __name__)
     service = auth_service.StemmarestAuthService(stemmarest_client)
+
+    @login_manager.user_loader
+    def load_user_from_id(user_id: str) -> AuthUser | None:
+        user = service.load_user(user_id)
+        if user is None:
+            return None
+        return AuthUser.from_stemmaweb_user(stemmaweb_user=user)
+
+    @login_manager.request_loader
+    def load_user_from_request(req: Request) -> AuthUser | None:
+        # Authorization: Basic <user_id> <passphrase>
+        auth_header = req.headers.get("Authorization")
+        if auth_header is None:
+            return None
+        auth_type, user_id, passphrase = auth_header.split(" ")
+        if auth_type != "Basic":
+            return None
+        user_or_none = service.user_credentials_valid(
+            models.LoginUserDTO(id=user_id, passphrase=passphrase)
+        )
+        if user_or_none is None:
+            return None
+
+        stemmaweb_user: StemmawebUser = user_or_none
+        return AuthUser.from_stemmaweb_user(stemmaweb_user=stemmaweb_user)
+
+    @blueprint.route("/protected", methods=["GET"])
+    @flask_login.login_required
+    def protected():
+        return "You are logged in!"
 
     @blueprint.route("/register", methods=["POST"])
     def register():
@@ -48,6 +81,11 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
                 status=401,
                 mimetype="application/json",
             )
+
+        # Login user for this flask session
+        user: StemmawebUser = user_or_none
+        auth_user = AuthUser.from_stemmaweb_user(user)
+        flask_login.login_user(auth_user)
 
         return Response(
             response=user_or_none.json(),

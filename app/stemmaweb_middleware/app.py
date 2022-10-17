@@ -12,6 +12,8 @@ def create_app(config_object="stemmaweb_middleware.settings"):
     """
     app = Flask(__name__.split(".")[0])
     app.config.from_object(config_object)
+    app.secret_key = app.config["SECRET_KEY"]
+
     register_extensions(app)
     register_blueprints(app)
     return app
@@ -24,7 +26,6 @@ def register_extensions(app: Flask):
     :param app: The Flask application object.
     """
     extensions.login_manager.init_app(app)
-    extensions.jwt_manager.init_app(app)
     return None
 
 

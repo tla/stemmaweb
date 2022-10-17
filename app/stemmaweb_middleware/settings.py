@@ -1,4 +1,6 @@
 """Settings passed to the Flask app instance in the app factory."""
+import secrets
+
 from environs import Env
 
 from stemmaweb_middleware.stemmarest.stemmarest_client import StemmarestClient
@@ -21,8 +23,9 @@ STEMMAREST_CLIENT = StemmarestClient(endpoint=STEMMAREST_ENDPOINT)
 STEMMAWEB_HOST = env.str("STEMMAWEB_HOST", default="http://localhost:3000")
 STEMMAWEB_API_ENDPOINTS = StemmarestEndpoints(server_name=STEMMAWEB_HOST)
 
-# Used for JWT-based authentication
-JWT_SECRET_KEY = env.str("JWT_SECRET_KEY")
+# Used for Flask-Login
+# Session Docs: https://flask.palletsprojects.com/en/2.1.x/quickstart/#sessions
+SECRET_KEY = env.str("SECRET_KEY", default=secrets.token_hex())
 
 # Used for Google OAuth
 GOOGLE_CLIENT_ID = env.str("GOOGLE_CLIENT_ID")

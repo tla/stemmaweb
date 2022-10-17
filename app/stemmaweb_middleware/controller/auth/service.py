@@ -34,6 +34,20 @@ class StemmarestAuthService:
             headers={"Content-Type": "application/json"},
         )
 
+    def load_user(self, user_id: str) -> StemmawebUser | None:
+        """
+        Load a user object from the Stemmarest API.
+
+        :param user_id: The ID of the user to load.
+        :return: The user object if it exists, `None` otherwise.
+        """
+        response = self.client.request(
+            method="GET",
+            path=f"/user/{user_id}",
+        )
+        no_such_user = response.status_code == 204
+        return None if no_such_user else StemmawebUser.parse_raw(response.content)
+
     def user_credentials_valid(
         self, credentials: models.LoginUserDTO
     ) -> StemmawebUser | None:
@@ -43,13 +57,6 @@ class StemmarestAuthService:
         :param credentials: Credentials to check.
         :return: The user object if the credentials are valid, `None` otherwise.
         """
-        response = self.client.request(
-            method="GET",
-            path=f"/user/{credentials.id}",
-        )
-        no_such_user = response.status_code == 204
-        if no_such_user:
-            return None
-        user_from_response = StemmawebUser.parse_raw(response.content)
+        user_from_response = self.load_user(credentials.id)
         passwords_match = user_from_response.passphrase == credentials.passphrase
         return user_from_response if passwords_match else None
