@@ -1,4 +1,7 @@
+import logging
+
 from flask import Flask
+from loguru import logger
 
 from . import controller, extensions
 
@@ -14,6 +17,7 @@ def create_app(config_object="stemmaweb_middleware.settings"):
     app.config.from_object(config_object)
     app.secret_key = app.config["SECRET_KEY"]
 
+    register_logging(app)
     register_extensions(app)
     register_blueprints(app)
     return app
@@ -47,4 +51,32 @@ def register_blueprints(app: Flask):
     # Middleware-API endpoints to handle auth
     auth_blueprint = controller.auth.routes.blueprint_factory(client)
     app.register_blueprint(auth_blueprint)
+    return None
+
+
+class InterceptHandler(logging.Handler):
+    """
+    Custom logging handler to intercept logs
+    from Flask and redirect them to Loguru.
+    """
+
+    def emit(self, record):
+        logger_opt = logger.opt(depth=6, exception=record.exc_info)
+        logger_opt.log(record.levelno, record.getMessage())
+
+
+def register_logging(app: Flask):
+    """
+    Register logging configuration.
+
+    :param app: The Flask application object.
+    """
+    logger.start(
+        app.config["LOGFILE"],
+        level=app.config["LOG_LEVEL"],
+        format="{time} {level} {message}",
+        backtrace=app.config["LOG_BACKTRACE"],
+        rotation="25 MB",
+    )
+    app.logger.addHandler(InterceptHandler())
     return None
