@@ -5,7 +5,7 @@ from flask.wrappers import Response
 from loguru import logger
 from werkzeug.routing import Rule
 
-from stemmaweb_middleware.permissions import current_user_role
+from stemmaweb_middleware.permissions import current_user, determine_user_role
 from stemmaweb_middleware.permissions.models import PermissionArguments
 from stemmaweb_middleware.stemmarest import StemmarestClient
 from stemmaweb_middleware.stemmarest.permissions import (
@@ -49,6 +49,8 @@ def blueprint_factory(
                 query_params=request.args.to_dict(),
                 body=request.json if request.is_json else None,
                 headers=dict(request.headers),
+                user=current_user,
+                user_role=determine_user_role(current_user),
             )
 
             stemmarest_endpoint = "/" + "/".join(path_segments)
@@ -59,14 +61,16 @@ def blueprint_factory(
                 violations,
                 allowed_http_methods,
                 response_transformer,
-            ) = permission_handler.check(args=args, user_role=current_user_role)
+            ) = permission_handler.check(args=args)
 
             if request.method not in allowed_http_methods or len(violations) > 0:
                 return Response(
-                    response=dict(
-                        message="The caller has insufficient permissions "
-                        "to access this resource.",
-                        violations=violations,
+                    response=json.dumps(
+                        dict(
+                            message="The caller has insufficient permissions "
+                            "to access this resource.",
+                            violations=violations,
+                        )
                     ),
                     status=403,
                     mimetype="application/json",

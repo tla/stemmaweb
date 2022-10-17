@@ -1,15 +1,16 @@
-from stemmaweb_middleware.permissions.models import Permission, PermissionArguments
+from stemmaweb_middleware.permissions.models import PermissionArguments
 
 
-def traditions_guest(args: PermissionArguments) -> set[Permission]:
-    """
-    Grant read-only permissions to public traditions for guest users
-    when visiting `/api/traditions`.
-    """
+def always_true(args: PermissionArguments) -> bool:
+    return True
+
+
+def always_false(args: PermissionArguments) -> bool:
+    return False
+
+
+def public_true_in_query_params(args: PermissionArguments) -> bool:
     only_public_requested = (
         args["query_params"].get("public", "false").lower() == "true"
     )
-    if only_public_requested:
-        return {Permission.READ}
-    else:
-        return {Permission.FORBIDDEN}
+    return only_public_requested

@@ -1,6 +1,10 @@
 from enum import Enum
 from typing import Any, Callable, Iterable, NamedTuple, TypedDict
 
+import pydantic
+
+from stemmaweb_middleware.models import CurrentUser
+
 
 class UserRole(Enum):
     """Enum class to represent user roles that influence permissions."""
@@ -79,10 +83,6 @@ class Permission(Enum):
         return http_methods
 
 
-"""A dictionary associating a list of permissions with a user role."""
-PermissionsPerRole = dict[UserRole, list[Permission]]
-
-
 class PermissionArguments(TypedDict):
     """Type of the argument based on which a `PermissionsPerRole` is determined."""
 
@@ -92,29 +92,56 @@ class PermissionArguments(TypedDict):
     query_params: dict[str, Any]
     body: dict[str, Any] | None
     headers: dict[str, Any]
+    user: CurrentUser
+    user_role: UserRole
 
 
 """
-Signature of a function that returns a `PermissionsPerRole` dictionary
-based on `PermissionArguments` input.
+Signature of a function to associate permissions with an endpoint,
+such as whether it has READ, WRITE, or FORBIDDEN permissions.
 """
-PermissionPredicate = Callable[[PermissionArguments], PermissionsPerRole]
+EndpointAccessPredicate = Callable[[PermissionArguments], bool]
 
 
-class PermissionConfig(TypedDict):
+class EndpointAccess(pydantic.BaseModel):
+    name: str
+    description: str | None = None
+    predicate: EndpointAccessPredicate
+    if_true: set[Permission]
+
+    def evaluate(self, args: PermissionArguments) -> set[Permission]:
+        if self.predicate(args):
+            return self.if_true
+        else:
+            return set()
+
+
+"""
+Signature of a function to transform a response body.
+Should be used to filter items from responses
+which the user is not allowed to see.
+"""
+ResponseTransformer = Callable[[Any], Any]
+
+
+class PermissionConfig(pydantic.BaseModel):
     """Model to represent a permission"""
 
-    name: str
-    description: str
-    predicate: PermissionPredicate
-
-
-ResponseTransformer = Callable[[Any], Any]
+    endpoint_access: EndpointAccess | None = None
+    response_transformer: ResponseTransformer | None = None
 
 
 class PermissionCheckResult(NamedTuple):
     """Model to represent the response of a permission check"""
 
+    """List of violated permissions for debugging purposes"""
     violations: list[str]
+
+    """HTTP methods that are allowed for the current user"""
     allowed_http_methods: set[str]
+
+    """
+    Response transformer to be applied to the response,
+    allowing role-based and user-data-based filtering.
+    """
     response_transformer: ResponseTransformer | None

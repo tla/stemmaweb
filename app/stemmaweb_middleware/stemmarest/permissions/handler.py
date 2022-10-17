@@ -3,7 +3,6 @@ from typing import Any, Callable
 from stemmaweb_middleware.permissions.models import (
     PermissionArguments,
     PermissionCheckResult,
-    UserRole,
 )
 
 from ..stemmarest_client import StemmarestClient
@@ -17,10 +16,13 @@ class StemmarestPermissionHandler:
         self.service = service
 
     def check(
-        self, args: PermissionArguments, user_role: UserRole
+        self,
+        args: PermissionArguments,
     ) -> PermissionCheckResult:
+        # API endpoint without '/api' prefix and trailing slash
+        # stemmarest_endpoint = "/" + "/".join(args["path_segments"])
         return PermissionCheckResult(
-            violations=[], allowed_http_methods=set("GET"), response_transformer=None
+            violations=[], allowed_http_methods={"GET"}, response_transformer=None
         )
 
 

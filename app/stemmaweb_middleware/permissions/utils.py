@@ -3,16 +3,10 @@ from typing import Callable
 
 from flask.wrappers import Response
 from flask_login import current_user as _current_user
-from werkzeug.local import LocalProxy
 
 from stemmaweb_middleware.models import AuthUser, CurrentUser, StemmawebUser
 
 from .models import UserRole
-
-# Proxying for convenience
-current_user_role: UserRole = LocalProxy(  # type: ignore
-    lambda: _get_current_user_role()
-)
 
 # Aliasing for automatic type-hinting
 current_user: CurrentUser = _current_user
@@ -102,15 +96,13 @@ def min_user_role_required(user_role: UserRole, func: Callable) -> Callable:
     return wrapper
 
 
-def _get_current_user_role() -> UserRole:
+def determine_user_role(user: CurrentUser) -> UserRole:
     """
     Returns the current user's role.
     If no user is present, only `UserRole.GUEST` is allowed.
 
     :return: the current user's role
     """
-
-    user: CurrentUser = current_user
     user_is_anonym = user is None or user.is_anonymous
     if user_is_anonym:
         return UserRole.GUEST
