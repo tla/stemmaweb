@@ -25,7 +25,8 @@ of the file should be:
 STEMMAREST_ENDPOINT=http://localhost:8080/stemmarest
 ```
 
-If you do not create a `.env` file, `STEMMAREST_ENDPOINT=http://localhost:8080/stemmarest` will be used by default.
+**Other environment variables should also be set to have the application work properly. Please copy the `.env.example`
+file and fill in the values.**
 
 Now you can add test data to your Stemmarest instance using the script `t/init_test_data.sh`; please note that this
 script depends on the presence of the [`jq`](https://stedolan.github.io/jq/) program to parse JSON responses from
