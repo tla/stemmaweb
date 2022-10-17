@@ -3,6 +3,20 @@
     const svg_slide_indicator = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>';
     const svg_slide_indicator_active = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="12" viewBox="0 0 24 24" fill="rgb(180,180,180)" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>';
 
+    const first_char_is_non_alpha = new RegExp( '^[^A-z]' );
+    
+    function $( query, all=false ) {
+      if( first_char_is_non_alpha.test( query ) ) {
+        if( all ) {
+          return( document.querySelectorAll( query ) );
+        } else {
+          return( document.querySelectorAll( query ) );
+        }
+      } else {
+        return( document.getElementById( query ) );
+      }
+    }
+
     function mellow_transition( transition ) {
       return transition
         .delay( 50 )
@@ -43,14 +57,21 @@
         links.on( 'click', get_tradition );
       })};
 
-      function fetch_rooted( trad_id, stemma_name, sigil ) {
-        sigil = 'svg-0.stemma of Tomas.δ'; // nope
-        sigil = 'δ'; //nope
-        // sigil = 'node14';//nope Method not allowed 404
-        // sigil = 'D'
-        fetch_url = encodeURI( '/api/tradition/' + trad_id + '/stemma/'  + stemma_name + '/reorient/' + sigil );
-        console.log( fetch( fetch_url, { method: 'POST' } ) );
-      }
+      function fetch_rooted( trad, stemma, sigil ) {
+        // Note: see issue #92, API/middleware needs updating for non ASCII sigils
+        fetch_url = encodeURI( '/api/tradition/' + trad.id + '/stemma/'  + stemma.identifier + '/reorient/' + sigil );
+        d3.json( fetch_url, { method: 'POST' } )
+          .then(
+            resp => {
+              stemma.dot = resp.dot;
+              render_stemma( trad, stemma )
+            })
+          .catch( 
+            error => {
+              // TODO: some generic error handling?
+              console.log( error )
+            })
+      };
   
       function update_meta( d, stemma_name ){
       let access_state = 'public';
@@ -77,20 +98,21 @@
         .text(d => d)
     }
 
-    function render_stemma( d, datum ) {
-      graph_viz.renderDot( ellipse_border_to_none( datum.dot ) ).on( 'end', function() {
+    function render_stemma( trad, stemma ) {
+      graph_viz.renderDot( ellipse_border_to_none( stemma.dot ) ).on( 'end', function() {
         d3.select('g#graph0').selectAll('.node').on( 'click', function( evt ) {
-            fetch_rooted( d.id, datum.identifier, d3.select( this ).datum().key );
+            fetch_rooted( trad, stemma, d3.select( this ).datum().key );
+            render_stemma( trad, stemma )
          } );
-        set_downloads( datum.dot );
-        update_meta( d, datum.identifier )
+        set_downloads( stemma.dot );
+        update_meta( trad, stemma.identifier )
       } ) 
     }
 
     function get_tradition( evt ) {
       evt.preventDefault();
-      var d = d3.select( this ).datum();
-      fetch( 'api/tradition/' + d.id + '/stemmata' )
+      var trad = d3.select( this ).datum();
+      fetch( 'api/tradition/' + trad.id + '/stemmata' )
       .then( resp => resp.json() )
       .then( data => {
         // console.log( data );
@@ -123,7 +145,7 @@
               d3.select( this ).select( 'svg' ).style( 'fill', 'rgb(180,180,180)' );
               var datum = d3.select( this ).datum();
               graph_area.style( 'opacity', '0.0' );
-              render_stemma( d, datum )
+              render_stemma( trad, datum )
             } );
         // The work horse, graphviz puts in the first stemma here,
         // and we have some mild transitions for posh fade in.
@@ -138,13 +160,13 @@
           // .transition( function(){ return mellow_transition( d3.transition() ) } )
           .on( 'renderEnd', function() { graph_area.transition().call( mellow_transition ).style( 'opacity', '1.0' ) } )
           // Render the stemma (also set button values and update metadata)
-          .on( 'initEnd', function() { render_stemma( d, data[0] ) } )
+          .on( 'initEnd', function() { render_stemma( trad, data[0] ) } )
       })
       .then( function() {
         // After we have started the rendering of the stemma 
         // we fade in the title of the tradition
         // and the buttons for download etc.
-        d3.select( '#tradition_name' ).call( quick_fade_in ).text( d.name );
+        d3.select( '#tradition_name' ).call( quick_fade_in ).text( trad.name );
         var buttons = d3.select( '#stemma_buttons' );
         if( buttons.classed( 'invisible' ) ) {
           buttons.call( quick_fade_in ).classed( 'invisible', false )
@@ -190,19 +212,19 @@
     }
 
     function show_new_tradition_partial() {
-      document.getElementById( 'add_tradition_modal_addition_type_choice' ).classList.add( 'hide' );
-      document.getElementById( 'texttradition_literal' ).innerText = 'text / tradition';
-      document.getElementById( 'tradition_literal' ).innerText = 'tradition';
-      document.getElementById( 'add_tradition_partial' ).classList.remove( 'hide' );
-      document.getElementById( 'new_tradition_partial' ).classList.remove( 'hide' )
+      $( 'add_tradition_modal_addition_type_choice' ).classList.add( 'hide' );
+      $( 'texttradition_literal' ).innerText = 'text / tradition';
+      $( 'tradition_literal' ).innerText = 'tradition';
+      $( 'add_tradition_partial' ).classList.remove( 'hide' );
+      $( 'new_tradition_partial' ).classList.remove( 'hide' )
     }
 
     function show_new_section_partial() {
-      document.getElementById( 'add_tradition_modal_addition_type_choice' ).classList.add( 'hide' );
-      document.getElementById( 'texttradition_literal' ).innerText = 'section';
-      document.getElementById( 'tradition_literal' ).innerText = 'section';
-      document.getElementById( 'add_tradition_partial' ).classList.remove( 'hide' );
-      document.getElementById( 'new_section_partial' ).classList.remove( 'hide' )
+      $( 'add_tradition_modal_addition_type_choice' ).classList.add( 'hide' );
+      $( 'texttradition_literal' ).innerText = 'section';
+      $( 'tradition_literal' ).innerText = 'section';
+      $( 'add_tradition_partial' ).classList.remove( 'hide' );
+      $( 'new_section_partial' ).classList.remove( 'hide' )
     }
 
     // 'Main'
@@ -210,12 +232,12 @@
     feather.replace( { 'aria-hidden': 'true' } )
 
     // Initialize the add_tradition_modal dialog
-    const add_tradition_modal_elem = document.getElementById('add_tradition_modal');
+    const add_tradition_modal_elem = $('add_tradition_modal');
     const add_tradition_modal = new bootstrap.Modal( add_tradition_modal_elem );
     // Make sure the right partial of the form is shown when section or tradition is chosen
-    const button_new_tradition = document.getElementById( 'button_new_tradition' );
+    const button_new_tradition = $( 'button_new_tradition' );
     button_new_tradition.addEventListener( 'click', show_new_tradition_partial );
-    const button_new_section = document.getElementById( 'button_new_section' );
+    const button_new_section = $( 'button_new_section' );
     button_new_section.addEventListener( 'click', show_new_section_partial );
     // Make sure, on cancel the form is returned to pristine state
     add_tradition_modal_elem.addEventListener( 'transitionend', function(evt) {
@@ -223,17 +245,17 @@
         [ 'add_tradition_partial', 
           'new_tradition_partial', 
           'new_section_partial' ].forEach( function( elem ) {
-          document.getElementById( elem ).classList.add( 'hide' );
+          $( elem ).classList.add( 'hide' );
         });
-        document.getElementById( 'add_tradition_modal_addition_type_choice' ).classList.remove( 'hide' );
-        document.getElementById( 'add_tradition_form' ).classList.remove( 'was-validated' );
+        $( 'add_tradition_modal_addition_type_choice' ).classList.remove( 'hide' );
+        $( 'add_tradition_form' ).classList.remove( 'was-validated' );
       };
     });
 
     // This ensures the add_tradition_modal is placed nicely flush right of the menubar.
     // TODO: Add responsiveness on resize.
     const dashboard_stemmaweb_css = getStyleSheet( '/css/dashboard-stemmaweb.css' );
-    let add_tradition_modal_marginleft = window.getComputedStyle( document.getElementById( 'sidebarMenu') ).getPropertyValue( 'width' );
+    let add_tradition_modal_marginleft = window.getComputedStyle( $('sidebarMenu') ).getPropertyValue( 'width' );
     dashboard_stemmaweb_css.insertRule( '#add_tradition_modal.modal.fade div.modal-dialog { margin-left: ' + add_tradition_modal_marginleft + '; margin-top: 50px; transform: none; }' );
 
     // JavaScript for disabling form submissions if there are invalid fields
@@ -249,7 +271,7 @@
             var form_data = new FormData(form);
             // Note that to inspect FormData you have to explode it
             // console.log( ...form_data )
-            form_data.append( 'file', document.getElementById( 'uploadfile' ).files[0] );
+            form_data.append( 'file', $( 'uploadfile' ).files[0] );
             fetch('newtradition/', {
               method: 'POST',
               body: form_data
@@ -258,6 +280,7 @@
             ).then(
               success => console.log(success)
             ).catch(
+              // TODO: some generic error handling
               error => console.log(error)
             );
           }
