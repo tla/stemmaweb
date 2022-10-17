@@ -45,7 +45,7 @@ from this directory, and
 make --directory=app serve
 ```
 
-to start the server in development mode. You can then access it at [http://localhost:3000/](http://localhost:3000/).
+to start the server in development mode. You can then access it at [http://127.0.0.1:3000/](http://127.0.0.1:3000/).
 
 The production server can be started using the following command:
 
