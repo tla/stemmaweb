@@ -3,6 +3,7 @@ import json
 import flask_login
 from flask import Blueprint, request
 from flask.wrappers import Request, Response
+from loguru import logger
 
 import stemmaweb_middleware.permissions as permissions
 from stemmaweb_middleware.extensions import login_manager
@@ -20,27 +21,35 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
 
     @login_manager.user_loader
     def load_user_from_id(user_id: str) -> AuthUser | None:
+        logger.info(f"Loading user from id: {user_id}")
         user = service.load_user(user_id)
         if user is None:
+            logger.debug(f"User not found: {user_id}")
             return None
+        logger.debug(f"User loaded from id: {user_id}")
         return AuthUser(user)
 
     @login_manager.request_loader
     def load_user_from_request(req: Request) -> AuthUser | None:
+        logger.info("Loading user from request")
         # Authorization: Basic <user_id> <passphrase>
         auth_header = req.headers.get("Authorization")
         if auth_header is None:
+            logger.debug("No Authorization header")
             return None
         auth_type, user_id, passphrase = auth_header.split(" ")
         if auth_type != "Basic":
+            logger.debug(f"Unsupported Authorization type: {auth_type}")
             return None
         user_or_none = service.user_credentials_valid(
             models.LoginUserDTO(id=user_id, passphrase=passphrase)
         )
         if user_or_none is None:
+            logger.debug(f"Invalid credentials: {user_id}")
             return None
 
         stemmaweb_user: StemmawebUser = user_or_none
+        logger.debug(f"User loaded from request: {stemmaweb_user.id}")
         return AuthUser(stemmaweb_user)
 
     @blueprint.route("/protected", methods=["GET"])

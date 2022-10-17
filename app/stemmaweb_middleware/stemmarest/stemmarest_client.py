@@ -1,4 +1,5 @@
 import requests
+from loguru import logger
 
 from ..utils import url_is_valid
 
@@ -42,4 +43,5 @@ class StemmarestClient:
         :return: A `requests.Response` object.
         """
         url = f"{self.endpoint}{path}"
+        logger.debug(f"Making Stemmarest call: {url}")
         return requests.request(method, url, **kwargs)
