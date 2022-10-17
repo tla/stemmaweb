@@ -2,14 +2,20 @@ import json
 from typing import Callable
 
 from flask.wrappers import Response
-from flask_login import current_user
+from flask_login import current_user as _current_user
 from werkzeug.local import LocalProxy
 
 from stemmaweb_middleware.models import AuthUser, CurrentUser, StemmawebUser
 
 from .models import UserRole
 
-current_user_role = LocalProxy(lambda: _get_current_user_role())
+# Proxying for convenience
+current_user_role: UserRole = LocalProxy(  # type: ignore
+    lambda: _get_current_user_role()
+)
+
+# Aliasing for automatic type-hinting
+current_user: CurrentUser = _current_user
 
 
 def require_min_user_role(user_role: UserRole) -> Callable:

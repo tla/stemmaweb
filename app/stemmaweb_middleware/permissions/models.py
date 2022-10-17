@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Callable, TypedDict
+from typing import Any, Callable, Iterable, NamedTuple, TypedDict
 
 
 class UserRole(Enum):
@@ -54,6 +54,30 @@ class Permission(Enum):
     WRITE = "write"
     FORBIDDEN = "forbidden"
 
+    def to_http_methods(self) -> list[str]:
+        """
+        :return: the HTTP methods that are allowed for this permission
+        """
+        if self == Permission.READ:
+            return ["GET"]
+        elif self == Permission.WRITE:
+            return ["GET", "POST", "PUT", "PATCH", "DELETE"]
+        else:
+            return []
+
+    @staticmethod
+    def iterable_to_http_methods(permissions: Iterable["Permission"]) -> list[str]:
+        """
+        :param permissions: an iterable of permissions
+        :return: the HTTP methods that are allowed for these permissions
+        """
+        if Permission.FORBIDDEN in permissions:
+            return []
+        http_methods: list[str] = []
+        for permission in permissions:
+            http_methods.extend(permission.to_http_methods())
+        return http_methods
+
 
 """A dictionary associating a list of permissions with a user role."""
 PermissionsPerRole = dict[UserRole, list[Permission]]
@@ -67,6 +91,7 @@ class PermissionArguments(TypedDict):
     path_segments: tuple[str, ...]
     query_params: dict[str, Any]
     body: dict[str, Any] | None
+    headers: dict[str, Any]
 
 
 """
@@ -82,3 +107,14 @@ class PermissionConfig(TypedDict):
     name: str
     description: str
     predicate: PermissionPredicate
+
+
+ResponseTransformer = Callable[[Any], Any]
+
+
+class PermissionCheckResult(NamedTuple):
+    """Model to represent the response of a permission check"""
+
+    violations: list[str]
+    allowed_http_methods: set[str]
+    response_transformer: ResponseTransformer | None

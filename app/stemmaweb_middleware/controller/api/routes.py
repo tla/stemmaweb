@@ -2,10 +2,15 @@ import json
 
 from flask import Blueprint, request
 from flask.wrappers import Response
+from loguru import logger
 from werkzeug.routing import Rule
 
+from stemmaweb_middleware.permissions import current_user_role
 from stemmaweb_middleware.permissions.models import PermissionArguments
 from stemmaweb_middleware.stemmarest import StemmarestClient
+from stemmaweb_middleware.stemmarest.permissions import (
+    get_stemmarest_permission_handler,
+)
 from stemmaweb_middleware.stemmarest.stemmarest_endpoints import StemmarestEndpoints
 
 
@@ -22,6 +27,7 @@ def blueprint_factory(
     blueprint = Blueprint("api", __name__)
     ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE"]
     ROUTE_PREFIX = "/api"
+    permission_handler = get_stemmarest_permission_handler(stemmarest_client)
 
     def wildcard_route_handler_func_factory(rule: Rule, nesting_level: int):
         """
@@ -40,11 +46,32 @@ def blueprint_factory(
                 method=request.method,
                 endpoint=request.path,
                 path_segments=path_segments,
-                query_params=request.args,
+                query_params=request.args.to_dict(),
                 body=request.json if request.is_json else None,
+                headers=dict(request.headers),
             )
 
             stemmarest_endpoint = "/" + "/".join(path_segments)
+            logger.debug(
+                f'Passthrough requested for "{stemmarest_endpoint}" with args {args}'
+            )
+            (
+                violations,
+                allowed_http_methods,
+                response_transformer,
+            ) = permission_handler.check(args=args, user_role=current_user_role)
+
+            if request.method not in allowed_http_methods or len(violations) > 0:
+                return Response(
+                    response=dict(
+                        message="The caller has insufficient permissions "
+                        "to access this resource.",
+                        violations=violations,
+                    ),
+                    status=403,
+                    mimetype="application/json",
+                )
+
             try:
                 response = stemmarest_client.request(
                     path=stemmarest_endpoint,
@@ -52,6 +79,9 @@ def blueprint_factory(
                     params=args["query_params"],
                     data=args["body"],
                 )
+                if response_transformer is not None:
+                    logger.debug("Applying response transformer")
+                    response = response_transformer(response)
 
                 return Response(
                     response=response.content,

@@ -19,16 +19,6 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
     blueprint = Blueprint("auth", __name__)
     service = auth_service.StemmarestAuthService(stemmarest_client)
 
-    @login_manager.user_loader
-    def load_user_from_id(user_id: str) -> AuthUser | None:
-        logger.info(f"Loading user from id: {user_id}")
-        user = service.load_user(user_id)
-        if user is None:
-            logger.debug(f"User not found: {user_id}")
-            return None
-        logger.debug(f"User loaded from id: {user_id}")
-        return AuthUser(user)
-
     @login_manager.request_loader
     def load_user_from_request(req: Request) -> AuthUser | None:
         logger.info("Loading user from request")
@@ -53,7 +43,7 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
         return AuthUser(stemmaweb_user)
 
     @blueprint.route("/protected", methods=["GET"])
-    @permissions.require_min_user_role(permissions.UserRole.GUEST)
+    @permissions.require_min_user_role(permissions.UserRole.USER)
     def protected():
         auth_user = flask_login.current_user
         if auth_user is None:
