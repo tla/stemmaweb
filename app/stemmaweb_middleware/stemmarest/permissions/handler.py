@@ -9,9 +9,9 @@ from stemmaweb_middleware.permissions.models import (
     PermissionConfig,
 )
 
+from ..permissions.declarations import get_stemmarest_permission_config
 from ..stemmarest_client import StemmarestClient
 from ..stemmarest_endpoints import StemmarestEndpoint
-from ..stemmarest_permissions import get_stemmarest_permission_config
 from .service import StemmarestPermissionService
 
 ResponseTransformer = Callable[[Any], Any]

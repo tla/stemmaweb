@@ -10,14 +10,13 @@ from stemmaweb_middleware.permissions.models import (
     PermissionConfig,
     UserRole,
 )
+from stemmaweb_middleware.stemmarest.permissions.service import (
+    StemmarestPermissionService,
+)
 
-from .permissions.service import StemmarestPermissionService
-from .stemmarest_endpoints import StemmarestEndpoint
 
-
-def get_stemmarest_permission_config(
-    service: StemmarestPermissionService, args: PermissionArguments
-):
+def config(service: StemmarestPermissionService, args: PermissionArguments):
+    """Role-based configuration for the `/traditions` Stemmarest endpoint."""
     traditions_config_guest = [
         PermissionConfig(
             endpoint_access=EndpointAccess(
@@ -45,7 +44,4 @@ def get_stemmarest_permission_config(
         UserRole.USER: traditions_config_user,
         UserRole.ADMIN: traditions_config_admin,
     }
-
-    return {
-        StemmarestEndpoint.TRADITIONS: traditions_config,
-    }
+    return traditions_config
