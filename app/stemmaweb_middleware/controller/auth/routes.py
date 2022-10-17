@@ -121,9 +121,14 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
         try:
             token = oauth.google.authorize_access_token()
             id_token = token["id_token"]
-            user_info = token["userinfo"]
+            access_token = token["access_token"]
+            parsable_token = dict(id_token=id_token, access_token=access_token)
+            nonce = token["userinfo"]["nonce"]
+            user = oauth.google.parse_id_token(parsable_token, nonce)
+            logger.debug(f"Google user authenticated: {user}")
         except Exception as e:
             logger.error(f"Error while logging in with Google: {e}")
+            flask_login.logout_user()
         return redirect("/")
 
     return blueprint
