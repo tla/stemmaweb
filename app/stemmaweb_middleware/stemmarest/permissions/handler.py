@@ -49,7 +49,7 @@ class StemmarestPermissionHandler:
         if endpoint_config is None:
             return PermissionCheckResult(
                 violations=[
-                    "The middleware forbids to access requested endpoint.",
+                    "The middleware forbids to access the requested endpoint.",
                     "No configuration found for this endpoint.",
                 ],
                 allowed_http_methods=set(),
@@ -61,7 +61,7 @@ class StemmarestPermissionHandler:
         if len(config_for_user) == 0:
             return PermissionCheckResult(
                 violations=[
-                    "The middleware forbids to access requested endpoint.",
+                    "The middleware forbids to access the requested endpoint.",
                     f"No permissions declared for the user role {user_role}.",
                 ],
                 allowed_http_methods=set(),

@@ -6,7 +6,7 @@ from stemmaweb_middleware.permissions.models import PermissionArguments
 
 from ...stemmarest_endpoints import StemmarestEndpoint
 from ..service import StemmarestPermissionService
-from . import traditions
+from . import tradition, traditions, user, users
 
 
 def get_stemmarest_permission_config(
@@ -14,4 +14,7 @@ def get_stemmarest_permission_config(
 ):
     return {
         StemmarestEndpoint.TRADITIONS: traditions.config(service, args),
+        StemmarestEndpoint.TRADITION: tradition.config(service, args),
+        StemmarestEndpoint.USERS: users.config(service, args),
+        StemmarestEndpoint.USER: user.config(service, args),
     }

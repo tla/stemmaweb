@@ -20,18 +20,19 @@ def config(service: StemmarestPermissionService, args: PermissionArguments):
     traditions_config_guest = [
         PermissionConfig(
             endpoint_access=EndpointAccess(
-                name="List Traditions",
-                description="Traditions can be listed only with the 'public=true' query parameter",
-                predicate=perm_predicates.public_true_in_query_params,
+                name="List Public Traditions",
+                description="Public traditions can be listed",
+                predicate=perm_predicates.always_true,
                 if_true={Permission.READ},
-            )
+            ),
+            response_transformer=perm_filters.public_resources_only,
         )
     ]
     traditions_config_user = [
         PermissionConfig(
             endpoint_access=EndpointAccess(
-                name="List Traditions",
-                description="Traditions can be listed",
+                name="List Public & Owned Traditions",
+                description="Public and own traditions can be listed",
                 predicate=perm_predicates.always_true,
                 if_true={Permission.READ},
             ),
