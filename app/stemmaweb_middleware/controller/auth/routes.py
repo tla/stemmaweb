@@ -2,12 +2,12 @@ import json
 import re
 
 import flask_login
-from flask import Blueprint, request
+from flask import Blueprint, redirect, request, url_for
 from flask.wrappers import Request, Response
 from loguru import logger
 
 import stemmaweb_middleware.permissions as permissions
-from stemmaweb_middleware.extensions import login_manager
+from stemmaweb_middleware.extensions import login_manager, oauth
 from stemmaweb_middleware.models import AuthUser, StemmawebUser
 from stemmaweb_middleware.stemmarest import StemmarestClient
 from stemmaweb_middleware.utils import try_parse_model
@@ -73,8 +73,12 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
             mimetype=response.headers.get("Content-Type", None),
         )
 
-    @blueprint.route("/login", methods=["POST"])
+    @blueprint.route("/login", methods=["GET", "POST"])
     def login():
+        # Check if query param says we should use Google login
+        if request.args.get("method", "").lower() == "google":
+            return google_login()
+
         body_or_error = try_parse_model(models.LoginUserDTO, request)
         if isinstance(body_or_error, Response):
             return body_or_error
@@ -104,5 +108,22 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
             status=200,
             mimetype="application/json",
         )
+
+    @blueprint.route("/google-login")
+    def google_login():
+        redirect_uri = url_for(
+            f"{blueprint.name}.google_oauth_redirect", _external=True
+        )
+        return oauth.google.authorize_redirect(redirect_uri)
+
+    @blueprint.route("/oauthcallback")
+    def google_oauth_redirect():
+        try:
+            token = oauth.google.authorize_access_token()
+            id_token = token["id_token"]
+            user_info = token["userinfo"]
+        except Exception as e:
+            logger.error(f"Error while logging in with Google: {e}")
+        return redirect("/")
 
     return blueprint

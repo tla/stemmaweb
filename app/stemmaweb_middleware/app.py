@@ -3,7 +3,7 @@ import logging
 from flask import Flask
 from loguru import logger
 
-from . import controller, extensions
+from . import constants, controller, extensions
 
 
 def create_app(config_object="stemmaweb_middleware.settings"):
@@ -30,6 +30,14 @@ def register_extensions(app: Flask):
     :param app: The Flask application object.
     """
     extensions.login_manager.init_app(app)
+    extensions.oauth.init_app(app)
+    extensions.oauth.register(
+        name="google",
+        client_id=app.config["GOOGLE_CLIENT_ID"],
+        client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+        server_metadata_url=constants.GOOGLE_DISCOVERY_URL,
+        client_kwargs={"scope": "openid email profile"},
+    )
     return None
 
 

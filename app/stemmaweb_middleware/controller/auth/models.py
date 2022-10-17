@@ -10,3 +10,14 @@ class LoginUserDTO(pydantic.BaseModel):
 
     id: str
     passphrase: str
+
+
+class GoogleUserInfo(pydantic.BaseModel):
+    """
+    Model to represent the user info accessible
+    after a successful Google login.
+    """
+
+    id_token: str
+    email: str
+    name: str
