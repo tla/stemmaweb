@@ -96,6 +96,10 @@
       <h3>Loading texts, please wait...</h3>
       <img src="[% c.uri_for( 'images', 'ajax-loader.gif' ) %]" alt="Loading tradition list..." />
     </div>
+    <div id="helplink">
+      <p>Problem reports gratefully accepted <a href="https://github.com/tla/stemmaweb/issues">on Github</a>!</p>
+    </div>
+    
   </div> <!-- main_page -->
 
   <!-- Textinfo editor dialog -->
