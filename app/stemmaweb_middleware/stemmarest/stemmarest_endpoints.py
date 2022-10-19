@@ -42,7 +42,7 @@ def nested_url_rule(level: int, endpoint="global_wildcard") -> Rule:
 
 class StemmarestEndpoints:
     def __init__(self, server_name: str):
-        # URL Rules to catch requests up to a nesting level of 4
-        # E.g.: /seg1/seg2/seg3/seg4
-        self.rules = [nested_url_rule(i) for i in range(1, 4 + 1)]
+        # URL Rules to catch requests up to a nesting level of 10
+        # E.g.: /seg1/seg2/seg3/seg4/seg5/seg6/seg7/seg8/seg9/seg10
+        self.rules = [nested_url_rule(i) for i in range(1, 10 + 1)]
         self.urls = Map(self.rules).bind(server_name)
