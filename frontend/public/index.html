@@ -2,28 +2,56 @@
 <html class="no-js" lang="">
   <head>
     <meta charset="utf-8" />
-    <title></title>
-    <meta name="description" content="" />
+    <title>Stemmaweb</title>
+    <meta
+      name="description"
+      content="Stemmaweb – A Collection of Tools for the Stemmatic Analysis of Texts"
+    />
+    <meta name="author" content="Stemmaweb: Tara L. Andrews, Joris J. van Zundert" />
+    <meta
+      name="author"
+      content="Bootstrap template: Mark Otto, Jacob Thornton, and Bootstrap contributors"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <meta property="og:title" content="" />
+    <!-- OpenGraph SEO tags -->
+    <meta property="og:title" content="Stemmaweb" />
     <meta property="og:type" content="" />
     <meta property="og:url" content="" />
     <meta property="og:image" content="" />
 
+    <!-- Favicons -->
+    <link rel="apple-touch-icon" sizes="57x57" href="/icons/apple-icon-57x57.png" />
+    <link rel="apple-touch-icon" sizes="60x60" href="/icons/apple-icon-60x60.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="/icons/apple-icon-72x72.png" />
+    <link rel="apple-touch-icon" sizes="76x76" href="/icons/apple-icon-76x76.png" />
+    <link rel="apple-touch-icon" sizes="114x114" href="/icons/apple-icon-114x114.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/icons/apple-icon-120x120.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/apple-icon-144x144.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-icon-180x180.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/android-icon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/icons/favicon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
     <link rel="manifest" href="site.webmanifest" />
-    <link rel="apple-touch-icon" href="icons/icon.png" />
-    <!-- Place favicon.ico in the root directory -->
+    <meta name="theme-color" content="#7952b3" />
 
+    <!-- Local CSS imports (3rd party CSS such as Bootstrap gets imported in `main.js`) -->
     <link rel="stylesheet" href="../src/css/normalize.css" />
     <link rel="stylesheet" href="../src/css/main.css" />
-
-    <meta name="theme-color" content="#fafafa" />
   </head>
 
   <body>
     <!-- Add your site or application content here -->
     <p>Hello world! This is HTML5 Boilerplate.</p>
+
+    <!-- WASM worker for d3-graphviz -->
+    <script
+      src="https://unpkg.com/@hpcc-js/wasm/dist/index.min.js"
+      type="application/javascript/"
+    ></script>
+    <!-- JS Entrypoint -->
     <script src="../src/js/main.js"></script>
   </body>
 </html>
