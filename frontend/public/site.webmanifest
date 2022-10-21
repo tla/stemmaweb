@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "Stemmaweb",
+  "short_name": "Stemmaweb",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#fafafa",
+  "description": "Stemmaweb is a web application for exploring and editing genealogical data.",
+  "icons": [{
+    "src": "icons/icon.png",
+    "type": "image/png",
+    "sizes": "192x192"
+  }]
+}
