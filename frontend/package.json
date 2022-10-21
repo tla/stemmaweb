@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "build": "parcel build 'public/*.html'",
-    "dev": "parcel serve --port=3000 'public/*.html'",
+    "dev": "parcel serve --port=5000 'public/*.html'",
     "start": "npm run build && npm run dev",
     "format": "prettier --write './**/*.{js,css,md,json,html}' --config ./.prettierrc.json --ignore-path ./.prettierignore"
   },

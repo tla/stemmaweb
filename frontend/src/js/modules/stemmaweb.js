@@ -1,3 +1,10 @@
+import StemmarestService from './stemmarestService';
+import * as d3 from 'd3';
+import * as feather from 'feather-icons';
+import { Modal } from 'bootstrap';
+
+const service = new StemmarestService('http://127.0.0.1:3000');
+
 export function initStemmaweb() {
   const svg_slide_indicator =
     '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>';
@@ -31,35 +38,30 @@ export function initStemmaweb() {
   }
 
   function fetch_traditions() {
-    fetch('/api/traditions')
-      .then((resp) => resp.json())
-      .then((data) => {
-        let traditions_list = d3
-          .select('#traditions_list')
-          .selectAll('li')
-          .data(data, (d) => d.id);
-        traditions_list.exit().remove();
-        traditions_list = traditions_list.enter().append('li').merge(traditions_list);
-        traditions_list.classed('nav-item', true);
-        const links = traditions_list
-          .append('a')
-          .classed('nav-link', true)
-          .attr('trad-id', (d) => d.id)
-          .attr('href', function (d) {
-            return 'api/tradition/' + d.id;
-          });
-        links.html(feather.icons['file-text'].toSvg());
-        links.append('span').text((d) => d.name);
-        links.on('click', get_tradition);
-      });
+    service.listTraditions().then((data) => {
+      let traditions_list = d3
+        .select('#traditions_list')
+        .selectAll('li')
+        .data(data, (d) => d.id);
+      traditions_list.exit().remove();
+      traditions_list = traditions_list.enter().append('li').merge(traditions_list);
+      traditions_list.classed('nav-item', true);
+      const links = traditions_list
+        .append('a')
+        .classed('nav-link', true)
+        .attr('trad-id', (d) => d.id)
+        .attr('href', function (d) {
+          return 'api/tradition/' + d.id;
+        });
+      links.html(feather.icons['file-text'].toSvg());
+      links.append('span').text((d) => d.name);
+      links.on('click', get_tradition);
+    });
   }
 
   function fetch_rooted(trad, stemma, sigil) {
-    // Note: see issue #92, API/middleware needs updating for non ASCII sigils
-    const fetch_url = encodeURI(
-      '/api/tradition/' + trad.id + '/stemma/' + stemma.identifier + '/reorient/' + sigil
-    );
-    d3.json(fetch_url, { method: 'POST' })
+    service
+      .reorientStemmaTree(trad.id, stemma.identifier, sigil)
       .then((resp) => {
         stemma.dot = resp.dot;
         render_stemma(trad, stemma);
@@ -112,8 +114,8 @@ export function initStemmaweb() {
   function get_tradition(evt) {
     evt.preventDefault();
     var trad = d3.select(this).datum();
-    fetch('api/tradition/' + trad.id + '/stemmata')
-      .then((resp) => resp.json())
+    service
+      .listStemmata(trad.id)
       .then((data) => {
         // console.log( data );
         var graph_area = d3.select('#graph_area');
@@ -209,9 +211,9 @@ export function initStemmaweb() {
     }
   }
 
-  function getStyleSheet(href) {
+  function getStyleSheet(name) {
     for (const sheet of document.styleSheets) {
-      if (sheet.href && sheet.href.endsWith(href)) {
+      if (sheet.href && sheet.href.split('.')[0].endsWith(name)) {
         return sheet;
       }
     }
@@ -239,7 +241,7 @@ export function initStemmaweb() {
 
   // Initialize the add_tradition_modal dialog
   const add_tradition_modal_elem = $('add_tradition_modal');
-  const add_tradition_modal = new bootstrap.Modal(add_tradition_modal_elem);
+  const add_tradition_modal = new Modal(add_tradition_modal_elem);
   // Make sure the right partial of the form is shown when section or tradition is chosen
   const button_new_tradition = $('button_new_tradition');
   button_new_tradition.addEventListener('click', show_new_tradition_partial);
@@ -263,7 +265,7 @@ export function initStemmaweb() {
 
   // This ensures the add_tradition_modal is placed nicely flush right of the menubar.
   // TODO: Add responsiveness on resize.
-  const dashboard_stemmaweb_css = getStyleSheet('/css/dashboard-stemmaweb.css');
+  const dashboard_stemmaweb_css = getStyleSheet('dashboard-stemmaweb');
   let add_tradition_modal_marginleft = window
     .getComputedStyle($('sidebarMenu'))
     .getPropertyValue('width');
