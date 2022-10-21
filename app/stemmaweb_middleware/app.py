@@ -38,6 +38,7 @@ def register_extensions(app: Flask):
         server_metadata_url=constants.GOOGLE_DISCOVERY_URL,
         client_kwargs={"scope": "openid email profile"},
     )
+    extensions.cors.init_app(app)
     return None
 
 
