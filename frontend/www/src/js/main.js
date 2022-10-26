@@ -1,1 +1,1 @@
-console.log('Hello World!');
+/** @typedef {import('stemmaweb').Tradition} Lol */

@@ -1,4 +1,4 @@
-import { types } from '../types';
+import { types } from '../types/models';
 
 /**
  * Service class to interact with the Stemmarest API through high-level

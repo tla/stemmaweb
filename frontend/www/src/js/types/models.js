@@ -1,7 +1,7 @@
 /**
  * Type representing a **Tradition** as returned from the Stemmarest API.
  *
- * @typedef {Object} types.Tradition
+ * @typedef {Object} models.Tradition
  * @property {string[]} witnesses - The list of witness sigla belonging to this
  *   tradition
  * @property {string} direction - Direction of the tradition (LR, RL, or BI).
@@ -16,7 +16,7 @@
 /**
  * Type representing a **Stemma** as returned from the Stemmarest API.
  *
- * @typedef {Object} types.Stemma
+ * @typedef {Object} models.Stemma
  * @property {boolean} is_undirected - True if this is an undirected tree,
  *   rather than a directed stemma.
  * @property {boolean} is_contaminated - True if the stemma indicates witness
@@ -29,6 +29,3 @@
  * @property {string} identifier - The name (identifier) of the stemma. Must be
  *   unique within the tradition.
  */
-
-const types = true;
-export { types };
