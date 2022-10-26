@@ -36,7 +36,12 @@
     <link rel="apple-touch-icon" sizes="144x144" href="/icons/apple-icon-144x144.png" />
     <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-icon-152x152.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-icon-180x180.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/icons/android-icon-192x192.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/icons/android-icon-192x192.png"
+    />
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="96x96" href="/icons/favicon-96x96.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
@@ -93,7 +98,10 @@
 
     <div class="container-fluid">
       <div class="row">
-        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+        <nav
+          id="sidebarMenu"
+          class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse"
+        >
           <div class="position-sticky pt-3">
             <h6
               class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
@@ -215,7 +223,8 @@
               <!-- Shows when either button above is clicked -->
               <div id="add_tradition_partial" class="hide">
                 <label for="new_name" id="upload_name_field" class="form-label"
-                  >Name of this <span id="texttradition_literal">text / tradition</span></label
+                  >Name of this
+                  <span id="texttradition_literal">text / tradition</span></label
                 >
                 <input
                   id="new_name"
@@ -230,17 +239,25 @@
                   <span id="tradition_literal">tradition</span>…
                 </div>
                 <br />
-                <label for="uploadfile" class="form-label">Collation file to upload</label>
+                <label for="uploadfile" class="form-label"
+                  >Collation file to upload</label
+                >
                 <input class="form-control" type="file" id="uploadfile" required="" />
                 <div class="invalid-feedback">We need a collation file to upload…</div>
                 <br />
                 <label for="new_filetype" class="form-label">Data format</label>
                 <select name="filetype" class="form-select" id="new_filetype">
-                  <option value="csv">Comma-separated values (spreadsheet collation)</option>
-                  <option value="tsv">Tab-separated values (spreadsheet collation)</option>
+                  <option value="csv">
+                    Comma-separated values (spreadsheet collation)
+                  </option>
+                  <option value="tsv">
+                    Tab-separated values (spreadsheet collation)
+                  </option>
                   <option value="xls">Microsoft Excel (spreadsheet values)</option>
                   <option value="teips">TEI parallel segmentation</option>
-                  <option value="cte">CTE export (TEI double-endpoint attachment)</option>
+                  <option value="cte">
+                    CTE export (TEI double-endpoint attachment)
+                  </option>
                   <option value="collatex">CollateX XML</option>
                   <option value="cxjson">CollateX JSON</option>
                   <option value="graphml">Native GraphML Zip</option>
@@ -250,8 +267,16 @@
 
                 <!-- Shows when 'Create a new tradition' button is clicked -->
                 <div id="new_tradition_partial" class="hide">
-                  <label for="new_lang" class="form-label">Primary language of the text</label>
-                  <input id="new_lang" type="text" name="language" class="form-control" size="20" />
+                  <label for="new_lang" class="form-label"
+                    >Primary language of the text</label
+                  >
+                  <input
+                    id="new_lang"
+                    type="text"
+                    name="language"
+                    class="form-control"
+                    size="20"
+                  />
                   <br />
                   <label for="direction" class="form-label">Text direction</label>
                   <select name="direction" class="form-select" id="direction">

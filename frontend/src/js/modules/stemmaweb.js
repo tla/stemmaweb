@@ -253,11 +253,11 @@ export function initStemmaweb() {
       evt.target == add_tradition_modal_elem &&
       !add_tradition_modal_elem.classList.contains('show')
     ) {
-      ['add_tradition_partial', 'new_tradition_partial', 'new_section_partial'].forEach(function (
-        elem
-      ) {
-        $(elem).classList.add('hide');
-      });
+      ['add_tradition_partial', 'new_tradition_partial', 'new_section_partial'].forEach(
+        function (elem) {
+          $(elem).classList.add('hide');
+        }
+      );
       $('add_tradition_modal_addition_type_choice').classList.remove('hide');
       $('add_tradition_form').classList.remove('was-validated');
     }
