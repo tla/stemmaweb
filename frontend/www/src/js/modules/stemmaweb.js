@@ -2,6 +2,7 @@ import StemmarestService from './stemmarestService';
 import * as d3 from 'd3';
 import * as feather from 'feather-icons';
 import { Modal } from 'bootstrap';
+import { graphviz } from 'd3-graphviz';
 
 const service = new StemmarestService('http://127.0.0.1:3000');
 
@@ -30,11 +31,18 @@ export function initStemmaweb() {
   }
 
   function quick_fade_in(sel) {
-    return sel.style('opacity', 0).transition().duration(500).style('opacity', 1);
+    return sel
+      .style('opacity', 0)
+      .transition()
+      .duration(500)
+      .style('opacity', 1);
   }
 
   function ellipse_border_to_none(dot) {
-    return dot.replace('" {', '" {\n\t node [color=none style=filled fillcolor=white]');
+    return dot.replace(
+      '" {',
+      '" {\n\t node [color=none style=filled fillcolor=white]'
+    );
   }
 
   function fetch_traditions() {
@@ -44,7 +52,10 @@ export function initStemmaweb() {
         .selectAll('li')
         .data(data, (d) => d.id);
       traditions_list.exit().remove();
-      traditions_list = traditions_list.enter().append('li').merge(traditions_list);
+      traditions_list = traditions_list
+        .enter()
+        .append('li')
+        .merge(traditions_list);
       traditions_list.classed('nav-item', true);
       const links = traditions_list
         .append('a')
@@ -99,16 +110,18 @@ export function initStemmaweb() {
   }
 
   function render_stemma(trad, stemma) {
-    graph_viz.renderDot(ellipse_border_to_none(stemma.dot)).on('end', function () {
-      d3.select('g#graph0')
-        .selectAll('.node')
-        .on('click', function (evt) {
-          fetch_rooted(trad, stemma, d3.select(this).datum().key);
-          render_stemma(trad, stemma);
-        });
-      set_downloads(stemma.dot);
-      update_meta(trad, stemma.identifier);
-    });
+    graph_viz
+      .renderDot(ellipse_border_to_none(stemma.dot))
+      .on('end', function () {
+        d3.select('g#graph0')
+          .selectAll('.node')
+          .on('click', function (evt) {
+            fetch_rooted(trad, stemma, d3.select(this).datum().key);
+            render_stemma(trad, stemma);
+          });
+        set_downloads(stemma.dot);
+        update_meta(trad, stemma.identifier);
+      });
   }
 
   function get_tradition(evt) {
@@ -144,7 +157,10 @@ export function initStemmaweb() {
           .on('click', function (evt) {
             // Add eventlisteners to slide indicators that will update the
             // indicators and render the newly chosen stemma.
-            d3.selectAll('#stemma_selector span svg').style('fill', 'rgb(255,255,255)');
+            d3.selectAll('#stemma_selector span svg').style(
+              'fill',
+              'rgb(255,255,255)'
+            );
             d3.select(this).select('svg').style('fill', 'rgb(180,180,180)');
             var datum = d3.select(this).datum();
             graph_area.style('opacity', '0.0');
@@ -152,8 +168,7 @@ export function initStemmaweb() {
           });
         // The work horse, graphviz puts in the first stemma here,
         // and we have some mild transitions for posh fade in.
-        const graph_viz = graph_div
-          .graphviz()
+        graphviz(graph_div.node())
           .width(graph_div.node().getBoundingClientRect().width)
           .height(graph_div.node().getBoundingClientRect().height)
           .fit(true)
@@ -163,7 +178,10 @@ export function initStemmaweb() {
           // 'drop in' has been selected as the default undefaultable transition.
           // .transition( function(){ return mellow_transition( d3.transition() ) } )
           .on('renderEnd', function () {
-            graph_area.transition().call(mellow_transition).style('opacity', '1.0');
+            graph_area
+              .transition()
+              .call(mellow_transition)
+              .style('opacity', '1.0');
           })
           // Render the stemma (also set button values and update metadata)
           .on('initEnd', function () {
@@ -189,11 +207,18 @@ export function initStemmaweb() {
     });
     d3.select('#download_svg').on('click', function (evt) {
       evt.preventDefault();
-      download('stemma.svg', d3.select('#graph_area div').html(), 'image/svg+xml');
+      download(
+        'stemma.svg',
+        d3.select('#graph_area div').html(),
+        'image/svg+xml'
+      );
     });
     d3.select('#download_png').on('click', function (evt) {
       evt.preventDefault();
-      saveSvgAsPng(d3.select('#graph_area div').select('svg').node(), 'stemma.png');
+      saveSvgAsPng(
+        d3.select('#graph_area div').select('svg').node(),
+        'stemma.png'
+      );
     });
   }
 
@@ -253,11 +278,13 @@ export function initStemmaweb() {
       evt.target == add_tradition_modal_elem &&
       !add_tradition_modal_elem.classList.contains('show')
     ) {
-      ['add_tradition_partial', 'new_tradition_partial', 'new_section_partial'].forEach(
-        function (elem) {
-          $(elem).classList.add('hide');
-        }
-      );
+      [
+        'add_tradition_partial',
+        'new_tradition_partial',
+        'new_section_partial'
+      ].forEach(function (elem) {
+        $(elem).classList.add('hide');
+      });
       $('add_tradition_modal_addition_type_choice').classList.remove('hide');
       $('add_tradition_form').classList.remove('was-validated');
     }

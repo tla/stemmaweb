@@ -1,10 +1,10 @@
 import { types } from '../types';
 
 /**
- * Service class to interact with the Stemmarest API through high-level functions. The
- * main purpose of this class is to encapsulate the logic needed for communication with
- * the REST API, such as where the REST API is deployed and what endpoints are
- * available.
+ * Service class to interact with the Stemmarest API through high-level
+ * functions. The main purpose of this class is to encapsulate the logic needed
+ * for communication with the REST API, such as where the REST API is deployed
+ * and what endpoints are available.
  */
 export default class StemmarestService {
   /**
@@ -17,13 +17,13 @@ export default class StemmarestService {
   }
 
   /**
-   * Constructs the full URL to be used for a request to the Stemmarest API based on the
-   * supplied `pathSegment`.
+   * Constructs the full URL to be used for a request to the Stemmarest API
+   * based on the supplied `pathSegment`.
    *
-   * @param {string} pathSegment - The path segment to be appended to the base URL of
-   *   the Stemmarest API, such as `"/api/traditions"`.
-   * @returns {string} Full URL to be used for a request to the Stemmarest API, using
-   *   URI encoding.
+   * @param {string} pathSegment - The path segment to be appended to the base
+   *   URL of the Stemmarest API, such as `"/api/traditions"`.
+   * @returns {string} Full URL to be used for a request to the Stemmarest API,
+   *   using URI encoding.
    */
   #endpoint(pathSegment) {
     const rawEndpoint = `${this.serverLocation}/${pathSegment}`;
@@ -53,10 +53,11 @@ export default class StemmarestService {
   }
 
   /**
-   * Fetches a list of all the stemma associated with the tradition identified by the
-   * supplied `tradId`.
+   * Fetches a list of all the stemma associated with the tradition identified
+   * by the supplied `tradId`.
    *
-   * @param {string} tradId - The id of the tradition whose stemmata are to be fetched.
+   * @param {string} tradId - The id of the tradition whose stemmata are to be
+   *   fetched.
    * @returns {Promise<types.Stemma[]>}
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemmata}
    */

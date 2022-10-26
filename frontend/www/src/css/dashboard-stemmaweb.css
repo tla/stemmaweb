@@ -3,7 +3,7 @@
 }
 .bg-light {
   /* Using `static` prefix to make sure that we use the static folder served by Flask  */
-  background-image: url('../../public/images/logo-light.svg');
+  background-image: url('../../images/logo-light.svg');
   background-position: left bottom;
   background-repeat: no-repeat;
 }
