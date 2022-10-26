@@ -3,9 +3,11 @@
   "version": "0.0.1",
   "license": "MIT",
   "scripts": {
-    "build": "parcel build 'public/*.html'",
-    "dev": "parcel serve --port=5000 'public/*.html'",
+    "build": "npm run clean && npm run copy-static && parcel build 'public/*.html'",
+    "dev": "npm run copy-static && parcel serve --port=5000 'public/*.html'",
     "start": "npm run build && npm run dev",
+    "copy-static": "mkdir -p dist && cp ./node_modules/@hpcc-js/wasm/dist/graphvizlib.wasm dist/",
+    "clean": "rm -rf dist .cache",
     "format": "prettier --write './**/*.{js,css,md,json,html}' --config ./.prettierrc.json --ignore-path ./.prettierignore"
   },
   "dependencies": {
