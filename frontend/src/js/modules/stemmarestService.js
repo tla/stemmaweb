@@ -40,7 +40,7 @@ export default class StemmarestService {
   /**
    * Fetches a list of all traditions from the Stemmarest API.
    * @return {Promise<types.Tradition[]>}
-   * @see {@link https://dhuniwien.github.io/tradition_repo/#-296807714-843083546|Stemmarest endpoint}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /traditions}
    */
   listTraditions() {
     const endpoint = this.#endpoint('api/traditions');
@@ -50,9 +50,10 @@ export default class StemmarestService {
   }
 
   /**
-   *
-   * @param {string} tradId
-   * @see {@link https://dhuniwien.github.io/tradition_repo/#-1976015424-407366191|Stemmarest endpoint}
+   * Fetches a list of all the stemma associated with the tradition identified by the supplied `tradId`.
+   * @param {string} tradId - The id of the tradition whose stemmata are to be fetched.
+   * @return {Promise<types.Stemma[]>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemmata}
    */
   listStemmata(tradId) {
     const endpoint = this.#endpoint(`api/tradition/${tradId}/stemmata`);
@@ -67,11 +68,11 @@ export default class StemmarestService {
    * @param {string} name
    * @param {string} nodeId
    * @return {Promise<object[]>}
-   * @see {@link https://dhuniwien.github.io/tradition_repo/#4909786502023382895|Stemmarest endpoint}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemma/[name]/reorient/[nodeId]}
    */
   reorientStemmaTree(tradId, name, nodeId) {
     // Note: see issue #92, API/middleware needs updating for non ASCII sigils
-    const endpoint = this.#endpoint(`api/traditions/${tradId}/stemma/${name}/reorient/${nodeId}`);
+    const endpoint = this.#endpoint(`api/tradition/${tradId}/stemma/${name}/reorient/${nodeId}`);
     return fetch(endpoint, { method: 'POST' })
       .then((response) => response.json())
       .catch(this.#handleFetchError);
