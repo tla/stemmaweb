@@ -117,18 +117,15 @@ function initStemmaweb() {
   }
 
   function render_stemma(graph_root, trad, stemma) {
-    graph_root
-      .renderDot(ellipse_border_to_none(stemma.dot))
-      .on('end', function () {
-        d3.select('g#graph0')
-          .selectAll('.node')
-          .on('click', function (evt) {
-            fetch_rooted(trad, stemma, d3.select(this).datum().key);
-            render_stemma(trad, stemma);
-          });
-        set_downloads(stemma.dot);
-        update_meta(trad, stemma.identifier);
+    graph_root.renderDot(ellipse_border_to_none(stemma.dot));
+    d3.select('g#graph0')
+      .selectAll('.node')
+      .on('click', function (evt) {
+        fetch_rooted(trad, stemma, d3.select(this).datum().key);
+        render_stemma(trad, stemma);
       });
+    set_downloads(stemma.dot);
+    update_meta(trad, stemma.identifier);
   }
 
   function get_tradition(evt) {
@@ -171,7 +168,7 @@ function initStemmaweb() {
             d3.select(this).select('svg').style('fill', 'rgb(180,180,180)');
             var datum = d3.select(this).datum();
             graph_area.style('opacity', '0.0');
-            render_stemma(trad, datum);
+            render_stemma(graph_div, trad, datum);
           });
         // The work horse, graphviz puts in the first stemma here,
         // and we have some mild transitions for posh fade in.

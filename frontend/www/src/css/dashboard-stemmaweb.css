@@ -59,3 +59,12 @@
 .form-select {
   font-size: 90%;
 }
+
+.indicator-svg:hover {
+  cursor: pointer;
+}
+
+.indicator-svg[data-active='false']:hover {
+  cursor: pointer;
+  fill: #e3e3e3;
+}

@@ -1,4 +1,8 @@
+/** @type {string} */
+
 const svg_slide_indicator = `<svg
+  class="indicator-svg"
+  data-active="false"
   xmlns="http://www.w3.org/2000/svg"
   width="15"
   height="12"
@@ -13,6 +17,8 @@ const svg_slide_indicator = `<svg
 </svg>`;
 
 const svg_slide_indicator_active = `<svg
+  class="indicator-svg"
+  data-active="true"
   xmlns="http://www.w3.org/2000/svg"
   width="15"
   height="12"
