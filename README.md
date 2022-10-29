@@ -37,13 +37,13 @@ have [Poetry](https://python-poetry.org/) and [Make](https://www.gnu.org/softwar
 Poetry installed, you can run:
 
 ```shell
-cd app && poetry install && cd -
+cd middleware && poetry install && cd -
 ```
 
 from this directory, and
 
 ```shell
-make --directory=app serve
+make --directory=middleware serve
 ```
 
 to start the server in development mode. You can then access it at [http://127.0.0.1:3000/](http://127.0.0.1:3000/).
@@ -51,5 +51,5 @@ to start the server in development mode. You can then access it at [http://127.0
 The production server can be started using the following command:
 
 ```shell
-make --directory=app start
+make --directory=middleware start
 ```
