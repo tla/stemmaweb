@@ -1,17 +1,24 @@
-import StemmarestService from './stemmarestService';
-import * as d3 from 'd3';
-import * as feather from 'feather-icons';
-import { Modal } from 'bootstrap';
-import { graphviz } from 'd3-graphviz';
+/** @type {import('d3')} */
+const d3 = window.d3;
 
+/** @type {import('feather-icons')} */
+const feather = window.feather;
+
+/** @type {import('bootstrap')} */
+const bootstrap = window.bootstrap;
+
+/** @type {import('save-svg-as-png').saveSvgAsPng} */
+const saveSvgAsPng = window.saveSvgAsPng;
+
+/**
+ * Object to interact with the Stemmarest Middleware's API through high-level
+ * functions.
+ *
+ * @type {StemmarestService}
+ */
 const service = new StemmarestService('http://127.0.0.1:3000');
 
-export function initStemmaweb() {
-  const svg_slide_indicator =
-    '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>';
-  const svg_slide_indicator_active =
-    '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="12" viewBox="0 0 24 24" fill="rgb(180,180,180)" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>';
-
+function initStemmaweb() {
   const first_char_is_non_alpha = new RegExp('^[^A-z]');
 
   function $(query, all = false) {
@@ -109,8 +116,8 @@ export function initStemmaweb() {
       .text((d) => d);
   }
 
-  function render_stemma(trad, stemma) {
-    graph_viz
+  function render_stemma(graph_root, trad, stemma) {
+    graph_root
       .renderDot(ellipse_border_to_none(stemma.dot))
       .on('end', function () {
         d3.select('g#graph0')
@@ -168,7 +175,8 @@ export function initStemmaweb() {
           });
         // The work horse, graphviz puts in the first stemma here,
         // and we have some mild transitions for posh fade in.
-        graphviz(graph_div.node())
+        graph_div = graph_div
+          .graphviz()
           .width(graph_div.node().getBoundingClientRect().width)
           .height(graph_div.node().getBoundingClientRect().height)
           .fit(true)
@@ -185,7 +193,7 @@ export function initStemmaweb() {
           })
           // Render the stemma (also set button values and update metadata)
           .on('initEnd', function () {
-            render_stemma(trad, data[0]);
+            render_stemma(graph_div, trad, data[0]);
           });
       })
       .then(function () {
@@ -266,7 +274,7 @@ export function initStemmaweb() {
 
   // Initialize the add_tradition_modal dialog
   const add_tradition_modal_elem = $('add_tradition_modal');
-  const add_tradition_modal = new Modal(add_tradition_modal_elem);
+  const add_tradition_modal = new bootstrap.Modal(add_tradition_modal_elem);
   // Make sure the right partial of the form is shown when section or tradition is chosen
   const button_new_tradition = $('button_new_tradition');
   button_new_tradition.addEventListener('click', show_new_tradition_partial);

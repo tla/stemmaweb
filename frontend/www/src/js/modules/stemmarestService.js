@@ -1,4 +1,8 @@
-import { types } from '../types/models';
+/**
+ * @typedef {import('stemmaweb').Tradition} Tradition
+ *
+ * @typedef {import('stemmaweb').Stemma} Stemma
+ */
 
 /**
  * Service class to interact with the Stemmarest API through high-level
@@ -6,7 +10,7 @@ import { types } from '../types/models';
  * for communication with the REST API, such as where the REST API is deployed
  * and what endpoints are available.
  */
-export default class StemmarestService {
+class StemmarestService {
   /**
    * Creates a new instance of the `StemmarestService` class.
    *
@@ -42,7 +46,7 @@ export default class StemmarestService {
   /**
    * Fetches a list of all traditions from the Stemmarest API.
    *
-   * @returns {Promise<types.Tradition[]>}
+   * @returns {Promise<Tradition[]>}
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /traditions}
    */
   listTraditions() {
@@ -58,7 +62,7 @@ export default class StemmarestService {
    *
    * @param {string} tradId - The id of the tradition whose stemmata are to be
    *   fetched.
-   * @returns {Promise<types.Stemma[]>}
+   * @returns {Promise<Stemma[]>}
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemmata}
    */
   listStemmata(tradId) {
@@ -69,10 +73,14 @@ export default class StemmarestService {
   }
 
   /**
-   * @param {string} tradId
-   * @param {string} name
-   * @param {string} nodeId
-   * @returns {Promise<object[]>}
+   * Reorients a stemma tree so that the given witness node is the root
+   * (archetype). This operation can only be performed on a stemma without
+   * contamination links.
+   *
+   * @param {string} tradId - The ID of the tradition being queried
+   * @param {string} name - The name of the requested stemma
+   * @param {string} nodeId - Archetype node
+   * @returns {Promise<object[]>} The updated stemma model
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemma/[name]/reorient/[nodeId]}
    */
   reorientStemmaTree(tradId, name, nodeId) {
