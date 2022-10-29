@@ -1,1 +1,1 @@
-/** @typedef {import('stemmaweb').Tradition} Lol */
+initStemmaweb();
