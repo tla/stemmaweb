@@ -20,6 +20,7 @@ def create_app(config_object="stemmaweb_middleware.settings"):
     register_logging(app)
     register_extensions(app)
     register_blueprints(app)
+    register_default_headers(app)
     return app
 
 
@@ -58,6 +59,21 @@ def register_blueprints(app: Flask):
     auth_blueprint = controller.auth.routes.blueprint_factory(client)
     app.register_blueprint(auth_blueprint)
     return None
+
+
+def register_default_headers(app: Flask):
+    """
+    Register default headers for all responses.
+
+    :param app: The Flask application object.
+    """
+
+    @app.after_request
+    def set_default_headers(response):
+        # Used to expose session cookies to the client browsers
+        # See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials  # noqa: E501
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        return response
 
 
 class InterceptHandler(logging.Handler):
