@@ -4,4 +4,4 @@ from flask_login import LoginManager
 
 login_manager = LoginManager()
 oauth = OAuth()
-cors = CORS(app=None, resources={r"/api/*": {"origins": "*"}})
+cors = CORS(app=None, resources={r"*": {"origins": "*"}})
