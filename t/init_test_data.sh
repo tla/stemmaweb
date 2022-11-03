@@ -10,18 +10,17 @@ curl --silent --request PUT --header 'Content-Type: application/json' --data '{ 
 
 echo Uploading Notre besoin
 curl --silent --request POST --form name="Notre besoin" --form file=@t/data/besoin.xml --form filetype=stemmaweb --form userId=user@example.org --form language=French --form public=yes $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
-BESOIN_ID=`jq ".tradId" /tmp/stemmarest.response`
-if [ -z $BESOIN_ID ]; then
+BESOIN_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`
+if [ $? -ne 0 ]; then
   echo Failed to create Notre besoin
   exit 1
 else
-  BESOIN_ID=`echo $BESOIN_ID | sed s/\"//g`
   echo Created tradition $BESOIN_ID
 fi
 
 echo ...and its stemma
 curl --silent --request POST --header 'Content-Type: application/json' --data @t/data/besoin_stemma.json $STEMMAREST_ENDPOINT/tradition/$BESOIN_ID/stemma > /tmp/stemmarest.response
-jq -e ".identifier" /tmp/stemmarest.response
+jq -e -r ".identifier" /tmp/stemmarest.response
 if [ $? -ne 0 ]; then
   echo Failed to add Notre besoin stemma
   exit 1
@@ -35,16 +34,27 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo Uploading Florilegium
-curl --silent --request POST --form name="Florilegium Coislinianum B" --form file=@t/data/florilegium.csv --form filetype=csv --form userId=user@example.org --form language=Greek --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
-FLOR_ID=`jq -e ".tradId" /tmp/stemmarest.response`
+echo Creating Florilegium
+curl --silent --request POST --form name="Florilegium Coislinianum B" --form empty=yes --form filetype=csv --form userId=user@example.org --form language=Greek --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+FLOR_ID=`jq -r -e ".tradId" /tmp/stemmarest.response`
 if [ $? -ne 0 ]; then
   echo Failed to create Florilegium
   exit 1
 else
-  FLOR_ID=`echo $FLOR_ID | sed s/\"//g`
   echo Created tradition $FLOR_ID
 fi
+echo Uploading three sections
+idx=1
+for e in w x y; do 
+  curl --silent --request POST --form name="section $idx" --form file=@t/data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response
+  SECTID=`jq -r -e ".sectionId" /tmp/stemmarest.response`
+  if [ $? -ne 0 ]; then
+    echo Failed to create section $e
+    exit 1
+  else
+    echo ...added section $SECTID
+  fi
+done
 echo ...and its stemma
 curl --silent --request POST --header 'Content-Type: application/json' --data @t/data/florilegium_stemma.json $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/stemma > /tmp/stemmarest.response
 jq -e ".identifier" /tmp/stemmarest.response
