@@ -243,7 +243,7 @@ function initStemmaweb() {
 
   function getStyleSheet(name) {
     for (const sheet of document.styleSheets) {
-      if (sheet.href && sheet.href.split('.')[0].endsWith(name)) {
+      if (sheet.href && sheet.href.split('.css')[0].endsWith(name)) {
         return sheet;
       }
     }
