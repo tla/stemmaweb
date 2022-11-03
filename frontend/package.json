@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "build": "scripts/copyVendor",
-    "dev": "scripts/runDev",
+    "serve": "scripts/serve",
     "format": "prettier --write './**/*.{js,css,md,json,html}' --config ./.prettierrc.json --ignore-path ./.prettierignore"
   },
   "dependencies": {
