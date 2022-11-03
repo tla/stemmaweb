@@ -1,16 +1,13 @@
-import json
-import re
-
 import flask_login
-from flask import Blueprint, redirect, request, url_for
-from flask.wrappers import Request, Response
+from flask import Blueprint, current_app, redirect, request, url_for
+from flask.wrappers import Response
 from loguru import logger
 
 import stemmaweb_middleware.permissions as permissions
 from stemmaweb_middleware.extensions import login_manager, oauth
 from stemmaweb_middleware.models import AuthUser, StemmawebUser
 from stemmaweb_middleware.stemmarest import StemmarestClient
-from stemmaweb_middleware.utils import try_parse_model
+from stemmaweb_middleware.utils import abort, success, try_parse_model
 
 from . import models
 from . import service as auth_service
@@ -20,33 +17,19 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
     blueprint = Blueprint("auth", __name__)
     service = auth_service.StemmarestAuthService(stemmarest_client)
 
-    @login_manager.request_loader
-    def load_user_from_request(req: Request) -> AuthUser | None:
-        logger.info("Loading user from request")
-        # Authorization: Basic <user_id> <passphrase>
-        auth_header = req.headers.get("Authorization")
-        if auth_header is None:
-            logger.debug("No Authorization header")
-            return None
+    @login_manager.user_loader
+    def load_user_from_request(user_id: str) -> AuthUser | None:
+        """
+        Load a user object from the Stemmarest API
+        based on the user ID stored in the session.
 
-        # Regex check the correct format "Basic <user_id> <passphrase>"
-        if not re.match(r"^Basic \S+ \S+$", auth_header):
-            logger.debug(
-                f"Authorization header is not in the expected format: '{auth_header}'"
-            )
-            return None
-
-        auth_type, user_id, passphrase = auth_header.split(" ")
-        if auth_type != "Basic":
-            logger.debug(f"Unsupported Authorization type: {auth_type}")
-            return None
-        user_or_none = service.user_credentials_valid(
-            models.LoginUserDTO(id=user_id, passphrase=passphrase)
-        )
+        :param user_id: The ID of the user to load, sourced from the Flask session
+                        created after a successful login through `/login`.
+        """
+        user_or_none = service.load_user(user_id)
         if user_or_none is None:
-            logger.debug(f"Invalid credentials: {user_id}")
+            logger.debug(f"User {user_id} not found.")
             return None
-
         stemmaweb_user: StemmawebUser = user_or_none
         logger.debug(f"User loaded from request: {stemmaweb_user.id}")
         return AuthUser(stemmaweb_user)
@@ -56,8 +39,8 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
     def protected():
         auth_user = flask_login.current_user
         if auth_user is None:
-            return Response(status=401, response="No auth user")
-        return Response(status=200, response=json.dumps(dict(message="Hello, world!")))
+            return abort(status=401, message="No auth user")
+        return success(status=200, body=dict(message="Hello, world!"))
 
     @blueprint.route("/register", methods=["POST"])
     def register():
@@ -86,28 +69,14 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
         body: models.LoginUserDTO = body_or_error
         user_or_none = service.user_credentials_valid(body)
         if user_or_none is None:
-            return Response(
-                response=json.dumps(
-                    dict(
-                        code=401,
-                        type="ERROR",
-                        message="Invalid credentials or no such user",
-                    )
-                ),
-                status=401,
-                mimetype="application/json",
-            )
+            return abort(status=401, message="Invalid credentials or no such user")
 
         # Login user for this flask session
         user: StemmawebUser = user_or_none
         auth_user = AuthUser(user)
         flask_login.login_user(auth_user)
 
-        return Response(
-            response=user_or_none.json(),
-            status=200,
-            mimetype="application/json",
-        )
+        return success(status=200, body=user)
 
     @blueprint.route("/google-login")
     def google_login():
@@ -116,9 +85,18 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
         )
         return oauth.google.authorize_redirect(redirect_uri)
 
+    def frontend_redirect(*, location: str = "/") -> Response:
+        """
+        Redirect to the frontend app.
+        """
+        frontend_url = current_app.config["STEMMAWEB_FRONTEND_URL"]
+        return redirect(f"{frontend_url}{location}")
+
     @blueprint.route("/oauthcallback")
     def google_oauth_redirect():
         try:
+            # Parse the OAuth response received from Google
+            # See https://developers.google.com/identity/protocols/oauth2/openid-connect#an-id-tokens-payload # noqa: E501
             token = oauth.google.authorize_access_token()
             id_token = token["id_token"]
             access_token = token["access_token"]
@@ -126,9 +104,40 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
             nonce = token["userinfo"]["nonce"]
             user = oauth.google.parse_id_token(parsable_token, nonce)
             logger.debug(f"Google user authenticated: {user}")
+
+            # Logging the user into a Flask Session
+            # Using `sub` as the user ID, which is a unique identifier
+            user_id = user["sub"]
+            email = user["email"]
+            user_or_none = service.load_user(user_id)
+            if user_or_none is None:
+                logger.debug(
+                    f"It's the first time {email} logs in using Google. "
+                    f"Creating user..."
+                )
+                new_user = models.StemmawebUser(
+                    id=user_id,
+                    email=email,
+                    # Using `user_id` as we will never actually need a password
+                    passphrase=user_id,
+                    role="user",
+                    active=True,
+                )
+                service.register_user(user=new_user)
+                flask_login.login_user(AuthUser(new_user))
+                # TODO: maybe redirect to dedicated `/success` page
+                return frontend_redirect()
+
+            # Otherwise, we just log the user in as it cannot be `None`
+            user_to_log_in: models.StemmawebUser = user_or_none
+            flask_login.login_user(AuthUser(user_to_log_in))
+            logger.debug(f"User logged in: {user_to_log_in}")
+            # TODO: maybe redirect to dedicated `/success` page
+            return frontend_redirect()
         except Exception as e:
             logger.error(f"Error while logging in with Google: {e}")
             flask_login.logout_user()
-        return redirect("/")
+            # TODO: maybe redirect to dedicated `/failure` page
+            return frontend_redirect()
 
     return blueprint
