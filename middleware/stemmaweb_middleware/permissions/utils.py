@@ -1,10 +1,9 @@
-import json
 from typing import Callable
 
-from flask.wrappers import Response
 from flask_login import current_user as _current_user
 
 from stemmaweb_middleware.models import AuthUser, CurrentUser, StemmawebUser
+from stemmaweb_middleware.utils import abort
 
 from .models import UserRole
 
@@ -45,18 +44,10 @@ def min_user_role_required(user_role: UserRole, func: Callable) -> Callable:
         user: CurrentUser = current_user
         user_is_anonym = user is None or user.is_anonymous
         if user_is_anonym and user_role != UserRole.GUEST:
-            return Response(
-                response=json.dumps(
-                    dict(
-                        code=403,
-                        type="ERROR",
-                        message="This resource is not accessible to guests. "
-                        "Please send authorization credentials "
-                        "as HTTP Headers.",
-                    )
-                ),
+            return abort(
                 status=403,
-                mimetype="application/json",
+                message="This resource is not accessible to guests. "
+                "Please log in to create a user session cookie.",
             )
         elif user_is_anonym and user_role == UserRole.GUEST:
             return func(*args, **kwargs)
@@ -64,31 +55,16 @@ def min_user_role_required(user_role: UserRole, func: Callable) -> Callable:
         auth_user: AuthUser = user
         stemmaweb_user: StemmawebUser = auth_user.data  # type: ignore
         if not UserRole.is_valid_label(stemmaweb_user.role):
-            return Response(
-                response=json.dumps(
-                    dict(
-                        code=500,
-                        type="ERROR",
-                        message=f"Unrecognized user role: {stemmaweb_user.role}",
-                    )
-                ),
-                status=500,
-                mimetype="application/json",
+            return abort(
+                status=500, message=f"Unrecognized user role: {stemmaweb_user.role}"
             )
 
         curr_user_role = UserRole.from_str(stemmaweb_user.role)
         if curr_user_role.numeric_value < user_role.numeric_value:
-            return Response(
-                response=json.dumps(
-                    dict(
-                        code=403,
-                        type="ERROR",
-                        message=f"This resource needs at least "
-                        f"'{user_role.label}' permissions.",
-                    )
-                ),
+            return abort(
                 status=403,
-                mimetype="application/json",
+                message=f"This resource needs at least "
+                f"'{user_role.label}' permissions.",
             )
 
         return func(*args, **kwargs)

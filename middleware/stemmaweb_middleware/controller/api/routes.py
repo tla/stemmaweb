@@ -1,5 +1,3 @@
-import json
-
 from flask import Blueprint, request
 from flask.wrappers import Response
 from loguru import logger
@@ -12,6 +10,7 @@ from stemmaweb_middleware.stemmarest.permissions import (
     get_stemmarest_permission_handler,
 )
 from stemmaweb_middleware.stemmarest.stemmarest_endpoints import StemmarestEndpoints
+from stemmaweb_middleware.utils import abort
 
 
 def blueprint_factory(
@@ -64,16 +63,11 @@ def blueprint_factory(
             ) = permission_handler.check(args=args)
 
             if request.method not in allowed_http_methods or len(violations) > 0:
-                return Response(
-                    response=json.dumps(
-                        dict(
-                            message="The caller has insufficient permissions "
-                            "to access this resource.",
-                            violations=violations,
-                        )
-                    ),
+                return abort(
                     status=403,
-                    mimetype="application/json",
+                    message="The caller has insufficient permissions "
+                    "to access this resource.",
+                    body=dict(violations=violations),
                 )
 
             try:
@@ -93,16 +87,10 @@ def blueprint_factory(
                     mimetype=response.headers.get("Content-Type", None),
                 )
             except Exception as e:
-                return Response(
-                    response=json.dumps(
-                        dict(
-                            message="An error occurred in the middleware.",
-                            type=f"{type(e).__name__}",
-                            error=str(e),
-                        )
-                    ),
+                return abort(
                     status=500,
-                    mimetype="application/json",
+                    message="An error occurred while processing the request.",
+                    body=dict(type=f"{type(e).__name__}", message=str(e)),
                 )
 
         return handler
