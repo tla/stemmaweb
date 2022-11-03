@@ -20,17 +20,22 @@ STEMMAREST_CLIENT = StemmarestClient(endpoint=STEMMAREST_ENDPOINT)
 
 # Endpoints redirected from this host (`STEMMAWEB_HOST`)
 # to the stemmarest server (`STEMMAREST_ENDPOINT`)
-STEMMAWEB_HOST = env.str("STEMMAWEB_HOST", default="http://127.0.0.1:3000")
-STEMMAWEB_API_ENDPOINTS = StemmarestEndpoints(server_name=STEMMAWEB_HOST)
+STEMMAWEB_MIDDLEWARE_URL = env.str(
+    "STEMMAWEB_MIDDLEWARE_URL", default="http://127.0.0.1:3000"
+)
+STEMMAWEB_API_ENDPOINTS = StemmarestEndpoints(server_name=STEMMAWEB_MIDDLEWARE_URL)
 
 # Used for Flask-Login
 # Session Docs: https://flask.palletsprojects.com/en/2.1.x/quickstart/#sessions
 SECRET_KEY = env.str("SECRET_KEY", default=secrets.token_hex())
 
 # Used for Google OAuth
-SERVER_NAME = env.str("SERVER_NAME", default="127.0.0.1:3000")
+STEMMAWEB_MIDDLEWARE_SERVER_NAME = STEMMAWEB_MIDDLEWARE_URL.split("://")[1]
 GOOGLE_CLIENT_ID = env.str("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = env.str("GOOGLE_CLIENT_SECRET")
+STEMMAWEB_FRONTEND_URL = env.str(
+    "STEMMAWEB_FRONTEND_URL", default="http://127.0.0.1:5000"
+)
 
 # Logging
 LOG_LEVEL = env.str("LOG_LEVEL", default="INFO")
