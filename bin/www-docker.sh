@@ -11,7 +11,7 @@ python -m http.server --directory=www 5000 &
 # Start the middleware
 cd app || exit
 echo -e "\e[1;32mStarting the middleware\e[0m"
-gunicorn --workers="$GUNICORN_WORKERS" --bind="$GUNICORN_BIND" 'stemmaweb_middleware:create_app()'
+gunicorn --workers=$GUNICORN_WORKERS --bind=$GUNICORN_BIND --log-level=debug --access-logfile=- --error-logfile=- 'stemmaweb_middleware:create_app()' &
 
 # Wait for any process to exit
 wait -n
