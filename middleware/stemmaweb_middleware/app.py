@@ -58,6 +58,10 @@ def register_blueprints(app: Flask):
     # Middleware-API endpoints to handle auth
     auth_blueprint = controller.auth.routes.blueprint_factory(client)
     app.register_blueprint(auth_blueprint)
+
+    # General health-check endpoint
+    health_blueprint = controller.health.routes.health
+    app.register_blueprint(health_blueprint)
     return None
 
 
