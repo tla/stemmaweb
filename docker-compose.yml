@@ -4,14 +4,25 @@ services:
   stemmarest:
     image: "dhuniwien/stemmarest:latest"
 
+  stemmarest-initializer:
+    build: bin
+    env_file:
+      - .env.docker
+    depends_on:
+      - stemmarest
+    volumes:
+      - ./bin/init-data/:/init-data
+    entrypoint: >
+      /bin/bash -c "sleep 10 && /init-data/init_test_data.sh"
+
   stemmaweb:
     build: .
     env_file:
-      - .env
+      - .env.docker
 
   reverse-proxy:
     build: ./reverse-proxy
     depends_on:
       - stemmaweb
     ports:
-      - "8080:80"
+      - "8888:80"
