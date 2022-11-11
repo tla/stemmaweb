@@ -23,7 +23,7 @@ STEMMAREST_CLIENT = StemmarestClient(endpoint=STEMMAREST_ENDPOINT)
 STEMMAWEB_MIDDLEWARE_URL = env.str(
     "STEMMAWEB_MIDDLEWARE_URL", default="http://127.0.0.1:3000"
 )
-STEMMAWEB_API_ENDPOINTS = StemmarestEndpoints(server_name=STEMMAWEB_MIDDLEWARE_URL)
+STEMMAWEB_API_ENDPOINTS = StemmarestEndpoints(middleware_url=STEMMAWEB_MIDDLEWARE_URL)
 
 # Used for Flask-Login
 # Session Docs: https://flask.palletsprojects.com/en/2.1.x/quickstart/#sessions

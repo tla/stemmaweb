@@ -1,8 +1,8 @@
 from flask import Blueprint
 
-health = Blueprint('health', __name__)
+health = Blueprint("health", __name__)
 
 
-@health.route('/')
+@health.route("/")
 def health_check():
-    return 'Middleware is healthy', 200
+    return "Middleware is healthy", 200

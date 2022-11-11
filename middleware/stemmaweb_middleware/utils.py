@@ -84,8 +84,9 @@ def success(
     :param body: The body to return with the response.
     :return: A Flask Response.
     """
-    if isinstance(body, pydantic.BaseModel):
-        body = body.dict()
+    if body is not None and isinstance(body, pydantic.BaseModel):
+        base_model: pydantic.BaseModel = body
+        body = base_model.dict()
     return Response(
         response=json.dumps(body) if body is not None else None,
         status=status,
