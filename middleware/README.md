@@ -24,6 +24,8 @@ required.
 | `LOG_LEVEL`                | Logging verbosity                                                                                                                                                                                                | `DEBUG`                            |
 | `LOGFILE`                  | Destination file to store the logs, relative to this module's root                                                                                                                                               | `stemmaweb_middleware.log`         |
 | `LOG_BACKTRACE`            | Whether error backtraces should be logged                                                                                                                                                                        | `True`                             |
+| `GUNICORN_WORKERS`         | Number of workers to be spawned by gunicorn in the production deployment. Passed to `--workers`                                                                                                                  | `4`                                |
+| `GUNICORN_BIND`            | Address to bind the WSGI server to. Passed to `--bind`                                                                                                                                                           | `0.0.0.0:3000`                     |
 
 ### Running with Poetry
 

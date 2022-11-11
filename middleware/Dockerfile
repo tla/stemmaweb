@@ -16,9 +16,7 @@ COPY --from=builder /usr/src/app/requirements.txt .
 RUN pip install -r requirements.txt
 COPY stemmaweb_middleware stemmaweb_middleware
 
-ARG GUNICORN_WORKERS=4
-ENV GUNICORN_WORKERS=${GUNICORN_WORKERS}
-ARG GUNICORN_BIND='127.0.0.1:3000'
-ENV GUNICORN_BIND=${GUNICORN_BIND}
+ENV GUNICORN_WORKERS=2
+ENV GUNICORN_BIND='0.0.0.0:3000'
 
-CMD gunicorn --workers=$GUNICORN_WORKERS --bind=$GUNICORN_BIND --log-level=debug 'stemmaweb_middleware:create_app()'
+CMD gunicorn --workers=$GUNICORN_WORKERS --bind=$GUNICORN_BIND --log-level=debug --access-logfile=- --error-logfile=- 'stemmaweb_middleware:create_app()'
