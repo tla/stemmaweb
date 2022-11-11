@@ -1,20 +1,17 @@
-version: '3'
+version: '3.9'
+
 services:
   stemmarest:
     image: "dhuniwien/stemmarest:latest"
 
   stemmaweb:
-    build: 
-      context: .
-      dockerfile: Dockerfile-fcgi
-    volumes:
-      - ./stemmaweb.conf:/var/www/stemmaweb/stemmaweb.conf
+    build: .
+    env_file:
+      - .env
 
-  nginx:
-    image: "nginx:latest"
+  reverse-proxy:
+    build: ./reverse-proxy
     depends_on:
       - stemmaweb
     ports:
-      - "5000:80"
-    volumes:
-      - ./nginx-conf:/etc/nginx/conf.d
+      - "8080:80"
