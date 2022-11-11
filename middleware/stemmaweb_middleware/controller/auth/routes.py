@@ -85,7 +85,7 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
         )
         return oauth.google.authorize_redirect(redirect_uri)
 
-    def frontend_redirect(*, location: str = "/") -> Response:
+    def frontend_redirect(*, location: str = "/"):
         """
         Redirect to the frontend app.
         """
