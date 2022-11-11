@@ -21,4 +21,4 @@ ENV GUNICORN_WORKERS=${GUNICORN_WORKERS}
 ARG GUNICORN_BIND='127.0.0.1:3000'
 ENV GUNICORN_BIND=${GUNICORN_BIND}
 
-ENTRYPOINT gunicorn --workers=$GUNICORN_WORKERS --bind=$GUNICORN_BIND 'stemmaweb_middleware:create_app()'
+CMD gunicorn --workers=$GUNICORN_WORKERS --bind=$GUNICORN_BIND --log-level=debug 'stemmaweb_middleware:create_app()'
