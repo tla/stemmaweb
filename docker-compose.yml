@@ -1,20 +1,28 @@
-version: '3'
+version: '3.9'
+
 services:
   stemmarest:
     image: "dhuniwien/stemmarest:latest"
 
-  stemmaweb:
-    build: 
-      context: .
-      dockerfile: Dockerfile-fcgi
+  stemmarest-initializer:
+    build: bin
+    env_file:
+      - .env.docker
+    depends_on:
+      - stemmarest
     volumes:
-      - ./stemmaweb.conf:/var/www/stemmaweb/stemmaweb.conf
+      - ./bin/init-data/:/init-data
+    entrypoint: >
+      /bin/bash -c "sleep 10 && /init-data/init_test_data.sh"
 
-  nginx:
-    image: "nginx:latest"
+  stemmaweb:
+    build: .
+    env_file:
+      - .env.docker
+
+  reverse-proxy:
+    build: ./reverse-proxy
     depends_on:
       - stemmaweb
     ports:
-      - "5000:80"
-    volumes:
-      - ./nginx-conf:/etc/nginx/conf.d
+      - "8888:80"

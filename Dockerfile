@@ -1,9 +1,17 @@
-# start from the bootstrap image
-FROM ghcr.io/tla/stemmaweb-bootstrap:latest
+# Building on top of the local middleware image
+# Precondition: `docker build -t stemmaweb-middleware ./middleware`
+FROM stemmaweb-middleware
+WORKDIR /usr/src
 
-WORKDIR /var/www/stemmaweb
-COPY . /var/www/stemmaweb/
+# Copy the static bundle into the container to /usr/src/www
+COPY frontend/www www
 
-# The astute image user may wish to copy in a custom stemmaweb.conf
-# before actually running the container.
-CMD ["/usr/bin/perl", "/var/www/stemmaweb/script/stemmaweb_server.pl"]
+# Copy the startup script which will handle spawning two processes:
+# 1. Plain HTTP server for the static frontend bundle (`python -m http.server`)
+# 2. The middleware server (Flask app served by `gunicorn`)
+# It also handles generating `env.js`
+COPY bin/www-docker.sh .
+COPY bin/generate-frontend-env.sh .
+
+# Actually start the above-described script
+CMD ./www-docker.sh

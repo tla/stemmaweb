@@ -1,0 +1,1 @@
+const STEMMAWEB_MIDDLEWARE_URL = 'lolll';

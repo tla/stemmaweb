@@ -1,0 +1,13 @@
+{
+  "name": "@types/stemmaweb",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.d.ts",
+  "files": [
+    "./**/*.d.ts"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

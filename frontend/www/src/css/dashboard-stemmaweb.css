@@ -1,0 +1,70 @@
+.brand-dark {
+  color: rgba(255, 255, 255, 0.7);
+}
+.bg-light {
+  /* Using `static` prefix to make sure that we use the static folder served by Flask  */
+  background-image: url('../../images/logo-light.svg');
+  background-position: left bottom;
+  background-repeat: no-repeat;
+}
+
+#graph_area {
+  background-color: white;
+  width: 100%;
+  height: 40vw;
+  padding: 1em;
+}
+
+@media (min-width: 200px) {
+  .ms-md-perc {
+    margin-left: 24.6% !important;
+  }
+}
+@media (min-width: 987px) {
+  .ms-md-perc {
+    margin-left: 16.6% !important;
+  }
+}
+
+.sidebar_properties {
+  background: none;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 100; /* Behind the navbar */
+  padding: 48px 0 0; /* Height of navbar */
+  box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.1);
+}
+
+.modal-backdrop {
+  background-color: #fff;
+}
+
+.modal-backdrop.show {
+  opacity: 0.2;
+}
+
+.modal-content {
+  background-color: #eaf0f9;
+  border: 1px solid rgba(138, 138, 138, 0.2);
+  border-radius: 0;
+}
+
+.hide {
+  display: none !important;
+}
+
+.form-control,
+.form-select {
+  font-size: 90%;
+}
+
+.indicator-svg:hover {
+  cursor: pointer;
+}
+
+.indicator-svg[data-active='false']:hover {
+  cursor: pointer;
+  fill: #e3e3e3;
+}

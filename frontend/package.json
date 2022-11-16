@@ -1,0 +1,28 @@
+{
+  "name": "frontend",
+  "version": "0.0.1",
+  "license": "MIT",
+  "scripts": {
+    "build": "scripts/copyVendor",
+    "serve": "scripts/serve",
+    "format": "prettier --write './**/*.{js,css,md,json,html}' --config ./.prettierrc.json --ignore-path ./.prettierignore"
+  },
+  "dependencies": {
+    "@hpcc-js/wasm": "^1.18.0",
+    "bootstrap": "^5.2.2",
+    "d3": "^7.6.1",
+    "d3-graphviz": "^4.4.0",
+    "feather-icons": "^4.29.0",
+    "save-svg-as-png": "^1.4.17"
+  },
+  "devDependencies": {
+    "@types/bootstrap": "^5.2.5",
+    "@types/d3": "^7.4.0",
+    "@types/d3-graphviz": "^2.6.7",
+    "@types/feather-icons": "^4.7.0",
+    "@types/stemmaweb": "file:types/stemmaweb",
+    "live-server": "^1.2.2",
+    "prettier": "^2.7.1",
+    "prettier-plugin-jsdoc": "^0.4.2"
+  }
+}
