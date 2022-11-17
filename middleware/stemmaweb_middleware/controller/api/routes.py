@@ -98,7 +98,7 @@ def blueprint_factory(
     # Actually register the wildcard routes with the handlers
     for i, r in enumerate(endpoints.rules):
         blueprint.add_url_rule(
-            rule="/".join([ROUTE_PREFIX, r.rule]),
+            rule="/".join([ROUTE_PREFIX, r.rule]).replace('//', '/'),
             endpoint=r.endpoint,
             view_func=wildcard_route_handler_func_factory(rule=r, nesting_level=i),
             methods=ALLOWED_METHODS,
