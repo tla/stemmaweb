@@ -2,7 +2,13 @@
 .PHONY: serve
 serve:
 	@echo "==> 📡 Serve"
-	@poetry run flask --debug --app stemmaweb_middleware:create_app run --host 127.0.0.1 --port 3000
+	@poetry run flask --debug --app stemmaweb_middleware:create_app run --host 0.0.0.0 --port 3000
+
+# Prints the middleware routes
+.PHONY: routes
+routes:
+	@echo "==> 🚦 Routes"
+	@poetry run flask --app stemmaweb_middleware:create_app routes
 
 # Start the server in production mode using a secure WSGI server
 .PHONY: start
