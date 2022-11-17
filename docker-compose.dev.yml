@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  stemmarest:
+    image: "dhuniwien/stemmarest:latest"
+    ports:
+      - "8080:8080"
+
+  stemmarest-initializer:
+    build: bin
+    env_file:
+      - .env.prod
+    depends_on:
+      - stemmarest
+    volumes:
+      - ./bin/init-data/:/init-data
+    entrypoint: >
+      /bin/bash -c "sleep 10 && /init-data/init_test_data.sh"
+
+  stemmaweb:
+    container_name: stemmaweb
+    build:
+        context: .
+        dockerfile: Dockerfile-dev
+    volumes:
+      - .:/usr/src
+      - ./middleware:/usr/src/middleware
+    env_file:
+      - .env.dev
+    ports:
+      - "3000:3000"
+      - "5000:5000"
+    entrypoint: >
+      /bin/bash -c "make install-middleware && 
+                    make install-frontend &&
+                    make run-frontend &&
+                    make run-middleware"
+
+  reverse-proxy:
+    build: ./reverse-proxy
+    depends_on:
+      - stemmaweb
+    ports:
+      - "8888:80"
