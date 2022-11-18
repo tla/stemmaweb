@@ -3005,33 +3005,9 @@ function loadSVG(normalised) {
       $('#normalize-for-type').show();
     }
     // Reload the SVG
-    $('#svgenlargement').empty().append(svgData.documentElement)
+    // $('#svgenlargement').empty().append(svgData.documentElement)
+    d3.select('#svgenlargement').node().append(svgData.documentElement);
     // TODO center the SVG vertically
     svgEnlargementLoaded();
   });
 }
-
-
-
-/*  OS Gadget stuff
-
-function svg_select_callback(topic, data, subscriberData) {
-  svgData = data;
-  loadSVG(svgData);
-}
-
-function loaded() {
-  var prefs = new gadgets.Prefs();
-  var preferredHeight = parseInt(prefs.getString('height'));
-  if (gadgets.util.hasFeature('dynamic-height')) gadgets.window.adjustHeight(preferredHeight);
-  expandFillPageClients();
-}
-
-if (gadgets.util.hasFeature('pubsub-2')) {
-  gadgets.HubSettings.onConnect = function(hum, suc, err) {
-    subId = gadgets.Hub.subscribe("interedition.svg.selected", svg_select_callback);
-    loaded();
-  };
-}
-else gadgets.util.registerOnLoadHandler(loaded);
-*/
