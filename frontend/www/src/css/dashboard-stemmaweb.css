@@ -8,6 +8,10 @@
   background-repeat: no-repeat;
 }
 
+.navbar-brand {
+  font-size: 1em;
+}
+
 #graph_area {
   background-color: white;
   width: 100%;
