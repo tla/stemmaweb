@@ -4,7 +4,7 @@ build:
 	@docker build -t stemmaweb-middleware ./middleware
 	@docker-compose build
 
-start:
+start: build
 	@echo "==> 🚀 Start"
 	@docker-compose up
 

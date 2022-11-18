@@ -1,5 +1,5 @@
 # General-purpose bash environment for utility scripts
-FROM debian:buster-slim
+FROM debian:bookworm-slim
 
 # install `curl` and `jq`
 RUN apt-get update &&  \
