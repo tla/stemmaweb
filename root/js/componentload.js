@@ -5,7 +5,7 @@ var selectedTextEditable;
 var selectedStemmaSequence = -1;
 var sortableSectionList;
 var sectionSortBackup;
-var stemmata = [];
+// var stemmata = [];
 
 // Load the names of the appropriate traditions into the directory div.
 function refreshDirectory() {
@@ -73,8 +73,7 @@ function loadTradition(textid, textname, editable) {
       $('#relatebutton_label').text('View collation and relationships');
     }
     // Add the stemma(ta)
-    stemmata = textdata.stemmata;
-    if (stemmata.length) {
+    if (textdata.stemmata.length) {
       selectedStemmaSequence = 0;
     } else {
       selectedStemmaSequence = -1;
@@ -84,15 +83,15 @@ function loadTradition(textid, textname, editable) {
     $('#run_relater').attr('action', _get_url(["relation", textid]));
     // Set up the download button and dialog
     $('#dl_tradition').attr('href', _get_url(["download", textid]));
-    $('#dl_tradition').attr('download', selectedTextInfo.name + '.xml');
+    $('#dl_tradition').attr('download', textdata.name + '.xml');
     $('#download_tradition').attr('value', textid);
-    if (selectedTextInfo.sections.length == 1) {
+    if (textdata.sections.length == 1) {
       $('#dl_choose_sections').hide();
     } else {
       $('#dl_choose_sections').show();
     }
     $('.relation-type-list').empty().append($('<option />').attr("value", "").text("(None)"));
-    $.each(selectedTextInfo.reltypes, function(i, r) {
+    $.each(textdata.reltypes, function(i, r) {
       $('#download_conflate').append($('<option />')
         .attr("value", r).text(r));
     });
@@ -185,7 +184,7 @@ function show_stemmapager() {
     }).removeClass('greyed_out');
     hasStemma = true;
   }
-  if (selectedStemmaSequence + 1 < stemmata.length) {
+  if (selectedStemmaSequence + 1 < selectedTextInfo.stemmata.length) {
     $('.pager_right_button').click(function() {
       load_stemma(selectedStemmaSequence + 1, selectedTextEditable);
     }).removeClass('greyed_out');
@@ -209,7 +208,7 @@ function load_stemma(idx) {
   }
   if (idx > -1) {
     // Load the stemma and its properties
-    var stemmadata = stemmata[idx];
+    var stemmadata = selectedTextInfo.stemmata[idx];
     if (selectedTextEditable) {
       $('#stemma_edit_button').show();
       $('#stemma_delete_button').show();
@@ -259,7 +258,8 @@ function process_stemweb_result(data) {
     // Add the new stemmata to the textinfo and tell the user.
     selectedTextInfo.stemweb_jobid = 0;
     if (data.stemmata.length > 0) {
-      stemmata = stemmata.concat(data.stemmata);
+      var stemmata = selectedTextInfo.stemmata.concat(data.stemmata);
+      selectedTextInfo['stemmata'] = stemmata;
       if (selectedStemmaSequence == -1) {
         // We have a stemma for the first time; load the first one.
         load_stemma(0, true);
@@ -357,7 +357,7 @@ function set_stemma_interactive(svg_element) {
         root: targetnode
       }, function(data) {
         // Reload the new stemma
-        stemmata[selectedStemmaSequence] = data;
+        selectedTextInfo.stemmata[selectedStemmaSequence] = data;
         load_stemma(selectedStemmaSequence);
         // Put away the dialog
         $('#root_tree_dialog').data('selectedNode', null).hide();
@@ -406,7 +406,7 @@ function set_stemma_interactive(svg_element) {
 
 function confirm_delete_stemma(seq) {
   // Get the stemma identifier
-  var stemmaid = stemmata[seq].name;
+  var stemmaid = selectedTextInfo.stemmata[seq].name;
   // First confirm that the user wants to proceed
   var really = confirm("This will delete the stemma " + stemmaid + " permanently. Are you sure?")
   if (really) {
@@ -414,8 +414,8 @@ function confirm_delete_stemma(seq) {
     $.post(requrl, function(remaining) {
       // The remaining stemmata are returned; save them and display
       // the first one, if it exists.
-      stemmata = remaining;
-      if (stemmata.length) {
+      selectedTextInfo.stemmata = remaining;
+      if (remaining.length) {
         selectedStemmaSequence = 0;
       } else {
         selectedStemmaSequence = -1;
@@ -728,10 +728,10 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           // We received a stemma SVG string in return.
           // Stash the answer in the appropriate spot in our stemma array
           if (stemmaid === '__NEW__') {
-            stemmata.push(data);
+            selectedTextInfo.stemmata.push(data);
             selectedStemmaSequence = stemmata.length - 1;
           } else {
-            stemmata[stemmaseq].svg = data.svg;
+            selectedTextInfo.stemmata[stemmaseq].svg = data.svg;
           }
           // Update the current stemma sequence number if this is a new stemma
           // Display the new stemma
