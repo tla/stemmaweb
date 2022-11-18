@@ -32,7 +32,8 @@ WORKDIR /tmp
 RUN wget --no-check-certificate http://evolution.gs.washington.edu/phylip/download/phylip-3.697.tar.gz \
  && tar -xzvf phylip-3.697.tar.gz
 WORKDIR /tmp/phylip-3.697/src
-RUN make -f Makefile.unx install \
+RUN sed -e 's/^CFLAGS =/CFLAGS = -fcommon/' Makefile.unx > Makefile \
+ && make install \
  && cp ../exe/pars /usr/local/bin
 
 # some of stemmaweb's dependencies fail tests or don't install cleanly from CPAN
