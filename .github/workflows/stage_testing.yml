@@ -1,4 +1,4 @@
-name: Build and push tagged
+name: Build and push test
 
 on:
   push:
