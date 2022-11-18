@@ -5,7 +5,7 @@
   "scripts": {
     "build": "scripts/copyVendor",
     "serve": "scripts/serve",
-    "serve:headless": "scripts/serve &> /dev/null",
+    "serve:background": "scripts/serve &> /dev/null",
     "format": "prettier --write './**/*.{js,css,md,json,html}' --config ./.prettierrc.json --ignore-path ./.prettierignore"
   },
   "dependencies": {

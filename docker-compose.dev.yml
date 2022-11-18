@@ -24,7 +24,6 @@ services:
         dockerfile: Dockerfile-dev
     volumes:
       - .:/usr/src
-      - ./middleware:/usr/src/middleware
     env_file:
       - .env.dev
     ports:
@@ -33,8 +32,7 @@ services:
     entrypoint: >
       /bin/bash -c "make install-middleware && 
                     make install-frontend &&
-                    make run-frontend &&
-                    make run-middleware"
+                    tail -F just-forcing-the-container-to-keep-running"
 
   reverse-proxy:
     build: ./reverse-proxy

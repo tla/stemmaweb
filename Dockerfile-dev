@@ -23,10 +23,11 @@ RUN apt-get update && apt-get install -y \
     && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
     && apt-get install -y nodejs npm
 
-# Install Make and jq
+# Install utilities
 RUN apt-get update && apt-get install -y \
     make \
-    jq
+    jq \
+    vim
 
 # Install Poetry
 RUN python -m pip install --upgrade pip &&  \

@@ -2,7 +2,11 @@
 .PHONY: serve
 serve:
 	@echo "==> 📡 Serve"
-	@poetry run flask --debug --app stemmaweb_middleware:create_app run --host 0.0.0.0 --port 3000
+	@poetry run gunicorn --reload --bind=0.0.0.0:3000  'stemmaweb_middleware:create_app()'
+
+serve-background:
+	@echo "==> 📡 Serve in Background"
+	@(poetry run gunicorn --reload --bind=0.0.0.0:3000  'stemmaweb_middleware:create_app()') &> /dev/null
 
 # Prints the middleware routes
 .PHONY: routes
