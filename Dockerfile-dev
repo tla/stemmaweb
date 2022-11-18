@@ -27,7 +27,8 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && apt-get install -y \
     make \
     jq \
-    vim
+    vim && \
+    pip install killport
 
 # Install Poetry
 RUN python -m pip install --upgrade pip &&  \

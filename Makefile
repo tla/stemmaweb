@@ -8,9 +8,23 @@ start:
 	@echo "==> 🚀 Start"
 	@docker-compose up
 
+# Spawns a new shell in the dev docker container
+shell:
+	@echo "==> 🐚 Shell"
+	@docker exec -it stemmaweb bash
+
 ################################################################
 # Commands below are for the dockerized development environment
+# They are only expected to work inside the docker container
 ################################################################
+
+build-dev:
+	@echo "==> 🏗 Build Dev Containers"
+	@docker-compose -f docker-compose.dev.yml build
+
+dev: build-dev
+	@echo "==> 💻 Development"
+	@docker-compose -f docker-compose.dev.yml up
 
 install-middleware:
 	@echo "==> 📦 Install Middleware"
@@ -33,18 +47,16 @@ run-frontend:
 
 run: run-middleware run-frontend
 
-build-dev:
-	@echo "==> 🏗 Build Dev Containers"
-	@docker-compose -f docker-compose.dev.yml build
+stop-middleware:
+	@echo "==> 🛑 Stop Middleware"
+	@killport 3000 || true
 
-dev: build-dev
-	@echo "==> 💻 Development"
-	@docker-compose -f docker-compose.dev.yml up
+stop-frontend:
+	@echo "==> 🛑 Stop Frontend"
+	@killport 5000 || true
 
-stop-dev:
+stop: stop-middleware stop-frontend
+
+dev-down:
 	@echo "==> 🛑 Stop Dev Containers"
 	@docker-compose -f docker-compose.dev.yml down
-
-shell:
-	@echo "==> 🐚 Shell"
-	@docker exec -it stemmaweb bash
