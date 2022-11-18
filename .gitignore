@@ -1,6 +1,8 @@
 db/
 blib/
 inc/
+scratch/
+META.yml
 .DS_Store
 .vscode
 munge.pl

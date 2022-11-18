@@ -68,6 +68,8 @@ test_requires 'Test::More' => '0.88';
 test_requires 'LWP::Protocol::PSGI';
 test_requires 'Test::WWW::Mechanize';
 test_requires 'IPC::System::Simple';
+test_requires 'Config::Any';
+test_requires 'LWP::UserAgent';
 catalyst;
 
 install_script glob('script/*.pl');
