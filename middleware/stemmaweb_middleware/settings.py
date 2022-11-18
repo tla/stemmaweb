@@ -2,6 +2,7 @@
 import secrets
 
 from environs import Env
+from loguru import logger
 
 from stemmaweb_middleware.stemmarest.stemmarest_client import StemmarestClient
 from stemmaweb_middleware.stemmarest.stemmarest_endpoints import StemmarestEndpoints
@@ -31,11 +32,18 @@ SECRET_KEY = env.str("SECRET_KEY", default=secrets.token_hex())
 
 # Used for Google OAuth
 STEMMAWEB_MIDDLEWARE_SERVER_NAME = STEMMAWEB_MIDDLEWARE_URL.split("://")[1]
-GOOGLE_CLIENT_ID = env.str("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = env.str("GOOGLE_CLIENT_SECRET")
+GOOGLE_CLIENT_ID = env.str("GOOGLE_CLIENT_ID", None)
+GOOGLE_CLIENT_SECRET = env.str("GOOGLE_CLIENT_SECRET", None)
 STEMMAWEB_FRONTEND_URL = env.str(
     "STEMMAWEB_FRONTEND_URL", default="http://127.0.0.1:5000"
 )
+
+if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+    logger.warning(
+        "Google OAuth not configured, login will not work. "
+        "You can set the GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET "
+        "environment variables to configure Google OAuth."
+    )
 
 # Logging
 LOG_LEVEL = env.str("LOG_LEVEL", default="INFO")
