@@ -3,8 +3,10 @@
   "version": "0.0.1",
   "license": "MIT",
   "scripts": {
+    "postinstall": "patch-package",
     "build": "scripts/copyVendor",
     "serve": "scripts/serve",
+    "serve:background": "scripts/serve &> /dev/null",
     "format": "prettier --write './**/*.{js,css,md,json,html}' --config ./.prettierrc.json --ignore-path ./.prettierignore"
   },
   "dependencies": {
@@ -22,6 +24,7 @@
     "@types/feather-icons": "^4.7.0",
     "@types/stemmaweb": "file:types/stemmaweb",
     "live-server": "^1.2.2",
+    "patch-package": "^6.5.0",
     "prettier": "^2.7.1",
     "prettier-plugin-jsdoc": "^0.4.2"
   }

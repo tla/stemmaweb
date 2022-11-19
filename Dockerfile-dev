@@ -1,0 +1,42 @@
+FROM debian:bookworm-slim
+
+# Install Python and aux packages
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    python3-setuptools \
+    python3-wheel \
+    python3-distutils \
+    build-essential \
+    locales
+
+# Alias `python3` to `python` and `pip3` to `pip`
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
+    update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+
+# Install Node.js and npm
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    ca-certificates \
+    lsb-release \
+    && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+    && apt-get install -y nodejs npm
+
+# Install utilities
+RUN apt-get update && apt-get install -y \
+    make \
+    jq \
+    vim && \
+    pip install killport
+
+# Install Poetry
+RUN python -m pip install --upgrade pip &&  \
+    pip install poetry
+
+# Install Poetry dependencies
+COPY middleware/poetry.lock middleware/pyproject.toml ./
+RUN poetry config virtualenvs.create false && \
+    poetry install
+
+WORKDIR /usr/src
