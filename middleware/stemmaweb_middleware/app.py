@@ -60,7 +60,7 @@ def register_blueprints(app: Flask):
     app.register_blueprint(auth_blueprint)
 
     # General health-check endpoint
-    health_blueprint = controller.health.routes.health
+    health_blueprint = controller.health.routes.blueprint_factory(client)
     app.register_blueprint(health_blueprint)
     return None
 
