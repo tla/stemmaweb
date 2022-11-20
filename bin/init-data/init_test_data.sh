@@ -5,6 +5,25 @@
 DIR_OF_THIS_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR_OF_THIS_SCRIPT" || exit 1
 
+# Look for a `.env` file recursively up the directory tree for 3 levels and source it if found
+for _ in {1..3}; do
+    if [ -f .env ]; then
+        source .env
+        break
+    fi
+    cd ..
+done
+cd "$DIR_OF_THIS_SCRIPT" || exit 1
+
+
+EXPECTED_ENV_VARS=("STEMMAREST_ENDPOINT")
+for ENV_VAR in "${EXPECTED_ENV_VARS[@]}"; do
+    if [ -z "${!ENV_VAR}" ]; then
+        echo "ERROR: Environment variable $ENV_VAR is not set."
+        exit 1
+    fi
+done
+
 if [ -n $STEMMAREST_AUTH_USER ]; then
     CURL="curl --silent -u $STEMMAREST_AUTH_USER:$STEMMAREST_AUTH_PASS"
 else

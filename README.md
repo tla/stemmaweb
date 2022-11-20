@@ -3,13 +3,94 @@
 Stemmaweb is a web application for viewing and manipulating text traditions based on
 the [Stemmarest](http://dhuniwien.github.io/tradition_repo/) data model.
 
+**Table of Contents**
+
+- [Overview](#overview)
+- [Trying it out](#trying-it-out-eventually)
+- [Development](#development)
+    - [Docker](#docker)
+    - [Local](#local)
+
+## Overview
+
+The system is made up of three main components:
+
+- The [Stemmarest](http://dhuniwien.github.io/tradition_repo/) backend, which
+  provides a RESTful API for accessing and manipulating text traditions.
+- The [Stemmaweb Middleware](./middleware/README.md) which provides an authentication and authorization
+  layer on top of the Stemmarest API. The frontend communicates only with this layer directly.
+- The [Stemmaweb Frontend](./frontend/README.md) which provides a web interface for
+  viewing and manipulating text traditions.
+
 ## Trying it out (eventually)
 
-A `docker-compose.yml` file is included in this directory, which will launch Stemmaweb behind an nginx proxy listening
-on port 5000. It may be necessary to obtain your own development API keys for Google and reCAPTcha authentication, in
-order to create user accounts.
+A prerequisite for using Stemmaweb is to have [Make](https://www.gnu.org/software/make/),
+[Docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) installed on your machine. You
+also need to configure the environment variables, to do so you can use `.env.prod.example` as a template. After filling
+in the missing values (or leaving them as they are), rename the file to `.env.prod`.
 
-## Development / Installation
+Once you have these, you can run the following command to get a working instance of Stemmaweb:
+
+```shell
+make start
+```
+
+After the build is complete, you can access the system through an `nginx` reverse proxy:
+
+- Frontend: [http://localhost:8888/stemmaweb/](http://localhost:8888/stemmaweb/)
+- Middleware: [http://localhost:8888/stemmaweb/requests/]([http://localhost:8888/stemmaweb/requests/)
+
+Please note that the backend will be automatically populated with test data for you to explore.
+
+## Development
+
+### Docker
+
+Please create a `.env.dev` file in the root directory of the project, based on the `.env.dev.example` file. After doing
+so, you can start the development environment with:
+
+```shell
+make dev
+```
+
+This will start the necessary services in the foreground, so you can see the logs. You can start the frontend and
+middleware
+by opening a new terminal session and running:
+
+```shell
+make shell
+```
+
+This will give you a shell in the `stemmaweb` container. From there, you can run the following command to start the
+frontend and middleware:
+
+```shell
+make run
+```
+
+After running this, both the frontend and the middleware will be started in your terminal session in a non-blocking way.
+All the logs will be visible in the terminal session automatically as events occur.
+
+You can stop individual services by running `make stop-frontend` or `make stop-middleware` in the `stemmaweb` container.
+You can stop all services by running `make stop` in the `stemmaweb` container. The whole docker stack can be stopped by
+running `make dev-down` in the root directory of the project.
+
+#### Service Endpoints
+
+- Backend:
+    - [http://localhost:3000/](http://localhost:3000/)
+    - [http://localhost:8888/stemmaweb/requests/](http://localhost:8888/stemmaweb/requests/)
+- Frontend:
+    - [http://localhost:5000/](http://localhost:5000/)
+    - [http://localhost:8888/stemmaweb/](http://localhost:8888/stemmaweb/)
+
+The preferred way to access the services is through the `nginx` reverse proxy (`http://localhost:8888/*`) so that you
+can work with the services as if they were in production.
+
+### Local
+
+**Please note that the preferred way to develop Stemmaweb is through the [Dockerized](https://www.docker.com/) setup.**
+However, if you want to develop without Docker, you can do so by following the instructions below.
 
 You will need an instance of Stemmarest running somewhere. The easiest is to run it from Docker:
 
@@ -17,20 +98,11 @@ You will need an instance of Stemmarest running somewhere. The easiest is to run
 docker run -d --name stemmarest -p 8080:8080 dhuniwien/stemmarest:latest
 ```
 
-Once that is done, you should create a `.env` file in this directory that indicates in the `STEMMAREST_ENDPOINT`
-variable where the Stemmarest server can be reached; for example, after running the Docker command above, the contents
-of the file should be:
+Once that is done, you should create a `.env` file in this directory based on `.env.example`.
 
-```shell
-STEMMAREST_ENDPOINT=http://localhost:8080/stemmarest
-```
-
-**Other environment variables should also be set to have the application work properly. Please copy the `.env.example`
-file and fill in the values.**
-
-Now you can add test data to your Stemmarest instance using the script `t/init_test_data.sh`; please note that this
-script depends on the presence of the [`jq`](https://stedolan.github.io/jq/) program to parse JSON responses from
-Stemmarest.
+Now you can add test data to your Stemmarest instance using the script `bin/init-data/init_test_data.sh`; please note
+that this script depends on the presence of the [`jq`](https://stedolan.github.io/jq/) program to parse JSON responses
+from Stemmarest.
 
 To install the necessary dependencies for the Stemmaweb server, you will need to
 have [Poetry](https://python-poetry.org/) and [Make](https://www.gnu.org/software/make/) on your machine. Once you have
