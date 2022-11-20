@@ -18,6 +18,8 @@ class SocialLoginOptions extends HTMLElement {
 customElements.define('social-login-options', SocialLoginOptions);
 
 class LoginForm extends HTMLElement {
+  static ID = 'login';
+
   constructor() {
     super();
     this.active = 'false';
@@ -37,7 +39,7 @@ class LoginForm extends HTMLElement {
     <div class="tab-pane fade ${
       this.active === 'true' ? 'show active' : 'd-none'
     }"
-         id="pills-login"
+         id="${LoginForm.ID}"
          role="tabpanel"
          aria-labelledby="tab-login">
       <form>
@@ -49,31 +51,15 @@ class LoginForm extends HTMLElement {
         <p class="text-center">or:</p>
 
         <!-- Email input -->
-        <div class="form-outline mb-4">
-          <input type="email" id="loginName" class="form-control" />
-          <label class="form-label" for="loginName">Email or username</label>
+        <div class="form-floating mb-4">
+          <input id="loginEmail" type="email" class="form-control" placeholder="Email">
+          <label for="loginEmail">Email</label>
         </div>
 
         <!-- Password input -->
-        <div class="form-outline mb-4">
-          <input type="password" id="loginPassword" class="form-control" />
-          <label class="form-label" for="loginPassword">Password</label>
-        </div>
-
-        <!-- 2 column grid layout -->
-        <div class="row mb-4">
-          <div class="col-md-6 d-flex justify-content-center">
-            <!-- Checkbox -->
-            <div class="form-check mb-3 mb-md-0">
-              <input class="form-check-input" type="checkbox" value="" id="loginCheck" checked />
-              <label class="form-check-label" for="loginCheck"> Remember me </label>
-            </div>
-          </div>
-
-          <div class="col-md-6 d-flex justify-content-center">
-            <!-- Simple link -->
-            <a href="#!">Forgot password?</a>
-          </div>
+        <div class="form-floating mb-4">
+          <input id="loginPassword" type="password" class="form-control" placeholder="Password">
+          <label for="loginPassword">Password</label>
         </div>
 
         <!-- Submit button -->
@@ -81,7 +67,11 @@ class LoginForm extends HTMLElement {
 
         <!-- Register buttons -->
         <div class="text-center">
-          <p>Not a member? <a href="#!">Register</a></p>
+          <p>No account yet?
+          <a href="#${RegisterForm.ID}"
+             onclick="AuthForm.setMode('register')">Register
+          </a>
+          </p>
         </div>
       </form>
     </div>
@@ -92,6 +82,7 @@ class LoginForm extends HTMLElement {
 customElements.define('login-form', LoginForm);
 
 class RegisterForm extends HTMLElement {
+  static ID = 'register';
   constructor() {
     super();
     this.active = 'false';
@@ -112,7 +103,7 @@ class RegisterForm extends HTMLElement {
         class="tab-pane fade ${
           this.active === 'true' ? 'show active' : 'd-none'
         }"
-        id="pills-register"
+        id="${RegisterForm.ID}"
         role="tabpanel"
         aria-labelledby="tab-register"
       >
@@ -120,63 +111,31 @@ class RegisterForm extends HTMLElement {
           <div class="text-center mb-3">
             <p>Sign up with:</p>
             <social-login-options></social-login-options>
+          </div>
 
           <p class="text-center">or:</p>
 
-          <!-- Name input -->
-          <div class="form-outline mb-4">
-            <input type="text" id="registerName" class="form-control" />
-            <label class="form-label" for="registerName">Name</label>
-          </div>
-
-          <!-- Username input -->
-          <div class="form-outline mb-4">
-            <input type="text" id="registerUsername" class="form-control" />
-            <label class="form-label" for="registerUsername">Username</label>
-          </div>
-
           <!-- Email input -->
-          <div class="form-outline mb-4">
-            <input type="email" id="registerEmail" class="form-control" />
-            <label class="form-label" for="registerEmail">Email</label>
+          <div class="form-floating mb-4">
+            <input id="registerEmail" type="email" class="form-control" placeholder="Email">
+            <label for="registerEmail">Email</label>
           </div>
 
           <!-- Password input -->
-          <div class="form-outline mb-4">
-            <input type="password" id="registerPassword" class="form-control" />
-            <label class="form-label" for="registerPassword">Password</label>
+          <div class="form-floating mb-4">
+            <input id="registerPassword" type="password" class="form-control" placeholder="Password">
+            <label for="registerPassword">Password</label>
           </div>
 
           <!-- Repeat Password input -->
-          <div class="form-outline mb-4">
-            <input
-              type="password"
-              id="registerRepeatPassword"
-              class="form-control"
-            />
-            <label class="form-label" for="registerRepeatPassword"
-              >Repeat password</label
-            >
-          </div>
-
-          <!-- Checkbox -->
-          <div class="form-check d-flex justify-content-center mb-4">
-            <input
-              class="form-check-input me-2"
-              type="checkbox"
-              value=""
-              id="registerCheck"
-              checked
-              aria-describedby="registerCheckHelpText"
-            />
-            <label class="form-check-label" for="registerCheck">
-              I have read and agree to the terms
-            </label>
+          <div class="form-floating mb-4">
+            <input id="registerRepeatPassword" type="password" class="form-control" placeholder="Repeat password">
+            <label for="registerRepeatPassword">Repeat password</label>
           </div>
 
           <!-- Submit button -->
           <button type="submit" class="btn btn-primary btn-block mb-3">
-            Sign in
+            Sign Up
           </button>
         </form>
       </div>
@@ -227,9 +186,9 @@ class AuthForm extends HTMLElement {
           class="nav-link ${this.inLoginMode() ? 'active' : ''}"
           id="tab-login"
           data-mdb-toggle="pill"
-          href="#pills-login"
+          href="#${LoginForm.ID}"
           role="tab"
-          aria-controls="pills-login"
+          aria-controls="${LoginForm.ID}"
           aria-selected="${this.inLoginMode()}"
           onclick="AuthForm.setMode('login')"
           >Login</a
@@ -240,9 +199,9 @@ class AuthForm extends HTMLElement {
           class="nav-link ${!this.inLoginMode() ? 'active' : ''}"
           id="tab-register"
           data-mdb-toggle="pill"
-          href="#pills-register"
+          href="#${RegisterForm.ID}"
           role="tab"
-          aria-controls="pills-register"
+          aria-controls="${RegisterForm.ID}"
           aria-selected="${!this.inLoginMode()}"
           onclick="AuthForm.setMode('register')"
           >Register</a
