@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. .env
+
 DIR_OF_THIS_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR_OF_THIS_SCRIPT" || exit 1
 
@@ -22,15 +24,29 @@ for ENV_VAR in "${EXPECTED_ENV_VARS[@]}"; do
     fi
 done
 
-echo Creating test user
-curl --silent --request PUT --header 'Content-Type: application/json' --data '{ "role":"user", "id":"user@example.org", "email":"user@example.org", "passphrase":"0NT3bCujDh6wvf5UTfXsjmlRhyEG6xvT1/kgiZPyjGk"}' $STEMMAREST_ENDPOINT/user/user@example.org
-echo Creating test admin user
-curl --silent --request PUT --header 'Content-Type: application/json' --data '{ "role":"admin", "id":"admin@example.org", "email":"admin@example.org", "passphrase":"AWHhPzEkrjRVdHsanteKojElOuXFQ80ouaZgWDUUgpk"}' $STEMMAREST_ENDPOINT/user/admin@example.org
+if [ -n $STEMMAREST_AUTH_USER ]; then
+    CURL="curl --silent -u $STEMMAREST_AUTH_USER:$STEMMAREST_AUTH_PASS"
+else
+    CURL="curl --silent"
+fi
 
-echo Uploading Notre besoin
-curl --silent --request POST --form name="Notre besoin" --form file=@data/besoin.xml --form filetype=stemmaweb --form userId=user@example.org --form language=French --form public=yes $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+echo Creating test user
+$CURL --request PUT --header 'Content-Type: application/json' --data '{ "role":"user", "id":"user@example.org", "email":"user@example.org", "passphrase":"0NT3bCujDh6wvf5UTfXsjmlRhyEG6xvT1/kgiZPyjGk"}' $STEMMAREST_ENDPOINT/user/user@example.org
+#if [ $? -ne 0 ]; then
+#  echo Failed to create test user
+#  exit 1
+#fi
+echo; echo Creating test admin user
+$CURL --request PUT --header 'Content-Type: application/json' --data '{ "role":"admin", "id":"admin@example.org", "email":"admin@example.org", "passphrase":"AWHhPzEkrjRVdHsanteKojElOuXFQ80ouaZgWDUUgpk"}' $STEMMAREST_ENDPOINT/user/admin@example.org
+#if [ $? -ne 0 ]; then
+#  echo Failed to create test user
+#  exit 1
+#fi
+
+echo; echo Uploading Notre besoin
+$CURL --request POST --form name="Notre besoin" --form file=@data/besoin.xml --form filetype=stemmaweb --form userId=user@example.org --form language=French --form public=yes $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
 BESOIN_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`
-if [ $? -ne 0 ]; then
+if [ -z $BESOIN_ID ]; then
   echo Failed to create Notre besoin
   exit 1
 else
@@ -38,36 +54,33 @@ else
 fi
 
 echo ...and its stemma
-curl --silent --request POST --header 'Content-Type: application/json' --data @data/besoin_stemma.json $STEMMAREST_ENDPOINT/tradition/$BESOIN_ID/stemma > /tmp/stemmarest.response
-jq -e -r ".identifier" /tmp/stemmarest.response
+$CURL --request POST --header 'Content-Type: application/json' --data @data/besoin_stemma.json $STEMMAREST_ENDPOINT/tradition/$BESOIN_ID/stemma
 if [ $? -ne 0 ]; then
   echo Failed to add Notre besoin stemma
   exit 1
 fi
 
-echo ...and its stemma
-curl --silent --request POST --header 'Content-Type: application/json' --data @data/besoin_stemma_2.json $STEMMAREST_ENDPOINT/tradition/$BESOIN_ID/stemma > /tmp/stemmarest.response
-jq -e ".identifier" /tmp/stemmarest.response
+echo ...and its other stemma
+$CURL --request POST --header 'Content-Type: application/json' --data @data/besoin_stemma_2.json $STEMMAREST_ENDPOINT/tradition/$BESOIN_ID/stemma
 if [ $? -ne 0 ]; then
-  echo Failed to add Notre besoin stemma
+  echo Failed to add other Notre besoin stemma
   exit 1
 fi
 
 echo Creating Florilegium
-curl --silent --request POST --form name="Florilegium Coislinianum B" --form empty=yes --form filetype=csv --form userId=user@example.org --form language=Greek --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+$CURL --request POST --form name="Florilegium Coislinianum B" --form empty=yes --form filetype=csv --form userId=user@example.org --form language=Greek --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
 FLOR_ID=`jq -r -e ".tradId" /tmp/stemmarest.response`
-if [ $? -ne 0 ]; then
+if [ -z $FLOR_ID ]; then
   echo Failed to create Florilegium
   exit 1
 else
   echo Created tradition $FLOR_ID
 fi
 echo Uploading three sections
-idx=1
 for e in w x y; do 
-  curl --silent --request POST --form name="section $idx" --form file=@data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response
+  $CURL --request POST --form name="section $e" --form file=@data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response
   SECTID=`jq -r -e ".sectionId" /tmp/stemmarest.response`
-  if [ $? -ne 0 ]; then
+  if [ -z $SECTID ]; then
     echo Failed to create section $e
     exit 1
   else
@@ -75,8 +88,7 @@ for e in w x y; do
   fi
 done
 echo ...and its stemma
-curl --silent --request POST --header 'Content-Type: application/json' --data @data/florilegium_stemma.json $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/stemma > /tmp/stemmarest.response
-jq -e ".identifier" /tmp/stemmarest.response
+$CURL --request POST --header 'Content-Type: application/json' --data @data/florilegium_stemma.json $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/stemma
 if [ $? -ne 0 ]; then
   echo Failed to add Florilegium stemma
   exit 1
