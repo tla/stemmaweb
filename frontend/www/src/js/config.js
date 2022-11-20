@@ -1,2 +1,7 @@
-// Configure `d3-graphviz` to use the local Web Assembly module `/wasm/graphvizlib.wasm`
-window['@hpcc-js/wasm'].wasmFolder('./wasm');
+/**
+ * Object to interact with the Stemmarest Middleware's API through high-level
+ * functions.
+ *
+ * @type {StemmarestService}
+ */
+const stemmarestService = new StemmarestService(STEMMAWEB_MIDDLEWARE_URL);
