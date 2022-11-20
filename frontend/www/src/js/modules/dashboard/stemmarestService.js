@@ -1,7 +1,7 @@
 /**
- * @typedef {import('stemmaweb').Tradition} Tradition
+ * @typedef {import('www/src/js/modules/dashboard/stemmaweb').Tradition} Tradition
  *
- * @typedef {import('stemmaweb').Stemma} Stemma
+ * @typedef {import('www/src/js/modules/dashboard/stemmaweb').Stemma} Stemma
  */
 
 /**
