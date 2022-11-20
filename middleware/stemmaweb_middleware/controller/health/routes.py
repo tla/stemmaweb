@@ -1,4 +1,5 @@
 from flask import Blueprint
+
 from stemmaweb_middleware.stemmarest import StemmarestClient
 
 
