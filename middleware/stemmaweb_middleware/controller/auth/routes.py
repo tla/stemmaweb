@@ -19,7 +19,8 @@ from . import service as auth_service
 
 
 def blueprint_factory(
-    stemmarest_client: StemmarestClient, recaptcha_verifier: RecaptchaVerifier
+    stemmarest_client: StemmarestClient,
+    recaptcha_verifier: RecaptchaVerifier
 ) -> Blueprint:
     blueprint = Blueprint("auth", __name__)
     service = auth_service.StemmarestAuthService(stemmarest_client)
@@ -56,6 +57,11 @@ def blueprint_factory(
             return body_or_error
 
         body: models.RegisterUserDTO = body_or_error
+
+        # Verify captcha
+        if not recaptcha_verifier.verify(body.recaptcha_token):
+            return abort(status=429, message="reCAPTCHA verification failed")
+
         response = service.register_user(body.to_stemmaweb_user())
         return Response(
             response=response.content,
@@ -77,6 +83,10 @@ def blueprint_factory(
         user_or_none = service.user_credentials_valid(body)
         if user_or_none is None:
             return abort(status=401, message="Invalid credentials or no such user")
+
+        # Verify captcha
+        if not recaptcha_verifier.verify(body.recaptcha_token):
+            return abort(status=429, message="reCAPTCHA verification failed")
 
         # Login user for this flask session
         user: StemmawebUser = user_or_none
