@@ -49,7 +49,7 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
             return body_or_error
 
         body: models.RegisterUserDTO = body_or_error
-        response = service.register_user(body)
+        response = service.register_user(body.to_stemmaweb_user())
         return Response(
             response=response.content,
             status=response.status_code,
@@ -115,7 +115,7 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
                     f"It's the first time {email} logs in using Google. "
                     f"Creating user..."
                 )
-                new_user = models.StemmawebUser(
+                new_user = StemmawebUser(
                     id=user_id,
                     email=email,
                     # Using `user_id` as we will never actually need a password
@@ -129,7 +129,7 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
                 return frontend_redirect()
 
             # Otherwise, we just log the user in as it cannot be `None`
-            user_to_log_in: models.StemmawebUser = user_or_none
+            user_to_log_in: StemmawebUser = user_or_none
             flask_login.login_user(AuthUser(user_to_log_in))
             logger.debug(f"User logged in: {user_to_log_in}")
             # TODO: maybe redirect to dedicated `/success` page

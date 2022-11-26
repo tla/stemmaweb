@@ -20,7 +20,7 @@ class StemmarestAuthService:
         """
         self.client = client
 
-    def register_user(self, user: models.RegisterUserDTO) -> requests.Response:
+    def register_user(self, user: StemmawebUser) -> requests.Response:
         """
         Register a new user via the Stemmarest API.
 
