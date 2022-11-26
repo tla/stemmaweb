@@ -3,11 +3,7 @@
  */
 class AuthActionName {
   static LOGIN_WITH_EMAIL = 'login_with_email';
-  static LOGIN_WITH_GOOGLE = 'login_with_google';
-  static LOGIN_WITH_GITHUB = 'login_with_github';
   static REGISTER_WITH_EMAIL = 'register_with_email';
-  static REGISTER_WITH_GOOGLE = 'register_with_google';
-  static REGISTER_WITH_GITHUB = 'register_with_github';
 }
 
 class SocialLoginOptions extends HTMLElement {
