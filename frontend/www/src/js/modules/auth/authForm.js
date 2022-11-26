@@ -34,47 +34,59 @@ class LoginForm extends HTMLElement {
     this[property] = newValue;
   }
 
+  static handleSubmit(event) {
+    event.preventDefault();
+    executeWithCaptcha('login', (token) => {
+      console.log('login captcha token', token);
+    });
+  }
+
   connectedCallback() {
+    this.render();
+    this.addEventListener('submit', LoginForm.handleSubmit);
+  }
+
+  render() {
     this.innerHTML = `
-    <div class="tab-pane fade ${
-      this.active === 'true' ? 'show active' : 'd-none'
-    }"
-         id="${LoginForm.ID}"
-         role="tabpanel"
-         aria-labelledby="tab-login">
-      <form>
-        <div class="text-center mb-3">
-          <p>Sign in with:</p>
-          <social-login-options></social-login-options>
-        </div>
+      <div class="tab-pane fade ${
+        this.active === 'true' ? 'show active' : 'd-none'
+      }"
+           id="${LoginForm.ID}"
+           role="tabpanel"
+           aria-labelledby="tab-login">
+        <form>
+          <div class="text-center mb-3">
+            <p>Sign in with:</p>
+            <social-login-options></social-login-options>
+          </div>
 
-        <p class="text-center">or:</p>
+          <p class="text-center">or:</p>
 
-        <!-- Email input -->
-        <div class="form-floating mb-4">
-          <input id="loginEmail" type="email" class="form-control" placeholder="Email">
-          <label for="loginEmail">Email</label>
-        </div>
+          <!-- Email input -->
+          <div class="form-floating mb-4">
+            <input id="loginEmail" type="email" class="form-control" placeholder="Email" required>
+            <label for="loginEmail">Email</label>
+          </div>
 
-        <!-- Password input -->
-        <div class="form-floating mb-4">
-          <input id="loginPassword" type="password" class="form-control" placeholder="Password">
-          <label for="loginPassword">Password</label>
-        </div>
+          <!-- Password input -->
+          <div class="form-floating mb-4">
+            <input id="loginPassword" type="password" class="form-control" placeholder="Password" required>
+            <label for="loginPassword">Password</label>
+          </div>
 
-        <!-- Submit button -->
-        <button type="submit" class="btn btn-primary btn-block mb-4">Sign in</button>
+          <!-- Submit button -->
+          <button type="submit" class="btn btn-primary btn-block mb-4">Sign in</button>
 
-        <!-- Register buttons -->
-        <div class="text-center">
-          <p>No account yet?
-          <a href="#${RegisterForm.ID}"
-             onclick="AuthForm.setMode('register')">Register
-          </a>
-          </p>
-        </div>
-      </form>
-    </div>
+          <!-- Register buttons -->
+          <div class="text-center">
+            <p>No account yet?
+            <a href="#${RegisterForm.ID}"
+               onclick="AuthForm.setMode('register')">Register
+            </a>
+            </p>
+          </div>
+        </form>
+      </div>
     `;
   }
 }
@@ -97,48 +109,58 @@ class RegisterForm extends HTMLElement {
     this[property] = newValue;
   }
 
+  static handleSubmit(event) {
+    event.preventDefault();
+    executeWithCaptcha('register', (token) => {
+      console.log('register captcha token', token);
+    });
+  }
+
   connectedCallback() {
+    this.render();
+    this.addEventListener('submit', RegisterForm.handleSubmit);
+  }
+
+  render() {
     this.innerHTML = `
-    <div
-        class="tab-pane fade ${
-          this.active === 'true' ? 'show active' : 'd-none'
-        }"
-        id="${RegisterForm.ID}"
-        role="tabpanel"
-        aria-labelledby="tab-register"
-      >
-        <form>
-          <div class="text-center mb-3">
-            <p>Sign up with:</p>
-            <social-login-options></social-login-options>
-          </div>
+      <div
+          class="tab-pane fade ${
+            this.active === 'true' ? 'show active' : 'd-none'
+          }"
+          id="${RegisterForm.ID}"
+          role="tabpanel"
+          aria-labelledby="tab-register"
+        >
+          <form>
+            <div class="text-center mb-3">
+              <p>Sign up with:</p>
+              <social-login-options></social-login-options>
+            </div>
 
-          <p class="text-center">or:</p>
+            <p class="text-center">or:</p>
 
-          <!-- Email input -->
-          <div class="form-floating mb-4">
-            <input id="registerEmail" type="email" class="form-control" placeholder="Email">
-            <label for="registerEmail">Email</label>
-          </div>
+            <!-- Email input -->
+            <div class="form-floating mb-4">
+              <input id="registerEmail" type="email" class="form-control" placeholder="Email" required>
+              <label for="registerEmail">Email</label>
+            </div>
 
-          <!-- Password input -->
-          <div class="form-floating mb-4">
-            <input id="registerPassword" type="password" class="form-control" placeholder="Password">
-            <label for="registerPassword">Password</label>
-          </div>
+            <!-- Password input -->
+            <div class="form-floating mb-4">
+              <input id="registerPassword" type="password" class="form-control" placeholder="Password" required>
+              <label for="registerPassword">Password</label>
+            </div>
 
-          <!-- Repeat Password input -->
-          <div class="form-floating mb-4">
-            <input id="registerRepeatPassword" type="password" class="form-control" placeholder="Repeat password">
-            <label for="registerRepeatPassword">Repeat password</label>
-          </div>
+            <!-- Repeat Password input -->
+            <div class="form-floating mb-4">
+              <input id="registerRepeatPassword" type="password" class="form-control" placeholder="Repeat password" required>
+              <label for="registerRepeatPassword">Repeat password</label>
+            </div>
 
-          <!-- Submit button -->
-          <button type="submit" class="btn btn-primary btn-block mb-3">
-            Sign Up
-          </button>
-        </form>
-      </div>
+            <!-- Submit button -->
+            <button type="submit" class="btn btn-primary btn-block mb-4">Sign Up</button>
+          </form>
+        </div>
     `;
   }
 }
