@@ -5,11 +5,13 @@ from stemmaweb_middleware.models import EmailStr, StemmawebUser, UserRoleStr
 
 class AuthDTO(pydantic.BaseModel):
     """Base class for all auth DTOs."""
+
     recaptcha_token: str
 
 
 class RegisterUserDTO(AuthDTO):
     """Data Transfer Object for registering a new user."""
+
     passphrase: str
     role: UserRoleStr  # type: ignore
     id: str
