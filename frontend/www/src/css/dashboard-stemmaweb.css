@@ -72,3 +72,7 @@
   cursor: pointer;
   fill: #e3e3e3;
 }
+
+[role='tab'] {
+  cursor: pointer;
+}

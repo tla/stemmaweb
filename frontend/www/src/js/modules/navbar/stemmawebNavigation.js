@@ -35,12 +35,17 @@ class StemmawebNavigation extends HTMLElement {
       <div class="d-flex flex-row-reverse">
         <div class="navbar-nav">
           <div class="nav-item text-nowrap">
-            <a class="nav-link px-3" href="#">About</a>
+            <a class="nav-link px-3" href="https://stemmaweb.net/">About</a>
           </div>
         </div>
         <div class="navbar-nav">
           <div class="nav-item text-nowrap">
-            <a class="nav-link px-3" href="#">Sign out</a>
+            <a class="nav-link px-3"
+                href="#"
+                data-bs-toggle="modal"
+                data-bs-target="#authModal">
+                Sign out
+            </a>
           </div>
         </div>
         <div class="navbar-nav">
@@ -53,4 +58,5 @@ class StemmawebNavigation extends HTMLElement {
     `;
   }
 }
+
 customElements.define('stemmaweb-navigation', StemmawebNavigation);

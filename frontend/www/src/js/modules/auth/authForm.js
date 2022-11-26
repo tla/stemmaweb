@@ -186,7 +186,6 @@ class AuthForm extends HTMLElement {
           class="nav-link ${this.inLoginMode() ? 'active' : ''}"
           id="tab-login"
           data-mdb-toggle="pill"
-          href="#${LoginForm.ID}"
           role="tab"
           aria-controls="${LoginForm.ID}"
           aria-selected="${this.inLoginMode()}"
@@ -199,7 +198,6 @@ class AuthForm extends HTMLElement {
           class="nav-link ${!this.inLoginMode() ? 'active' : ''}"
           id="tab-register"
           data-mdb-toggle="pill"
-          href="#${RegisterForm.ID}"
           role="tab"
           aria-controls="${RegisterForm.ID}"
           aria-selected="${!this.inLoginMode()}"
@@ -223,3 +221,39 @@ class AuthForm extends HTMLElement {
 }
 
 customElements.define('auth-form', AuthForm);
+
+class AuthModal extends HTMLElement {
+  constructor() {
+    super();
+  }
+
+  connectedCallback() {
+    this.render();
+  }
+
+  render() {
+    this.innerHTML = `
+    <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="authModalLabel">Login</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mt-4 container">
+              <div class="row justify-content-center align-items-center">
+                <div class="col-sm-12 col-md-8 col-lg-6">
+                  <auth-form></auth-form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    `;
+  }
+}
+
+customElements.define('auth-modal', AuthModal);
