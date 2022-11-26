@@ -45,6 +45,15 @@ if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
         "environment variables to configure Google OAuth."
     )
 
+# Used for reCAPTCHA validation
+RECAPTCHA_SECRET_KEY = env.str("RECAPTCHA_SECRET_KEY", None)
+if not RECAPTCHA_SECRET_KEY:
+    logger.warning(
+        "reCAPTCHA not configured, auth operations will not work. "
+        "You can set the RECAPTCHA_SECRET_KEY "
+        "environment variable to configure reCAPTCHA."
+    )
+
 # Logging
 LOG_LEVEL = env.str("LOG_LEVEL", default="INFO")
 LOGFILE = env.str("LOGFILE", default="stemmaweb_middleware.log")
