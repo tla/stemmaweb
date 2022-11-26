@@ -7,13 +7,20 @@ import stemmaweb_middleware.permissions as permissions
 from stemmaweb_middleware.extensions import login_manager, oauth
 from stemmaweb_middleware.models import AuthUser, StemmawebUser
 from stemmaweb_middleware.stemmarest import StemmarestClient
-from stemmaweb_middleware.utils import abort, success, try_parse_model
+from stemmaweb_middleware.utils import (
+    RecaptchaVerifier,
+    abort,
+    success,
+    try_parse_model,
+)
 
 from . import models
 from . import service as auth_service
 
 
-def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
+def blueprint_factory(
+    stemmarest_client: StemmarestClient, recaptcha_verifier: RecaptchaVerifier
+) -> Blueprint:
     blueprint = Blueprint("auth", __name__)
     service = auth_service.StemmarestAuthService(stemmarest_client)
 

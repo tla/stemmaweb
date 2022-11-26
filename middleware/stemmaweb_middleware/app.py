@@ -56,7 +56,10 @@ def register_blueprints(app: Flask):
     app.register_blueprint(api_blueprint)
 
     # Middleware-API endpoints to handle auth
-    auth_blueprint = controller.auth.routes.blueprint_factory(client)
+    recaptcha_verifier = app.config["RECAPTCHA_VERIFIER"]
+    auth_blueprint = controller.auth.routes.blueprint_factory(
+        client, recaptcha_verifier
+    )
     app.register_blueprint(auth_blueprint)
 
     # General health-check endpoint

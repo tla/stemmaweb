@@ -6,6 +6,9 @@ from loguru import logger
 
 from stemmaweb_middleware.stemmarest.stemmarest_client import StemmarestClient
 from stemmaweb_middleware.stemmarest.stemmarest_endpoints import StemmarestEndpoints
+from stemmaweb_middleware.utils import RecaptchaVerifier
+
+from . import constants
 
 env = Env()
 env.read_env()
@@ -53,6 +56,11 @@ if not RECAPTCHA_SECRET_KEY:
         "You can set the RECAPTCHA_SECRET_KEY "
         "environment variable to configure reCAPTCHA."
     )
+RECAPTCHA_VERIFIER = RecaptchaVerifier(
+    secret=RECAPTCHA_SECRET_KEY,
+    verification_url=constants.GOOGLE_RECAPTCHA_VERIFICATION_URL,
+    threshold=constants.GOOGLE_RECAPTCHA_THRESHOLD,
+)
 
 # Logging
 LOG_LEVEL = env.str("LOG_LEVEL", default="INFO")
