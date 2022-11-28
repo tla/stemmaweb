@@ -1,3 +1,10 @@
+/** Wrapper object to return API responses with a clean error-handling. */
+export interface BaseResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+}
+
 /** Type representing a **Tradition** as returned from the Stemmarest API. */
 export interface Tradition {
   /** The list of witness sigla belonging to this tradition */
@@ -68,3 +75,6 @@ export interface LoginUserDTO extends AuthDTO {
   id: string;
   passphrase: string;
 }
+
+/** Model to represent a user in the system. */
+export type StemmawebUser = Omit<RegisterUserDTO, 'recaptcha_token'>;
