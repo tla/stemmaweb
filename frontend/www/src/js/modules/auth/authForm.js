@@ -33,6 +33,10 @@ customElements.define('social-login-options', SocialLoginOptions);
 
 class LoginForm extends HTMLElement {
   static ID = 'login';
+  static FIELD_IDS = {
+    email: 'loginEmail',
+    password: 'loginPassword'
+  };
 
   constructor() {
     super();
@@ -43,6 +47,17 @@ class LoginForm extends HTMLElement {
     return ['active'];
   }
 
+  /** @returns {{ email: string; password: string }} */
+  static get fieldValues() {
+    return Object.entries(this.FIELD_IDS).reduce(
+      (acc, [fieldName, fieldId]) => {
+        acc[fieldName] = document.getElementById(fieldId).value;
+        return acc;
+      },
+      {}
+    );
+  }
+
   attributeChangedCallback(property, oldValue, newValue) {
     if (oldValue === newValue) return;
     this[property] = newValue;
@@ -50,12 +65,13 @@ class LoginForm extends HTMLElement {
 
   static handleSubmit(event) {
     event.preventDefault();
+    const values = LoginForm.fieldValues;
     executeWithCaptcha(AuthActionName.LOGIN_WITH_EMAIL, (token) => {
       authFormService
         .loginUser({
           recaptcha_token: token,
-          id: 'test@lol.com',
-          passphrase: 'test'
+          id: values.email,
+          passphrase: values.password
         })
         .then(console.log);
     });
@@ -84,14 +100,22 @@ class LoginForm extends HTMLElement {
 
           <!-- Email input -->
           <div class="form-floating mb-4">
-            <input id="loginEmail" type="email" class="form-control" placeholder="Email" required>
-            <label for="loginEmail">Email</label>
+            <input id="${LoginForm.FIELD_IDS.email}"
+                   type="email"
+                   class="form-control"
+                   placeholder="Email"
+                   required>
+            <label for="${LoginForm.FIELD_IDS.email}">Email</label>
           </div>
 
           <!-- Password input -->
           <div class="form-floating mb-4">
-            <input id="loginPassword" type="password" class="form-control" placeholder="Password" required>
-            <label for="loginPassword">Password</label>
+            <input id="${LoginForm.FIELD_IDS.password}"
+                   type="password"
+                   class="form-control"
+                   placeholder="Password"
+                   required>
+            <label for="${LoginForm.FIELD_IDS.password}">Password</label>
           </div>
 
           <!-- Submit button -->
@@ -115,6 +139,13 @@ customElements.define('login-form', LoginForm);
 
 class RegisterForm extends HTMLElement {
   static ID = 'register';
+
+  static FIELD_IDS = {
+    email: 'registerEmail',
+    password: 'registerPassword',
+    confirmPassword: 'registerConfirmPassword'
+  };
+
   constructor() {
     super();
     this.active = 'false';
@@ -124,6 +155,17 @@ class RegisterForm extends HTMLElement {
     return ['active'];
   }
 
+  /** @returns {{ email: string; password: string; confirmPassword: string }} */
+  static get fieldValues() {
+    return Object.entries(this.FIELD_IDS).reduce(
+      (acc, [fieldName, fieldId]) => {
+        acc[fieldName] = document.getElementById(fieldId).value;
+        return acc;
+      },
+      {}
+    );
+  }
+
   attributeChangedCallback(property, oldValue, newValue) {
     if (oldValue === newValue) return;
     this[property] = newValue;
@@ -131,15 +173,22 @@ class RegisterForm extends HTMLElement {
 
   static handleSubmit(event) {
     event.preventDefault();
+    const values = RegisterForm.fieldValues;
+    if (values.password !== values.confirmPassword) {
+      // TODO: handle with error dialog
+      console.error('Passwords do not match');
+      return;
+    }
     executeWithCaptcha(AuthActionName.REGISTER_WITH_EMAIL, (token) => {
       authFormService
         .registerUser({
           recaptcha_token: token,
           active: true,
-          email: 'testlol.com',
-          id: 'test@lol.com',
+          id: values.email,
+          email: values.email,
+          // TODO: Differentiate between roles
           role: 'user',
-          passphrase: 'test'
+          passphrase: values.password
         })
         .then(console.log);
     });
@@ -170,20 +219,34 @@ class RegisterForm extends HTMLElement {
 
             <!-- Email input -->
             <div class="form-floating mb-4">
-              <input id="registerEmail" type="email" class="form-control" placeholder="Email" required>
-              <label for="registerEmail">Email</label>
+              <input id="${RegisterForm.FIELD_IDS.email}"
+                     type="email"
+                     class="form-control"
+                     placeholder="Email"
+                     required>
+              <label for="${RegisterForm.FIELD_IDS.email}">Email</label>
             </div>
 
             <!-- Password input -->
             <div class="form-floating mb-4">
-              <input id="registerPassword" type="password" class="form-control" placeholder="Password" required>
-              <label for="registerPassword">Password</label>
+              <input id="${RegisterForm.FIELD_IDS.password}"
+                     type="password"
+                     class="form-control"
+                     placeholder="Password"
+                     required>
+              <label for="${RegisterForm.FIELD_IDS.password}">Password</label>
             </div>
 
-            <!-- Repeat Password input -->
+            <!-- Confirm Password input -->
             <div class="form-floating mb-4">
-              <input id="registerRepeatPassword" type="password" class="form-control" placeholder="Repeat password" required>
-              <label for="registerRepeatPassword">Repeat password</label>
+              <input id="${RegisterForm.FIELD_IDS.confirmPassword}"
+                     type="password"
+                     class="form-control"
+                     placeholder="Confirm password"
+                     required>
+              <label for="${
+                RegisterForm.FIELD_IDS.confirmPassword
+              }">Confirm password</label>
             </div>
 
             <!-- Submit button -->
