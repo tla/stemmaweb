@@ -1,6 +1,12 @@
 /**
- * Namespace for constants to be used to label actions for Google reCAPTCHA.
+ * Object to interact with the Stemmarest Middleware's API through high-level
+ * functions.
+ *
+ * @type {StemmarestService}
  */
+const authFormService = stemmarestService;
+
+/** Namespace for constants to be used to label actions for Google reCAPTCHA. */
 class AuthActionName {
   static LOGIN_WITH_EMAIL = 'login_with_email';
   static REGISTER_WITH_EMAIL = 'register_with_email';
@@ -45,7 +51,13 @@ class LoginForm extends HTMLElement {
   static handleSubmit(event) {
     event.preventDefault();
     executeWithCaptcha(AuthActionName.LOGIN_WITH_EMAIL, (token) => {
-      console.log('login captcha token', token);
+      authFormService
+        .loginUser({
+          recaptcha_token: token,
+          id: 'test@lol.com',
+          passphrase: 'test'
+        })
+        .then(console.log);
     });
   }
 
@@ -120,7 +132,16 @@ class RegisterForm extends HTMLElement {
   static handleSubmit(event) {
     event.preventDefault();
     executeWithCaptcha(AuthActionName.REGISTER_WITH_EMAIL, (token) => {
-      console.log('register captcha token', token);
+      authFormService
+        .registerUser({
+          recaptcha_token: token,
+          active: true,
+          email: 'testlol.com',
+          id: 'test@lol.com',
+          role: 'user',
+          passphrase: 'test'
+        })
+        .then(console.log);
     });
   }
 
