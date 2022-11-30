@@ -1,4 +1,10 @@
 /**
+ * @typedef {import('@types/stemmaweb').BaseResponse} BaseResponse
+ *
+ * @typedef {import('@types/stemmaweb').StemmawebUser} StemmawebUser
+ */
+
+/**
  * Object to interact with the Stemmarest Middleware's API through high-level
  * functions.
  *
@@ -73,8 +79,36 @@ class LoginForm extends HTMLElement {
           id: values.email,
           passphrase: values.password
         })
-        .then(console.log);
+        .then(LoginForm.#onResponse, LoginForm.#onError)
+        .catch(console.error);
     });
+  }
+
+  /** @param response {BaseResponse<StemmawebUser>} response from the server */
+  static #onResponse(response) {
+    // Login credentials are correct
+    if (response.success) {
+      StemmawebAlert.show(
+        `<strong>Success:</strong> You are logged in!`,
+        'success'
+      );
+      AuthModal.close();
+    } else {
+      // The server responded, but does not allow a login
+      // Might be caused by invalid credentials or too low captcha score
+      StemmawebAlert.show(
+        `<strong>Error:</strong> Unable to login. Please try again.`,
+        'danger'
+      );
+    }
+  }
+
+  static #onError() {
+    // Error in communication with the server
+    StemmawebAlert.show(
+      `<strong>Error</strong> failed to get server response`,
+      'danger'
+    );
   }
 
   connectedCallback() {
@@ -175,8 +209,10 @@ class RegisterForm extends HTMLElement {
     event.preventDefault();
     const values = RegisterForm.fieldValues;
     if (values.password !== values.confirmPassword) {
-      // TODO: handle with error dialog
-      console.error('Passwords do not match');
+      StemmawebAlert.show(
+        `<strong>Error:</strong> Passwords do not match.`,
+        'warning'
+      );
       return;
     }
     executeWithCaptcha(AuthActionName.REGISTER_WITH_EMAIL, (token) => {
@@ -190,8 +226,36 @@ class RegisterForm extends HTMLElement {
           role: 'user',
           passphrase: values.password
         })
-        .then(console.log);
+        .then(RegisterForm.#onResponse, RegisterForm.#onError)
+        .catch(console.error);
     });
+  }
+
+  /** @param response {BaseResponse<StemmawebUser>} response from the server */
+  static #onResponse(response) {
+    // Registration DTO was accepted by the server and the user was created
+    if (response.success) {
+      StemmawebAlert.show(
+        `<strong>Success:</strong> You can log in now!`,
+        'success'
+      );
+      AuthForm.setMode('login');
+    } else {
+      // The server responded, but does not allow a registration
+      StemmawebAlert.show(
+        `<strong>Error:</strong> Unable to register. Please try again.`,
+        'danger'
+      );
+    }
+  }
+
+  static #onError(e) {
+    console.error(e);
+    // Error in communication with the server
+    StemmawebAlert.show(
+      `<strong>Error</strong> failed to get server response`,
+      'danger'
+    );
   }
 
   connectedCallback() {
@@ -279,10 +343,6 @@ class AuthForm extends HTMLElement {
     return this.mode === 'login';
   }
 
-  setMode(mode) {
-    this.mode = mode;
-  }
-
   static setMode(mode) {
     document.querySelector('auth-form').setAttribute('mode', mode);
   }
@@ -343,6 +403,10 @@ class AuthModal extends HTMLElement {
 
   connectedCallback() {
     this.render();
+  }
+
+  static close() {
+    document.querySelector('auth-modal .btn-close').click();
   }
 
   render() {
