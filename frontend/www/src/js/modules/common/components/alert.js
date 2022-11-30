@@ -10,13 +10,23 @@ class StemmawebAlert extends HTMLElement {
    *
    * @param body {string} The body of the alert, may contain HTML
    * @param type {'primary' | 'secondary' | 'success' | 'danger' | 'warning' |
-   *   'info' | 'light' | 'dark'} The type of the alert
+   *   'info' | 'light' | 'dark'} The type of the alert. Defaults to 'primary'.
+   * @param autoHideMs {number | null} The number of milliseconds to wait before
+   *   hiding the alert. The alert will not be hidden if this is null. Defaults
+   *   to 3000.
    */
-  static show(body, type = 'primary') {
+  static show(body, type = 'primary', autoHideMs = 3000) {
     const alert = document.createElement('stemmaweb-alert');
     alert.body = body;
     alert.type = type;
     document.body.appendChild(alert);
+    if (autoHideMs !== null) {
+      setTimeout(() => {
+        // Emulate a click on the close button to get the nice fade-out animation
+        // and keep the UX consistent.
+        alert.querySelector('button').click();
+      }, autoHideMs);
+    }
   }
 
   static get observedAttributes() {
