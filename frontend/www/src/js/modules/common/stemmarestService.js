@@ -114,8 +114,15 @@ class StemmarestService {
   /**
    * @return {string} The URL to initiate a Google OAuth login.
    */
-  get googleOAuthHref() {
-    return this.#endpoint('google-login');
+  get oAuthHrefGoogle() {
+    return this.#endpoint('oauth-google');
+  }
+
+  /**
+   * @return {string} The URL to initiate a GitHub OAuth login.
+   */
+  get oAuthHrefGithub() {
+    return this.#endpoint('oauth-github');
   }
 
   /**

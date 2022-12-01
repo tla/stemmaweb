@@ -26,13 +26,15 @@ class SocialLoginOptions extends HTMLElement {
   connectedCallback() {
     this.innerHTML = `
       <a class="btn btn-link btn-floating mx-1"
-         href="${authFormService.googleOAuthHref}"
+         href="${authFormService.oAuthHrefGoogle}"
          target="_blank">
         <i>${google_icon}</i>
       </a>
-      <button type="button" class="btn btn-link btn-floating mx-1">
+      <a class="btn btn-link btn-floating mx-1"
+         href="${authFormService.oAuthHrefGithub}"
+         target="_blank">
         <i>${github_icon}</i>
-      </button>
+      </a>
     `;
   }
 }
