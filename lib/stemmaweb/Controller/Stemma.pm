@@ -38,35 +38,37 @@ sub index :Path :Args(2) {
     my ($self, $c, $textid, $stemmaid) = @_;
     my $textinfo = load_tradition($c, $textid);
 
-    # Construct the correct URL
-    my $method = 'post';
-    my $location = sprintf("/tradition/%s/stemma", $textinfo->{id});
-    if ($stemmaid ne '__NEW__') {
-        $method = 'put';
-        $location .= "/$stemmaid";
-    }
-
     # Send the request and get the response
     my $stemmadata;
     if ($c->req->method eq 'POST') {
-        if ($textinfo->{permission} eq 'full') {
-            my $dot = $c->request->body_params->{dot};
-            try {
-                $stemmadata = $c->model('Directory')->ajax(
-                    $method, $location,
-                    'Content-Type' => 'application/json',
-                    Content        => encode_utf8($dot)
-                );
-            }
-            catch (stemmaweb::Error $e ) {
-                return json_error($c, $e->status, $e->message);
-            }
-        } else {
-
+        if ($textinfo->{permission} ne 'full') {
             # No permissions to update the stemma
             return json_error($c, 403,
 'You do not have permission to update stemmata for this tradition'
             );
+        }
+
+        my $dot = $c->request->body_params->{dot};
+
+        # Construct the correct URL. 
+        my $location = sprintf("/tradition/%s/stemma", $textinfo->{id});
+        if ($stemmaid eq '__NEW__') {
+            # We have to fish out the name of the stemma from teh dot if it is new.
+            $dot =~ /^(di)?graph\s+(.*?)\s+\{/;
+            $stemmaid = $2;
+            $stemmaid =~ s/^"(.*)"/$1/;
+        }
+        $location .= "/$stemmaid";
+        my $stemmamodel = { identifier => $stemmaid, dot => $dot };
+        try {
+            $stemmadata = $c->model('Directory')->ajax(
+                'put', $location,  # The backend uses PUT
+                'Content-Type' => 'application/json',
+                Content        => encode_json($stemmamodel)
+            );
+        }
+        catch (stemmaweb::Error $e ) {
+            return json_error($c, $e->status, $e->message);
         }
     } elsif ($c->req->method eq 'GET') {
         try {
