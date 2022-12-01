@@ -30,7 +30,10 @@ def register_extensions(app: Flask):
 
     :param app: The Flask application object.
     """
+    # Login manager to handle user sessions
     extensions.login_manager.init_app(app)
+
+    # Authlib OAuth2 client
     extensions.oauth.init_app(app)
     extensions.oauth.register(
         name="google",
@@ -39,6 +42,15 @@ def register_extensions(app: Flask):
         server_metadata_url=constants.GOOGLE_DISCOVERY_URL,
         client_kwargs={"scope": "openid email profile"},
     )
+    extensions.oauth.register(
+        name="github",
+        client_id=app.config["GITHUB_CLIENT_ID"],
+        client_secret=app.config["GITHUB_CLIENT_SECRET"],
+        authorize_url=constants.GITHUB_AUTHORIZATION_URL,
+        client_kwargs={"scope": "user:email"},
+    )
+
+    # Flask-Cors to handle CORS
     extensions.cors.init_app(app)
     return None
 

@@ -48,6 +48,15 @@ if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
         "environment variables to configure Google OAuth."
     )
 
+GITHUB_CLIENT_ID = env.str("GITHUB_CLIENT_ID", None)
+GITHUB_CLIENT_SECRET = env.str("GITHUB_CLIENT_SECRET", None)
+if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
+    logger.warning(
+        "GitHub OAuth not configured, login will not work. "
+        "You can set the GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET "
+        "environment variables to configure GitHub OAuth."
+    )
+
 # Used for reCAPTCHA validation
 RECAPTCHA_SECRET_KEY = env.str("RECAPTCHA_SECRET_KEY", None)
 if not RECAPTCHA_SECRET_KEY:

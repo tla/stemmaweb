@@ -94,11 +94,6 @@ def blueprint_factory(
 
         return success(status=200, body=user)
 
-    @blueprint.route("/google-login")
-    def google_login():
-        redirect_uri = f"{current_app.config['STEMMAWEB_MIDDLEWARE_URL']}/oauthcallback-google"
-        return oauth.google.authorize_redirect(redirect_uri)
-
     def frontend_redirect(*, location: str = "/"):
         """
         Redirect to the frontend app.
@@ -108,6 +103,13 @@ def blueprint_factory(
         if redirect_uri.endswith("//"):
             redirect_uri = redirect_uri[:-1]
         return redirect(redirect_uri)
+
+    @blueprint.route("/oauth-google")
+    def google_login():
+        redirect_uri = (
+            f"{current_app.config['STEMMAWEB_MIDDLEWARE_URL']}/oauthcallback-google"
+        )
+        return oauth.google.authorize_redirect(redirect_uri)
 
     @blueprint.route("/oauthcallback-google")
     def google_oauth_redirect():
@@ -156,5 +158,21 @@ def blueprint_factory(
             flask_login.logout_user()
             # TODO: maybe redirect to dedicated `/failure` page
             return frontend_redirect()
+
+    @blueprint.route("/oauth-github")
+    def github_login():
+        redirect_uri = (
+            f"{current_app.config['STEMMAWEB_MIDDLEWARE_URL']}/oauthcallback-github"
+        )
+        # TODO: proper `state` parameter handling to prevent CSRF
+        # See: https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps#parameters
+        return oauth.github.authorize_redirect(redirect_uri, state='my-super-secret-state')
+
+    @blueprint.route("/oauthcallback-github")
+    def github_oauth_redirect():
+        code = request.args.get("code")
+        state = request.args.get("state")
+        logger.debug("User authorized GitHub OAuth")
+        return frontend_redirect()
 
     return blueprint
