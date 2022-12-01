@@ -107,6 +107,19 @@ class StemmarestAuthService:
     def load_user_github_oauth(
         self, oauth: OAuth, code: str, state: str, client_id: str, client_secret: str
     ) -> StemmawebUser | models.GitHubUserInfo:
+        """
+        Loads a user by interacting with the GitHub OAuth API.
+
+        :param oauth: The pre-configured OAuth object to use
+        :param code: The temporary code received from GitHub,
+                     to be exchanged for an access token
+        :param state: The state parameter received from GitHub,
+                      should be checked to prevent CSRF
+        :param client_id: The client ID of the GitHub OAuth app
+        :param client_secret: The client secret of the GitHub OAuth app
+        :return: A `StemmawebUser` object if the user exists,
+                 a `models.GitHubUserInfo` object otherwise.
+        """
         # Conduct flow as described in https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps#web-application-flow # noqa: E501
         access_token = self.__exchange_gh_code_for_access_token(
             code, client_id, client_secret

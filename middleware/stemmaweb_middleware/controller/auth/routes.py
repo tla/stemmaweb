@@ -114,12 +114,27 @@ def blueprint_factory(
     def oauth_redirect(
         provider: str,
         user_getter: models.UserGetter,
-        *args,
-        **kwargs,
+        user_getter_args: tuple,
     ):
+        """
+        Higher-order function to handle OAuth redirects from distinct providers.
+        The supplied `user_getter` function is used to retrieve
+        an existing `StemmawebUser` loaded from the provider's API,
+        or to create a new one from the data sourced from the provider.
+
+        `user_getter_args` needs to be supplied so that the `user_getter`
+        can be called with the correct arguments **inside** this function.
+        This is needed so that a uniform error-handling flow can be implemented.
+
+        :param provider: the name of the OAuth provider, used in logging
+        :param user_getter: a function to retrieve a `StemmawebUser`
+                            from the provider's API
+        :param user_getter_args: the arguments to pass to `user_getter`
+        :return: a Flask response
+        """
         logger.debug(f"OAuth redirect for {provider} invoked...")
         try:
-            user_or_user_source = user_getter(*args, **kwargs)
+            user_or_user_source = user_getter(*user_getter_args)
 
             # Check whether the user already exists
             if isinstance(user_or_user_source, StemmawebUser):
@@ -132,6 +147,10 @@ def blueprint_factory(
             # The user does not exist yet, so we need to register them
             user_source: models.StemmawebUserSource = user_or_user_source
             user_to_register = user_source.to_stemmaweb_user()
+            logger.debug(
+                f"User loaded from {provider} not found in Stemmarest, "
+                f"registering: {user_to_register.email}"
+            )
             service.register_user(user=user_to_register)
 
             # Log in the newly registered user
@@ -146,7 +165,11 @@ def blueprint_factory(
 
     @blueprint.route("/oauthcallback-google")
     def google_oauth_redirect():
-        return oauth_redirect("Google", service.load_user_google_oauth, oauth)
+        return oauth_redirect(
+            provider="Google",
+            user_getter=service.load_user_google_oauth,
+            user_getter_args=(oauth,),
+        )
 
     @blueprint.route("/oauth-github")
     def github_login():
@@ -164,13 +187,15 @@ def blueprint_factory(
         code = request.args.get("code")
         state = request.args.get("state")
         return oauth_redirect(
-            "GitHub",
-            service.load_user_github_oauth,
-            oauth,
-            code,
-            state,
-            current_app.config["GITHUB_CLIENT_ID"],
-            current_app.config["GITHUB_CLIENT_SECRET"],
+            provider="GitHub",
+            user_getter=service.load_user_github_oauth,
+            user_getter_args=(
+                oauth,
+                code,
+                state,
+                current_app.config["GITHUB_CLIENT_ID"],
+                current_app.config["GITHUB_CLIENT_SECRET"],
+            ),
         )
 
     return blueprint
