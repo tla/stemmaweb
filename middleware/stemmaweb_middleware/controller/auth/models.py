@@ -1,6 +1,14 @@
+from abc import ABC, abstractmethod
+
 import pydantic
 
 from stemmaweb_middleware.models import EmailStr, StemmawebUser, UserRoleStr
+
+
+class StemmawebUserSource(ABC):
+    @abstractmethod
+    def to_stemmaweb_user(self) -> StemmawebUser:
+        pass
 
 
 class AuthDTO(pydantic.BaseModel):
@@ -9,7 +17,7 @@ class AuthDTO(pydantic.BaseModel):
     recaptcha_token: str
 
 
-class RegisterUserDTO(AuthDTO):
+class RegisterUserDTO(StemmawebUserSource, AuthDTO):
     """Data Transfer Object for registering a new user."""
 
     passphrase: str
@@ -35,7 +43,7 @@ class LoginUserDTO(AuthDTO):
     passphrase: str
 
 
-class GoogleUserInfo(pydantic.BaseModel):
+class GoogleUserInfo(StemmawebUserSource, pydantic.BaseModel):
     """
     Model to represent the user info accessible
     after a successful Google login.
@@ -48,8 +56,28 @@ class GoogleUserInfo(pydantic.BaseModel):
         return StemmawebUser(
             id=self.sub,
             email=self.email,
-            # Using `user_id` as we will never actually need a password
+            # Using user id as we will never actually need a password
             passphrase=self.sub,
+            role="user",
+            active=True,
+        )
+
+
+class GitHubUserInfo(StemmawebUserSource, pydantic.BaseModel):
+    """
+    Model to represent the user info accessible
+    after a successful GitHub login.
+    """
+
+    login: str
+    email: str
+
+    def to_stemmaweb_user(self) -> StemmawebUser:
+        return StemmawebUser(
+            id=self.login,
+            email=self.email,
+            # Using user id as we will never actually need a password
+            passphrase=self.login,
             role="user",
             active=True,
         )

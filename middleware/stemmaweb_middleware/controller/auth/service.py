@@ -101,3 +101,8 @@ class StemmarestAuthService:
                 email=email,
             )
         return user_or_none
+
+    def load_user_github_oauth(
+        self, oauth: OAuth, code: str, state: str
+    ) -> StemmawebUser | models.GitHubUserInfo:
+        pass

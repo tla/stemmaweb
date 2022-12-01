@@ -1,3 +1,5 @@
+from typing import Callable
+
 import flask_login
 from flask import Blueprint, current_app, redirect, request
 from flask.wrappers import Response
@@ -111,22 +113,27 @@ def blueprint_factory(
         )
         return oauth.google.authorize_redirect(redirect_uri)
 
-    @blueprint.route("/oauthcallback-google")
-    def google_oauth_redirect():
+    def oauth_redirect(
+        provider: str,
+        user_getter: Callable[[...], StemmawebUser | models.StemmawebUserSource],
+        *args,
+        **kwargs,
+    ):
+        logger.debug(f"OAuth redirect for {provider} invoked...")
         try:
-            user_or_google_info = service.load_user_google_oauth(oauth)
+            user_or_user_source = user_getter(*args, **kwargs)
 
             # Check whether the user already exists
-            if isinstance(user_or_google_info, StemmawebUser):
-                user_to_log_in: StemmawebUser = user_or_google_info
+            if isinstance(user_or_user_source, StemmawebUser):
+                user_to_log_in: StemmawebUser = user_or_user_source
                 flask_login.login_user(AuthUser(user_to_log_in))
                 logger.debug(f"User logged in: {user_to_log_in}")
                 # TODO: maybe redirect to dedicated `/success` page
                 return frontend_redirect()
 
             # The user does not exist yet, so we need to register them
-            google_info: models.GoogleUserInfo = user_or_google_info
-            user_to_register = google_info.to_stemmaweb_user()
+            user_source: models.StemmawebUserSource = user_or_user_source
+            user_to_register = user_source.to_stemmaweb_user()
             service.register_user(user=user_to_register)
 
             # Log in the newly registered user
@@ -134,10 +141,14 @@ def blueprint_factory(
             # TODO: maybe redirect to dedicated `/success` page
             return frontend_redirect()
         except Exception as e:
-            logger.error(f"Error while logging in with Google: {e}")
+            logger.error(f"Error while logging in with {provider}: {e}")
             flask_login.logout_user()
             # TODO: maybe redirect to dedicated `/failure` page
             return frontend_redirect()
+
+    @blueprint.route("/oauthcallback-google")
+    def google_oauth_redirect():
+        return oauth_redirect("Google", service.load_user_google_oauth, oauth)
 
     @blueprint.route("/oauth-github")
     def github_login():
@@ -154,7 +165,8 @@ def blueprint_factory(
     def github_oauth_redirect():
         code = request.args.get("code")
         state = request.args.get("state")
-        logger.debug("User authorized GitHub OAuth")
-        return frontend_redirect()
+        return oauth_redirect(
+            "GitHub", service.load_user_github_oauth, oauth, code, state
+        )
 
     return blueprint
