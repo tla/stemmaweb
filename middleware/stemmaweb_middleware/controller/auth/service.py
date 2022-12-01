@@ -1,4 +1,5 @@
 import requests
+from authlib.integrations.flask_client import OAuth
 
 from stemmaweb_middleware.models import StemmawebUser
 from stemmaweb_middleware.stemmarest import StemmarestClient
@@ -63,3 +64,40 @@ class StemmarestAuthService:
         user_from_response: StemmawebUser = user_or_none
         passwords_match = user_from_response.passphrase == credentials.passphrase
         return user_from_response if passwords_match else None
+
+    def load_user_google_oauth(
+        self, oauth: OAuth
+    ) -> StemmawebUser | models.GoogleUserInfo:
+        """
+        Loads a user by interacting with the Google OAuth API.
+        If the user exists, a `StemmawebUser` object is returned,
+        otherwise a `models.GoogleUserInfo` object
+        which can be used to register the user.
+
+        This must be called after `oauth.google.authorize_redirect` has been invoked.
+
+        :param oauth: The pre-configured OAuth object to use
+                      to interact with the Google OAuth API.
+        :return: A `StemmawebUser` object if the user exists,
+                 a `models.GoogleUserInfo` object otherwise.
+        """
+        # Parse the OAuth response received from Google
+        # See https://developers.google.com/identity/protocols/oauth2/openid-connect#an-id-tokens-payload # noqa: E501
+        token = oauth.google.authorize_access_token()
+        id_token = token["id_token"]
+        access_token = token["access_token"]
+        parsable_token = dict(id_token=id_token, access_token=access_token)
+        nonce = token["userinfo"]["nonce"]
+        user = oauth.google.parse_id_token(parsable_token, nonce)
+
+        # Logging the user into a Flask Session
+        # Using `sub` as the user ID, which is a unique identifier
+        user_id = user["sub"]
+        email = user["email"]
+        user_or_none = self.load_user(user_id)
+        if user_or_none is None:
+            return models.GoogleUserInfo(
+                sub=user_id,
+                email=email,
+            )
+        return user_or_none

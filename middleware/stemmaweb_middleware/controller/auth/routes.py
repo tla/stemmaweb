@@ -114,43 +114,23 @@ def blueprint_factory(
     @blueprint.route("/oauthcallback-google")
     def google_oauth_redirect():
         try:
-            # Parse the OAuth response received from Google
-            # See https://developers.google.com/identity/protocols/oauth2/openid-connect#an-id-tokens-payload # noqa: E501
-            token = oauth.google.authorize_access_token()
-            id_token = token["id_token"]
-            access_token = token["access_token"]
-            parsable_token = dict(id_token=id_token, access_token=access_token)
-            nonce = token["userinfo"]["nonce"]
-            user = oauth.google.parse_id_token(parsable_token, nonce)
-            logger.debug(f"Google user authenticated: {user}")
+            user_or_google_info = service.load_user_google_oauth(oauth)
 
-            # Logging the user into a Flask Session
-            # Using `sub` as the user ID, which is a unique identifier
-            user_id = user["sub"]
-            email = user["email"]
-            user_or_none = service.load_user(user_id)
-            if user_or_none is None:
-                logger.debug(
-                    f"It's the first time {email} logs in using Google. "
-                    f"Creating user..."
-                )
-                new_user = StemmawebUser(
-                    id=user_id,
-                    email=email,
-                    # Using `user_id` as we will never actually need a password
-                    passphrase=user_id,
-                    role="user",
-                    active=True,
-                )
-                service.register_user(user=new_user)
-                flask_login.login_user(AuthUser(new_user))
+            # Check whether the user already exists
+            if isinstance(user_or_google_info, StemmawebUser):
+                user_to_log_in: StemmawebUser = user_or_google_info
+                flask_login.login_user(AuthUser(user_to_log_in))
+                logger.debug(f"User logged in: {user_to_log_in}")
                 # TODO: maybe redirect to dedicated `/success` page
                 return frontend_redirect()
 
-            # Otherwise, we just log the user in as it cannot be `None`
-            user_to_log_in: StemmawebUser = user_or_none
-            flask_login.login_user(AuthUser(user_to_log_in))
-            logger.debug(f"User logged in: {user_to_log_in}")
+            # The user does not exist yet, so we need to register them
+            google_info: models.GoogleUserInfo = user_or_google_info
+            user_to_register = google_info.to_stemmaweb_user()
+            service.register_user(user=user_to_register)
+
+            # Log in the newly registered user
+            flask_login.login_user(AuthUser(user_to_register))
             # TODO: maybe redirect to dedicated `/success` page
             return frontend_redirect()
         except Exception as e:
@@ -165,8 +145,10 @@ def blueprint_factory(
             f"{current_app.config['STEMMAWEB_MIDDLEWARE_URL']}/oauthcallback-github"
         )
         # TODO: proper `state` parameter handling to prevent CSRF
-        # See: https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps#parameters
-        return oauth.github.authorize_redirect(redirect_uri, state='my-super-secret-state')
+        # See: https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps#parameters  # noqa: E501
+        return oauth.github.authorize_redirect(
+            redirect_uri, state="my-super-secret-state"
+        )
 
     @blueprint.route("/oauthcallback-github")
     def github_oauth_redirect():

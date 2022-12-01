@@ -41,6 +41,15 @@ class GoogleUserInfo(pydantic.BaseModel):
     after a successful Google login.
     """
 
-    id_token: str
+    sub: str
     email: str
-    name: str
+
+    def to_stemmaweb_user(self) -> StemmawebUser:
+        return StemmawebUser(
+            id=self.sub,
+            email=self.email,
+            # Using `user_id` as we will never actually need a password
+            passphrase=self.sub,
+            role="user",
+            active=True,
+        )
