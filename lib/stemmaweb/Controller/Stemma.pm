@@ -4,7 +4,7 @@ use namespace::autoclean;
 
 use strict;
 use warnings;
-use Encode qw/ encode_utf8 /;
+use JSON qw/ encode_json /;
 use TryCatch;
 use stemmaweb::Controller::Util
   qw/ load_tradition stemma_info json_error json_bool /;
@@ -40,6 +40,8 @@ sub index :Path :Args(2) {
 
     # Send the request and get the response
     my $stemmadata;
+    my $location = sprintf("/tradition/%s/stemma/%s", $textinfo->{id}, $stemmaid);
+
     if ($c->req->method eq 'POST') {
         if ($textinfo->{permission} ne 'full') {
             # No permissions to update the stemma
@@ -49,16 +51,14 @@ sub index :Path :Args(2) {
         }
 
         my $dot = $c->request->body_params->{dot};
-
-        # Construct the correct URL. 
-        my $location = sprintf("/tradition/%s/stemma", $textinfo->{id});
+        # Fix the URL if we are posting a new stemma 
         if ($stemmaid eq '__NEW__') {
-            # We have to fish out the name of the stemma from teh dot if it is new.
+            # We have to fish out the name of the stemma from the dot if it is new.
             $dot =~ /^(di)?graph\s+(.*?)\s+\{/;
             $stemmaid = $2;
             $stemmaid =~ s/^"(.*)"/$1/;
+            $location =~ s/__NEW__/$stemmaid/;
         }
-        $location .= "/$stemmaid";
         my $stemmamodel = { identifier => $stemmaid, dot => $dot };
         try {
             $stemmadata = $c->model('Directory')->ajax(
