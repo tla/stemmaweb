@@ -1,6 +1,7 @@
 import requests
 from authlib.integrations.flask_client import OAuth
 
+import stemmaweb_middleware.constants as constants
 from stemmaweb_middleware.models import StemmawebUser
 from stemmaweb_middleware.stemmarest import StemmarestClient
 
@@ -90,10 +91,11 @@ class StemmarestAuthService:
         nonce = token["userinfo"]["nonce"]
         user = oauth.google.parse_id_token(parsable_token, nonce)
 
-        # Logging the user into a Flask Session
         # Using `sub` as the user ID, which is a unique identifier
         user_id = user["sub"]
         email = user["email"]
+
+        # Checking if the user exists
         user_or_none = self.load_user(user_id)
         if user_or_none is None:
             return models.GoogleUserInfo(
@@ -103,6 +105,121 @@ class StemmarestAuthService:
         return user_or_none
 
     def load_user_github_oauth(
-        self, oauth: OAuth, code: str, state: str
+        self, oauth: OAuth, code: str, state: str, client_id: str, client_secret: str
     ) -> StemmawebUser | models.GitHubUserInfo:
-        pass
+        # Conduct flow as described in https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps#web-application-flow # noqa: E501
+        access_token = self.__exchange_gh_code_for_access_token(
+            code, client_id, client_secret
+        )
+        user_login = self.__get_gh_user_login(access_token)
+        user_email = self.__get_gh_user_email(access_token)
+        user_or_none = self.load_user(user_login)
+        if user_or_none is None:
+            return models.GitHubUserInfo(login=user_login, email=user_email)  # type: ignore  # noqa: E501
+        return user_or_none
+
+    @staticmethod
+    def __exchange_gh_code_for_access_token(
+        code: str, client_id: str, client_secret: str
+    ) -> str:
+        data = dict(code=code, client_id=client_id, client_secret=client_secret)
+        url = constants.GITHUB_API_ACCESS_TOKEN_URL
+        headers = {"Accept": "application/json"}
+        response = requests.post(url, data=data, headers=headers)
+        return response.json()["access_token"]
+
+    @staticmethod
+    def __get_gh_user_login(access_token: str) -> str:
+        """
+        Get the login name of the GitHub user with the given access token.
+
+        .. code-block::
+
+            {
+                "login": "...",
+                "id": 123456,
+                "node_id": "...",
+                "avatar_url": "...",
+                "gravatar_id": "...",
+                "url": "...",
+                "html_url": "...",
+                "followers_url": "...",
+                "following_url": "...",
+                "gists_url": "...",
+                "starred_url": "...",
+                "subscriptions_url": "...",
+                "organizations_url": "...",
+                "repos_url": "...",
+                "events_url": "...",
+                "received_events_url": "...",
+                "type": "...",
+                "site_admin": false,
+                "name": "...",
+                "company": "...",
+                "blog": "...",
+                "location": "...",
+                "email": null,
+                "hireable": null,
+                "bio": "...",
+                "twitter_username": "...",
+                "public_repos": 106,
+                "public_gists": 4,
+                "followers": 19,
+                "following": 77,
+                "created_at": "...",
+                "updated_at": "...Z"
+            }
+
+        :param access_token: The access token to use
+                             to authenticate with the GitHub API.
+        :return: The login name of the GitHub user.
+        """
+        url = constants.GITHUB_API_USER_URL
+        headers = {"Authorization": f"Bearer {access_token}"}
+        response = requests.get(url, headers=headers)
+        return response.json()["login"]
+
+    @staticmethod
+    def __get_gh_user_email(access_token: str) -> str:
+        """
+        Get the user's primary email address from the GitHub API.
+
+        Example API response:
+
+        .. code-block::
+
+            [
+                {
+                    "email": "123456+username@users.noreply.github.com",
+                    "primary": false,
+                    "verified": true,
+                    "visibility": null
+                },
+                {
+                    "email": "some.one@domain.com",
+                    "primary": true,
+                    "verified": true,
+                    "visibility": "private"
+                },
+                {
+                    "email": "someother@alternativedomain.at",
+                    "primary": false,
+                    "verified": true,
+                    "visibility": null
+                }
+            ]
+
+        :param access_token: The access token to use
+                             to authenticate with the GitHub API.
+        :return: The user's primary email address.
+        """
+        url = constants.GITHUB_API_USER_EMAILS_URL
+        headers = {"Authorization": f"Bearer {access_token}"}
+        response = requests.get(url, headers=headers)
+        emails: list[dict] = response.json()
+
+        def predicate(email: dict) -> bool:
+            return email["primary"]
+
+        primary_email = next(filter(predicate, emails))
+        return primary_email["email"]

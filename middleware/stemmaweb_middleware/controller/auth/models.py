@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Protocol
 
 import pydantic
 
@@ -9,6 +10,11 @@ class StemmawebUserSource(ABC):
     @abstractmethod
     def to_stemmaweb_user(self) -> StemmawebUser:
         pass
+
+
+class UserGetter(Protocol):
+    def __call__(self, *args) -> StemmawebUser | StemmawebUserSource:
+        raise NotImplementedError
 
 
 class AuthDTO(pydantic.BaseModel):
@@ -50,7 +56,7 @@ class GoogleUserInfo(StemmawebUserSource, pydantic.BaseModel):
     """
 
     sub: str
-    email: str
+    email: EmailStr
 
     def to_stemmaweb_user(self) -> StemmawebUser:
         return StemmawebUser(
@@ -70,7 +76,7 @@ class GitHubUserInfo(StemmawebUserSource, pydantic.BaseModel):
     """
 
     login: str
-    email: str
+    email: EmailStr
 
     def to_stemmaweb_user(self) -> StemmawebUser:
         return StemmawebUser(

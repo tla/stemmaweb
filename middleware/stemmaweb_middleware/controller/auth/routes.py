@@ -1,5 +1,3 @@
-from typing import Callable
-
 import flask_login
 from flask import Blueprint, current_app, redirect, request
 from flask.wrappers import Response
@@ -115,7 +113,7 @@ def blueprint_factory(
 
     def oauth_redirect(
         provider: str,
-        user_getter: Callable[[...], StemmawebUser | models.StemmawebUserSource],
+        user_getter: models.UserGetter,
         *args,
         **kwargs,
     ):
@@ -166,7 +164,13 @@ def blueprint_factory(
         code = request.args.get("code")
         state = request.args.get("state")
         return oauth_redirect(
-            "GitHub", service.load_user_github_oauth, oauth, code, state
+            "GitHub",
+            service.load_user_github_oauth,
+            oauth,
+            code,
+            state,
+            current_app.config["GITHUB_CLIENT_ID"],
+            current_app.config["GITHUB_CLIENT_SECRET"],
         )
 
     return blueprint
