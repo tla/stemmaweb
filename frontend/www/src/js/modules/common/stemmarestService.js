@@ -112,6 +112,13 @@ class StemmarestService {
   }
 
   /**
+   * @return {string} The URL to initiate a Google OAuth login.
+   */
+  get googleOAuthHref() {
+    return this.#endpoint('google-login');
+  }
+
+  /**
    * @param dto {RegisterUserDTO}
    * @returns {Promise<BaseResponse<StemmawebUser>>}
    */
