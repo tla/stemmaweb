@@ -1,5 +1,5 @@
 import flask_login
-from flask import Blueprint, current_app, redirect, request, url_for
+from flask import Blueprint, current_app, redirect, request
 from flask.wrappers import Response
 from loguru import logger
 
@@ -19,8 +19,7 @@ from . import service as auth_service
 
 
 def blueprint_factory(
-    stemmarest_client: StemmarestClient,
-    recaptcha_verifier: RecaptchaVerifier
+    stemmarest_client: StemmarestClient, recaptcha_verifier: RecaptchaVerifier
 ) -> Blueprint:
     blueprint = Blueprint("auth", __name__)
     service = auth_service.StemmarestAuthService(stemmarest_client)
@@ -97,9 +96,7 @@ def blueprint_factory(
 
     @blueprint.route("/google-login")
     def google_login():
-        redirect_uri = url_for(
-            f"{blueprint.name}.google_oauth_redirect", _external=True
-        )
+        redirect_uri = f"{current_app.config['STEMMAWEB_MIDDLEWARE_URL']}/oauthcallback-google"
         return oauth.google.authorize_redirect(redirect_uri)
 
     def frontend_redirect(*, location: str = "/"):
@@ -107,9 +104,12 @@ def blueprint_factory(
         Redirect to the frontend app.
         """
         frontend_url = current_app.config["STEMMAWEB_FRONTEND_URL"]
-        return redirect(f"{frontend_url}{location}")
+        redirect_uri = f"{frontend_url}{location}"
+        if redirect_uri.endswith("//"):
+            redirect_uri = redirect_uri[:-1]
+        return redirect(redirect_uri)
 
-    @blueprint.route("/oauthcallback")
+    @blueprint.route("/oauthcallback-google")
     def google_oauth_redirect():
         try:
             # Parse the OAuth response received from Google
