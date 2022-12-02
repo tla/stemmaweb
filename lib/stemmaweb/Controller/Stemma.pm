@@ -40,7 +40,7 @@ sub index :Path :Args(2) {
 
     # Send the request and get the response
     my $stemmadata;
-    my $location = sprintf("/tradition/%s/stemma/%s", $textinfo->{id}, $stemmaid);
+    my $location = sprintf("/tradition/%s/stemma", $textinfo->{id});
 
     if ($c->req->method eq 'POST') {
         if ($textinfo->{permission} ne 'full') {
@@ -52,17 +52,15 @@ sub index :Path :Args(2) {
 
         my $dot = $c->request->body_params->{dot};
         # Fix the URL if we are posting a new stemma 
-        if ($stemmaid eq '__NEW__') {
-            # We have to fish out the name of the stemma from the dot if it is new.
-            $dot =~ /^(di)?graph\s+(.*?)\s+\{/;
-            $stemmaid = $2;
-            $stemmaid =~ s/^"(.*)"/$1/;
-            $location =~ s/__NEW__/$stemmaid/;
+        my $method = 'post';
+        if ($stemmaid ne '__NEW__') {
+            $location .= "/$stemmaid";
+            $method = 'put';
         }
         my $stemmamodel = { identifier => $stemmaid, dot => $dot };
         try {
             $stemmadata = $c->model('Directory')->ajax(
-                'put', $location,  # The backend uses PUT
+                $method, $location,  # The backend uses PUT
                 'Content-Type' => 'application/json',
                 Content        => encode_json($stemmamodel)
             );

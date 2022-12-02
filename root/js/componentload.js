@@ -719,7 +719,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
           // Stash the answer in the appropriate spot in our stemma array
           if (stemmaid === '__NEW__') {
             selectedTextInfo.stemmata.push(data);
-            selectedStemmaSequence = stemmata.length - 1;
+            selectedStemmaSequence = selectedTextInfo.stemmata.length - 1;
           } else {
             selectedTextInfo.stemmata[stemmaseq].svg = data.svg;
           }
