@@ -202,6 +202,7 @@ function load_stemma(idx) {
   $('#stemma_delete_button').hide();
   $('#stexaminer_button').hide();
   $('#stemma_identifier').empty();
+  $('#stemma_graph').svg('destroy');
   // Add the relevant Stemweb functionality
   if (selectedTextEditable) {
     switch_stemweb_ui();

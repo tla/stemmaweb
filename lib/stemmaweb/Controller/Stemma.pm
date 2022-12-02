@@ -53,7 +53,12 @@ sub index :Path :Args(2) {
         my $dot = $c->request->body_params->{dot};
         # Fix the URL if we are posting a new stemma 
         my $method = 'post';
-        if ($stemmaid ne '__NEW__') {
+        if ($stemmaid eq '__NEW__') {
+            # We have to fish out the name of the stemma from the dot if it is new.
+            $dot =~ /^(di)?graph\s+(.*?)\s+\{/;
+            $stemmaid = $2;
+            $stemmaid =~ s/^"(.*)"/$1/;
+        } else {
             $location .= "/$stemmaid";
             $method = 'put';
         }
