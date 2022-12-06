@@ -67,7 +67,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo Creating Florilegium
+echo; echo Creating Florilegium
 $CURL --request POST --form name="Florilegium Coislinianum B" --form empty=yes --form filetype=csv --form userId=user@example.org --form language=Greek --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
 FLOR_ID=`jq -r -e ".tradId" /tmp/stemmarest.response`
 if [ -z $FLOR_ID ]; then
@@ -92,4 +92,14 @@ $CURL --request POST --header 'Content-Type: application/json' --data @data/flor
 if [ $? -ne 0 ]; then
   echo Failed to add Florilegium stemma
   exit 1
+fi
+
+echo; echo Creating Matthew 401
+$CURL --request POST --form name="Matthew 401" --form file=@data/milestone-401.zip --form filetype=graphml --form userId=user@example.org --form language=Armenian --form public=yes $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+MATTHEW_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`
+if [ -z $MATTHEW_ID ]; then
+  echo Failed to create Matthew 401
+  exit 1
+else
+  echo Created tradition $MATTHEW_ID
 fi
