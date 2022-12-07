@@ -96,6 +96,10 @@ class LoginForm extends HTMLElement {
         `<strong>Success:</strong> You are logged in!`,
         'success'
       );
+      /** @type {import('@types/stemmaweb').StemmawebUser} */
+      const user = response.data;
+      delete user.passphrase;
+      AUTH_STORE.setUser({ user });
       AuthModal.close();
     } else {
       // The server responded, but does not allow a login

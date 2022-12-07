@@ -26,7 +26,5 @@ function initState() {
     .catch(console.error);
 }
 
-/**
- * Load user asynchronously from the server.
- */
+/** Load user asynchronously from the server. */
 window.addEventListener('load', initState);
