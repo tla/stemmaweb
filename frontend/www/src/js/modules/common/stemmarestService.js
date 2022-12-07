@@ -10,6 +10,8 @@
  * @typedef {import('types/stemmaweb').LoginUserDTO} LoginUserDTO
  *
  * @typedef {import('types/stemmaweb').StemmawebUser} StemmawebUser
+ *
+ * @typedef {import('types/stemmaweb').StemmawebUserState} StemmawebUserState
  */
 
 /**
@@ -111,18 +113,25 @@ class StemmarestService {
     );
   }
 
-  /**
-   * @return {string} The URL to initiate a Google OAuth login.
-   */
+  /** @returns {string} The URL to initiate a Google OAuth login. */
   get oAuthHrefGoogle() {
     return this.#endpoint('oauth-google');
   }
 
-  /**
-   * @return {string} The URL to initiate a GitHub OAuth login.
-   */
+  /** @returns {string} The URL to initiate a GitHub OAuth login. */
   get oAuthHrefGithub() {
     return this.#endpoint('oauth-github');
+  }
+
+  /**
+   * @typedef {Object} CheckUserResponse
+   * @property {StemmawebUserState | null} user
+   * @returns {Promise<BaseResponse<CheckUserResponse>>}
+   */
+  checkUser() {
+    return this.#fetch('user', {
+      method: 'GET'
+    });
   }
 
   /**

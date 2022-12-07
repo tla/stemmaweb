@@ -78,3 +78,11 @@ export interface LoginUserDTO extends AuthDTO {
 
 /** Model to represent a user in the system. */
 export type StemmawebUser = Omit<RegisterUserDTO, 'recaptcha_token'>;
+
+/** Type to represent an in-app user without sensitive information. */
+export type StemmawebUserState = Omit<StemmawebUser, 'passphrase'>;
+
+/** Model to represent the in-app state of a user. */
+export type AuthState = {
+  user: StemmawebUserState | null;
+};
