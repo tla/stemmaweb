@@ -57,7 +57,9 @@ def blueprint_factory(
         """
         if isinstance(flask_login.current_user, AuthUser):
             auth_user: AuthUser = flask_login.current_user
-            return success(status=200, body=dict(user=auth_user.data.dict(exclude={'passphrase'})))
+            return success(
+                status=200, body=dict(user=auth_user.data.dict(exclude={"passphrase"}))
+            )
         else:
             return success(status=200, body=dict(user=None))
 
