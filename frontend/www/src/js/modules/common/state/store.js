@@ -13,8 +13,13 @@ class StateStore {
    * @param {T} initialState The initial state of the application.
    */
   constructor(initialState) {
-    this.state = initialState;
+    this._state = initialState;
     this.listeners = [];
+  }
+
+  /** @returns {T} */
+  get state() {
+    return this._state;
   }
 
   /**
@@ -23,8 +28,8 @@ class StateStore {
    * @param {T} newState The new state of the application.
    */
   setState(newState) {
-    Object.assign(this.state, newState);
-    this.listeners.forEach((listener) => listener(this.state));
+    Object.assign(this._state, newState);
+    this.listeners.forEach((listener) => listener(this._state));
   }
 
   /**

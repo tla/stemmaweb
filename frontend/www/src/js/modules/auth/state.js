@@ -1,16 +1,31 @@
-/** @typedef {import('@types/stemmaweb').AuthState} AuthState */
+/**
+ * @typedef {import('@types/stemmaweb').AuthState} AuthState
+ *
+ * @typedef {import('@types/stemmaweb').StemmawebUserState} StemmawebUserState
+ */
 
-/** @type {StateStore<AuthState>} */
-const AuthStateStore = StateStore;
-class AuthStore extends AuthStateStore {
+class AuthStore extends StateStore {
   /** @param {AuthState} initialState */
   constructor(initialState) {
     super(initialState);
   }
 
-  /** @param {Pick<AuthState, 'user'>} user */
+  /** @returns {AuthState} State */
+  get state() {
+    return super.state;
+  }
+
+  /** @param {StemmawebUserState} user */
   setUser(user) {
     this.setState({ ...this.state, user });
+  }
+
+  /**
+   * @param {(state: AuthState) => void} listener The listener function to
+   *   register.
+   */
+  subscribe(listener) {
+    super.subscribe(listener);
   }
 }
 
@@ -22,7 +37,7 @@ const authStateStoreService = stemmarestService;
 function initState() {
   authStateStoreService
     .checkUser()
-    .then((res) => AUTH_STORE.setUser(res.data))
+    .then((res) => AUTH_STORE.setUser(res.data.user))
     .catch(console.error);
 }
 

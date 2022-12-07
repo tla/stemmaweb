@@ -1,6 +1,10 @@
 class StemmawebNavigation extends HTMLElement {
   constructor() {
     super();
+    // Whenever the user logs in or out, we need to update the navbar.
+    AUTH_STORE.subscribe((_) => {
+      this.render();
+    });
   }
 
   connectedCallback() {
@@ -8,6 +12,11 @@ class StemmawebNavigation extends HTMLElement {
   }
 
   render() {
+    this._render(AUTH_STORE.state.user);
+  }
+
+  /** @param {import('@types/stemmaweb').StemmawebUserState} user */
+  _render(user) {
     this.innerHTML = `
     <header
       class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow"
@@ -50,7 +59,9 @@ class StemmawebNavigation extends HTMLElement {
         </div>
         <div class="navbar-nav">
           <div class="nav-item text-nowrap">
-            <a class="nav-link px-3" href="#">Hello User</a>
+            <a class="nav-link px-3" href="#">Logged in as ${
+              !user ? 'Guest' : user['email']
+            }</a>
           </div>
         </div>
       </div>
