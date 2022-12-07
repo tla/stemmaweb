@@ -49,6 +49,18 @@ def blueprint_factory(
             return abort(status=401, message="No auth user")
         return success(status=200, body=dict(message="Hello, world!"))
 
+    @blueprint.route("/user", methods=["GET"])
+    def user():
+        """
+        Get the currently logged-in user, if any, based on the Flask session.
+        :return:
+        """
+        if isinstance(flask_login.current_user, AuthUser):
+            auth_user: AuthUser = flask_login.current_user
+            return success(status=200, body=dict(user=auth_user.data.dict(exclude={'passphrase'})))
+        else:
+            return success(status=200, body=dict(user=None))
+
     @blueprint.route("/register", methods=["POST"])
     def register():
         body_or_error = try_parse_model(models.RegisterUserDTO, request)
