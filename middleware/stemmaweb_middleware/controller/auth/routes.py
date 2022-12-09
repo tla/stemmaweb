@@ -82,12 +82,8 @@ def blueprint_factory(
             mimetype=response.headers.get("Content-Type", None),
         )
 
-    @blueprint.route("/login", methods=["GET", "POST"])
+    @blueprint.route("/login", methods=["POST"])
     def login():
-        # Check if query param says we should use Google login
-        if request.args.get("method", "").lower() == "google":
-            return google_login()
-
         body_or_error = try_parse_model(models.LoginUserDTO, request)
         if isinstance(body_or_error, Response):
             return body_or_error
@@ -107,6 +103,11 @@ def blueprint_factory(
         flask_login.login_user(auth_user)
 
         return success(status=200, body=user)
+
+    @blueprint.route("/logout", methods=["GET"])
+    def logout():
+        flask_login.logout_user()
+        return success(status=200, body=dict(message="Logged out"))
 
     def frontend_redirect(*, location: str = "/"):
         """
