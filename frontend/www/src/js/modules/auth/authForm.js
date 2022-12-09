@@ -99,7 +99,7 @@ class LoginForm extends HTMLElement {
       /** @type {import('@types/stemmaweb').StemmawebUser} */
       const user = response.data;
       delete user.passphrase;
-      AUTH_STORE.setUser({ user });
+      AUTH_STORE.setUser(user);
       AuthModal.close();
     } else {
       // The server responded, but does not allow a login
