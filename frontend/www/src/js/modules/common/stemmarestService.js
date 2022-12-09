@@ -159,6 +159,17 @@ class StemmarestService {
   }
 
   /**
+   * @typedef {Object} LogoutUserResponse
+   * @property {'Logged out'} message
+   * @returns {Promise<BaseResponse<LogoutUserResponse>>}
+   */
+  logoutUser() {
+    return this.#fetch('logout', {
+      method: 'GET'
+    });
+  }
+
+  /**
    * Fetches a list of all traditions from the Stemmarest API.
    *
    * @returns {Promise<Tradition[]>}

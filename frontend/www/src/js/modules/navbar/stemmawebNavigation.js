@@ -1,3 +1,11 @@
+/**
+ * Object to interact with the Stemmarest Middleware's API through high-level
+ * functions.
+ *
+ * @type {StemmarestService}
+ */
+const stemmawebNavigationService = stemmarestService;
+
 class StemmawebNavigation extends HTMLElement {
   constructor() {
     super();
@@ -15,8 +23,29 @@ class StemmawebNavigation extends HTMLElement {
     this._render(AUTH_STORE.state.user);
   }
 
+  static logoutUser() {
+    stemmawebNavigationService
+      .logoutUser()
+      .then(() => AUTH_STORE.setUser(null))
+      .catch(console.error);
+  }
+
   /** @param {import('@types/stemmaweb').StemmawebUserState} user */
   _render(user) {
+    // Inner component declarations.
+    const signInLink = `
+    <a class="nav-link px-3"
+        data-bs-toggle="modal"
+        data-bs-target="#authModal">
+        Sign in
+    </a>
+    `;
+    const signOutLink = `
+    <a class="nav-link px-3" onclick="StemmawebNavigation.logoutUser()">
+        Sign out
+    </a>
+    `;
+
     this.innerHTML = `
     <header
       class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow"
@@ -49,17 +78,12 @@ class StemmawebNavigation extends HTMLElement {
         </div>
         <div class="navbar-nav">
           <div class="nav-item text-nowrap">
-            <a class="nav-link px-3"
-                href="#"
-                data-bs-toggle="modal"
-                data-bs-target="#authModal">
-                Sign out
-            </a>
+            ${user ? signOutLink : signInLink}
           </div>
         </div>
         <div class="navbar-nav">
           <div class="nav-item text-nowrap">
-            <a class="nav-link px-3" href="#">Logged in as ${
+            <a class="nav-link px-3">Logged in as ${
               !user ? 'Guest' : user['email']
             }</a>
           </div>
