@@ -84,3 +84,7 @@ stemmaweb-alert {
   right: 10px;
   width: 50vw;
 }
+
+.nav-link {
+  cursor: pointer;
+}
