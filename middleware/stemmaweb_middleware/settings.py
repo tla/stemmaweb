@@ -6,6 +6,9 @@ from loguru import logger
 
 from stemmaweb_middleware.stemmarest.stemmarest_client import StemmarestClient
 from stemmaweb_middleware.stemmarest.stemmarest_endpoints import StemmarestEndpoints
+from stemmaweb_middleware.utils import RecaptchaVerifier
+
+from . import constants
 
 env = Env()
 env.read_env()
@@ -44,6 +47,29 @@ if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
         "You can set the GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET "
         "environment variables to configure Google OAuth."
     )
+
+GITHUB_CLIENT_ID = env.str("GITHUB_CLIENT_ID", None)
+GITHUB_CLIENT_SECRET = env.str("GITHUB_CLIENT_SECRET", None)
+if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
+    logger.warning(
+        "GitHub OAuth not configured, login will not work. "
+        "You can set the GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET "
+        "environment variables to configure GitHub OAuth."
+    )
+
+# Used for reCAPTCHA validation
+RECAPTCHA_SECRET_KEY = env.str("RECAPTCHA_SECRET_KEY", None)
+if not RECAPTCHA_SECRET_KEY:
+    logger.warning(
+        "reCAPTCHA not configured, auth operations will not work. "
+        "You can set the RECAPTCHA_SECRET_KEY "
+        "environment variable to configure reCAPTCHA."
+    )
+RECAPTCHA_VERIFIER = RecaptchaVerifier(
+    secret=RECAPTCHA_SECRET_KEY,
+    verification_url=constants.GOOGLE_RECAPTCHA_VERIFICATION_URL,
+    threshold=constants.GOOGLE_RECAPTCHA_THRESHOLD,
+)
 
 # Logging
 LOG_LEVEL = env.str("LOG_LEVEL", default="INFO")

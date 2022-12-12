@@ -72,3 +72,19 @@
   cursor: pointer;
   fill: #e3e3e3;
 }
+
+[role='tab'] {
+  cursor: pointer;
+}
+
+stemmaweb-alert {
+  z-index: 1100;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 50vw;
+}
+
+.nav-link {
+  cursor: pointer;
+}

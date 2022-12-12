@@ -1,5 +1,5 @@
 import flask_login
-from flask import Blueprint, current_app, redirect, request, url_for
+from flask import Blueprint, current_app, redirect, request
 from flask.wrappers import Response
 from loguru import logger
 
@@ -7,13 +7,20 @@ import stemmaweb_middleware.permissions as permissions
 from stemmaweb_middleware.extensions import login_manager, oauth
 from stemmaweb_middleware.models import AuthUser, StemmawebUser
 from stemmaweb_middleware.stemmarest import StemmarestClient
-from stemmaweb_middleware.utils import abort, success, try_parse_model
+from stemmaweb_middleware.utils import (
+    RecaptchaVerifier,
+    abort,
+    success,
+    try_parse_model,
+)
 
 from . import models
 from . import service as auth_service
 
 
-def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
+def blueprint_factory(
+    stemmarest_client: StemmarestClient, recaptcha_verifier: RecaptchaVerifier
+) -> Blueprint:
     blueprint = Blueprint("auth", __name__)
     service = auth_service.StemmarestAuthService(stemmarest_client)
 
@@ -42,6 +49,20 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
             return abort(status=401, message="No auth user")
         return success(status=200, body=dict(message="Hello, world!"))
 
+    @blueprint.route("/user", methods=["GET"])
+    def user():
+        """
+        Get the currently logged-in user, if any, based on the Flask session.
+        :return:
+        """
+        if isinstance(flask_login.current_user, AuthUser):
+            auth_user: AuthUser = flask_login.current_user
+            return success(
+                status=200, body=dict(user=auth_user.data.dict(exclude={"passphrase"}))
+            )
+        else:
+            return success(status=200, body=dict(user=None))
+
     @blueprint.route("/register", methods=["POST"])
     def register():
         body_or_error = try_parse_model(models.RegisterUserDTO, request)
@@ -49,19 +70,20 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
             return body_or_error
 
         body: models.RegisterUserDTO = body_or_error
-        response = service.register_user(body)
+
+        # Verify captcha
+        if not recaptcha_verifier.verify(body.recaptcha_token):
+            return abort(status=429, message="reCAPTCHA verification failed")
+
+        response = service.register_user(body.to_stemmaweb_user())
         return Response(
             response=response.content,
             status=response.status_code,
             mimetype=response.headers.get("Content-Type", None),
         )
 
-    @blueprint.route("/login", methods=["GET", "POST"])
+    @blueprint.route("/login", methods=["POST"])
     def login():
-        # Check if query param says we should use Google login
-        if request.args.get("method", "").lower() == "google":
-            return google_login()
-
         body_or_error = try_parse_model(models.LoginUserDTO, request)
         if isinstance(body_or_error, Response):
             return body_or_error
@@ -71,6 +93,10 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
         if user_or_none is None:
             return abort(status=401, message="Invalid credentials or no such user")
 
+        # Verify captcha
+        if not recaptcha_verifier.verify(body.recaptcha_token):
+            return abort(status=429, message="reCAPTCHA verification failed")
+
         # Login user for this flask session
         user: StemmawebUser = user_or_none
         auth_user = AuthUser(user)
@@ -78,66 +104,113 @@ def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
 
         return success(status=200, body=user)
 
-    @blueprint.route("/google-login")
-    def google_login():
-        redirect_uri = url_for(
-            f"{blueprint.name}.google_oauth_redirect", _external=True
-        )
-        return oauth.google.authorize_redirect(redirect_uri)
+    @blueprint.route("/logout", methods=["GET"])
+    def logout():
+        flask_login.logout_user()
+        return success(status=200, body=dict(message="Logged out"))
 
     def frontend_redirect(*, location: str = "/"):
         """
         Redirect to the frontend app.
         """
         frontend_url = current_app.config["STEMMAWEB_FRONTEND_URL"]
-        return redirect(f"{frontend_url}{location}")
+        redirect_uri = f"{frontend_url}{location}"
+        if redirect_uri.endswith("//"):
+            redirect_uri = redirect_uri[:-1]
+        return redirect(redirect_uri)
 
-    @blueprint.route("/oauthcallback")
-    def google_oauth_redirect():
+    @blueprint.route("/oauth-google")
+    def google_login():
+        redirect_uri = (
+            f"{current_app.config['STEMMAWEB_MIDDLEWARE_URL']}/oauthcallback-google"
+        )
+        return oauth.google.authorize_redirect(redirect_uri)
+
+    def oauth_redirect(
+        provider: str,
+        user_getter: models.UserGetter,
+        user_getter_args: tuple,
+    ):
+        """
+        Higher-order function to handle OAuth redirects from distinct providers.
+        The supplied `user_getter` function is used to retrieve
+        an existing `StemmawebUser` loaded from the provider's API,
+        or to create a new one from the data sourced from the provider.
+
+        `user_getter_args` needs to be supplied so that the `user_getter`
+        can be called with the correct arguments **inside** this function.
+        This is needed so that a uniform error-handling flow can be implemented.
+
+        :param provider: the name of the OAuth provider, used in logging
+        :param user_getter: a function to retrieve a `StemmawebUser`
+                            from the provider's API
+        :param user_getter_args: the arguments to pass to `user_getter`
+        :return: a Flask response
+        """
+        logger.debug(f"OAuth redirect for {provider} invoked...")
         try:
-            # Parse the OAuth response received from Google
-            # See https://developers.google.com/identity/protocols/oauth2/openid-connect#an-id-tokens-payload # noqa: E501
-            token = oauth.google.authorize_access_token()
-            id_token = token["id_token"]
-            access_token = token["access_token"]
-            parsable_token = dict(id_token=id_token, access_token=access_token)
-            nonce = token["userinfo"]["nonce"]
-            user = oauth.google.parse_id_token(parsable_token, nonce)
-            logger.debug(f"Google user authenticated: {user}")
+            user_or_user_source = user_getter(*user_getter_args)
 
-            # Logging the user into a Flask Session
-            # Using `sub` as the user ID, which is a unique identifier
-            user_id = user["sub"]
-            email = user["email"]
-            user_or_none = service.load_user(user_id)
-            if user_or_none is None:
-                logger.debug(
-                    f"It's the first time {email} logs in using Google. "
-                    f"Creating user..."
-                )
-                new_user = models.StemmawebUser(
-                    id=user_id,
-                    email=email,
-                    # Using `user_id` as we will never actually need a password
-                    passphrase=user_id,
-                    role="user",
-                    active=True,
-                )
-                service.register_user(user=new_user)
-                flask_login.login_user(AuthUser(new_user))
+            # Check whether the user already exists
+            if isinstance(user_or_user_source, StemmawebUser):
+                user_to_log_in: StemmawebUser = user_or_user_source
+                flask_login.login_user(AuthUser(user_to_log_in))
+                logger.debug(f"User logged in: {user_to_log_in}")
                 # TODO: maybe redirect to dedicated `/success` page
                 return frontend_redirect()
 
-            # Otherwise, we just log the user in as it cannot be `None`
-            user_to_log_in: models.StemmawebUser = user_or_none
-            flask_login.login_user(AuthUser(user_to_log_in))
-            logger.debug(f"User logged in: {user_to_log_in}")
+            # The user does not exist yet, so we need to register them
+            user_source: models.StemmawebUserSource = user_or_user_source
+            user_to_register = user_source.to_stemmaweb_user()
+            logger.debug(
+                f"User loaded from {provider} not found in Stemmarest, "
+                f"registering: {user_to_register.email}"
+            )
+            service.register_user(user=user_to_register)
+
+            # Log in the newly registered user
+            flask_login.login_user(AuthUser(user_to_register))
             # TODO: maybe redirect to dedicated `/success` page
             return frontend_redirect()
         except Exception as e:
-            logger.error(f"Error while logging in with Google: {e}")
+            logger.error(f"Error while logging in with {provider}: {e}")
             flask_login.logout_user()
             # TODO: maybe redirect to dedicated `/failure` page
             return frontend_redirect()
+
+    @blueprint.route("/oauthcallback-google")
+    def google_oauth_redirect():
+        return oauth_redirect(
+            provider="Google",
+            user_getter=service.load_user_google_oauth,
+            user_getter_args=(oauth,),
+        )
+
+    @blueprint.route("/oauth-github")
+    def github_login():
+        redirect_uri = (
+            f"{current_app.config['STEMMAWEB_MIDDLEWARE_URL']}/oauthcallback-github"
+        )
+        # TODO: proper `state` parameter handling to prevent CSRF
+        # See: https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps#parameters  # noqa: E501
+        return oauth.github.authorize_redirect(
+            redirect_uri, state="my-super-secret-state"
+        )
+
+    @blueprint.route("/oauthcallback-github")
+    def github_oauth_redirect():
+        code = request.args.get("code")
+        state = request.args.get("state")
+        return oauth_redirect(
+            provider="GitHub",
+            user_getter=service.load_user_github_oauth,
+            user_getter_args=(
+                oauth,
+                code,
+                state,
+                current_app.config["GITHUB_CLIENT_ID"],
+                current_app.config["GITHUB_CLIENT_SECRET"],
+            ),
+        )
 
     return blueprint

@@ -1,0 +1,221 @@
+/**
+ * @typedef {import('types/stemmaweb').BaseResponse} BaseResponse
+ *
+ * @typedef {import('types/stemmaweb').Tradition} Tradition
+ *
+ * @typedef {import('types/stemmaweb').Stemma} Stemma
+ *
+ * @typedef {import('types/stemmaweb').RegisterUserDTO} RegisterUserDTO
+ *
+ * @typedef {import('types/stemmaweb').LoginUserDTO} LoginUserDTO
+ *
+ * @typedef {import('types/stemmaweb').StemmawebUser} StemmawebUser
+ *
+ * @typedef {import('types/stemmaweb').StemmawebUserState} StemmawebUserState
+ */
+
+/**
+ * @param baseUrl {string}
+ * @param params {Record<string, string>}
+ * @returns {string}
+ */
+function constructFetchUrl(baseUrl, params) {
+  if (Object.keys(params).length === 0) {
+    return baseUrl;
+  }
+  const queryString = Object.keys(params)
+    .map(
+      (key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
+    )
+    .join('&');
+  return `${baseUrl}?${queryString}`;
+}
+
+/**
+ * Utility function to fetch a specific endpoint.
+ *
+ * @template T
+ * @function
+ * @param endpoint {string} The endpoint to fetch.
+ * @param options {RequestInit | undefined} The options to pass to the fetch
+ *   call.
+ * @param params {Record<string, string>} Query parameters to pass to the
+ *   endpoint.
+ * @returns {BaseResponse<T>} The response from the fetch call.
+ */
+async function baseFetch(endpoint, options, params = {}) {
+  const res = await fetch(constructFetchUrl(endpoint, params), options);
+  const data = await res.json();
+  if (res.ok) {
+    return { success: true, message: res.statusText, data };
+  } else {
+    return { success: false, message: res.statusText, data };
+  }
+}
+
+/**
+ * Service class to interact with the Stemmarest API through high-level
+ * functions. The main purpose of this class is to encapsulate the logic needed
+ * for communication with the REST API, such as where the REST API is deployed
+ * and what endpoints are available.
+ */
+class StemmarestService {
+  /**
+   * Creates a new instance of the `StemmarestService` class.
+   *
+   * @param {string} serverLocation - A url to the stemmarest server
+   */
+  constructor(serverLocation) {
+    this.serverLocation = serverLocation;
+  }
+
+  /**
+   * Constructs the full URL to be used for a request to the Stemmarest API
+   * based on the supplied `pathSegment`.
+   *
+   * @param {string} pathSegment - The path segment to be appended to the base
+   *   URL of the Stemmarest API, such as `"/api/traditions"`.
+   * @returns {string} Full URL to be used for a request to the Stemmarest API,
+   *   using URI encoding.
+   */
+  #endpoint(pathSegment) {
+    const rawEndpoint = `${this.serverLocation}/${pathSegment}`;
+    return encodeURI(rawEndpoint);
+  }
+
+  /**
+   * Utility function to fetch a specific endpoint.
+   *
+   * @template T
+   * @function
+   * @param endpoint {string} The endpoint to fetch.
+   * @param options {RequestInit | undefined} The options to pass to the fetch
+   *   call.
+   * @param params {Record<string, string>} Query parameters to pass to the
+   *   endpoint.
+   * @returns {BaseResponse<T>} The response from the fetch call.
+   */
+  #fetch(endpoint, options, params = {}) {
+    return baseFetch(`${this.#endpoint(endpoint)}`, options, params).catch(
+      this.#handleFetchError
+    );
+  }
+
+  /**
+   * Generic way to handle errors from the fetch API.
+   *
+   * @param {any} errorReason - The reason for the error
+   */
+  #handleFetchError(errorReason) {
+    console.error(
+      "Error while interacting with the middleware's API:",
+      errorReason
+    );
+  }
+
+  /** @returns {string} The URL to initiate a Google OAuth login. */
+  get oAuthHrefGoogle() {
+    return this.#endpoint('oauth-google');
+  }
+
+  /** @returns {string} The URL to initiate a GitHub OAuth login. */
+  get oAuthHrefGithub() {
+    return this.#endpoint('oauth-github');
+  }
+
+  /**
+   * @typedef {Object} CheckUserResponse
+   * @property {StemmawebUserState | null} user
+   * @returns {Promise<BaseResponse<CheckUserResponse>>}
+   */
+  checkUser() {
+    return this.#fetch('user', {
+      method: 'GET'
+    });
+  }
+
+  /**
+   * @param dto {RegisterUserDTO}
+   * @returns {Promise<BaseResponse<StemmawebUser>>}
+   */
+  registerUser(dto) {
+    return this.#fetch('register', {
+      method: 'POST',
+      body: JSON.stringify(dto),
+      headers: new Headers({ 'Content-Type': 'application/json' })
+    });
+  }
+
+  /**
+   * @param dto {LoginUserDTO}
+   * @returns {Promise<BaseResponse<StemmawebUser>>}
+   */
+  loginUser(dto) {
+    return this.#fetch('login', {
+      method: 'POST',
+      body: JSON.stringify(dto),
+      headers: new Headers({ 'Content-Type': 'application/json' })
+    });
+  }
+
+  /**
+   * @typedef {Object} LogoutUserResponse
+   * @property {'Logged out'} message
+   * @returns {Promise<BaseResponse<LogoutUserResponse>>}
+   */
+  logoutUser() {
+    return this.#fetch('logout', {
+      method: 'GET'
+    });
+  }
+
+  /**
+   * Fetches a list of all traditions from the Stemmarest API.
+   *
+   * @returns {Promise<Tradition[]>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /traditions}
+   */
+  listTraditions() {
+    const endpoint = this.#endpoint('api/traditions');
+    return fetch(endpoint)
+      .then((response) => response.json())
+      .catch(this.#handleFetchError);
+  }
+
+  /**
+   * Fetches a list of all the stemma associated with the tradition identified
+   * by the supplied `tradId`.
+   *
+   * @param {string} tradId - The id of the tradition whose stemmata are to be
+   *   fetched.
+   * @returns {Promise<Stemma[]>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemmata}
+   */
+  listStemmata(tradId) {
+    const endpoint = this.#endpoint(`api/tradition/${tradId}/stemmata`);
+    return fetch(endpoint)
+      .then((response) => response.json())
+      .catch(this.#handleFetchError);
+  }
+
+  /**
+   * Reorients a stemma tree so that the given witness node is the root
+   * (archetype). This operation can only be performed on a stemma without
+   * contamination links.
+   *
+   * @param {string} tradId - The ID of the tradition being queried
+   * @param {string} name - The name of the requested stemma
+   * @param {string} nodeId - Archetype node
+   * @returns {Promise<object[]>} The updated stemma model
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemma/[name]/reorient/[nodeId]}
+   */
+  reorientStemmaTree(tradId, name, nodeId) {
+    // Note: see issue #92, API/middleware needs updating for non ASCII sigils
+    const endpoint = this.#endpoint(
+      `api/tradition/${tradId}/stemma/${name}/reorient/${nodeId}`
+    );
+    return fetch(endpoint, { method: 'POST' })
+      .then((response) => response.json())
+      .catch(this.#handleFetchError);
+  }
+}

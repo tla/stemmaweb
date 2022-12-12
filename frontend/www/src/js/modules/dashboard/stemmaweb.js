@@ -16,7 +16,7 @@ const saveSvgAsPng = window.saveSvgAsPng;
  *
  * @type {StemmarestService}
  */
-const service = new StemmarestService(STEMMAWEB_MIDDLEWARE_URL);
+const service = stemmarestService;
 
 function initStemmaweb() {
   const first_char_is_non_alpha = new RegExp('^[^A-z]');

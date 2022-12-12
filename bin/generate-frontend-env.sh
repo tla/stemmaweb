@@ -2,8 +2,10 @@
 
 # Array of environment variables to be processed
 # - STEMMAWEB_MIDDLEWARE_URL is the URL of the Stemmaweb middleware
+# - RECAPTCHA_SITE_KEY is the public key for the reCAPTCHA service
 ENV_VARS_TO_COPY=(
     "STEMMAWEB_MIDDLEWARE_URL"
+    "RECAPTCHA_SITE_KEY"
 )
 
 statements=""
@@ -19,7 +21,7 @@ for ENV_VAR in "${ENV_VARS_TO_COPY[@]}"; do
 
     # If the environment variable is set, append it to `statements`
     # as a JS declaration: `const ENV_VAR = "value of ENV_VAR";`
-    statements="${statements}const $ENV_VAR = \"${!ENV_VAR}\";\n"
+    statements="${statements}const $ENV_VAR = '${!ENV_VAR}';\n"
 done
 
 # shellcheck disable=SC2059
