@@ -125,3 +125,16 @@ The production server can be started using the following command:
 ```shell
 make --directory=middleware start
 ```
+
+## Testing
+
+An end-to-end test suite is available in the [frontend-e2e](frontend-e2e) directory, using Cypress. To run the tests in
+headless mode, you can execute the `make` target below. This will start the necessary services in the background using
+Docker, and then execute the defined specifications.
+
+```shell
+make tests
+```
+
+You can read more about developing tests and executing them with the UI of Cypress, you can read more about it
+in [frontend-e2e/README.md](frontend-e2e/README.md).
