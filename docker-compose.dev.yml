@@ -15,7 +15,7 @@ services:
     volumes:
       - ./bin/init-data/:/init-data
     entrypoint: >
-      /bin/bash -c "sleep 10 && /init-data/init_test_data.sh"
+      /bin/bash -c "./wait-for-it.sh --host=${STEMMAREST_HOST} --port=${STEMMAREST_PORT} -- /init-data/init_test_data.sh"
 
   stemmaweb:
     container_name: stemmaweb
