@@ -8,7 +8,6 @@ module.exports = defineConfig({
     }
   },
   env: {
-    STEMMAWEB_FRONTEND_URL: env.STEMMAWEB_FRONTEND_URL,
-    STEMMAWEB_MIDDLEWARE_URL: env.STEMMAWEB_MIDDLEWARE_URL
+    ...env
   }
 });
