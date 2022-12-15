@@ -27,6 +27,7 @@ dev: build-dev
 	@docker-compose --env-file .env.dev -f docker-compose.dev.yml up
 
 
+# The command to be replaced in `stemmaweb-e2e`'s entrypoint
 CY_NPM_COMMAND="cy:run"
 
 build-tests:
@@ -36,11 +37,15 @@ build-tests:
 build-tests-arm:
 	@make build-tests CY_NPM_COMMAND="cy:run:arm"
 
-tests: build-tests
+tests: tests-down build-tests
 	@echo "==> 🧪 Run E2E Tests"
 	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker-compose --env-file .env.dev -f docker-compose.test.yml up
 
-tests-arm: build-tests-arm
+tests-down:
+	@echo "==> 🛑 Stop Test Containers"
+	@docker-compose --env-file .env.dev -f docker-compose.test.yml down
+
+tests-arm:
 	@make tests CY_NPM_COMMAND="cy:run:arm"
 
 install-middleware:
@@ -76,4 +81,4 @@ stop: stop-middleware stop-frontend
 
 dev-down:
 	@echo "==> 🛑 Stop Dev Containers"
-	@docker-compose -f docker-compose.dev.yml down
+	@docker-compose --env-file .env.dev -f docker-compose.dev.yml down

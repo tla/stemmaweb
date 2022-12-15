@@ -8,6 +8,3 @@ RUN npm ci
 
 # Copy source files
 COPY . .
-
-# Run tests
-CMD ["npm", "test"]

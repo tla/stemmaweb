@@ -8,7 +8,8 @@
     "cy:open": "cypress open",
     "cy:run": "cypress run",
     "cy:run:arm": "cypress run --browser electron",
-    "test": "npm run cy:run"
+    "test": "npm run cy:run",
+    "start": "npm run cy:open"
   },
   "keywords": [],
   "author": "",
