@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  stemmarest:
+    image: "dhuniwien/stemmarest:latest"
+    ports:
+      - "8080:8080"
+
+  stemmarest-initializer:
+    build: bin
+    env_file:
+      - .env.dev
+    depends_on:
+      - stemmarest
+    volumes:
+      - ./bin/init-data/:/init-data
+    entrypoint: >
+      /bin/bash -c "./wait-for-it.sh --host=${STEMMAREST_HOST} --port=${STEMMAREST_PORT} -- /init-data/init_test_data.sh"
+
+  stemmaweb:
+    container_name: stemmaweb
+    build:
+        context: .
+        dockerfile: Dockerfile-dev
+    volumes:
+      - .:/usr/src
+    env_file:
+      - .env.dev
+    ports:
+      - "3000:3000"
+      - "5000:5000"
+    entrypoint: >
+      /bin/bash -c "make install-middleware && 
+                    make install-frontend &&
+                    make run &&
+                    tail -F just-forcing-the-container-to-keep-running"
+    
+  stemmaweb-e2e:
+    container_name: stemmaweb-e2e
+    build: frontend-e2e
+    env_file:
+      - .env.dev
+    depends_on:
+      - stemmaweb
+      - stemmarest-initializer
+    volumes:
+      - ./frontend-e2e/:/app
+    entrypoint: >
+      /bin/bash -c "sleep 10 &&  # Waiting for `stemmarest-initializer` to finish
+                    npx -y wait-on '${CY_STEMMAWEB_FRONTEND_URL}/' &&
+                    npx -y wait-on '${CY_STEMMAWEB_MIDDLEWARE_URL}/' &&
+                    npm run ${CY_NPM_COMMAND}"
+
+  reverse-proxy:
+    build: ./reverse-proxy
+    depends_on:
+      - stemmaweb
+    ports:
+      - "8888:80"

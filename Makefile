@@ -20,11 +20,28 @@ shell:
 
 build-dev:
 	@echo "==> 🏗 Build Dev Containers"
-	@docker-compose -f docker-compose.dev.yml build
+	@docker-compose --env-file .env.dev -f docker-compose.dev.yml build
 
 dev: build-dev
 	@echo "==> 💻 Development"
-	@docker-compose -f docker-compose.dev.yml up
+	@docker-compose --env-file .env.dev -f docker-compose.dev.yml up
+
+
+CY_NPM_COMMAND="cy:run"
+
+build-tests:
+	@echo "==> 🏗 Build Test Containers"
+	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker-compose --env-file .env.dev -f docker-compose.test.yml build
+
+build-tests-arm:
+	@make build-tests CY_NPM_COMMAND="cy:run:arm"
+
+tests: build-tests
+	@echo "==> 🧪 Run E2E Tests"
+	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker-compose --env-file .env.dev -f docker-compose.test.yml up
+
+tests-arm: build-tests-arm
+	@make tests CY_NPM_COMMAND="cy:run:arm"
 
 install-middleware:
 	@echo "==> 📦 Install Middleware"
