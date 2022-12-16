@@ -8,8 +8,8 @@ the [Stemmarest](http://dhuniwien.github.io/tradition_repo/) data model.
 - [Overview](#overview)
 - [Trying it out](#trying-it-out-eventually)
 - [Development](#development)
-    - [Docker](#docker)
-    - [Local](#local)
+  - [Docker](#docker)
+  - [Local](#local)
 
 ## Overview
 
@@ -43,6 +43,26 @@ After the build is complete, you can access the system through an `nginx` revers
 Please note that the backend will be automatically populated with test data for you to explore.
 
 ## Development
+
+### Decrypting Environment Variables
+
+Please create a file called `env_passphrase` in the root directory of the project, containing a single line with the passphrase to decrypt the environment variables. This file is ignored by git, so you can safely add it to the repository.
+
+Then you should be able to decrypt the environment variables by running:
+
+```shell
+make decrypt-env
+```
+
+### Encrypting Environment Variables
+
+If you need to extend any of the environment variables, you can commit your changes to the repository in an encrypted way by running the command below after editing any of the `.env.*` files:
+
+```shell
+make encrypt-env
+```
+
+This command will regenerate `env.zip.gpg` with the new environment variables and it is safe to be committed to the repository. Other contributors will be able to sync the changes by running `make decrypt-env`.
 
 ### Docker
 
@@ -78,11 +98,11 @@ running `make dev-down` in the root directory of the project.
 #### Service Endpoints
 
 - Backend:
-    - [http://localhost:3000/](http://localhost:3000/)
-    - [http://localhost:8888/stemmaweb/requests/](http://localhost:8888/stemmaweb/requests/)
+  - [http://localhost:3000/](http://localhost:3000/)
+  - [http://localhost:8888/stemmaweb/requests/](http://localhost:8888/stemmaweb/requests/)
 - Frontend:
-    - [http://localhost:5000/](http://localhost:5000/)
-    - [http://localhost:8888/stemmaweb/](http://localhost:8888/stemmaweb/)
+  - [http://localhost:5000/](http://localhost:5000/)
+  - [http://localhost:8888/stemmaweb/](http://localhost:8888/stemmaweb/)
 
 The preferred way to access the services is through the `nginx` reverse proxy (`http://localhost:8888/*`) so that you
 can work with the services as if they were in production.
