@@ -82,3 +82,16 @@ stop: stop-middleware stop-frontend
 dev-down:
 	@echo "==> 🛑 Stop Dev Containers"
 	@docker-compose --env-file .env.dev -f docker-compose.dev.yml down
+
+archive-env:
+	@echo "==> 📦 Archive .env files into env.zip"
+	@ls -d .env* | grep -v '.example$$' | zip env.zip -@
+
+encrypt-env: archive-env
+	@echo "==> 🔐 Encrypt env.zip"
+	@gpg --quiet --batch --yes --symmetric --cipher-algo AES256 --passphrase=$$(cat env_passphrase) env.zip
+
+decrypt-env:
+	@echo "==> 🔓 Decrypt env.zip"
+	@gpg --quiet --batch --yes --decrypt --passphrase=$$(cat env_passphrase) --output env.zip env.zip.gpg
+	@unzip -od . env.zip
