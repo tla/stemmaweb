@@ -4,3 +4,9 @@ FROM debian:bookworm-slim
 # install `curl` and `jq`
 RUN apt-get update &&  \
     apt-get install -y curl jq
+
+WORKDIR /usr/src
+
+# Add wait-for-it to wait for Stemmarest to be ready
+COPY wait-for-it.sh .
+RUN chmod +x wait-for-it.sh

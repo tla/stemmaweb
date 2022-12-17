@@ -32,7 +32,24 @@ services:
     entrypoint: >
       /bin/bash -c "make install-middleware && 
                     make install-frontend &&
+                    make run &&
                     tail -F just-forcing-the-container-to-keep-running"
+    
+  stemmaweb-e2e:
+    container_name: stemmaweb-e2e
+    build: frontend-e2e
+    env_file:
+      - .env.dev
+    depends_on:
+      - stemmaweb
+      - stemmarest-initializer
+    volumes:
+      - ./frontend-e2e/:/app
+    entrypoint: >
+      /bin/bash -c "sleep 10 &&  # Waiting for `stemmarest-initializer` to finish
+                    npx -y wait-on '${CY_STEMMAWEB_FRONTEND_URL}/' &&
+                    npx -y wait-on '${CY_STEMMAWEB_MIDDLEWARE_URL}/' &&
+                    npm run ${CY_NPM_COMMAND}"
 
   reverse-proxy:
     build: ./reverse-proxy

@@ -1,0 +1,20 @@
+{
+  "name": "frontend-e2e",
+  "version": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "scripts": {
+    "format": "prettier --write './**/*.{js,ts,css,md,json,html}' --config ./.prettierrc.json --ignore-path ./.prettierignore",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:arm": "cypress run --browser electron",
+    "test": "npm run cy:run",
+    "start": "npm run cy:open"
+  },
+  "keywords": [],
+  "author": "",
+  "devDependencies": {
+    "cypress": "^12.1.0",
+    "prettier": "^2.8.1"
+  }
+}
