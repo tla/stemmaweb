@@ -17,10 +17,7 @@ jobs:
         run: echo -n ${{ secrets.ENV_PASSPHRASE }} > env_passphrase
 
       - name: Build `docker-compose.dev.yml`
-        run: make build-dev
-
-      - name: Build `docker-compose.test.yml`
-        run: make build-tests
+        run: docker-compose -f docker-compose.dev.yml build
 
       - name: Decrypt environment variables stored in `env.zip.gpg`
         run: make decrypt-env
