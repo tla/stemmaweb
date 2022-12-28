@@ -16,8 +16,11 @@ jobs:
       - name: Create `env_passphrase` file for decryption of environment variables
         run: echo -n ${{ secrets.ENV_PASSPHRASE }} > env_passphrase
 
-      - name: Display GPG version
-        run: gpg --version
+      - name: Build `docker-compose.dev.yml`
+        run: make build-dev
+
+      - name: Build `docker-compose.test.yml`
+        run: make build-tests
 
       - name: Decrypt environment variables stored in `env.zip.gpg`
         run: make decrypt-env
