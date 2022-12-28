@@ -1,6 +1,13 @@
 version: '3.9'
 
 services:
+  shell:
+    build: bin
+    env_file:
+      - .env.dev
+    volumes:
+      - .:/usr/src
+
   stemmarest:
     image: "dhuniwien/stemmarest:latest"
     ports:

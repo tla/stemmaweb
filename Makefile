@@ -87,11 +87,16 @@ archive-env:
 	@echo "==> 📦 Archive .env files into env.zip"
 	@ls -d .env* | grep -v '.example$$' | zip env.zip -@
 
+#################################################################################
+# The .env* files need to be encrypted and decrypted inside a Docker container
+# to make sure that the same `gpg` version is used on all machines, including CI
+#################################################################################
+
 encrypt-env: archive-env
 	@echo "==> 🔐 Encrypt env.zip"
-	@gpg --quiet --batch --yes --symmetric --cipher-algo AES256 --passphrase=$$(cat env_passphrase) env.zip
+	@docker-compose -f docker-compose.dev.yml run shell bash -c 'gpg --quiet --batch --yes --symmetric --cipher-algo AES256 --passphrase="$$(cat env_passphrase)" env.zip'
 
 decrypt-env:
 	@echo "==> 🔓 Decrypt env.zip"
-	@gpg --quiet --batch --yes --decrypt --passphrase=$$(cat env_passphrase) --output env.zip env.zip.gpg
+	@docker-compose -f docker-compose.dev.yml run shell bash -c 'gpg --quiet --batch --yes --decrypt --passphrase="$$(cat env_passphrase)" --output env.zip env.zip.gpg'
 	@unzip -od . env.zip
