@@ -94,9 +94,9 @@ archive-env:
 
 encrypt-env: archive-env
 	@echo "==> 🔐 Encrypt env.zip"
-	@docker-compose -f docker-compose.dev.yml run shell bash -c 'gpg --quiet --batch --yes --symmetric --cipher-algo AES256 --passphrase="$$(cat env_passphrase)" env.zip'
+	@docker-compose -f docker-compose.dev.yml run shell bash -c 'gpg --version && gpg --quiet --batch --yes --symmetric --cipher-algo AES256 --passphrase="$$(cat env_passphrase)" env.zip'
 
 decrypt-env:
 	@echo "==> 🔓 Decrypt env.zip"
-	@docker-compose -f docker-compose.dev.yml run shell bash -c 'gpg --quiet --batch --yes --decrypt --passphrase="$$(cat env_passphrase)" --output env.zip env.zip.gpg'
+	@docker-compose -f docker-compose.dev.yml run shell bash -c 'gpg --version && gpg --quiet --batch --yes --decrypt --passphrase="$$(cat env_passphrase)" --output env.zip env.zip.gpg'
 	@unzip -od . env.zip
