@@ -16,6 +16,9 @@ jobs:
       - name: Create `env_passphrase` file for decryption of environment variables
         run: echo -n ${{ secrets.ENV_PASSPHRASE }} > env_passphrase
 
+      - name: Display GPG version
+        run: gpg --version
+
       - name: Decrypt environment variables stored in `env.zip.gpg`
         run: make decrypt-env
 
