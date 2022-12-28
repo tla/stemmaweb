@@ -39,11 +39,11 @@ build-tests-arm:
 
 tests: tests-down build-tests
 	@echo "==> 🧪 Run E2E Tests"
-	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker-compose --env-file .env.dev -f docker-compose.test.yml up
+	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) ./bin/tests.sh
 
 tests-down:
 	@echo "==> 🛑 Stop Test Containers"
-	@docker-compose --env-file .env.dev -f docker-compose.test.yml down
+	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker-compose --env-file .env.dev -f docker-compose.test.yml down
 
 tests-arm:
 	@make tests CY_NPM_COMMAND="cy:run:arm"
