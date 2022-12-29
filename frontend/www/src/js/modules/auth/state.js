@@ -34,6 +34,11 @@ const AUTH_STORE = new AuthStore({ user: null });
 /** @type {StemmarestService} */
 const authStateStoreService = stemmarestService;
 
+/**
+ * Initializes the user state of the app by checking the server for a logged-in
+ * user. The session cookie is used in the background to determine whether a
+ * user is logged in.
+ */
 function initState() {
   authStateStoreService
     .checkUser()
