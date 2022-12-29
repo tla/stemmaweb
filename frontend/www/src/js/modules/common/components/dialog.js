@@ -76,11 +76,23 @@ class StemmawebDialog extends HTMLElement {
     element.closeType = usedOptions.closeType;
     element.okLabel = usedOptions.okLabel;
     element.okType = usedOptions.okType;
+
+    // add the element to the DOM
     document.body.appendChild(element);
 
-    // show the dialog
+    // access the node inside the shadow DOM
     const dialog = document.getElementById('modalDialog');
     const dialogInstance = bootstrap.Modal.getOrCreateInstance(dialog);
+
+    // Attach callbacks to the dialog's buttons
+    const actionButtons = dialog.querySelectorAll('.modal-footer button');
+    actionButtons[0].addEventListener('click', actions.onClose);
+    actionButtons[1].addEventListener('click', () => {
+      actions.onOk();
+      dialogInstance.hide();
+    });
+
+    // show the dialog
     dialogInstance.show();
   }
 
