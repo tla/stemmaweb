@@ -95,7 +95,7 @@ class StemmarestService {
    *   endpoint.
    * @returns {BaseResponse<T>} The response from the fetch call.
    */
-  #fetch(endpoint, options, params = {}) {
+  #fetch(endpoint, options = { method: 'GET' }, params = {}) {
     return baseFetch(`${this.#endpoint(endpoint)}`, options, params).catch(
       this.#handleFetchError
     );
@@ -129,9 +129,7 @@ class StemmarestService {
    * @returns {Promise<BaseResponse<CheckUserResponse>>}
    */
   checkUser() {
-    return this.#fetch('user', {
-      method: 'GET'
-    });
+    return this.#fetch('user');
   }
 
   /**
@@ -164,22 +162,17 @@ class StemmarestService {
    * @returns {Promise<BaseResponse<LogoutUserResponse>>}
    */
   logoutUser() {
-    return this.#fetch('logout', {
-      method: 'GET'
-    });
+    return this.#fetch('logout');
   }
 
   /**
    * Fetches a list of all traditions from the Stemmarest API.
    *
-   * @returns {Promise<Tradition[]>}
+   * @returns {Promise<BaseResponse<Tradition[]>>}
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /traditions}
    */
   listTraditions() {
-    const endpoint = this.#endpoint('api/traditions');
-    return fetch(endpoint)
-      .then((response) => response.json())
-      .catch(this.#handleFetchError);
+    return this.#fetch('api/traditions');
   }
 
   /**
