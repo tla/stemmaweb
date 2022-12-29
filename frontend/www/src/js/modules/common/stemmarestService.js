@@ -45,11 +45,21 @@ function constructFetchUrl(baseUrl, params) {
  */
 async function baseFetch(endpoint, options, params = {}) {
   const res = await fetch(constructFetchUrl(endpoint, params), options);
-  const data = await res.json();
+  const isJson = (res.headers.get('content-type') || '').includes(
+    'application/json'
+  );
   if (res.ok) {
-    return { success: true, message: res.statusText, data };
+    return {
+      success: true,
+      message: res.statusText,
+      ...(isJson ? { data: await res.json() } : {})
+    };
   } else {
-    return { success: false, message: res.statusText, data };
+    return {
+      success: false,
+      message: res.statusText,
+      ...(isJson ? { data: await res.json() } : {})
+    };
   }
 }
 
@@ -173,6 +183,18 @@ class StemmarestService {
    */
   listTraditions() {
     return this.#fetch('api/traditions');
+  }
+
+  /**
+   * Deletes a tradition from the Stemmarest API.
+   *
+   * @param {string} tradId
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
+   */
+  deleteTradition(tradId) {
+    return this.#fetch(`api/tradition/${tradId}`, {
+      method: 'DELETE'
+    });
   }
 
   /**
