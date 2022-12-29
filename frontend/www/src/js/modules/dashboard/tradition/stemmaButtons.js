@@ -7,6 +7,27 @@ class StemmaButtons extends HTMLElement {
     this.render();
   }
 
+  static handleDelete() {
+    const { selectedTradition: tradition, availableTraditions } =
+      TRADITION_STORE.state;
+    StemmawebDialog.show(
+      'Delete Tradition',
+      `<p>Are you sure you want to delete <span class="fst-italic">${tradition.name}</span>?</p>`,
+      {
+        onOk: () => {
+          StemmawebAlert.show('Tradition Deleted', 'info');
+        },
+        onClose: () => console.log('Close')
+      },
+      {
+        okLabel: 'Yes, delete it',
+        okType: 'danger',
+        closeLabel: 'Cancel',
+        closeType: 'secondary'
+      }
+    );
+  }
+
   render() {
     this.innerHTML = `
     <div <div id="stemma_buttons" class="btn-toolbar mb-2 mb-md-0 invisible">
@@ -44,7 +65,9 @@ class StemmaButtons extends HTMLElement {
         </div>
       </div>
       <div class="btn-group ms-2">
-        <button type="button" class="btn btn-sm btn-outline-danger">
+        <button type="button"
+                class="btn btn-sm btn-outline-danger"
+                onclick="StemmaButtons.handleDelete()">
           <span data-feather="trash"></span>
           Delete
         </button>
