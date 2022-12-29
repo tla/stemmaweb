@@ -1,3 +1,11 @@
+/**
+ * Object to interact with the Stemmarest Middleware's API through high-level
+ * functions.
+ *
+ * @type {StemmarestService}
+ */
+const stemmaButtonsService = stemmarestService;
+
 class StemmaButtons extends HTMLElement {
   constructor() {
     super();
@@ -15,9 +23,28 @@ class StemmaButtons extends HTMLElement {
       `<p>Are you sure you want to delete <span class="fst-italic">${tradition.name}</span>?</p>`,
       {
         onOk: () => {
-          StemmawebAlert.show('Tradition Deleted', 'info');
-        },
-        onClose: () => console.log('Close')
+          stemmaButtonsService.deleteTradition(tradition.id).then((res) => {
+            if (res.success) {
+              StemmawebAlert.show(
+                `<p class="d-inline">Deleted <span class="fst-italic">${tradition.name}</span></p>`,
+                'success'
+              );
+              // Update client-side state
+              const traditionsWithoutDeleted = availableTraditions.filter(
+                (t) => t.id !== tradition.id
+              );
+              TRADITION_STORE.setState({
+                availableTraditions: traditionsWithoutDeleted,
+                selectedTradition: traditionsWithoutDeleted[0] || null
+              });
+            } else {
+              StemmawebAlert.show(
+                `Error during deletion: ${res.message}`,
+                'danger'
+              );
+            }
+          });
+        }
       },
       {
         okLabel: 'Yes, delete it',
@@ -28,9 +55,13 @@ class StemmaButtons extends HTMLElement {
     );
   }
 
+  static hide() {
+    document.getElementById('stemma_buttons').classList.add('invisible');
+  }
+
   render() {
     this.innerHTML = `
-    <div <div id="stemma_buttons" class="btn-toolbar mb-2 mb-md-0 invisible">
+    <div id="stemma_buttons" class="btn-toolbar mb-2 mb-md-0 invisible">
       <div class="btn-group me-2">
         <button type="button" class="btn btn-sm btn-outline-secondary">
           Examine Stemma
@@ -72,7 +103,7 @@ class StemmaButtons extends HTMLElement {
           Delete
         </button>
       </div>
-    </div>
+    </>
     `;
   }
 }
