@@ -50,8 +50,8 @@ class StemmawebDialog extends HTMLElement {
   /**
    * @param title {string} The title of the dialog.
    * @param body {string | HTMLElement} The body of the dialog.
-   * @param actions {{onOk: function(): void, onClose: function(): void}} Dialog
-   *   action callbacks. is closed.
+   * @param actions {Partial<{onOk: function(): void, onClose: function():
+   *   void}>} Dialog action callbacks. is closed.
    * @param options {Partial<StemmawebDialogOptions>} The options for the
    *   dialog.
    */
@@ -86,9 +86,9 @@ class StemmawebDialog extends HTMLElement {
 
     // Attach callbacks to the dialog's buttons
     const actionButtons = dialog.querySelectorAll('.modal-footer button');
-    actionButtons[0].addEventListener('click', actions.onClose);
+    actionButtons[0].addEventListener('click', actions.onClose || (() => {}));
     actionButtons[1].addEventListener('click', () => {
-      actions.onOk();
+      (actions.onOk || (() => {}))();
       dialogInstance.hide();
     });
 
