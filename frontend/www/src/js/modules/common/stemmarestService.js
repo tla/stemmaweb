@@ -41,7 +41,7 @@ function constructFetchUrl(baseUrl, params) {
  *   call.
  * @param params {Record<string, string>} Query parameters to pass to the
  *   endpoint.
- * @returns {BaseResponse<T>} The response from the fetch call.
+ * @returns {Promise<BaseResponse<T>>} The response from the fetch call.
  */
 async function baseFetch(endpoint, options, params = {}) {
   const res = await fetch(constructFetchUrl(endpoint, params), options);
@@ -103,7 +103,7 @@ class StemmarestService {
    *   call.
    * @param params {Record<string, string>} Query parameters to pass to the
    *   endpoint.
-   * @returns {BaseResponse<T>} The response from the fetch call.
+   * @returns {Promise<BaseResponse<T>>} The response from the fetch call.
    */
   #fetch(endpoint, options = { method: 'GET' }, params = {}) {
     return baseFetch(`${this.#endpoint(endpoint)}`, options, params).catch(
