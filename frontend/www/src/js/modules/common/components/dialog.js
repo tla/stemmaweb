@@ -1,0 +1,118 @@
+/**
+ * @typedef {Object} StemmawebDialogOptions
+ * @property {string} closeLabel The label for the close button.
+ * @property {| 'primary'
+ *   | 'secondary'
+ *   | 'success'
+ *   | 'danger'
+ *   | 'warning'
+ *   | 'info'
+ *   | 'light'
+ *   | 'dark'} closeType
+ *   The type of the close button.
+ * @property {string} okLabel The label for the OK button.
+ * @property {| 'primary'
+ *   | 'secondary'
+ *   | 'success'
+ *   | 'danger'
+ *   | 'warning'
+ *   | 'info'
+ *   | 'light'
+ *   | 'dark'} okType
+ *   The type of the OK button.
+ */
+
+class StemmawebDialog extends HTMLElement {
+  /** @type {StemmawebDialogOptions} */
+  static #defaultOptions = {
+    closeLabel: 'Close',
+    closeType: 'secondary',
+    okLabel: 'OK',
+    okType: 'primary'
+  };
+
+  constructor() {
+    super();
+    this.modalTitle = 'Modal title';
+    this.body = 'Body';
+    this.closeLabel = StemmawebDialog.#defaultOptions.closeLabel;
+    this.closeType = StemmawebDialog.#defaultOptions.closeType;
+    this.onClose = () => {};
+    this.okLabel = StemmawebDialog.#defaultOptions.okLabel;
+    this.okType = StemmawebDialog.#defaultOptions.okType;
+    this.onOk = () => {};
+  }
+
+  static get observedAttributes() {
+    return ['title', 'body', 'closeLabel', 'closeType', 'okLabel', 'okType'];
+  }
+
+  /**
+   * @param title {string} The title of the dialog.
+   * @param body {string | HTMLElement} The body of the dialog.
+   * @param actions {{onOk: function(): void, onClose: function(): void}} Dialog
+   *   action callbacks. is closed.
+   * @param options {Partial<StemmawebDialogOptions>} The options for the
+   *   dialog.
+   */
+  static show(
+    title,
+    body,
+    actions = { onOk: () => {}, onClose: () => {} },
+    options = {}
+  ) {
+    // remove any existing dialogs
+    const existingDialogs = document.querySelectorAll('stemmaweb-dialog');
+    existingDialogs.forEach((dialog) => dialog.remove());
+
+    // create a new dialog and set its properties
+    const element = document.createElement('stemmaweb-dialog');
+    element.modalTitle = title;
+    element.body = body;
+    element.onClose = actions.onClose;
+    element.onOk = actions.onOk;
+    const usedOptions = { ...StemmawebDialog.#defaultOptions, ...options };
+    element.closeLabel = usedOptions.closeLabel;
+    element.closeType = usedOptions.closeType;
+    element.okLabel = usedOptions.okLabel;
+    element.okType = usedOptions.okType;
+    document.body.appendChild(element);
+
+    // show the dialog
+    const dialog = document.getElementById('modalDialog');
+    const dialogInstance = bootstrap.Modal.getOrCreateInstance(dialog);
+    dialogInstance.show();
+  }
+
+  attributeChangedCallback(property, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    this[property] = newValue;
+  }
+
+  connectedCallback() {
+    this.render();
+  }
+
+  render() {
+    this.innerHTML = `
+    <div class="modal fade" id="modalDialog" tabindex="-1" aria-labelledby="modalDialogLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalDialogLabel">${this.modalTitle}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            ${this.body}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-${this.closeType}" data-bs-dismiss="modal">${this.closeLabel}</button>
+            <button type="button" class="btn btn-${this.okType}">${this.okLabel}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    `;
+  }
+}
+customElements.define('stemmaweb-dialog', StemmawebDialog);
