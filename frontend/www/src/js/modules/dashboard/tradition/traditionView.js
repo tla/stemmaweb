@@ -7,6 +7,13 @@ class TraditionView extends HTMLElement {
     this.render();
   }
 
+  static clearTradition() {
+    document.getElementById('tradition_name').innerHTML = '';
+    document.getElementById('graph_area').innerHTML = '';
+    document.getElementById('stemma_selector').innerHTML = '';
+    StemmaButtons.hide();
+  }
+
   render() {
     this.innerHTML = `
       <div

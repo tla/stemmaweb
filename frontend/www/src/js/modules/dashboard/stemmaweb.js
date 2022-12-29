@@ -299,9 +299,12 @@ function initStemmaweb() {
     const { availableTraditions, selectedTradition } = state;
     // render the tradition list
     render_tradition_list(availableTraditions);
-    // render the current tradition
+    // render the current tradition if it is not null
     if (selectedTradition) {
       render_tradition(selectedTradition);
+    } else {
+      // otherwise, remove the current tradition from the UI
+      TraditionView.clearTradition();
     }
   }
 
