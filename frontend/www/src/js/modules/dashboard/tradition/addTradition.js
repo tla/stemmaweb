@@ -76,47 +76,58 @@ class AddTraditionModal extends HTMLElement {
     });
   }
 
+  /**
+   * @returns {{
+   *   name: string;
+   *   file: File;
+   *   isPublic: boolean;
+   *   language: string | null;
+   *   userId: string;
+   *   fileType: import('@types/stemmarest').TraditionFileType;
+   *   direction: string;
+   * }}
+   */
+  static #extractFormValuesTradition() {
+    const name = $('new_name').value;
+    const file = $('uploadfile').files[0];
+    const fileType = $('new_filetype').value;
+    const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
+    const language = $('new_lang').value || null;
+    const direction = $('direction').value;
+    const isPublic = $('new_public').checked;
+    return { name, file, fileType, userId, language, direction, isPublic };
+  }
+
+  /** @param {import('@types/stemmaweb').BaseResponse} res */
+  static #handleResponseTradition(res) {
+    if (res.success) {
+      StemmawebAlert.show('Tradition Created', 'success');
+      AddTraditionModal.#hide();
+    } else {
+      StemmawebAlert.show(`Error: ${res.message}`, 'danger');
+    }
+  }
+
   #initForm() {
     // JavaScript for disabling form submissions if there are invalid fields
     // Fetch all the forms we want to apply custom Bootstrap validation styles to
     const forms = document.querySelectorAll(
       'add-tradition-modal .needs-validation'
     );
-    // Loop over them and prevent submission
-    Array.prototype.slice.call(forms).forEach(function (form) {
+    // Loop over them and setup event listener for the 'submit' event
+    Array.prototype.slice.call(forms).forEach((form) => {
       form.addEventListener(
         'submit',
-        function (evt) {
+        (evt) => {
           evt.preventDefault();
           evt.stopPropagation();
           if (form.checkValidity()) {
-            const name = $('new_name').value;
-            const file = $('uploadfile').files[0];
-            const fileType = $('new_filetype').value;
-            const userId = AUTH_STORE.state.user
-              ? AUTH_STORE.state.user.id
-              : null;
-            const language = $('new_lang').value || null;
-            const direction = $('direction').value;
-            const isPublic = $('new_public').checked;
+            const values = Object.values(
+              AddTraditionModal.#extractFormValuesTradition()
+            );
             addTraditionService
-              .addTradition(
-                name,
-                file,
-                fileType,
-                userId,
-                language,
-                direction,
-                isPublic
-              )
-              .then((res) => {
-                if (res.success) {
-                  StemmawebAlert.show('Tradition Created', 'success');
-                  AddTraditionModal.#hide();
-                } else {
-                  StemmawebAlert.show(`Error: ${res.message}`, 'danger');
-                }
-              });
+              .addTradition(...values)
+              .then(AddTraditionModal.#handleResponseTradition);
           }
           form.classList.add('was-validated');
         },
