@@ -5,6 +5,107 @@ class AddTraditionModal extends HTMLElement {
 
   connectedCallback() {
     this.render();
+    this.#initModal();
+    this.#initForm();
+    this.#initStyles();
+  }
+
+  static #show_new_tradition_partial() {
+    $('add_tradition_modal_addition_type_choice').classList.add('hide');
+    $('texttradition_literal').innerText = 'text / tradition';
+    $('tradition_literal').innerText = 'tradition';
+    $('add_tradition_partial').classList.remove('hide');
+    $('new_tradition_partial').classList.remove('hide');
+  }
+
+  static #show_new_section_partial() {
+    $('add_tradition_modal_addition_type_choice').classList.add('hide');
+    $('texttradition_literal').innerText = 'section';
+    $('tradition_literal').innerText = 'section';
+    $('add_tradition_partial').classList.remove('hide');
+    $('new_section_partial').classList.remove('hide');
+  }
+
+  #initModal() {
+    // Initialize the add_tradition_modal dialog
+    const add_tradition_modal_elem = $('add_tradition_modal');
+    new bootstrap.Modal(add_tradition_modal_elem);
+    // Make sure the right partial of the form is shown when section or tradition is chosen
+    const button_new_tradition = $('button_new_tradition');
+    button_new_tradition.addEventListener(
+      'click',
+      AddTraditionModal.#show_new_tradition_partial
+    );
+    const button_new_section = $('button_new_section');
+    button_new_section.addEventListener(
+      'click',
+      AddTraditionModal.#show_new_section_partial
+    );
+    // Make sure, on cancel the form is returned to pristine state
+    add_tradition_modal_elem.addEventListener('transitionend', function (evt) {
+      if (
+        evt.target === add_tradition_modal_elem &&
+        !add_tradition_modal_elem.classList.contains('show')
+      ) {
+        [
+          'add_tradition_partial',
+          'new_tradition_partial',
+          'new_section_partial'
+        ].forEach(function (elem) {
+          $(elem).classList.add('hide');
+        });
+        $('add_tradition_modal_addition_type_choice').classList.remove('hide');
+        $('add_tradition_form').classList.remove('was-validated');
+      }
+    });
+  }
+
+  #initForm() {
+    // JavaScript for disabling form submissions if there are invalid fields
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    const forms = document.querySelectorAll('.needs-validation');
+    // Loop over them and prevent submission
+    Array.prototype.slice.call(forms).forEach(function (form) {
+      form.addEventListener(
+        'submit',
+        function (evt) {
+          evt.preventDefault();
+          evt.stopPropagation();
+          if (form.checkValidity()) {
+            const form_data = new FormData(form);
+            // Note that to inspect FormData you have to explode it
+            // console.log( ...form_data )
+            form_data.append('file', $('uploadfile').files[0]);
+            fetch('newtradition/', {
+              method: 'POST',
+              body: form_data
+            })
+              .then((response) => console.log(response))
+              .then((success) => console.log(success))
+              .catch(
+                // TODO: some generic error handling
+                (error) => console.log(error)
+              );
+          }
+          form.classList.add('was-validated');
+        },
+        false
+      );
+    });
+  }
+
+  #initStyles() {
+    // This ensures the add_tradition_modal is placed nicely flush right of the menubar.
+    // TODO: Add responsiveness on resize.
+    const dashboard_stemmaweb_css = getStyleSheet('dashboard-stemmaweb');
+    let add_tradition_modal_marginleft = window
+      .getComputedStyle($('sidebarMenu'))
+      .getPropertyValue('width');
+    dashboard_stemmaweb_css.insertRule(
+      '#add_tradition_modal.modal.fade div.modal-dialog { margin-left: ' +
+        add_tradition_modal_marginleft +
+        '; margin-top: 50px; transform: none; }'
+    );
   }
 
   render() {

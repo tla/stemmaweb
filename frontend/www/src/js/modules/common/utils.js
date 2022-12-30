@@ -25,3 +25,38 @@ function executeWithCaptcha(action, callback) {
     });
   });
 }
+
+/**
+ * Gets a CSS style sheet by its name.
+ *
+ * @param {string} name The name of the style sheet.
+ * @returns {CSSStyleSheet | null} The style sheet or null if it doesn't exist.
+ */
+function getStyleSheet(name) {
+  for (const sheet of document.styleSheets) {
+    if (sheet.href && sheet.href.split('.css')[0].endsWith(name)) {
+      return sheet;
+    }
+  }
+  return null;
+}
+
+/**
+ * JQuery-like function to access the DOM.
+ *
+ * @param query {string} The query to be executed.
+ * @param all {boolean} Whether to return all elements or just the first one.
+ * @returns {NodeListOf<any> | HTMLElement} The result of the query.
+ */
+function $(query, all = false) {
+  const first_char_is_non_alpha = new RegExp('^[^A-z]');
+  if (first_char_is_non_alpha.test(query)) {
+    if (all) {
+      return document.querySelectorAll(query);
+    } else {
+      return document.querySelectorAll(query);
+    }
+  } else {
+    return document.getElementById(query);
+  }
+}
