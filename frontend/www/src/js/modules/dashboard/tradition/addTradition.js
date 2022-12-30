@@ -1,3 +1,11 @@
+/**
+ * Object to interact with the Stemmarest Middleware's API through high-level
+ * functions.
+ *
+ * @type {StemmarestService}
+ */
+const addTraditionService = stemmarestService;
+
 class AddTraditionModal extends HTMLElement {
   constructor() {
     super();
@@ -24,6 +32,14 @@ class AddTraditionModal extends HTMLElement {
     $('tradition_literal').innerText = 'section';
     $('add_tradition_partial').classList.remove('hide');
     $('new_section_partial').classList.remove('hide');
+  }
+
+  static #hide() {
+    document
+      .querySelector(
+        '#add_tradition_modal_savecancel .add-tradition-modal_close'
+      )
+      .click();
   }
 
   #initModal() {
@@ -63,7 +79,9 @@ class AddTraditionModal extends HTMLElement {
   #initForm() {
     // JavaScript for disabling form submissions if there are invalid fields
     // Fetch all the forms we want to apply custom Bootstrap validation styles to
-    const forms = document.querySelectorAll('.needs-validation');
+    const forms = document.querySelectorAll(
+      'add-tradition-modal .needs-validation'
+    );
     // Loop over them and prevent submission
     Array.prototype.slice.call(forms).forEach(function (form) {
       form.addEventListener(
@@ -72,20 +90,33 @@ class AddTraditionModal extends HTMLElement {
           evt.preventDefault();
           evt.stopPropagation();
           if (form.checkValidity()) {
-            const form_data = new FormData(form);
-            // Note that to inspect FormData you have to explode it
-            // console.log( ...form_data )
-            form_data.append('file', $('uploadfile').files[0]);
-            fetch('newtradition/', {
-              method: 'POST',
-              body: form_data
-            })
-              .then((response) => console.log(response))
-              .then((success) => console.log(success))
-              .catch(
-                // TODO: some generic error handling
-                (error) => console.log(error)
-              );
+            const name = $('new_name').value;
+            const file = $('uploadfile').files[0];
+            const fileType = $('new_filetype').value;
+            const userId = AUTH_STORE.state.user
+              ? AUTH_STORE.state.user.id
+              : null;
+            const language = $('new_lang').value || null;
+            const direction = $('direction').value;
+            const isPublic = $('new_public').checked;
+            addTraditionService
+              .addTradition(
+                name,
+                file,
+                fileType,
+                userId,
+                language,
+                direction,
+                isPublic
+              )
+              .then((res) => {
+                if (res.success) {
+                  StemmawebAlert.show('Tradition Created', 'success');
+                  AddTraditionModal.#hide();
+                } else {
+                  StemmawebAlert.show(`Error: ${res.message}`, 'danger');
+                }
+              });
           }
           form.classList.add('was-validated');
         },
@@ -107,6 +138,25 @@ class AddTraditionModal extends HTMLElement {
         '; margin-top: 50px; transform: none; }'
     );
   }
+
+  /**
+   * Supported file type options.
+   *
+   * @type {[
+   *   { value: import('@types/stemmaweb').TraditionFileType; name: string }
+   * ]}
+   */
+  static #fileTypes = [
+    { value: 'csv', name: 'Comma-separated values (spreadsheet collation)' },
+    { value: 'tsv', name: 'Tab-separated values (spreadsheet collation)' },
+    { value: 'xls', name: 'Microsoft Excel (spreadsheet values)' },
+    { value: 'teips', name: 'TEI parallel segmentation' },
+    { value: 'cte', name: 'CTE export (TEI double-endpoint attachment)' },
+    { value: 'collatex', name: 'CollateX XML' },
+    { value: 'cxjson', name: 'CollateX JSON' },
+    { value: 'graphml', name: 'Native GraphML Zip' },
+    { value: 'stemmaweb', name: 'Legacy Stemmaweb GraphML' }
+  ];
 
   render() {
     this.innerHTML = `
@@ -190,23 +240,12 @@ class AddTraditionModal extends HTMLElement {
                   <br />
                   <label for="new_filetype" class="form-label">Data format</label>
                   <select name="filetype" class="form-select" id="new_filetype">
-                    <option value="csv">
-                      Comma-separated values (spreadsheet collation)
-                    </option>
-                    <option value="tsv">
-                      Tab-separated values (spreadsheet collation)
-                    </option>
-                    <option value="xls">
-                      Microsoft Excel (spreadsheet values)
-                    </option>
-                    <option value="teips">TEI parallel segmentation</option>
-                    <option value="cte">
-                      CTE export (TEI double-endpoint attachment)
-                    </option>
-                    <option value="collatex">CollateX XML</option>
-                    <option value="cxjson">CollateX JSON</option>
-                    <option value="graphml">Native GraphML Zip</option>
-                    <option value="stemmaweb">Legacy Stemmaweb GraphML</option>
+                    ${AddTraditionModal.#fileTypes
+                      .map(
+                        ({ value, name }) =>
+                          `<option value="${value}">${name}</option>`
+                      )
+                      .join('\n')}
                   </select>
                   <br />
 

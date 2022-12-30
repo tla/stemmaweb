@@ -3,6 +3,8 @@
  *
  * @typedef {import('types/stemmaweb').Tradition} Tradition
  *
+ * @typedef {import('types/stemmaweb').TraditionFileType} TraditionFileType
+ *
  * @typedef {import('types/stemmaweb').Stemma} Stemma
  *
  * @typedef {import('types/stemmaweb').RegisterUserDTO} RegisterUserDTO
@@ -194,6 +196,42 @@ class StemmarestService {
   deleteTradition(tradId) {
     return this.#fetch(`api/tradition/${tradId}`, {
       method: 'DELETE'
+    });
+  }
+
+  /**
+   * Adds a new tradition to the Stemmarest API.
+   *
+   * @param {string} name - The name of the tradition to be added.
+   * @param {File} file - The file containing the tradition to be added.
+   * @param {TraditionFileType} fileType
+   * @param {string | null} userId
+   * @param {string | null} language
+   * @param {string} direction
+   * @param {boolean} isPublic
+   * @returns {Promise<BaseResponse<{ tradId: string }>>}
+   */
+  addTradition(name, file, fileType, userId, language, direction, isPublic) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to add a tradition.'
+      });
+    }
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('file', file);
+    formData.append('filetype', fileType);
+    formData.append('userId', userId);
+    if (language !== null) {
+      formData.append('language', language);
+    }
+    formData.append('direction', direction);
+    formData.append('public', isPublic ? 'yes' : 'no');
+    return this.#fetch('api/tradition', {
+      method: 'POST',
+      'Content-Type': 'multipart/form-data',
+      body: formData
     });
   }
 
