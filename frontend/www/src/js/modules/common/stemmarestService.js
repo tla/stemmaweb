@@ -189,6 +189,7 @@ class StemmarestService {
 
   /**
    * Fetches a tradition by its ID from the Stemmarest API.
+   *
    * @param {string} tradId
    * @returns {Promise<BaseResponse<Tradition>>}
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
