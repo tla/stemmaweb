@@ -188,6 +188,16 @@ class StemmarestService {
   }
 
   /**
+   * Fetches a tradition by its ID from the Stemmarest API.
+   * @param {string} tradId
+   * @returns {Promise<BaseResponse<Tradition>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
+   */
+  getTradition(tradId) {
+    return this.#fetch(`api/tradition/${tradId}`);
+  }
+
+  /**
    * Deletes a tradition from the Stemmarest API.
    *
    * @param {string} tradId
