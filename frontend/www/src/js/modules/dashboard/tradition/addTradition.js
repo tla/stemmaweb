@@ -1,3 +1,5 @@
+/** @typedef {import('@types/stemmaweb').BaseResponse} BaseResponse */
+
 /**
  * Object to interact with the Stemmarest Middleware's API through high-level
  * functions.
@@ -98,11 +100,15 @@ class AddTraditionModal extends HTMLElement {
     return { name, file, fileType, userId, language, direction, isPublic };
   }
 
-  /** @param {import('@types/stemmaweb').BaseResponse} res */
+  /** @param {BaseResponse<{ tradId: string }>} res */
   static #handleResponseTradition(res) {
     if (res.success) {
       StemmawebAlert.show('Tradition Created', 'success');
       AddTraditionModal.#hide();
+
+      // Append the newly added tradition to the list of traditions
+      const { tradId } = res.data;
+      TRADITION_STORE.appendTradition(tradId);
     } else {
       StemmawebAlert.show(`Error: ${res.message}`, 'danger');
     }
