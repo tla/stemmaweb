@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, Request, request
 from flask.wrappers import Response
 from loguru import logger
 from werkzeug.routing import Rule
@@ -10,7 +10,7 @@ from stemmaweb_middleware.stemmarest.permissions import (
     get_stemmarest_permission_handler,
 )
 from stemmaweb_middleware.stemmarest.stemmarest_endpoints import StemmarestEndpoints
-from stemmaweb_middleware.utils import abort
+from stemmaweb_middleware.utils import abort, files_to_bytes
 
 
 def blueprint_factory(
@@ -46,7 +46,7 @@ def blueprint_factory(
                 endpoint=request.path,
                 path_segments=path_segments,
                 query_params=request.args.to_dict(),
-                body=request.json if request.is_json else None,
+                data=__extract_data_from_request(request),
                 headers=dict(request.headers),
                 user=current_user,
                 user_role=determine_user_role(current_user),
@@ -75,7 +75,8 @@ def blueprint_factory(
                     path=stemmarest_endpoint,
                     method=args["method"],
                     params=args["query_params"],
-                    data=args["body"],
+                    data=args["data"],
+                    files=files_to_bytes(request.files),
                 )
                 if response_transformer is not None:
                     logger.debug("Applying response transformer")
@@ -105,3 +106,19 @@ def blueprint_factory(
         )
 
     return blueprint
+
+
+def __extract_data_from_request(req: Request):
+    """
+    Extracts data from a Flask request object. Handles both JSON and form data.
+    The return value is compatible with the `requests` library.
+
+    :param req: the Flask request object.
+    :return:
+    """
+    if req.is_json:
+        return req.json
+    elif len(req.form) > 0:
+        return req.form
+    else:
+        return None
