@@ -31,15 +31,21 @@ class StemmaStore extends StateStore {
   }
 
   /**
-   * Sets the selected stemma by taking the one from the `availableStemmata` at
-   * the supplied `index`. If the index is out of bounds, the selected stemma is
-   * set to `null`.
+   * Sets the supplied `stemma` as the selected stemma.
    *
-   * @param {number} index
+   * @param {Stemma} stemma The stemma to select.
    */
-  setSelectedStemma(index) {
-    const selectedStemma = this.state.availableStemmata[index] || null;
-    this.setState({ ...this.state, selectedStemma });
+  setSelectedStemma(stemma) {
+    this.setState({ ...this.state, selectedStemma: stemma });
+  }
+
+  /**
+   * @returns {number} The index of the currently selected stemma in the list of
+   *   all available stemmata.
+   */
+  get selectedIndex() {
+    const { availableStemmata, selectedStemma } = this.state;
+    return availableStemmata.indexOf(selectedStemma);
   }
 
   /**

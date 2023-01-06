@@ -1,7 +1,11 @@
 /**
  * @typedef {import('@types/stemmaweb').TraditionState} TraditionState
  *
+ * @typedef {import('@types/stemmaweb').StemmaState} StemmaState
+ *
  * @typedef {import('@types/stemmaweb').Tradition} Tradition
+ *
+ * @typedef {import('@types/stemmaweb').Stemma} Stemma
  */
 
 /** @type {import('d3')} */
@@ -87,40 +91,20 @@ function initStemmaweb() {
       });
   }
 
-  function update_meta(d, stemma_name) {
-    let access_state = 'public';
-    if (d.is_public == 'false') {
-      access_state = 'private';
-    }
-    let meta = [
-      ['Tradition', d.id],
-      ['Stemma', stemma_name],
-      ['Owner', d.owner],
-      ['Access', access_state],
-      ['Language', d.language],
-      ['Witnesses', d.witnesses]
-    ];
-    var rows = d3
-      .select('#tradition_info')
-      .selectAll('tr')
-      .data(meta)
-      .join('tr')
-      .selectAll('td')
-      .data(function (row) {
-        return row;
-      })
-      .join('td')
-      .text((d) => d);
-  }
-
-  function render_stemma(graph_root, trad, stemma) {
-    update_meta(trad, stemma.identifier);
+  /**
+   * Renders the supplied `stemma` as a graph.
+   *
+   * @param graph_root
+   * @param {Tradition} tradition
+   * @param {Stemma} stemma
+   */
+  function render_stemma(graph_root, tradition, stemma) {
     graph_root.renderDot(ellipse_border_to_none(stemma.dot));
     d3.select('g#graph0')
       .selectAll('.node')
-      .on('click', function (evt) {
-        fetch_rooted(trad, stemma, d3.select(this).datum().key);
-        render_stemma(trad, stemma);
+      .on('click', function (e, d) {
+        fetch_rooted(tradition, stemma, d.key);
+        render_stemma(graph_root, tradition, stemma);
       });
     set_downloads(stemma.dot);
   }
@@ -129,81 +113,80 @@ function initStemmaweb() {
    * Renders the supplied `tradition` object as a graph in the center of the
    * dashboard.
    *
-   * @param {Tradition} trad
+   * @param {Tradition} tradition
+   * @param {Stemma[]} stemmata
+   * @param {Stemma | null} selectedStemma
    */
-  function render_tradition(trad) {
-    service
-      .listStemmata(trad.id)
-      .then(({ data }) => {
-        // console.log( data );
-        var graph_area = d3.select('#graph_area');
-        // After getting the stemmata data we subdue the graph area
-        // so we can paint on it unseen and then fade it in
-        graph_area.style('opacity', '0.0');
-        graph_area.select('*').remove();
-        var graph_div = graph_area.append('div');
-        graph_div.style('height', '100%');
-        // Here we put in the slide indicators that will allow the user to
-        // switch to different stemmata.
-        var stemma_selector = d3.select('#stemma_selector');
-        stemma_selector.selectAll('*').remove();
-        stemma_selector
-          .selectAll('span')
-          .data(data)
-          .enter()
-          .append('span')
-          .html(function (d, i) {
-            var svg = svg_slide_indicator;
-            if (i == 0) {
-              svg = svg_slide_indicator_active;
-            }
-            return svg;
-          })
-          .on('click', function (evt) {
-            // Add eventlisteners to slide indicators that will update the
-            // indicators and render the newly chosen stemma.
-            d3.selectAll('#stemma_selector span svg').style(
-              'fill',
-              'rgb(255,255,255)'
-            );
-            d3.select(this).select('svg').style('fill', 'rgb(180,180,180)');
-            var datum = d3.select(this).datum();
-            graph_area.style('opacity', '0.0');
-            render_stemma(graph_div, trad, datum);
-          });
-        // The work horse, graphviz puts in the first stemma here,
-        // and we have some mild transitions for posh fade in.
-        graph_div = graph_div
-          .graphviz()
-          .width(graph_div.node().getBoundingClientRect().width)
-          .height(graph_div.node().getBoundingClientRect().height)
-          .fit(true)
-          // NB Failed approach notice…
-          // This causes a slower transition, but the graph still 'drops in'.
-          // It just slows *all* transitions. I wish I knew why the butt ugly
-          // 'drop in' has been selected as the default undefaultable transition.
-          // .transition( function(){ return mellow_transition( d3.transition() ) } )
-          .on('renderEnd', function () {
-            graph_area
-              .transition()
-              .call(mellow_transition)
-              .style('opacity', '1.0');
-          })
-          // Render the stemma (also set button values and update metadata)
-          .on('initEnd', function () {
-            render_stemma(graph_div, trad, data[0]);
-          });
+  function render_tradition(tradition, stemmata, selectedStemma) {
+    // console.log( data );
+    const graph_area = d3.select('#graph_area');
+    // After getting the stemmata data we subdue the graph area,
+    // so we can paint on it unseen and then fade it in
+    graph_area.style('opacity', '0.0');
+    graph_area.select('*').remove();
+    let graph_div = graph_area.append('div');
+    graph_div.style('height', '100%');
+    // Here we put in the slide indicators that will allow the user to
+    // switch to different stemmata.
+    const stemma_selector = d3.select('#stemma_selector');
+    stemma_selector.selectAll('*').remove();
+    stemma_selector
+      .selectAll('span')
+      .data(stemmata)
+      .enter()
+      .append('span')
+      .html((d, i) => {
+        const selectedIndex = STEMMA_STORE.selectedIndex;
+        const isSelected =
+          (selectedIndex === -1 && i === 0) || selectedIndex === i;
+        const svg = isSelected
+          ? svg_slide_indicator_active
+          : svg_slide_indicator;
+        return `<div data-index="${i}">${svg}</div>`;
       })
-      .then(function () {
-        // After we have started the rendering of the stemma
-        // we fade in the title of the tradition
-        // and the buttons for download etc.
-        d3.select('#tradition_name').call(quick_fade_in).text(trad.name);
-        var buttons = d3.select('#stemma_buttons');
-        if (buttons.classed('invisible')) {
-          buttons.call(quick_fade_in).classed('invisible', false);
+      .on('click', function (e, d) {
+        // Add eventlisteners to slide indicators that will update the
+        // indicators and render the newly chosen stemma.
+        d3.selectAll('#stemma_selector span svg').style(
+          'fill',
+          'rgb(255,255,255)'
+        );
+        d3.select(this).select('svg').style('fill', 'rgb(180,180,180)');
+        graph_area.style('opacity', '0.0');
+
+        // Update the state with the selected stemma
+        STEMMA_STORE.setSelectedStemma(d);
+      });
+    // The work horse, graphviz puts in the first stemma here,
+    // and we have some mild transitions for posh fade in.
+    graph_div = graph_div
+      .graphviz()
+      .width(graph_div.node().getBoundingClientRect().width)
+      .height(graph_div.node().getBoundingClientRect().height)
+      .fit(true)
+      // NB Failed approach notice…
+      // This causes a slower transition, but the graph still 'drops in'.
+      // It just slows *all* transitions. I wish I knew why the butt ugly
+      // 'drop in' has been selected as the default undefaultable transition.
+      // .transition( function(){ return mellow_transition( d3.transition() ) } )
+      .on('renderEnd', function () {
+        graph_area.transition().call(mellow_transition).style('opacity', '1.0');
+      })
+      // Render the stemma (also set button values and update metadata)
+      .on('initEnd', function () {
+        if (stemmata.length > 0) {
+          render_stemma(graph_div, tradition, selectedStemma || stemmata[0]);
         }
       });
+
+    // After we have started the rendering of the stemma
+    // we fade in the title of the tradition
+    // and the buttons for download etc.
+    d3.select('#tradition_name').call(quick_fade_in).text(tradition.name);
+    const buttons = d3.select('#stemma_buttons');
+    if (buttons.classed('invisible')) {
+      buttons.call(quick_fade_in).classed('invisible', false);
+    }
   }
 
   function select_tradition(evt) {
@@ -263,14 +246,29 @@ function initStemmaweb() {
     render_tradition_list(availableTraditions);
     // render the current tradition if it is not null
     if (selectedTradition) {
-      render_tradition(selectedTradition);
+      render_tradition(selectedTradition, [], null);
     } else {
       // otherwise, remove the current tradition from the UI
       TraditionView.clearTradition();
     }
   }
 
+  /**
+   * This function will be called each time the state persisted in the
+   * `STEMMA_STORE` changes. It will update the UI to reflect the current
+   * state.
+   *
+   * @param {StemmaState} state
+   */
+  function onStemmaStateChanged(state) {
+    const { parentTradition, availableStemmata, selectedStemma } = state;
+    if (parentTradition) {
+      render_tradition(parentTradition, availableStemmata, selectedStemma);
+    }
+  }
+
   // 'Main'
   TRADITION_STORE.subscribe(onTraditionStateChanged);
+  STEMMA_STORE.subscribe(onStemmaStateChanged);
   feather.replace({ 'aria-hidden': 'true' });
 }
