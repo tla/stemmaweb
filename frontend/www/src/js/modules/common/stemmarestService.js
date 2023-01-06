@@ -252,14 +252,11 @@ class StemmarestService {
    *
    * @param {string} tradId - The id of the tradition whose stemmata are to be
    *   fetched.
-   * @returns {Promise<Stemma[]>}
+   * @returns {Promise<BaseResponse<Stemma[]>>}
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemmata}
    */
   listStemmata(tradId) {
-    const endpoint = this.#endpoint(`api/tradition/${tradId}/stemmata`);
-    return fetch(endpoint)
-      .then((response) => response.json())
-      .catch(this.#handleFetchError);
+    return this.#fetch(`api/tradition/${tradId}/stemmata`);
   }
 
   /**
