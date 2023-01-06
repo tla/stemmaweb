@@ -76,5 +76,9 @@ function initState() {
   });
 }
 
+// Attach the listener of `STEMMA_STORE` so that it is updated whenever the
+// selected tradition changes.
+TRADITION_STORE.subscribe(STEMMA_STORE.traditionListener);
+
 /** Load traditions asynchronously from the server. */
 window.addEventListener('load', initState);
