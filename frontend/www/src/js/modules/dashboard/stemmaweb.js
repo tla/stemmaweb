@@ -114,6 +114,7 @@ function initStemmaweb() {
   }
 
   function render_stemma(graph_root, trad, stemma) {
+    update_meta(trad, stemma.identifier);
     graph_root.renderDot(ellipse_border_to_none(stemma.dot));
     d3.select('g#graph0')
       .selectAll('.node')
@@ -122,7 +123,6 @@ function initStemmaweb() {
         render_stemma(trad, stemma);
       });
     set_downloads(stemma.dot);
-    update_meta(trad, stemma.identifier);
   }
 
   /**
@@ -134,7 +134,7 @@ function initStemmaweb() {
   function render_tradition(trad) {
     service
       .listStemmata(trad.id)
-      .then((data) => {
+      .then(({ data }) => {
         // console.log( data );
         var graph_area = d3.select('#graph_area');
         // After getting the stemmata data we subdue the graph area
