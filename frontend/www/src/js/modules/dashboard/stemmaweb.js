@@ -6,6 +6,8 @@
  * @typedef {import('@types/stemmaweb').Tradition} Tradition
  *
  * @typedef {import('@types/stemmaweb').Stemma} Stemma
+ *
+ * @typedef {import('d3-graphviz').Graphviz} Graphviz
  */
 
 /** @type {import('d3')} */
@@ -28,6 +30,26 @@ const saveSvgAsPng = window.saveSvgAsPng;
  */
 const service = stemmarestService;
 
+/**
+ * Constructs the graph root div governed by `graphviz` or returns the existing
+ * one.
+ *
+ * @returns {Graphviz}
+ */
+function graphvizRoot() {
+  const graph_area = d3.select('#graph_area');
+  const selection = graph_area.select('#graph');
+  const graph = selection.empty()
+    ? graph_area.append('div').attr('id', 'graph')
+    : selection;
+  graph.style('height', '100%');
+  return graph
+    .graphviz()
+    .width(graph.node().getBoundingClientRect().width)
+    .height(graph.node().getBoundingClientRect().height)
+    .fit(true);
+}
+
 function initStemmaweb() {
   function mellow_transition(transition) {
     return transition.delay(50).duration(1000).ease(d3.easeLinear);
@@ -41,6 +63,10 @@ function initStemmaweb() {
       .style('opacity', 1);
   }
 
+  /**
+   * @param {string} dot
+   * @returns {string}
+   */
   function ellipse_border_to_none(dot) {
     return dot.replace(
       '" {',
@@ -83,7 +109,7 @@ function initStemmaweb() {
       .reorientStemmaTree(trad.id, stemma.identifier, sigil)
       .then((resp) => {
         stemma.dot = resp.dot;
-        render_stemma(trad, stemma);
+        render_stemma(graphvizRoot(), trad, stemma);
       })
       .catch((error) => {
         // TODO: some generic error handling?
@@ -94,7 +120,7 @@ function initStemmaweb() {
   /**
    * Renders the supplied `stemma` as a graph.
    *
-   * @param graph_root
+   * @param {Graphviz} graph_root
    * @param {Tradition} tradition
    * @param {Stemma} stemma
    */
@@ -124,8 +150,7 @@ function initStemmaweb() {
     // so we can paint on it unseen and then fade it in
     graph_area.style('opacity', '0.0');
     graph_area.select('*').remove();
-    let graph_div = graph_area.append('div');
-    graph_div.style('height', '100%');
+    const graphDiv = graphvizRoot();
     // Here we put in the slide indicators that will allow the user to
     // switch to different stemmata.
     const stemma_selector = d3.select('#stemma_selector');
@@ -159,11 +184,7 @@ function initStemmaweb() {
       });
     // The work horse, graphviz puts in the first stemma here,
     // and we have some mild transitions for posh fade in.
-    graph_div = graph_div
-      .graphviz()
-      .width(graph_div.node().getBoundingClientRect().width)
-      .height(graph_div.node().getBoundingClientRect().height)
-      .fit(true)
+    graphDiv
       // NB Failed approach notice…
       // This causes a slower transition, but the graph still 'drops in'.
       // It just slows *all* transitions. I wish I knew why the butt ugly
@@ -175,7 +196,7 @@ function initStemmaweb() {
       // Render the stemma (also set button values and update metadata)
       .on('initEnd', function () {
         if (stemmata.length > 0) {
-          render_stemma(graph_div, tradition, selectedStemma || stemmata[0]);
+          render_stemma(graphDiv, tradition, selectedStemma || stemmata[0]);
         }
       });
 
