@@ -22,10 +22,7 @@ class StemmaStore extends StateStore {
     return super.state;
   }
 
-  /**
-   * @param {(state: StemmaState) => void} listener The listener function to
-   *   register.
-   */
+  /** @param {(function(StemmaState): void)|(function(StemmaState, StemmaState): void)} listener */
   subscribe(listener) {
     super.subscribe(listener);
   }

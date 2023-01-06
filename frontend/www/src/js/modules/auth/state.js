@@ -20,10 +20,7 @@ class AuthStore extends StateStore {
     this.setState({ ...this.state, user });
   }
 
-  /**
-   * @param {(state: AuthState) => void} listener The listener function to
-   *   register.
-   */
+  /** @param {(function(AuthState): void)|(function(AuthState, AuthState): void)} listener */
   subscribe(listener) {
     super.subscribe(listener);
   }

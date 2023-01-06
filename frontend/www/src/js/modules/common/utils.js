@@ -60,3 +60,16 @@ function $(query, all = false) {
     return document.getElementById(query);
   }
 }
+
+/**
+ * Compares the properties of two objects and returns true if they are deeply
+ * equal, false otherwise.
+ *
+ * @param {any} a - The first object to be compared.
+ * @param {any} b - The second object to be compared.
+ * @returns {boolean} - A boolean value indicating whether the objects are
+ *   equal.
+ */
+function objectsEqual(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}

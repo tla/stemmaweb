@@ -51,10 +51,7 @@ class TraditionStore extends StateStore {
     });
   }
 
-  /**
-   * @param {(state: TraditionState) => void} listener The listener function to
-   *   register.
-   */
+  /** @param {(function(TraditionState): void)|(function(TraditionState, TraditionState): void)} listener */
   subscribe(listener) {
     super.subscribe(listener);
   }

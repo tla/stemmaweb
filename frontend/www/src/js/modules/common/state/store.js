@@ -13,6 +13,7 @@ class StateStore {
    * @param {T} initialState The initial state of the application.
    */
   constructor(initialState) {
+    this._prevState = null;
     this._state = initialState;
     this.listeners = [];
   }
@@ -28,15 +29,28 @@ class StateStore {
    * @param {T} newState The new state of the application.
    */
   setState(newState) {
-    Object.assign(this._state, newState);
-    this.listeners.forEach((listener) => listener(this._state));
+    // Only execute this operation if the state has actually changed.
+    const shouldSkip = objectsEqual(this._state, newState);
+    if (shouldSkip) return;
+
+    this._prevState = this._state;
+    this._state = newState;
+
+    this.listeners.forEach((listener) => {
+      if (listener.length === 1) {
+        listener(this._state);
+      } else {
+        listener(this._prevState, this._state);
+      }
+    });
   }
 
   /**
    * Registers a listener function that will be called whenever the state is
    * updated.
    *
-   * @param {(state: T) => void} listener The listener function to register.
+   * @param {((state: T) => void) | ((prevState: T, state: T) => void)} listener
+   *   The listener function to register.
    */
   subscribe(listener) {
     this.listeners.push(listener);
