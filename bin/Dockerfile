@@ -1,9 +1,9 @@
 # General-purpose bash environment for utility scripts
-FROM debian:bookworm-slim
+FROM ubuntu:latest
 
-# install `curl` and `jq`
+# install `curl`, `jq` and `gnupg2`
 RUN apt-get update &&  \
-    apt-get install -y curl jq
+    apt-get install -y curl jq gnupg2
 
 WORKDIR /usr/src
 

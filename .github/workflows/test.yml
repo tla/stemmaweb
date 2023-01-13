@@ -1,0 +1,85 @@
+name: Automatic Testing
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  set_vars:
+    name: Set Auxiliary Variables
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_run: ${{ steps.set_should_run.outputs.should_run }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Checking whether relevant files were changed
+        uses: dorny/paths-filter@v2.11.1
+        id: changes
+        with:
+          filters: |
+            infra:
+              - '.github/workflows/test.yml'
+              - 'env.zip.gpg'
+              - 'Makefile'
+              - 'docker-compose.dev.yml'
+              - 'docker-compose.test.yml'
+              - 'Dockerfile-dev'
+              - 'bin/**'
+            app:
+              - 'frontend/**'
+              - 'middleware/**'
+              - 'reverse-proxy/**'
+            tests:
+              - 'frontend-e2e/**'
+
+      - name: Set `should_run`
+        id: set_should_run
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const refName = context.ref.split('/').slice(2).join('/')
+            core.info(`Detected ref: ${refName}`)
+            const event = context.eventName
+            core.info(`Detected event: ${event}`)
+
+            if (event === 'pull_request') {
+              const relevantFilesChanged = ${{ steps.changes.outputs.infra == 'true' || steps.changes.outputs.app == 'true' || steps.changes.outputs.tests == 'true' }}
+              core.info(`Relevant files changed: ${relevantFilesChanged}`)
+              if (relevantFilesChanged) {
+                core.info('PR event with relevant changes ➡️ running E2E tests 🧪')
+                core.setOutput('should_run', true)
+              } else {
+                core.info('PR event with irrelevant changes ➡️ no need for E2E tests 😴')
+                core.setOutput('should_run', false)
+              }
+            } else {
+              core.info('Not a PR event ➡️ running E2E tests 🧪')
+              core.setOutput('should_run', true)
+            }
+
+  e2e:
+    if: ${{ needs.set_vars.outputs.should_run == 'true' }}
+    needs: set_vars
+    name: End-to-end Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Create `env_passphrase` file for decryption of environment variables
+        run: echo -n ${{ secrets.ENV_PASSPHRASE }} > env_passphrase
+
+      - name: Build `docker-compose.dev.yml` with empty environment variables
+        run: |
+          touch .env.dev && \
+          make build-dev
+
+      - name: Decrypt environment variables stored in `env.zip.gpg`
+        run: make decrypt-env
+
+      - name: Run the end-to-end tests
+        run: make tests
