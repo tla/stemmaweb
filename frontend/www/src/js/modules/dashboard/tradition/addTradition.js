@@ -1,3 +1,13 @@
+/** @typedef {import('@types/stemmaweb').BaseResponse} BaseResponse */
+
+/**
+ * Object to interact with the Stemmarest Middleware's API through high-level
+ * functions.
+ *
+ * @type {StemmarestService}
+ */
+const addTraditionService = stemmarestService;
+
 class AddTraditionModal extends HTMLElement {
   constructor() {
     super();
@@ -5,7 +15,165 @@ class AddTraditionModal extends HTMLElement {
 
   connectedCallback() {
     this.render();
+    this.#initModal();
+    this.#initForm();
+    this.#initStyles();
   }
+
+  static #show_new_tradition_partial() {
+    $('add_tradition_modal_addition_type_choice').classList.add('hide');
+    $('texttradition_literal').innerText = 'text / tradition';
+    $('tradition_literal').innerText = 'tradition';
+    $('add_tradition_partial').classList.remove('hide');
+    $('new_tradition_partial').classList.remove('hide');
+  }
+
+  static #show_new_section_partial() {
+    $('add_tradition_modal_addition_type_choice').classList.add('hide');
+    $('texttradition_literal').innerText = 'section';
+    $('tradition_literal').innerText = 'section';
+    $('add_tradition_partial').classList.remove('hide');
+    $('new_section_partial').classList.remove('hide');
+  }
+
+  static #hide() {
+    document
+      .querySelector(
+        '#add_tradition_modal_savecancel .add-tradition-modal_close'
+      )
+      .click();
+  }
+
+  #initModal() {
+    // Initialize the add_tradition_modal dialog
+    const add_tradition_modal_elem = $('add_tradition_modal');
+    new bootstrap.Modal(add_tradition_modal_elem);
+    // Make sure the right partial of the form is shown when section or tradition is chosen
+    const button_new_tradition = $('button_new_tradition');
+    button_new_tradition.addEventListener(
+      'click',
+      AddTraditionModal.#show_new_tradition_partial
+    );
+    const button_new_section = $('button_new_section');
+    button_new_section.addEventListener(
+      'click',
+      AddTraditionModal.#show_new_section_partial
+    );
+    // Make sure, on cancel the form is returned to pristine state
+    add_tradition_modal_elem.addEventListener('transitionend', function (evt) {
+      if (
+        evt.target === add_tradition_modal_elem &&
+        !add_tradition_modal_elem.classList.contains('show')
+      ) {
+        [
+          'add_tradition_partial',
+          'new_tradition_partial',
+          'new_section_partial'
+        ].forEach(function (elem) {
+          $(elem).classList.add('hide');
+        });
+        $('add_tradition_modal_addition_type_choice').classList.remove('hide');
+        $('add_tradition_form').classList.remove('was-validated');
+      }
+    });
+  }
+
+  /**
+   * @returns {{
+   *   name: string;
+   *   file: File;
+   *   isPublic: boolean;
+   *   language: string | null;
+   *   userId: string;
+   *   fileType: import('@types/stemmarest').TraditionFileType;
+   *   direction: string;
+   * }}
+   */
+  static #extractFormValuesTradition() {
+    const name = $('new_name').value;
+    const file = $('uploadfile').files[0];
+    const fileType = $('new_filetype').value;
+    const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
+    const language = $('new_lang').value || null;
+    const direction = $('direction').value;
+    const isPublic = $('new_public').checked;
+    return { name, file, fileType, userId, language, direction, isPublic };
+  }
+
+  /** @param {BaseResponse<{ tradId: string }>} res */
+  static #handleResponseTradition(res) {
+    if (res.success) {
+      StemmawebAlert.show('Tradition Created', 'success');
+      AddTraditionModal.#hide();
+
+      // Append the newly added tradition to the list of traditions
+      const { tradId } = res.data;
+      TRADITION_STORE.appendTradition(tradId);
+    } else {
+      StemmawebAlert.show(`Error: ${res.message}`, 'danger');
+    }
+  }
+
+  #initForm() {
+    // JavaScript for disabling form submissions if there are invalid fields
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    const forms = document.querySelectorAll(
+      'add-tradition-modal .needs-validation'
+    );
+    // Loop over them and setup event listener for the 'submit' event
+    Array.prototype.slice.call(forms).forEach((form) => {
+      form.addEventListener(
+        'submit',
+        (evt) => {
+          evt.preventDefault();
+          evt.stopPropagation();
+          if (form.checkValidity()) {
+            const values = Object.values(
+              AddTraditionModal.#extractFormValuesTradition()
+            );
+            addTraditionService
+              .addTradition(...values)
+              .then(AddTraditionModal.#handleResponseTradition);
+          }
+          form.classList.add('was-validated');
+        },
+        false
+      );
+    });
+  }
+
+  #initStyles() {
+    // This ensures the add_tradition_modal is placed nicely flush right of the menubar.
+    // TODO: Add responsiveness on resize.
+    const dashboard_stemmaweb_css = getStyleSheet('dashboard-stemmaweb');
+    let add_tradition_modal_marginleft = window
+      .getComputedStyle($('sidebarMenu'))
+      .getPropertyValue('width');
+    dashboard_stemmaweb_css.insertRule(
+      '#add_tradition_modal.modal.fade div.modal-dialog { margin-left: ' +
+        add_tradition_modal_marginleft +
+        '; margin-top: 50px; transform: none; }'
+    );
+  }
+
+  /**
+   * Supported file type options.
+   *
+   * @type {[
+   *   { value: import('@types/stemmaweb').TraditionFileType; name: string }
+   * ]}
+   */
+  static #fileTypes = [
+    { value: 'csv', name: 'Comma-separated values (spreadsheet collation)' },
+    { value: 'tsv', name: 'Tab-separated values (spreadsheet collation)' },
+    { value: 'xls', name: 'Microsoft Excel (spreadsheet values)' },
+    { value: 'teips', name: 'TEI parallel segmentation' },
+    { value: 'cte', name: 'CTE export (TEI double-endpoint attachment)' },
+    { value: 'collatex', name: 'CollateX XML' },
+    { value: 'cxjson', name: 'CollateX JSON' },
+    { value: 'graphml', name: 'Native GraphML Zip' },
+    { value: 'stemmaweb', name: 'Legacy Stemmaweb GraphML' }
+  ];
 
   render() {
     this.innerHTML = `
@@ -89,23 +257,12 @@ class AddTraditionModal extends HTMLElement {
                   <br />
                   <label for="new_filetype" class="form-label">Data format</label>
                   <select name="filetype" class="form-select" id="new_filetype">
-                    <option value="csv">
-                      Comma-separated values (spreadsheet collation)
-                    </option>
-                    <option value="tsv">
-                      Tab-separated values (spreadsheet collation)
-                    </option>
-                    <option value="xls">
-                      Microsoft Excel (spreadsheet values)
-                    </option>
-                    <option value="teips">TEI parallel segmentation</option>
-                    <option value="cte">
-                      CTE export (TEI double-endpoint attachment)
-                    </option>
-                    <option value="collatex">CollateX XML</option>
-                    <option value="cxjson">CollateX JSON</option>
-                    <option value="graphml">Native GraphML Zip</option>
-                    <option value="stemmaweb">Legacy Stemmaweb GraphML</option>
+                    ${AddTraditionModal.#fileTypes
+                      .map(
+                        ({ value, name }) =>
+                          `<option value="${value}">${name}</option>`
+                      )
+                      .join('\n')}
                   </select>
                   <br />
 

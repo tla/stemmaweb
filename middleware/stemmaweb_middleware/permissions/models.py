@@ -90,7 +90,7 @@ class PermissionArguments(TypedDict):
     endpoint: str
     path_segments: tuple[str, ...]
     query_params: dict[str, Any]
-    body: dict[str, Any] | None
+    data: dict[str, Any] | None
     headers: dict[str, Any]
     user: CurrentUser
     user_role: UserRole

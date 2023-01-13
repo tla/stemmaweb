@@ -29,6 +29,17 @@ export interface Tradition {
   language: string;
 }
 
+/** Possible file types for a tradition. */
+export type TraditionFileType =
+  | 'csv'
+  | 'tsv'
+  | 'teips'
+  | 'collatex'
+  | 'cxjson'
+  | 'stemmaweb'
+  | 'graphmlsingle'
+  | 'graphml';
+
 /** Type representing a **Stemma** as returned from the Stemmarest API. */
 export interface Stemma {
   /** True if this is an undirected tree, rather than a directed stemma. */
@@ -92,4 +103,11 @@ export type AuthState = {
 export type TraditionState = {
   availableTraditions: Tradition[];
   selectedTradition: Tradition | null;
+};
+
+/** Model to represent the in-app state of a Stemma selection. */
+export type StemmaState = {
+  parentTradition: Tradition | null;
+  availableStemmata: Stemma[];
+  selectedStemma: Stemma | null;
 };
