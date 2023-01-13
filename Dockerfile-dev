@@ -1,5 +1,8 @@
 FROM ubuntu:latest
 
+# Make sure that we don't get any interactive prompts
+ENV DEBIAN_FRONTEND noninteractive
+
 # Install Python and aux packages
 RUN apt-get update && apt-get install -y \
     python3.10 \
