@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim
+FROM ubuntu:latest
 
 # Install Python and aux packages
 RUN apt-get update && apt-get install -y \
@@ -22,7 +22,8 @@ RUN apt-get update && apt-get install -y \
     lsb-release &&  \
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - &&  \
     apt-get install -y nodejs
-# Install npm
+
+# Update npm (got installed in the previous layer with `nodejs`)
 RUN npm install -g npm@latest
 
 # Install utilities
