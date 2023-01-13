@@ -41,15 +41,25 @@ function constructFetchUrl(baseUrl, params) {
  *   call.
  * @param params {Record<string, string>} Query parameters to pass to the
  *   endpoint.
- * @returns {BaseResponse<T>} The response from the fetch call.
+ * @returns {Promise<BaseResponse<T>>} The response from the fetch call.
  */
 async function baseFetch(endpoint, options, params = {}) {
   const res = await fetch(constructFetchUrl(endpoint, params), options);
-  const data = await res.json();
+  const isJson = (res.headers.get('content-type') || '').includes(
+    'application/json'
+  );
   if (res.ok) {
-    return { success: true, message: res.statusText, data };
+    return {
+      success: true,
+      message: res.statusText,
+      ...(isJson ? { data: await res.json() } : {})
+    };
   } else {
-    return { success: false, message: res.statusText, data };
+    return {
+      success: false,
+      message: res.statusText,
+      ...(isJson ? { data: await res.json() } : {})
+    };
   }
 }
 
@@ -93,9 +103,9 @@ class StemmarestService {
    *   call.
    * @param params {Record<string, string>} Query parameters to pass to the
    *   endpoint.
-   * @returns {BaseResponse<T>} The response from the fetch call.
+   * @returns {Promise<BaseResponse<T>>} The response from the fetch call.
    */
-  #fetch(endpoint, options, params = {}) {
+  #fetch(endpoint, options = { method: 'GET' }, params = {}) {
     return baseFetch(`${this.#endpoint(endpoint)}`, options, params).catch(
       this.#handleFetchError
     );
@@ -129,9 +139,7 @@ class StemmarestService {
    * @returns {Promise<BaseResponse<CheckUserResponse>>}
    */
   checkUser() {
-    return this.#fetch('user', {
-      method: 'GET'
-    });
+    return this.#fetch('user');
   }
 
   /**
@@ -164,22 +172,29 @@ class StemmarestService {
    * @returns {Promise<BaseResponse<LogoutUserResponse>>}
    */
   logoutUser() {
-    return this.#fetch('logout', {
-      method: 'GET'
-    });
+    return this.#fetch('logout');
   }
 
   /**
    * Fetches a list of all traditions from the Stemmarest API.
    *
-   * @returns {Promise<Tradition[]>}
+   * @returns {Promise<BaseResponse<Tradition[]>>}
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /traditions}
    */
   listTraditions() {
-    const endpoint = this.#endpoint('api/traditions');
-    return fetch(endpoint)
-      .then((response) => response.json())
-      .catch(this.#handleFetchError);
+    return this.#fetch('api/traditions');
+  }
+
+  /**
+   * Deletes a tradition from the Stemmarest API.
+   *
+   * @param {string} tradId
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
+   */
+  deleteTradition(tradId) {
+    return this.#fetch(`api/tradition/${tradId}`, {
+      method: 'DELETE'
+    });
   }
 
   /**

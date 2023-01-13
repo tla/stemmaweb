@@ -28,6 +28,7 @@ export interface Tradition {
   /** The language of the tradition */
   language: string;
 }
+
 /** Type representing a **Stemma** as returned from the Stemmarest API. */
 export interface Stemma {
   /** True if this is an undirected tree, rather than a directed stemma. */
@@ -85,4 +86,10 @@ export type StemmawebUserState = Omit<StemmawebUser, 'passphrase'>;
 /** Model to represent the in-app state of a user. */
 export type AuthState = {
   user: StemmawebUserState | null;
+};
+
+/** Model to represent the in-app state of a Tradition selection. */
+export type TraditionState = {
+  availableTraditions: Tradition[];
+  selectedTradition: Tradition | null;
 };

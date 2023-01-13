@@ -140,57 +140,7 @@
         </nav>
 
         <main class="col-md-9 col-lg-7 ms-md-perc px-md-4">
-          <div
-            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
-          >
-            <h2 id="tradition_name">
-              &nbsp;<!-- Tradition title placeholder -->
-            </h2>
-            <div id="stemma_buttons" class="btn-toolbar mb-2 mb-md-0 invisible">
-              <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary">
-                  Examine Stemma
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary">
-                  Edit Collation
-                </button>
-              </div>
-              <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary">
-                  <span data-feather="download"></span>
-                  Tradition
-                </button>
-              </div>
-              <div class="dropdown">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                  id="stemma_image_downloadbtn"
-                  data-bs-toggle="dropdown"
-                >
-                  <span data-feather="download"></span>
-                  Stemma
-                </button>
-                <div
-                  class="dropdown-menu"
-                  aria-labelledby="stemma_image_downloadbtn"
-                >
-                  <a class="dropdown-item" id="download_svg" href="#">.svg</a>
-                  <a class="dropdown-item" id="download_png" href="#">.png</a>
-                  <a class="dropdown-item" id="download_dot" href="#">.dot</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="my-4 w-100" id="graph_area"></div>
-
-          <div
-            class="my-4 w-100 d-flex justify-content-center"
-            id="stemma_selector"
-          >
-            <!-- svg_slide_indicators go here -->
-          </div>
+          <tradition-view></tradition-view>
         </main>
 
         <div
@@ -270,6 +220,10 @@
       src="./src/js/modules/auth/state.js"
       type="application/javascript"
     ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/state.js"
+      type="application/javascript"
+    ></script>
 
     <!-- Components -->
     <script
@@ -281,11 +235,23 @@
       type="application/javascript"
     ></script>
     <script
+      src="src/js/modules/common/components/dialog.js"
+      type="application/javascript"
+    ></script>
+    <script
       src="src/js/modules/dashboard/stemmaweb.js"
       type="application/javascript"
     ></script>
     <script
-      src="src/js/modules/dashboard/addTradition.js"
+      src="src/js/modules/dashboard/tradition/addTradition.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="src/js/modules/dashboard/tradition/stemmaButtons.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="src/js/modules/dashboard/tradition/traditionView.js"
       type="application/javascript"
     ></script>
     <script
