@@ -152,6 +152,16 @@ class PropertyTableView extends HTMLElement {
         class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
       >
         <span>Properties</span>
+        <a
+        class="link-secondary"
+        href="#"
+        aria-label="Edit tradition properties"
+        data-bs-toggle="modal"
+        data-bs-target="#edit_properties_modal"
+      >
+          <span>${feather.icons['edit'].toSvg()}</span>
+      </a>
+
       </h6>
 
       <div class="table-responsive px-3 py-3">
@@ -161,6 +171,7 @@ class PropertyTableView extends HTMLElement {
           </tbody>
         </table>
       </div>
+
     </div>
     `;
   }
