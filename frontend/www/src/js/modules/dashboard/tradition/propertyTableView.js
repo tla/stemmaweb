@@ -152,15 +152,7 @@ class PropertyTableView extends HTMLElement {
         class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
       >
         <span>Properties</span>
-        <a
-        class="link-secondary"
-        href="#"
-        aria-label="Edit tradition properties"
-        data-bs-toggle="modal"
-        data-bs-target="#edit_properties_modal"
-      >
-          <span>${feather.icons['edit'].toSvg()}</span>
-      </a>
+        <edit-properties-button/>
 
       </h6>
 
@@ -170,6 +162,7 @@ class PropertyTableView extends HTMLElement {
           ${metaItems.map(this.renderMetaItem).join('\n')}
           </tbody>
         </table>
+        <another-button/>
       </div>
 
     </div>
