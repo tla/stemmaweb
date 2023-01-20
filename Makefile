@@ -85,7 +85,7 @@ dev-down:
 
 archive-env:
 	@echo "==> 📦 Archive .env files into env.zip"
-	@zip -r env.zip $$(find . -type f -name "*.env*" ! -name "*.example" -maxdepth 2)
+	@docker-compose -f docker-compose.dev.yml run --rm shell bash -c 'zip -r env.zip $$(find . -maxdepth 2 -type f -name "*.env*" ! -name "*.example")'
 
 #################################################################################
 # The .env* files need to be encrypted and decrypted inside a Docker container
@@ -99,4 +99,4 @@ encrypt-env: archive-env
 decrypt-env:
 	@echo "==> 🔓 Decrypt env.zip"
 	@docker-compose -f docker-compose.dev.yml run --rm shell bash -c 'gpg --version && gpg --quiet --batch --yes --decrypt --passphrase="$$(cat env_passphrase)" --output env.zip env.zip.gpg'
-	@unzip -od . env.zip
+	@docker-compose -f docker-compose.dev.yml run --rm shell bash -c 'unzip -od . env.zip'
