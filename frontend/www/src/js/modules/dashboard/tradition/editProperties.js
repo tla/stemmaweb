@@ -1,8 +1,74 @@
-class EditPropertiesButton extends HTMLElement {
+/**
+ * 
+ * @typedef {{ label: string; value: string; inputType: string }} FormMetaItem
+ * 
+ * @typedef {import('@types/stemmaweb').Tradition} Tradition
+ * 
+ */
+
+class EditProperties extends HTMLElement {
 
     constructor() {
         super();
         this.addEventListener( 'click', this.showDialog );
+    }
+
+    /** @type {FormControlMap} */
+    static #formControlMap = {
+        'text': EditProperties.#renderTextControl
+    };
+
+    /** @type {TraditionMetaLabels} */
+    static #traditionMetadataLabels = {
+        name: 'Name',
+        tradition: 'Tradition',
+        direction: 'Direction',
+        owner: 'Owner',
+        access: 'Access',
+        language: 'Language',
+        witnesses: 'Witnesses'
+    };
+
+    /** @type {StemmaMetaLabels} */
+    static #stemmaMetadataLabels = {
+        stemma: 'Stemma'
+    };
+
+    /** @type {DirectionMap} */
+    static #directionMap = {
+        'LR': 'Left to right',
+        'RL': 'Right to Left',
+        'BI': 'Bi-directional'
+    }
+
+    /**
+    * Maps 'LR' etc. to more readable 'Left to right' form.
+    * 
+    * @param {string} key
+    * @returns {string}
+    */
+    static #mapDirection( key ) {
+        return EditProperties.#directionMap[key] || key;
+    }
+
+    /**
+    * @param {Tradition} tradition Tradition to render the metadata for.
+    * @returns {FormMetaItem[]} Array of metadata items to display on a form.
+    */
+    static #metadataFromTradition(tradition) {
+        const labels = EditProperties.#traditionMetadataLabels;
+        return [
+            {
+                label: labels.name,
+                value: tradition.name,
+                inputType: 'text'  // We could expand this into `inputOptions: {}` when we need more info per control.
+            },
+            {
+                label: labels.language,
+                value: tradition.language,
+                inputType: 'text'  // We could expand this into `inputOptions: {}` when we need more info per control.
+            }            
+        ]
     }
 
     connectedCallback() {
@@ -18,34 +84,52 @@ class EditPropertiesButton extends HTMLElement {
         return 'margin-right: 0px; width: ' + edit_properties_modal_width + '; margin-top: 50px; transform: none;'
     }
 
+    /**
+    * @param {MetaItem} item
+    * @returns {string}
+    */
+    static #renderTextControl(item) {
+        return `
+            <label 
+                for="name" 
+                id="edit_property_name_field" 
+                class="form-label"
+            >
+                ${item.label}
+            </label>
+            <input
+                id="name"
+                type="text"
+                name="name"
+                value="${item.value}"
+                class="form-control has-validation"
+                size="40"
+                required=""
+            />
+            <div class="invalid-feedback">
+                A name is required for the tradition.
+            </div>
+            <br />
+            `;
+    }
+
+    /**
+    * @param {MetaItem} item
+    * @returns {string}
+    */
+    renderFormControl(item) {
+        return EditProperties.#formControlMap[ item.inputType ](item);
+    }
+
     showDialog() {
+        const metaItems = EditProperties.#metadataFromTradition( STEMMA_STORE.state.parentTradition );
         const modal_body = `
             <form
             id="add_tradition_form"
             class="needs-validation"
             novalidate=""
             >
-            <label for="direction" class="form-label"
-            >Text direction</label
-            >
-            <select name="direction" class="form-select" id="direction">
-                <option value="LR" selected="">Left to Right</option>
-                <option value="RL">Right to Left</option>
-                <option value="BI">Bi-directional</option>
-            </select>
-            <br />
-            <div class="form-check">
-                <input
-                class="form-check-input"
-                type="checkbox"
-                value=""
-                id="new_public"
-                name="public"
-                />
-                <label class="form-label form-check-label" for="new_public">
-                Allow public display
-                </label>
-            </div>
+            ${ metaItems.map( this.renderFormControl ).join( '\n' ) }
             </form>  
         `
         StemmawebDialog.show( 'Edit properties', modal_body, {}, { elemStyle: this.#initDialogStyle() } );
@@ -65,4 +149,4 @@ class EditPropertiesButton extends HTMLElement {
 
 }
 
-customElements.define( 'edit-properties-button', EditPropertiesButton );
+customElements.define( 'edit-properties-button', EditProperties );

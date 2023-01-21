@@ -3,6 +3,7 @@
  *   owner: string;
  *   access: string;
  *   language: string;
+ *   direction: string;
  *   tradition: string;
  *   witnesses: string;
  * }} TraditionMetaLabels
@@ -28,6 +29,7 @@ class PropertyTableView extends HTMLElement {
   /** @type {TraditionMetaLabels} */
   static #traditionMetadataLabels = {
     tradition: 'Tradition',
+    direction: 'Direction',
     owner: 'Owner',
     access: 'Access',
     language: 'Language',
@@ -39,6 +41,23 @@ class PropertyTableView extends HTMLElement {
     stemma: 'Stemma'
   };
 
+  /** @type {DirectionMap} */
+  static #directionMap = {
+    'LR': 'Left to right',
+    'RL': 'Right to Left',
+    'BI': 'Bi-directional'
+  }
+
+  /**
+   * Maps 'LR' etc. to more readable 'Left to right' form.
+   * 
+   * @param {string} key
+   * @returns {string}
+   */
+  static #mapDirection( key ) {
+    return PropertyTableView.#directionMap[key] || key;
+  }
+
   /**
    * @param {Tradition} tradition Tradition to render the metadata for.
    * @returns {MetaItem[]} Array of metadata items to display.
@@ -49,6 +68,9 @@ class PropertyTableView extends HTMLElement {
       {
         label: labels.tradition,
         value: tradition.id
+      },
+      { label: labels.direction,
+        value: this.#mapDirection( tradition.direction )
       },
       {
         label: labels.owner,
@@ -94,6 +116,7 @@ class PropertyTableView extends HTMLElement {
     PropertyTableView.#traditionMetadataLabels.owner,
     PropertyTableView.#traditionMetadataLabels.access,
     PropertyTableView.#traditionMetadataLabels.language,
+    PropertyTableView.#traditionMetadataLabels.direction,
     PropertyTableView.#traditionMetadataLabels.witnesses
   ];
 

@@ -17,13 +17,16 @@ class TraditionView extends HTMLElement {
   render() {
     this.innerHTML = `
       <div
-        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+        class="d-flex justify-content-between flex-wrap align-items-center pt-2 pb-1 border-bottom"
       >
-        <h2 id="tradition_name">
+        <h4 id="tradition_name" class="pt-3">
           &nbsp;<!-- Tradition title placeholder -->
-        </h2>
-        <stemma-buttons></stemma-buttons>
+        </h4>
+        <div class="d-flex justify-content-end ms-5 pt-3 mb-2 lex-nowrap" id="stemma_buttons_container">
+          <stemma-buttons></stemma-buttons>
+        </div>
       </div>
+
 
       <div class="my-4 w-100" id="graph_area"></div>
 
