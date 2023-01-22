@@ -5,7 +5,6 @@ from environs import Env
 from loguru import logger
 
 from stemmaweb_middleware.stemmarest.stemmarest_client import StemmarestClient
-from stemmaweb_middleware.stemmarest.stemmarest_endpoints import StemmarestEndpoints
 from stemmaweb_middleware.utils import RecaptchaVerifier
 
 from . import constants
@@ -27,7 +26,6 @@ STEMMAREST_CLIENT = StemmarestClient(endpoint=STEMMAREST_ENDPOINT)
 STEMMAWEB_MIDDLEWARE_URL = env.str(
     "STEMMAWEB_MIDDLEWARE_URL", default="http://127.0.0.1:3000"
 )
-STEMMAWEB_API_ENDPOINTS = StemmarestEndpoints(middleware_url=STEMMAWEB_MIDDLEWARE_URL)
 
 # Used for Flask-Login
 # Session Docs: https://flask.palletsprojects.com/en/2.1.x/quickstart/#sessions

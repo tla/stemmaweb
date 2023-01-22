@@ -61,10 +61,8 @@ def register_blueprints(app: Flask):
 
     :param app: The Flask application object.
     """
-    # Stemmarest API endpoints, hybrid permissions
-    api_endpoints = app.config["STEMMAWEB_API_ENDPOINTS"]
     client = app.config["STEMMAREST_CLIENT"]
-    api_blueprint = controller.api.routes.blueprint_factory(api_endpoints, client)
+    api_blueprint = controller.api.routes.blueprint_factory(client)
     app.register_blueprint(api_blueprint)
 
     # Middleware-API endpoints to handle auth
