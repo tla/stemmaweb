@@ -15,18 +15,8 @@ class EditProperties extends HTMLElement {
 
     /** @type {FormControlMap} */
     static #formControlMap = {
-        'text': EditProperties.#renderTextControl
-    };
-
-    /** @type {TraditionMetaLabels} */
-    static #traditionMetadataLabels = {
-        name: 'Name',
-        tradition: 'Tradition',
-        direction: 'Direction',
-        owner: 'Owner',
-        access: 'Access',
-        language: 'Language',
-        witnesses: 'Witnesses'
+        'text': EditProperties.#renderTextControl,
+        'dropdown': EditProperties.#renderDropdownControl
     };
 
     /** @type {StemmaMetaLabels} */
@@ -34,41 +24,20 @@ class EditProperties extends HTMLElement {
         stemma: 'Stemma'
     };
 
-    /** @type {DirectionMap} */
-    static #directionMap = {
-        'LR': 'Left to right',
-        'RL': 'Right to Left',
-        'BI': 'Bi-directional'
-    }
-
-    /**
-    * Maps 'LR' etc. to more readable 'Left to right' form.
-    * 
-    * @param {string} key
-    * @returns {string}
-    */
-    static #mapDirection( key ) {
-        return EditProperties.#directionMap[key] || key;
-    }
-
     /**
     * @param {Tradition} tradition Tradition to render the metadata for.
     * @returns {FormMetaItem[]} Array of metadata items to display on a form.
     */
-    static #metadataFromTradition(tradition) {
-        const labels = EditProperties.#traditionMetadataLabels;
-        return [
+    static metadataFromTradition(tradition) {
+        const metadata = PropertyTableView.metadataFromTradition(tradition);
+        metadata.push( 
             {
-                label: labels.name,
+                label: PropertyTableView.traditionMetadataLabels.name,
                 value: tradition.name,
-                inputType: 'text'  // We could expand this into `inputOptions: {}` when we need more info per control.
-            },
-            {
-                label: labels.language,
-                value: tradition.language,
-                inputType: 'text'  // We could expand this into `inputOptions: {}` when we need more info per control.
+                inputOptions: { control: 'text', size: 40, required: true }
             }            
-        ]
+        );
+        return metadata;
     }
 
     connectedCallback() {
@@ -89,28 +58,61 @@ class EditProperties extends HTMLElement {
     * @returns {string}
     */
     static #renderTextControl(item) {
+        const invalidFeedback = `
+            <div class="invalid-feedback">
+                Input for this field is required for the tradition.
+            </div>
+        `;
         return `
             <label 
-                for="name" 
-                id="edit_property_name_field" 
+                for="${item.label.toLowerCase()}_input" 
+                id="edit_property_${item.label.toLowerCase()}_field" 
                 class="form-label"
             >
                 ${item.label}
             </label>
             <input
-                id="name"
+                id="${item.label.toLowerCase()}_input"
                 type="text"
-                name="name"
+                name="${item.label.toLowerCase()}_input"
                 value="${item.value}"
-                class="form-control has-validation"
-                size="40"
-                required=""
+                class="form-control ${item.inputOptions.required ? "has-validation" : ""}"
+                ${item.inputOptions.size ? "size=\"" + item.inputOptions.size + "\"" : ""}
+                ${item.inputOptions.required ? "required=\"\"" : ""}
             />
-            <div class="invalid-feedback">
-                A name is required for the tradition.
-            </div>
+            ${item.inputOptions.required ? invalidFeedback : ""}
             <br />
-            `;
+        `;
+    }
+
+    static #renderSelectOption( option, selectedValue ) {
+        return `
+            <option value="${option.value}" ${ (selectedValue==option.display) ? "selected" : "" }>${option.display}</option>
+        `;
+    }
+
+    /**
+    * @param {MetaItem} item
+    * @returns {string}
+    */
+    static #renderDropdownControl(item) {
+        return `
+            <label 
+                for="${item.label.toLowerCase()}_input" 
+                id="edit_property_${item.label.toLowerCase()}_field" 
+                class="form-label"
+            >
+                ${item.label}
+            </label>
+            <select
+                id="${item.label.toLowerCase()}_input"
+                name="${item.label.toLowerCase()}_input"
+                class="form-select"
+            >
+                ${ item.inputOptions.selectOptions.map( function( option ){ return EditProperties.#renderSelectOption( option, item.value ) } ) }
+            </select>
+            <br />
+        `;
     }
 
     /**
@@ -118,11 +120,13 @@ class EditProperties extends HTMLElement {
     * @returns {string}
     */
     renderFormControl(item) {
-        return EditProperties.#formControlMap[ item.inputType ](item);
+        return item.inputOptions
+            ? EditProperties.#formControlMap[ item.inputOptions.control ](item)
+            : ""
     }
 
     showDialog() {
-        const metaItems = EditProperties.#metadataFromTradition( STEMMA_STORE.state.parentTradition );
+        const metaItems = PropertyTableView.sortedMetaItems( EditProperties.metadataFromTradition( STEMMA_STORE.state.parentTradition ) );
         const modal_body = `
             <form
             id="add_tradition_form"
