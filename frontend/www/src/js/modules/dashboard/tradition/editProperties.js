@@ -8,7 +8,8 @@ class EditProperties extends HTMLElement {
     /** @type {FormControlMap} */
     static #formControlMap = {
         'text': EditProperties.#renderTextControl,
-        'dropdown': EditProperties.#renderDropdownControl
+        'dropdown': EditProperties.#renderDropdownControl,
+        'checkbox': EditProperties.#renderCheckboxControl
     };
 
     /**
@@ -39,6 +40,17 @@ class EditProperties extends HTMLElement {
           .getPropertyValue('width');
         return 'margin-right: 0px; width: ' + edit_properties_modal_width + '; margin-top: 50px; transform: none;'
     }
+    
+    /**
+    * @param {MetaItem} item
+    * @returns {string}
+    */
+    static #renderLabel( item ) {
+        const label = item.inputOptions.label 
+            ? item.inputOptions.label 
+            : item.label 
+        return label
+    }
 
     /**
     * @param {MetaItem} item
@@ -56,7 +68,7 @@ class EditProperties extends HTMLElement {
                 id="edit_property_${item.label.toLowerCase()}_field" 
                 class="form-label"
             >
-                ${item.label}
+                ${ EditProperties.#renderLabel( item ) }
             </label>
             <input
                 id="${item.label.toLowerCase()}_input"
@@ -89,7 +101,7 @@ class EditProperties extends HTMLElement {
                 id="edit_property_${item.label.toLowerCase()}_field" 
                 class="form-label"
             >
-                ${item.label}
+            ${ EditProperties.#renderLabel( item ) }
             </label>
             <select
                 id="${item.label.toLowerCase()}_input"
@@ -101,6 +113,27 @@ class EditProperties extends HTMLElement {
             <br />
         `;
     }
+
+    /**
+    * @param {MetaItem} item
+    * @returns {string}
+    */
+    static #renderCheckboxControl(item) {
+        return `
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="${item.label.toLowerCase()}_input" name="${item.label.toLowerCase()}_input">
+                <label 
+                    for="${item.label.toLowerCase()}_input" 
+                    id="edit_property_${item.label.toLowerCase()}_field" 
+                    class="form-label"
+                >
+                ${ EditProperties.#renderLabel( item ) }
+                </label>
+            </div>
+            <br />
+        `;
+    }
+
 
     /**
     * @param {MetaItem} item

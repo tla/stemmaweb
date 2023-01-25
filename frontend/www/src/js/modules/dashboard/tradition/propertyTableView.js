@@ -107,7 +107,8 @@ class PropertyTableView extends HTMLElement {
       },
       {
         label: labels.access,
-        value: tradition.is_public ? 'Public' : 'Private'
+        value: tradition.is_public ? 'Public' : 'Private',
+        inputOptions: { control: 'checkbox', label: 'Allow public access?' }
       },
       {
         label: labels.language,
