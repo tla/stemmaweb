@@ -1,11 +1,3 @@
-/**
- * 
- * @typedef {{ label: string; value: string; inputType: string }} FormMetaItem
- * 
- * @typedef {import('@types/stemmaweb').Tradition} Tradition
- * 
- */
-
 class EditProperties extends HTMLElement {
 
     constructor() {
@@ -19,14 +11,9 @@ class EditProperties extends HTMLElement {
         'dropdown': EditProperties.#renderDropdownControl
     };
 
-    /** @type {StemmaMetaLabels} */
-    static #stemmaMetadataLabels = {
-        stemma: 'Stemma'
-    };
-
     /**
     * @param {Tradition} tradition Tradition to render the metadata for.
-    * @returns {FormMetaItem[]} Array of metadata items to display on a form.
+    * @returns {MetaItem[]} Array of metadata items to display on a form.
     */
     static metadataFromTradition(tradition) {
         const metadata = PropertyTableView.metadataFromTradition(tradition);
