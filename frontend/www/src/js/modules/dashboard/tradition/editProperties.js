@@ -84,7 +84,7 @@ class EditProperties extends HTMLElement {
         `;
     }
 
-    static #renderSelectOption( option, selectedValue ) {
+    static #createSelectOption( option, selectedValue ) {
         return `
             <option value="${option.value}" ${ (selectedValue==option.display) ? "selected" : "" }>${option.display}</option>
         `;
