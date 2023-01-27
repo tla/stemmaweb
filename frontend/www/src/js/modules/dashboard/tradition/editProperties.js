@@ -45,7 +45,7 @@ class EditProperties extends HTMLElement {
     * @param {MetaItem} item
     * @returns {string}
     */
-    static #renderLabel( item ) {
+    static #createLabel( item ) {
         const label = item.inputOptions.label 
             ? item.inputOptions.label 
             : item.label 
