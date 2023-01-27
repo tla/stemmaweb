@@ -32,7 +32,7 @@ class EditProperties extends HTMLElement {
         this.render();
     }
 
-    #initDialogStyle() {
+    #createDialogStyle() {
         // This ensures the modal is placed nicely fit with the properties sidebar.
         // TODO: Add responsiveness on resize.
         let edit_properties_modal_width = window
