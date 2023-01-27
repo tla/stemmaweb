@@ -10,7 +10,7 @@
  *
  * @typedef {{ stemma: string }} StemmaMetaLabels
  *
- * @typedef {{ label: string; value: string, inputOptions: InputOptions }} MetaItem
+ * @typedef {{ label: string; value: string, inputOptions?: InputOptions }} MetaItem
  *
  * @typedef {import('@types/stemmaweb').Tradition} Tradition
  *
