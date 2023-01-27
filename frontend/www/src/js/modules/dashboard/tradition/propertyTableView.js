@@ -10,7 +10,7 @@
  *
  * @typedef {{ stemma: string }} StemmaMetaLabels
  *
- * @typedef {{ label: string; value: string, inputOptions?: InputOptions }} MetaItem
+ * @typedef {{ label: string; value: string; inputOptions?: InputOptions }} MetaItem
  *
  * @typedef {import('@types/stemmaweb').Tradition} Tradition
  *
@@ -66,34 +66,38 @@ class PropertyTableView extends HTMLElement {
    *     }
    * )} InputOptions
    */
-  
-  /** @type {SelectOption[]}  */
+
+  /** @type {SelectOption[]} */
   static #directionOptions = [
-    { 
+    {
       value: 'LR',
       display: 'Left to Right'
     },
-    { 
+    {
       value: 'RL',
-      display: 'Right to Left' 
+      display: 'Right to Left'
     },
-    { 
+    {
       value: 'BI',
-      display: 'Bi-directional' 
+      display: 'Bi-directional'
     }
-  ]
+  ];
 
   /**
    * Maps 'LR' etc. to more readable 'Left to right' form.
-   * 
+   *
    * @param {string} key
    * @returns {string}
    */
-  static #mapDirection( key ) {
-    const directionMap = this.#directionOptions.reduce( function( options, option ) {
-      options[ option.value] = option.display;
+  static #mapDirection(key) {
+    const directionMap = this.#directionOptions.reduce(function (
+      options,
+      option
+    ) {
+      options[option.value] = option.display;
       return options;
-    }, {} );
+    },
+    {});
     return directionMap[key] || key;
   }
 
@@ -108,9 +112,13 @@ class PropertyTableView extends HTMLElement {
         label: labels.tradition,
         value: tradition.id
       },
-      { label: labels.direction,
-        value: this.#mapDirection( tradition.direction ),
-        inputOptions: { control: 'dropdown', selectOptions: this.#directionOptions }
+      {
+        label: labels.direction,
+        value: this.#mapDirection(tradition.direction),
+        inputOptions: {
+          control: 'dropdown',
+          selectOptions: this.#directionOptions
+        }
       },
       {
         label: labels.owner,

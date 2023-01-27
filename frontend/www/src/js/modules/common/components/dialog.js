@@ -106,7 +106,7 @@ class StemmawebDialog extends HTMLElement {
   connectedCallback() {
     this.render();
   }
-// #modalDialog.modal.fade div.modal-dialog
+  // #modalDialog.modal.fade div.modal-dialog
   render() {
     this.innerHTML = `
     <div class="modal fade" id="modalDialog" tabindex="-1" aria-labelledby="modalDialogLabel" aria-hidden="true">
