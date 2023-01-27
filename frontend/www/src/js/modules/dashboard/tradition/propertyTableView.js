@@ -42,18 +42,29 @@ class PropertyTableView extends HTMLElement {
     stemma: 'Stemma'
   };
 
-  /** 
+  /**
    * @typedef {{
-   *    value: string, 
-   *    display:string
+   *   value: string;
+   *   display: string;
    * }} SelectOption
-   * 
+   *
    * @typedef {{
-   *    control: string,
-   *    size: integer,
-   *    required: boolean,
-   *    selectOptions: SelectOption[] 
-   * }} InputOptions
+   *   size: number;
+   *   required: boolean;
+   *   label?: string;
+   * } & (
+   *   | {
+   *       control: 'dropdown';
+   *       size: number;
+   *       required: boolean;
+   *       selectOptions: SelectOption[];
+   *     }
+   *   | {
+   *       control: 'text' | 'checkbox';
+   *       size: number;
+   *       required: boolean;
+   *     }
+   * )} InputOptions
    */
   
   /** @type {SelectOption[]}  */
