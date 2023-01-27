@@ -47,10 +47,7 @@ class EditProperties extends HTMLElement {
    * @returns {string}
    */
   static #createLabel(item) {
-    const label = item.inputOptions.label
-      ? item.inputOptions.label
-      : item.label;
-    return label;
+    return item.inputOptions.label ? item.inputOptions.label : item.label;
   }
 
   /**
@@ -64,9 +61,9 @@ class EditProperties extends HTMLElement {
             </div>
         `;
     return `
-            <label 
-                for="${item.label.toLowerCase()}_input" 
-                id="edit_property_${item.label.toLowerCase()}_field" 
+            <label
+                for="${item.label.toLowerCase()}_input"
+                id="edit_property_${item.label.toLowerCase()}_field"
                 class="form-label"
             >
                 ${EditProperties.#createLabel(item)}
@@ -92,10 +89,11 @@ class EditProperties extends HTMLElement {
   }
 
   static #createSelectOption(option, selectedValue) {
+    const selected = option.value === selectedValue ? 'selected' : '';
     return `
-            <option value="${option.value}" ${
-      selectedValue == option.display ? 'selected' : ''
-    }>${option.display}</option>
+      <option value="${option.value}" ${selected}>
+      ${option.display}
+      </option>
         `;
   }
 
@@ -105,9 +103,9 @@ class EditProperties extends HTMLElement {
    */
   static #createDropdownControl(item) {
     return `
-            <label 
-                for="${item.label.toLowerCase()}_input" 
-                id="edit_property_${item.label.toLowerCase()}_field" 
+            <label
+                for="${item.label.toLowerCase()}_input"
+                id="edit_property_${item.label.toLowerCase()}_field"
                 class="form-label"
             >
             ${EditProperties.#createLabel(item)}
@@ -133,9 +131,9 @@ class EditProperties extends HTMLElement {
     return `
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="" id="${item.label.toLowerCase()}_input" name="${item.label.toLowerCase()}_input">
-                <label 
-                    for="${item.label.toLowerCase()}_input" 
-                    id="edit_property_${item.label.toLowerCase()}_field" 
+                <label
+                    for="${item.label.toLowerCase()}_input"
+                    id="edit_property_${item.label.toLowerCase()}_field"
                     class="form-label"
                 >
                 ${EditProperties.#createLabel(item)}
@@ -166,7 +164,7 @@ class EditProperties extends HTMLElement {
             novalidate=""
             >
             ${metaItems.map(this.renderFormControl).join('\n')}
-            </form>  
+            </form>
         `;
     StemmawebDialog.show(
       'Edit properties',
