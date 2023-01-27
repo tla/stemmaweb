@@ -94,7 +94,7 @@ class EditProperties extends HTMLElement {
     * @param {MetaItem} item
     * @returns {string}
     */
-    static #renderDropdownControl(item) {
+    static #createDropdownControl(item) {
         return `
             <label 
                 for="${item.label.toLowerCase()}_input" 
