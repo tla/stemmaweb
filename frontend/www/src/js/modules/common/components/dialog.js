@@ -20,6 +20,7 @@
  *   | 'light'
  *   | 'dark'} okType
  *   The type of the OK button.
+ * @property {string} elemStyle The style of the dialog.
  */
 
 class StemmawebDialog extends HTMLElement {
@@ -28,7 +29,8 @@ class StemmawebDialog extends HTMLElement {
     closeLabel: 'Close',
     closeType: 'secondary',
     okLabel: 'OK',
-    okType: 'primary'
+    okType: 'primary',
+    elemStyle: ''
   };
 
   constructor() {
@@ -41,7 +43,7 @@ class StemmawebDialog extends HTMLElement {
     this.okLabel = StemmawebDialog.#defaultOptions.okLabel;
     this.okType = StemmawebDialog.#defaultOptions.okType;
     this.onOk = () => {};
-    this.elemStyle = '';
+    this.elemStyle = StemmawebDialog.#defaultOptions.elemStyle;
   }
 
   static get observedAttributes() {
