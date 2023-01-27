@@ -5,12 +5,12 @@ class EditProperties extends HTMLElement {
         this.addEventListener( 'click', this.showDialog );
     }
 
-    /** @type {FormControlMap} */
-    static #formControlMap = {
-        'text': EditProperties.#renderTextControl,
-        'dropdown': EditProperties.#renderDropdownControl,
-        'checkbox': EditProperties.#renderCheckboxControl
-    };
+    /** @type {{checkbox: function(MetaItem): string, text: function(MetaItem): string, dropdown: function(MetaItem): string}} */
+  static #formControlMap = {
+    text: EditProperties.#renderTextControl,
+    dropdown: EditProperties.#renderDropdownControl,
+    checkbox: EditProperties.#renderCheckboxControl
+  };
 
     /**
     * @param {Tradition} tradition Tradition to render the metadata for.
