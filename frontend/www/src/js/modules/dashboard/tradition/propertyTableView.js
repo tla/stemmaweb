@@ -6,6 +6,7 @@
  *   direction: string;
  *   tradition: string;
  *   witnesses: string;
+ *   name: string;
  * }} TraditionMetaLabels
  *
  * @typedef {{ stemma: string }} StemmaMetaLabels
