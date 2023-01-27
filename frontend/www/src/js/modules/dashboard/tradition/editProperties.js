@@ -7,9 +7,9 @@ class EditProperties extends HTMLElement {
 
     /** @type {{checkbox: function(MetaItem): string, text: function(MetaItem): string, dropdown: function(MetaItem): string}} */
   static #formControlMap = {
-    text: EditProperties.#renderTextControl,
-    dropdown: EditProperties.#renderDropdownControl,
-    checkbox: EditProperties.#renderCheckboxControl
+    text: EditProperties.#createTextControl,
+    dropdown: EditProperties.#createDropdownControl,
+    checkbox: EditProperties.#createCheckboxControl
   };
 
     /**
@@ -68,7 +68,7 @@ class EditProperties extends HTMLElement {
                 id="edit_property_${item.label.toLowerCase()}_field" 
                 class="form-label"
             >
-                ${ EditProperties.#renderLabel( item ) }
+                ${ EditProperties.#createLabel( item ) }
             </label>
             <input
                 id="${item.label.toLowerCase()}_input"
@@ -101,14 +101,14 @@ class EditProperties extends HTMLElement {
                 id="edit_property_${item.label.toLowerCase()}_field" 
                 class="form-label"
             >
-            ${ EditProperties.#renderLabel( item ) }
+            ${ EditProperties.#createLabel( item ) }
             </label>
             <select
                 id="${item.label.toLowerCase()}_input"
                 name="${item.label.toLowerCase()}_input"
                 class="form-select"
             >
-                ${ item.inputOptions.selectOptions.map( function( option ){ return EditProperties.#renderSelectOption( option, item.value ) } ) }
+                ${ item.inputOptions.selectOptions.map( function( option ){ return EditProperties.#createSelectOption( option, item.value ) } ) }
             </select>
             <br />
         `;
@@ -127,7 +127,7 @@ class EditProperties extends HTMLElement {
                     id="edit_property_${item.label.toLowerCase()}_field" 
                     class="form-label"
                 >
-                ${ EditProperties.#renderLabel( item ) }
+                ${ EditProperties.#createLabel( item ) }
                 </label>
             </div>
             <br />
@@ -156,7 +156,7 @@ class EditProperties extends HTMLElement {
             ${ metaItems.map( this.renderFormControl ).join( '\n' ) }
             </form>  
         `
-        StemmawebDialog.show( 'Edit properties', modal_body, {}, { elemStyle: this.#initDialogStyle() } );
+        StemmawebDialog.show( 'Edit properties', modal_body, {}, { elemStyle: this.#createDialogStyle() } );
     }
 
     render() {
