@@ -56,7 +56,7 @@ class EditProperties extends HTMLElement {
     * @param {MetaItem} item
     * @returns {string}
     */
-    static #renderTextControl(item) {
+    static #createTextControl(item) {
         const invalidFeedback = `
             <div class="invalid-feedback">
                 Input for this field is required for the tradition.
