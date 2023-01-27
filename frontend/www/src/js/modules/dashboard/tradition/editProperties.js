@@ -118,7 +118,7 @@ class EditProperties extends HTMLElement {
     * @param {MetaItem} item
     * @returns {string}
     */
-    static #renderCheckboxControl(item) {
+    static #createCheckboxControl(item) {
         return `
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="" id="${item.label.toLowerCase()}_input" name="${item.label.toLowerCase()}_input">
