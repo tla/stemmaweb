@@ -10,7 +10,7 @@ from stemmaweb_middleware.permissions.models import (
 )
 
 from ..permissions.declarations import get_stemmarest_permission_config
-from ..stemmarest_client import StemmarestClient
+from ..stemmarest_client import APIClient
 from ..stemmarest_endpoints import StemmarestEndpoint
 from .service import StemmarestPermissionService
 
@@ -97,7 +97,7 @@ class StemmarestPermissionHandler:
 
 
 def get_stemmarest_permission_handler(
-    client: StemmarestClient,
+    client: APIClient,
 ) -> StemmarestPermissionHandler:
     service = StemmarestPermissionService(client)
     handler = StemmarestPermissionHandler(service)

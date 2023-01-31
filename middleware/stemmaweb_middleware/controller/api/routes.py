@@ -4,14 +4,14 @@ from loguru import logger
 
 from stemmaweb_middleware.permissions import current_user, determine_user_role
 from stemmaweb_middleware.permissions.models import PermissionArguments
-from stemmaweb_middleware.stemmarest import StemmarestClient
+from stemmaweb_middleware.stemmarest import APIClient
 from stemmaweb_middleware.stemmarest.permissions import (
     get_stemmarest_permission_handler,
 )
 from stemmaweb_middleware.utils import abort, files_to_bytes
 
 
-def blueprint_factory(stemmarest_client: StemmarestClient):
+def blueprint_factory(stemmarest_client: APIClient):
     """
     Creates a Flask blueprint to expose the Stemmarest API at `/api/*`.
 

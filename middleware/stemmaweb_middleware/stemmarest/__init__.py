@@ -1,3 +1,3 @@
-from .stemmarest_client import StemmarestClient
+from .stemmarest_client import APIClient
 
-__all__ = ["StemmarestClient"]
+__all__ = ["APIClient"]

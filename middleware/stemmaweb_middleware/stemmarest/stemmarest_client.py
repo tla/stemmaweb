@@ -19,19 +19,21 @@ def _expand_endpoint_pattern(endpoint_str: str, path_params: dict[str, str]) -> 
     return endpoint_str
 
 
-class StemmarestClient:
+class APIClient:
     """Class to make requests to the Stemmarest API"""
 
-    def __init__(self, endpoint: str):
+    def __init__(self, endpoint: str, name: str):
         """
         Initialize a `StemmarestClient` object.
 
         :param endpoint: The URL of the Stemmarest API endpoint used for requests.
+        :param name: The name of the contacted API. Will appear in logs.
         """
         if not url_is_valid(endpoint):
-            raise ValueError(f"Invalid Stemmarest endpoint URL: {endpoint}")
+            raise ValueError(f"Invalid {name} endpoint URL: {endpoint}")
 
         self.endpoint = endpoint
+        self.name = name
 
     def request(self, method: str, path: str, **kwargs) -> requests.Response:
         """
@@ -43,5 +45,5 @@ class StemmarestClient:
         :return: A `requests.Response` object.
         """
         url = f"{self.endpoint}{path}"
-        logger.debug(f"Making Stemmarest call: {url}")
+        logger.debug(f"Making {self.name} call: {url}")
         return requests.request(method, url, **kwargs)

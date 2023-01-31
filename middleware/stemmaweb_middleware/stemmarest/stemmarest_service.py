@@ -1,10 +1,10 @@
-from .stemmarest_client import StemmarestClient
+from .stemmarest_client import APIClient
 
 
 class StemmarestService:
     """Service class to perform high-level operations on the Stemmarest API."""
 
-    def __init__(self, client: StemmarestClient):
+    def __init__(self, client: APIClient):
         """
         Initialize a `StemmarestService` object.
 

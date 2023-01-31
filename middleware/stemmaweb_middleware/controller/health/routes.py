@@ -1,9 +1,9 @@
 from flask import Blueprint
 
-from stemmaweb_middleware.stemmarest import StemmarestClient
+from stemmaweb_middleware.stemmarest import APIClient
 
 
-def blueprint_factory(stemmarest_client: StemmarestClient) -> Blueprint:
+def blueprint_factory(stemmarest_client: APIClient) -> Blueprint:
     blueprint = Blueprint("health", __name__)
 
     @blueprint.route("/")

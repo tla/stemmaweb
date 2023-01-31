@@ -1,4 +1,4 @@
-from stemmaweb_middleware.stemmarest import StemmarestClient
+from stemmaweb_middleware.stemmarest import APIClient
 
 
 class StemmarestPermissionService:
@@ -7,7 +7,7 @@ class StemmarestPermissionService:
     Hides low-level details of the Stemmarest API from the routes.
     """
 
-    def __init__(self, client: StemmarestClient):
+    def __init__(self, client: APIClient):
         """
         Creates a new service object.
 

@@ -3,7 +3,7 @@ from authlib.integrations.flask_client import OAuth
 
 import stemmaweb_middleware.constants as constants
 from stemmaweb_middleware.models import StemmawebUser
-from stemmaweb_middleware.stemmarest import StemmarestClient
+from stemmaweb_middleware.stemmarest import APIClient
 
 from . import models
 
@@ -14,7 +14,7 @@ class StemmarestAuthService:
     Hides low-level details of the Stemmarest API from the routes.
     """
 
-    def __init__(self, client: StemmarestClient):
+    def __init__(self, client: APIClient):
         """
         Creates a new service object for the auth routes.
 
