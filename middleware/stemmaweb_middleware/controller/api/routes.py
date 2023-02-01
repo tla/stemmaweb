@@ -10,7 +10,7 @@ def blueprint_factory(stemmarest_client: APIClient):
     """
     Creates a Flask blueprint to expose the Stemmarest API at `/api/*`.
 
-    :param stemmarest_client: `StemmarestClient` to interact with the Stemmarest API.
+    :param stemmarest_client: `APIClient` to interact with the Stemmarest API.
     :return: the configured Flask blueprint.
     """
     blueprint = Blueprint("api", __name__)
@@ -28,7 +28,7 @@ def blueprint_factory(stemmarest_client: APIClient):
 
         :return: a tuple containing a message and a 200 status code.
         """
-        return "Passthrough is healthy", 200
+        return f"[{permission_handler.name}] Passthrough is healthy", 200
 
     @blueprint.route(f"/{ROUTE_PREFIX}/<path:segments>", methods=ALLOWED_METHODS)
     def wildcard(segments: str):
