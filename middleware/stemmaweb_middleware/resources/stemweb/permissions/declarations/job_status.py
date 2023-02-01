@@ -1,6 +1,3 @@
-# pylint: skip-file
-# flake8: noqa
-
 import stemmaweb_middleware.permissions.predicates as perm_predicates_base
 from stemmaweb_middleware.permissions.models import (
     EndpointAccess,
@@ -9,15 +6,15 @@ from stemmaweb_middleware.permissions.models import (
     PermissionConfig,
     UserRole,
 )
-from stemmaweb_middleware.resources.stemmarest.permissions.service import (
-    StemmarestPermissionService,
+from stemmaweb_middleware.resources.stemweb.permissions.service import (
+    StemwebPermissionService,
 )
 
 
 def config(
-    service: StemmarestPermissionService, args: PermissionArguments
+    service: StemwebPermissionService, args: PermissionArguments
 ) -> dict[UserRole, list[PermissionConfig]]:
-    """Role-based configuration for the `/users/*` Stemmarest endpoint."""
+    """Role-based configuration for the `/algorithms/jobstatus` Stemweb endpoint."""
     base_config = [
         PermissionConfig(
             endpoint_access=EndpointAccess(
@@ -28,12 +25,12 @@ def config(
             ),
         )
     ]
-    users_config_guest = [*base_config]
-    users_config_user = [*base_config]
-    users_config_admin = [*base_config]
-    users_config = {
-        UserRole.GUEST: users_config_guest,
-        UserRole.USER: users_config_user,
-        UserRole.ADMIN: users_config_admin,
+    tradition_config_guest = [*base_config]
+    tradition_config_user = [*base_config]
+    tradition_config_admin = [*base_config]
+    tradition_config = {
+        UserRole.GUEST: tradition_config_guest,
+        UserRole.USER: tradition_config_user,
+        UserRole.ADMIN: tradition_config_admin,
     }
-    return users_config
+    return tradition_config

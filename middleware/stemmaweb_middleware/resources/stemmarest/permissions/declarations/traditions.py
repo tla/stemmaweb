@@ -1,8 +1,8 @@
 # pylint: skip-file
 # flake8: noqa
 
+import stemmaweb_middleware.permissions.predicates as perm_predicates_base
 import stemmaweb_middleware.resources.stemmarest.permissions.filter as perm_filters
-import stemmaweb_middleware.resources.stemmarest.permissions.predicates as perm_predicates
 from stemmaweb_middleware.permissions.models import (
     EndpointAccess,
     Permission,
@@ -24,7 +24,7 @@ def config(
             endpoint_access=EndpointAccess(
                 name="List Public Traditions",
                 description="Public traditions can be listed",
-                predicate=perm_predicates.always_true,
+                predicate=perm_predicates_base.always_true,
                 if_true={Permission.READ},
             ),
             response_transformer=perm_filters.public_resources_only,
@@ -35,7 +35,7 @@ def config(
             endpoint_access=EndpointAccess(
                 name="List Public & Owned Traditions",
                 description="Public and own traditions can be listed",
-                predicate=perm_predicates.always_true,
+                predicate=perm_predicates_base.always_true,
                 if_true={Permission.READ},
             ),
             response_transformer=perm_filters.owned_resources_only_factory(args),

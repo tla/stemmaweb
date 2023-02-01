@@ -1,7 +1,7 @@
 # pylint: skip-file
 # flake8: noqa
 
-import stemmaweb_middleware.resources.stemmarest.permissions.predicates as perm_predicates
+import stemmaweb_middleware.permissions.predicates as perm_predicates_base
 from stemmaweb_middleware.permissions.models import (
     EndpointAccess,
     Permission,
@@ -23,7 +23,7 @@ def config(
             endpoint_access=EndpointAccess(
                 name="Allow all",
                 description="Allowing full access for now",
-                predicate=perm_predicates.always_true,
+                predicate=perm_predicates_base.always_true,
                 if_true={Permission.READ, Permission.WRITE},
             ),
         )

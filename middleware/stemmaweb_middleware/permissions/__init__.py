@@ -1,4 +1,4 @@
-from . import models
+from . import models, predicates
 from .models import UserRole
 from .utils import (
     current_user,
@@ -14,4 +14,5 @@ __all__ = [
     "require_min_user_role",
     "determine_user_role",
     "current_user",
+    "predicates",
 ]
