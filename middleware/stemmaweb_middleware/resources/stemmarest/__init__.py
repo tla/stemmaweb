@@ -1,3 +1,4 @@
-from stemmaweb_middleware.resources.base.api_client import APIClient
+from .stemmarest_endpoints import StemmarestEndpoint
+from .stemmarest_service import StemmarestService
 
-__all__ = ["APIClient"]
+__all__ = ["StemmarestEndpoint", "StemmarestService"]
