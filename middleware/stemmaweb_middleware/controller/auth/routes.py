@@ -182,7 +182,7 @@ def blueprint_factory(
     def google_oauth_redirect():
         return oauth_redirect(
             provider="Google",
-            user_getter=service.load_user_google_oauth,
+            user_getter=service.load_user_google_oauth,  # type: ignore
             user_getter_args=(oauth,),
         )
 
@@ -203,7 +203,7 @@ def blueprint_factory(
         state = request.args.get("state")
         return oauth_redirect(
             provider="GitHub",
-            user_getter=service.load_user_github_oauth,
+            user_getter=service.load_user_github_oauth,  # type: ignore
             user_getter_args=(
                 oauth,
                 code,
