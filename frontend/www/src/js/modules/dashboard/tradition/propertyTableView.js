@@ -3,13 +3,15 @@
  *   owner: string;
  *   access: string;
  *   language: string;
+ *   direction: string;
  *   tradition: string;
  *   witnesses: string;
+ *   name: string;
  * }} TraditionMetaLabels
  *
  * @typedef {{ stemma: string }} StemmaMetaLabels
  *
- * @typedef {{ label: string; value: string }} MetaItem
+ * @typedef {{ label: string; value: string; inputOptions?: InputOptions }} MetaItem
  *
  * @typedef {import('@types/stemmaweb').Tradition} Tradition
  *
@@ -26,12 +28,14 @@ class PropertyTableView extends HTMLElement {
   }
 
   /** @type {TraditionMetaLabels} */
-  static #traditionMetadataLabels = {
+  static traditionMetadataLabels = {
     tradition: 'Tradition',
+    direction: 'Direction',
     owner: 'Owner',
     access: 'Access',
     language: 'Language',
-    witnesses: 'Witnesses'
+    witnesses: 'Witnesses',
+    name: 'Name'
   };
 
   /** @type {StemmaMetaLabels} */
@@ -40,15 +44,82 @@ class PropertyTableView extends HTMLElement {
   };
 
   /**
+   * @typedef {{
+   *   value: string;
+   *   display: string;
+   * }} SelectOption
+   *
+   * @typedef {{
+   *   size: number;
+   *   required: boolean;
+   *   label?: string;
+   * } & (
+   *   | {
+   *       control: 'dropdown';
+   *       size: number;
+   *       required: boolean;
+   *       selectOptions: SelectOption[];
+   *     }
+   *   | {
+   *       control: 'text' | 'checkbox';
+   *       size: number;
+   *       required: boolean;
+   *     }
+   * )} InputOptions
+   */
+
+  /** @type {SelectOption[]} */
+  static #directionOptions = [
+    {
+      value: 'LR',
+      display: 'Left to Right'
+    },
+    {
+      value: 'RL',
+      display: 'Right to Left'
+    },
+    {
+      value: 'BI',
+      display: 'Bi-directional'
+    }
+  ];
+
+  /**
+   * Maps 'LR' etc. to more readable 'Left to right' form.
+   *
+   * @param {string} key
+   * @returns {string}
+   */
+  static #mapDirection(key) {
+    const directionMap = this.#directionOptions.reduce(function (
+      options,
+      option
+    ) {
+      options[option.value] = option.display;
+      return options;
+    },
+    {});
+    return directionMap[key] || key;
+  }
+
+  /**
    * @param {Tradition} tradition Tradition to render the metadata for.
    * @returns {MetaItem[]} Array of metadata items to display.
    */
-  static #metadataFromTradition(tradition) {
-    const labels = PropertyTableView.#traditionMetadataLabels;
+  static metadataFromTradition(tradition) {
+    const labels = PropertyTableView.traditionMetadataLabels;
     return [
       {
         label: labels.tradition,
         value: tradition.id
+      },
+      {
+        label: labels.direction,
+        value: this.#mapDirection(tradition.direction),
+        inputOptions: {
+          control: 'dropdown',
+          selectOptions: this.#directionOptions
+        }
       },
       {
         label: labels.owner,
@@ -56,15 +127,18 @@ class PropertyTableView extends HTMLElement {
       },
       {
         label: labels.access,
-        value: tradition.is_public ? 'Public' : 'Private'
+        value: tradition.is_public ? 'Public' : 'Private',
+        inputOptions: { control: 'checkbox', label: 'Allow public access?' }
       },
       {
         label: labels.language,
-        value: tradition.language
+        value: tradition.language,
+        inputOptions: { control: 'text', size: 20 }
       },
       {
         label: labels.witnesses,
-        value: tradition.witnesses
+        value: tradition.witnesses,
+        inputOptions: { control: 'text', size: 80, required: true }
       }
     ];
   }
@@ -89,12 +163,13 @@ class PropertyTableView extends HTMLElement {
    * @type {string[]}
    */
   static #metadataLabelOrder = [
-    PropertyTableView.#traditionMetadataLabels.tradition,
+    PropertyTableView.traditionMetadataLabels.tradition,
     PropertyTableView.#stemmaMetadataLabels.stemma,
-    PropertyTableView.#traditionMetadataLabels.owner,
-    PropertyTableView.#traditionMetadataLabels.access,
-    PropertyTableView.#traditionMetadataLabels.language,
-    PropertyTableView.#traditionMetadataLabels.witnesses
+    PropertyTableView.traditionMetadataLabels.owner,
+    PropertyTableView.traditionMetadataLabels.access,
+    PropertyTableView.traditionMetadataLabels.language,
+    PropertyTableView.traditionMetadataLabels.direction,
+    PropertyTableView.traditionMetadataLabels.witnesses
   ];
 
   /**
@@ -136,7 +211,7 @@ class PropertyTableView extends HTMLElement {
   render(tradition, stemma) {
     /** @type {MetaItem[]} */
     const traditionMeta = tradition
-      ? PropertyTableView.#metadataFromTradition(tradition)
+      ? PropertyTableView.metadataFromTradition(tradition)
       : [];
     /** @type {MetaItem[]} */
     const stemmaMeta = stemma
@@ -152,6 +227,8 @@ class PropertyTableView extends HTMLElement {
         class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
       >
         <span>Properties</span>
+        <edit-properties-button/>
+
       </h6>
 
       <div class="table-responsive px-3 py-3">
@@ -160,7 +237,9 @@ class PropertyTableView extends HTMLElement {
           ${metaItems.map(this.renderMetaItem).join('\n')}
           </tbody>
         </table>
+        <another-button/>
       </div>
+
     </div>
     `;
   }

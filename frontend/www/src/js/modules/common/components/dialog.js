@@ -20,6 +20,7 @@
  *   | 'light'
  *   | 'dark'} okType
  *   The type of the OK button.
+ * @property {string} elemStyle The style of the dialog.
  */
 
 class StemmawebDialog extends HTMLElement {
@@ -28,7 +29,8 @@ class StemmawebDialog extends HTMLElement {
     closeLabel: 'Close',
     closeType: 'secondary',
     okLabel: 'OK',
-    okType: 'primary'
+    okType: 'primary',
+    elemStyle: ''
   };
 
   constructor() {
@@ -41,6 +43,7 @@ class StemmawebDialog extends HTMLElement {
     this.okLabel = StemmawebDialog.#defaultOptions.okLabel;
     this.okType = StemmawebDialog.#defaultOptions.okType;
     this.onOk = () => {};
+    this.elemStyle = StemmawebDialog.#defaultOptions.elemStyle;
   }
 
   static get observedAttributes() {
@@ -76,6 +79,7 @@ class StemmawebDialog extends HTMLElement {
     element.closeType = usedOptions.closeType;
     element.okLabel = usedOptions.okLabel;
     element.okType = usedOptions.okType;
+    element.elemStyle = usedOptions.elemStyle;
 
     // add the element to the DOM
     document.body.appendChild(element);
@@ -104,11 +108,11 @@ class StemmawebDialog extends HTMLElement {
   connectedCallback() {
     this.render();
   }
-
+  // #modalDialog.modal.fade div.modal-dialog
   render() {
     this.innerHTML = `
     <div class="modal fade" id="modalDialog" tabindex="-1" aria-labelledby="modalDialogLabel" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog" style="${this.elemStyle}">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="modalDialogLabel">${this.modalTitle}</h5>
