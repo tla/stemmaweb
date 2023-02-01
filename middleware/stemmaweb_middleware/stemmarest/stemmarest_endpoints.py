@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Optional
+from stemmaweb_middleware.utils import match_path
 
 
 class StemmarestEndpoint(Enum):
@@ -25,8 +26,8 @@ class StemmarestEndpoint(Enum):
         :param path: The path to match.
         :return: The corresponding `StemmarestEndpoint`.
         """
-        for endpoint in StemmarestEndpoint:
-            first_segment = endpoint.value.split("/")[1]
-            if path.startswith(f"/{first_segment}"):
-                return endpoint
-        return None
+        endpoints = [endpoint.value for endpoint in StemmarestEndpoint]
+        matched_endpoint = match_path(path, endpoints)
+        if matched_endpoint is None:
+            return None
+        return StemmarestEndpoint(matched_endpoint)
