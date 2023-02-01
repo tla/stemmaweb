@@ -61,20 +61,27 @@ def register_blueprints(app: Flask):
 
     :param app: The Flask application object.
     """
-    client = app.config["STEMMAREST_CLIENT"]
-    api_blueprint = controller.api.routes.blueprint_factory(client)
+    # Stemmarest endpoint
+    stemmarest_client = app.config["STEMMAREST_CLIENT"]
+    api_blueprint = controller.api.routes.blueprint_factory(stemmarest_client)
     app.register_blueprint(api_blueprint)
 
     # Middleware-API endpoints to handle auth
     recaptcha_verifier = app.config["RECAPTCHA_VERIFIER"]
     auth_blueprint = controller.auth.routes.blueprint_factory(
-        client, recaptcha_verifier
+        stemmarest_client, recaptcha_verifier
     )
     app.register_blueprint(auth_blueprint)
 
     # General health-check endpoint
-    health_blueprint = controller.health.routes.blueprint_factory(client)
+    health_blueprint = controller.health.routes.blueprint_factory(stemmarest_client)
     app.register_blueprint(health_blueprint)
+
+    # Stemweb endpoint
+    stemweb_client = app.config["STEMWEB_CLIENT"]
+    stemweb_blueprint = controller.stemweb.routes.blueprint_factory(stemweb_client)
+    app.register_blueprint(stemweb_blueprint)
+
     return None
 
 
