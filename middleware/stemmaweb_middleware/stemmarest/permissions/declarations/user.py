@@ -14,7 +14,9 @@ from stemmaweb_middleware.stemmarest.permissions.service import (
 )
 
 
-def config(service: StemmarestPermissionService, args: PermissionArguments):
+def config(
+    service: StemmarestPermissionService, args: PermissionArguments
+) -> dict[UserRole, list[PermissionConfig]]:
     """Role-based configuration for the `/user/*` Stemmarest endpoint."""
     base_config = [
         PermissionConfig(

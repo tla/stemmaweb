@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Optional
+
 from stemmaweb_middleware.utils import match_path
 
 
