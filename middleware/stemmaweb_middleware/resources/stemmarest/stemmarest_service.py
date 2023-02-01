@@ -1,4 +1,4 @@
-from .stemmarest_client import APIClient
+from stemmaweb_middleware.resources.base.api_client import APIClient
 
 
 class StemmarestService:

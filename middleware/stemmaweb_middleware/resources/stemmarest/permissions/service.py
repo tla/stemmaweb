@@ -1,4 +1,4 @@
-from stemmaweb_middleware.stemmarest import APIClient
+from stemmaweb_middleware.resources.base import APIClient
 
 
 class StemmarestPermissionService:

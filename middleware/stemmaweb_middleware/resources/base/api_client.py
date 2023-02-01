@@ -1,7 +1,7 @@
 import requests
 from loguru import logger
 
-from ..utils import url_is_valid
+from stemmaweb_middleware.utils import url_is_valid
 
 
 def _expand_endpoint_pattern(endpoint_str: str, path_params: dict[str, str]) -> str:
@@ -20,13 +20,13 @@ def _expand_endpoint_pattern(endpoint_str: str, path_params: dict[str, str]) -> 
 
 
 class APIClient:
-    """Class to make requests to the Stemmarest API"""
+    """Class to make requests to an external API"""
 
     def __init__(self, endpoint: str, name: str):
         """
-        Initialize a `StemmarestClient` object.
+        Initialize an `APIClient` object.
 
-        :param endpoint: The URL of the Stemmarest API endpoint used for requests.
+        :param endpoint: The URL of the API endpoint used for requests.
         :param name: The name of the contacted API. Will appear in logs.
         """
         if not url_is_valid(endpoint):
@@ -37,7 +37,7 @@ class APIClient:
 
     def request(self, method: str, path: str, **kwargs) -> requests.Response:
         """
-        Make a request to the Stemmarest API.
+        Make a request to the API.
 
         :param method: The HTTP method to use.
         :param path: The path to the resource to request.

@@ -1,8 +1,8 @@
 from stemmaweb_middleware.permissions.base_handler import BasePermissionHandler
+from stemmaweb_middleware.permissions.models import PermissionProvider
+from stemmaweb_middleware.resources.base.api_client import APIClient
 
-from ...permissions.models import PermissionProvider
 from ..permissions.declarations import StemmarestPermissionProvider
-from ..stemmarest_client import APIClient
 from ..stemmarest_endpoints import StemmarestEndpoint
 from .service import StemmarestPermissionService
 

@@ -1,6 +1,6 @@
 from flask import Blueprint
 
-from stemmaweb_middleware.stemmarest import APIClient
+from stemmaweb_middleware.resources.base import APIClient
 
 
 def blueprint_factory(stemmarest_client: APIClient) -> Blueprint:

@@ -6,7 +6,7 @@ from loguru import logger
 import stemmaweb_middleware.permissions as permissions
 from stemmaweb_middleware.extensions import login_manager, oauth
 from stemmaweb_middleware.models import AuthUser, StemmawebUser
-from stemmaweb_middleware.stemmarest import APIClient
+from stemmaweb_middleware.resources.base import APIClient
 from stemmaweb_middleware.utils import (
     RecaptchaVerifier,
     abort,

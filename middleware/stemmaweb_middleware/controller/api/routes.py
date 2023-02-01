@@ -4,8 +4,8 @@ from loguru import logger
 
 from stemmaweb_middleware.permissions import current_user, determine_user_role
 from stemmaweb_middleware.permissions.models import PermissionArguments
-from stemmaweb_middleware.stemmarest import APIClient
-from stemmaweb_middleware.stemmarest.permissions import (
+from stemmaweb_middleware.resources.base import APIClient
+from stemmaweb_middleware.resources.stemmarest.permissions import (
     get_stemmarest_permission_handler,
 )
 from stemmaweb_middleware.utils import abort, files_to_bytes

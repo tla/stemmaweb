@@ -1,8 +1,8 @@
 # pylint: skip-file
 # flake8: noqa
 
-import stemmaweb_middleware.stemmarest.permissions.filter as perm_filters
-import stemmaweb_middleware.stemmarest.permissions.predicates as perm_predicates
+import stemmaweb_middleware.resources.stemmarest.permissions.filter as perm_filters
+import stemmaweb_middleware.resources.stemmarest.permissions.predicates as perm_predicates
 from stemmaweb_middleware.permissions.models import (
     EndpointAccess,
     Permission,
@@ -10,7 +10,7 @@ from stemmaweb_middleware.permissions.models import (
     PermissionConfig,
     UserRole,
 )
-from stemmaweb_middleware.stemmarest.permissions.service import (
+from stemmaweb_middleware.resources.stemmarest.permissions.service import (
     StemmarestPermissionService,
 )
 

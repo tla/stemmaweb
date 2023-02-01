@@ -4,7 +4,7 @@ import secrets
 from environs import Env
 from loguru import logger
 
-from stemmaweb_middleware.stemmarest.stemmarest_client import APIClient
+from stemmaweb_middleware.resources.base import APIClient
 from stemmaweb_middleware.utils import RecaptchaVerifier
 
 from . import constants

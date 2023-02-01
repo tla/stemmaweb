@@ -73,7 +73,7 @@ in the [`stemmaweb_middleware/controller/auth`](./stemmaweb_middleware/controlle
 The middleware accepts or rejects requests based on the user's role. The authorization logic is implemented using
 a custom decorator (higher-order-function) `require_min_user_role`, defined in
 the [`stemmaweb_middleware/permissions`](./stemmaweb_middleware/permissions) module. The actual declarations are defined
-in [`stemmaweb_middleware/stemmarest/permissions/declarations`](./stemmaweb_middleware/stemmarest/permissions/declarations)
+in [`stemmaweb_middleware/resources/stemmarest/permissions/declarations`](stemmaweb_middleware/resources/stemmarest/permissions/declarations)
 .
 
 ### Forwarding Requests to the Stemmarest Backend
