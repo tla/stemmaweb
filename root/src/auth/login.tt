@@ -3,9 +3,7 @@
 	applicationstyle = c.uri_for('/css/auth.css')
 %]
 
-<meta name="google-signin-client_id" content="[% google_client_id %]" />
-<meta name="google-signin-scope" content="profile email" />
-<script src="https://apis.google.com/js/platform.js" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
  $(document).ready(function() {
     $('#login_actions').accordion();
@@ -75,11 +73,11 @@
 	<div>
 		<p>If you have a Google account, you may use it to sign into Stemmaweb.</p>
 
-        <div class="g-signin2"
-			data-onsuccess="googleSignIn"
-			data-onfailure="googleSignInFailed"
-			data-theme="dark">
+        <div id="g_id_onload"
+         	data-client_id="[% google_client_id %]"
+         	data-callback="googleSignIn">
 		</div>
+		<div class="g_id_signin" data-type="standard"></div>
 		<form id="google_form" action="[% c.uri_for_action('/users/login') | html %]" method="post">
 			<input id='google_email' name='email' value='' type='hidden' />
 			<input id='google_id_token' name='id_token' value='' type='hidden' />
