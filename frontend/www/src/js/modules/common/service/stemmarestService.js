@@ -21,6 +21,8 @@
  * functions. The main purpose of this class is to encapsulate the logic needed
  * for communication with the REST API, such as where the REST API is deployed
  * and what endpoints are available.
+ *
+ * {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Docs}
  */
 class StemmarestService extends BaseService {
   /** @param {string} baseUrl The base URL of the Stemmarest API. */
