@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Optional
 
+from loguru import logger
+
 from stemmaweb_middleware.utils import match_path
 
 
@@ -36,6 +38,9 @@ class StemwebEndpoint(Enum):
         """
         endpoints = [endpoint.value for endpoint in StemwebEndpoint]
         matched_endpoint = match_path(path, endpoints)
+        logger.debug(
+            f"[Stemweb] Matched path `{path}` to endpoint `{matched_endpoint}`"
+        )
         if matched_endpoint is None:
             return None
         return StemwebEndpoint(matched_endpoint)
