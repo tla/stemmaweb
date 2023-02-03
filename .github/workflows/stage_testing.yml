@@ -15,34 +15,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: Log into ghcr.io
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log into DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PW }}
 
       - name: Build and push development image
         id: docker_build
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v4
         with:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: dhuniwien/stemmaweb:master
       - name: Build and push FCGI image
         id: docker_build_fcgi
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v4
         with:
           file: Dockerfile-fcgi
           push: true
@@ -54,4 +54,5 @@ jobs:
     steps:
       - name: Deploy to Rancher
         run: |
-          curl -i -X POST "${{ secrets.RANCHERURL }}?action=redeploy" -H "Authorization: Bearer ${{ secrets.RANCHER_BEARER_TOKEN }}"
+          curl -i -X POST "${{ secrets.RANCHERURL }}:stemma-web?action=redeploy" -H "Authorization: Bearer ${{ secrets.RANCHER_BEARER_TOKEN }}"
+          curl -i -X POST "${{ secrets.RANCHERURL }}:stemma-nginx?action=redeploy" -H "Authorization: Bearer ${{ secrets.RANCHER_BEARER_TOKEN }}"
