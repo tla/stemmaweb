@@ -10,12 +10,15 @@ class StemwebEndpoint(Enum):
 
     `Read more about the API
     <https://stemmaweb.net/?p=58>`_
+
+    `See all Stemweb endpoints
+    <https://github.com/tla/stemmaweb/issues/103#issuecomment-1416056239>`_
     """
 
     DISCOVERY = "/algorithms/available"
-    CALCULATE = "/algorithms/calculate"
-    JOB_STATUS = "/algorithms/jobstatus"
-    RESULT = "/stemmatology/result"
+    CALCULATE = "/algorithms/process/{algo_id}"
+    JOB_STATUS = "/algorithms/jobstatus/{run_id}"
+    RESULT = "/stemweb/result"
 
     @staticmethod
     def match(path: str) -> Optional["StemwebEndpoint"]:
