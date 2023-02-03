@@ -55,5 +55,5 @@ export type DjRelOwnerManyToManyWithValues<T, K extends keyof T, V> = Overwrite<
 export type AlgorithmWithArgs = DjRelOwnerManyToManyWithValues<
   Algorithm,
   'args',
-  AlgorithmArg
+  DjangoModel<AlgorithmArg>
 >;

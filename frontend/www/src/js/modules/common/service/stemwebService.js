@@ -49,9 +49,9 @@ class StemwebModelHelper {
    */
   static joinManyToMany(model, relationName, relationArray) {
     const primaryKeysToJoin = model[relationName];
-    const relationsToJoin = relationArray
-      .filter((relation) => primaryKeysToJoin.includes(relation.pk))
-      .map((relation) => relation.fields);
+    const relationsToJoin = relationArray.filter((relation) =>
+      primaryKeysToJoin.includes(relation.pk)
+    );
     return {
       ...model,
       [relationName]: relationsToJoin
@@ -79,7 +79,7 @@ class StemwebService extends BaseService {
    * interface and option parameters that are required or recommended for their
    * use.
    *
-   * @returns {Promise<BaseResponse<AlgorithmWithArgs[]>>}
+   * @returns {Promise<BaseResponse<DjangoModel<AlgorithmWithArgs[]>>>}
    */
   listAvailableAlgorithms() {
     return this.fetch('/algorithms/available').then((response) => {
@@ -97,11 +97,15 @@ class StemwebService extends BaseService {
         return algorithms.map((algorithm) => {
           /** @type {KeyOf<Algorithm>} */
           const relationName = 'args';
-          return StemwebModelHelper.joinManyToMany(
+          const fields = StemwebModelHelper.joinManyToMany(
             algorithm.fields,
             relationName,
             algorithmArgs
           );
+          return {
+            ...algorithm,
+            fields
+          };
         });
       }
 
