@@ -22,68 +22,20 @@
  * for communication with the REST API, such as where the REST API is deployed
  * and what endpoints are available.
  */
-class StemmarestService {
-  /**
-   * Creates a new instance of the `StemmarestService` class.
-   *
-   * @param {string} baseUrl - A url to the stemmarest server
-   */
+class StemmarestService extends BaseService {
+  /** @param {string} baseUrl The base URL of the Stemmarest API. */
   constructor(baseUrl) {
-    this.baseUrl = baseUrl;
-  }
-
-  /**
-   * Constructs the full URL to be used for a request to the Stemmarest API
-   * based on the supplied `pathSegment`.
-   *
-   * @param {string} pathSegment - The path segment to be appended to the base
-   *   URL of the Stemmarest API, such as `"/api/traditions"`.
-   * @returns {string} Full URL to be used for a request to the Stemmarest API,
-   *   using URI encoding.
-   */
-  #endpoint(pathSegment) {
-    const rawEndpoint = `${this.baseUrl}${pathSegment}`;
-    return encodeURI(rawEndpoint);
-  }
-
-  /**
-   * Utility function to fetch a specific endpoint.
-   *
-   * @template T
-   * @function
-   * @param endpoint {string} The endpoint to fetch.
-   * @param options {RequestInit | undefined} The options to pass to the fetch
-   *   call.
-   * @param params {Record<string, string>} Query parameters to pass to the
-   *   endpoint.
-   * @returns {Promise<BaseResponse<T>>} The response from the fetch call.
-   */
-  #fetch(endpoint, options = { method: 'GET' }, params = {}) {
-    return baseFetch(`${this.#endpoint(endpoint)}`, options, params).catch(
-      this.#handleFetchError
-    );
-  }
-
-  /**
-   * Generic way to handle errors from the fetch API.
-   *
-   * @param {any} errorReason - The reason for the error
-   */
-  #handleFetchError(errorReason) {
-    console.error(
-      "Error while interacting with the middleware's API:",
-      errorReason
-    );
+    super(baseUrl);
   }
 
   /** @returns {string} The URL to initiate a Google OAuth login. */
   get oAuthHrefGoogle() {
-    return this.#endpoint('/oauth-google');
+    return this.endpoint('/oauth-google');
   }
 
   /** @returns {string} The URL to initiate a GitHub OAuth login. */
   get oAuthHrefGithub() {
-    return this.#endpoint('/oauth-github');
+    return this.endpoint('/oauth-github');
   }
 
   /**
@@ -92,7 +44,7 @@ class StemmarestService {
    * @returns {Promise<BaseResponse<CheckUserResponse>>}
    */
   checkUser() {
-    return this.#fetch('/user');
+    return this.fetch('/user');
   }
 
   /**
@@ -100,7 +52,7 @@ class StemmarestService {
    * @returns {Promise<BaseResponse<StemmawebUser>>}
    */
   registerUser(dto) {
-    return this.#fetch('/register', {
+    return this.fetch('/register', {
       method: 'POST',
       body: JSON.stringify(dto),
       headers: new Headers({ 'Content-Type': 'application/json' })
@@ -112,7 +64,7 @@ class StemmarestService {
    * @returns {Promise<BaseResponse<StemmawebUser>>}
    */
   loginUser(dto) {
-    return this.#fetch('/login', {
+    return this.fetch('/login', {
       method: 'POST',
       body: JSON.stringify(dto),
       headers: new Headers({ 'Content-Type': 'application/json' })
@@ -125,7 +77,7 @@ class StemmarestService {
    * @returns {Promise<BaseResponse<LogoutUserResponse>>}
    */
   logoutUser() {
-    return this.#fetch('/logout');
+    return this.fetch('/logout');
   }
 
   /**
@@ -135,7 +87,7 @@ class StemmarestService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /traditions}
    */
   listTraditions() {
-    return this.#fetch('/api/traditions');
+    return this.fetch('/api/traditions');
   }
 
   /**
@@ -146,7 +98,7 @@ class StemmarestService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
    */
   getTradition(tradId) {
-    return this.#fetch(`/api/tradition/${tradId}`);
+    return this.fetch(`/api/tradition/${tradId}`);
   }
 
   /**
@@ -156,7 +108,7 @@ class StemmarestService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
    */
   deleteTradition(tradId) {
-    return this.#fetch(`/api/tradition/${tradId}`, {
+    return this.fetch(`/api/tradition/${tradId}`, {
       method: 'DELETE'
     });
   }
@@ -190,7 +142,7 @@ class StemmarestService {
     }
     formData.append('direction', direction);
     formData.append('public', isPublic ? 'yes' : 'no');
-    return this.#fetch('/api/tradition', {
+    return this.fetch('/api/tradition', {
       method: 'POST',
       'Content-Type': 'multipart/form-data',
       body: formData
@@ -207,7 +159,7 @@ class StemmarestService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemmata}
    */
   listStemmata(tradId) {
-    return this.#fetch(`/api/tradition/${tradId}/stemmata`);
+    return this.fetch(`/api/tradition/${tradId}/stemmata`);
   }
 
   /**
@@ -223,11 +175,12 @@ class StemmarestService {
    */
   reorientStemmaTree(tradId, name, nodeId) {
     // Note: see issue #92, API/middleware needs updating for non ASCII sigils
-    const endpoint = this.#endpoint(
+    const endpoint = this.endpoint(
       `/api/tradition/${tradId}/stemma/${name}/reorient/${nodeId}`
     );
-    return fetch(endpoint, { method: 'POST' })
-      .then((response) => response.json())
-      .catch(this.#handleFetchError);
+    // TODO: Update this to use `this.fetch` and return a `BaseResponse`
+    return fetch(endpoint, { method: 'POST' }).then((response) =>
+      response.json()
+    );
   }
 }
