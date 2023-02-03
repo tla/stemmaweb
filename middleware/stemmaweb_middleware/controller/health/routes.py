@@ -4,7 +4,7 @@ from stemmaweb_middleware.resources.base import APIClient
 
 
 def blueprint_factory(
-        *, stemmarest_client: APIClient, stemweb_client: APIClient
+    *, stemmarest_client: APIClient, stemweb_client: APIClient
 ) -> Blueprint:
     blueprint = Blueprint("health", __name__)
 
