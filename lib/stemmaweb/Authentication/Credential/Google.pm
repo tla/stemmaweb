@@ -50,22 +50,13 @@ sub authenticate {
         Catalyst::Exception->throw("id_token not specified.");
     }
 
-    my $email = $authinfo->{email};
-    $email ||=
-        $c->req->method eq 'GET'
-      ? $c->req->query_params->{email}
-      : $c->req->body_params->{email};
-
     my $userinfo = $self->decode($id_token);
+    my $email    = $userinfo->{email};
     my $sub      = $userinfo->{sub};
 
     unless (exists $userinfo->{email}) {
-        if ($email) {
-            $userinfo->{email} = $email;
-        } else {
-            Catalyst::Exception->throw(
-                'No email address associated with login request!');
-        }
+        Catalyst::Exception->throw(
+            'No email address associated with login request!');
     }
 
     if (!$sub) {

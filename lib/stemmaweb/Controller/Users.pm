@@ -62,7 +62,7 @@ before login => sub {
     $c->req->param(realm => 'openid')
       if $c->req->param('openid-check');
 
-    if ($c->req->params->{email} && $c->req->params->{id_token}) {
+    if ($c->req->params->{id_token}) {
         $c->req->param(realm => 'google');
     }
 

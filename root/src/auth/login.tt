@@ -26,16 +26,16 @@
 	function googleSignIn(googleUser) {
 		// Get the information we need
 		console.log(googleUser);
-		var profile = googleUser.getBasicProfile();
-		var email = profile.getEmail();
-		var id_token = googleUser.getAuthResponse().id_token;
-		// Log back out of Google, so that we don't get auto-logged in next time
-		var auth2 = gapi.auth2.getAuthInstance();
-		auth2.signOut();
+		// var profile = googleUser.getBasicProfile();
+		// var email = profile.getEmail();
+		// var id_token = googleUser.getAuthResponse().id_token;
+		// // Log back out of Google, so that we don't get auto-logged in next time
+		// var auth2 = gapi.auth2.getAuthInstance();
+		// auth2.signOut();
 
 		// Send credentials to the server for verification
-		document.getElementById('google_email').value = email;
-		document.getElementById('google_id_token').value = id_token;
+		// document.getElementById('google_email').value = email;
+		document.getElementById('google_id_token').value = googleUser.credential;
 		document.getElementById('google_form').submit();
 	}
 
@@ -79,7 +79,7 @@
 		</div>
 		<div class="g_id_signin" data-type="standard"></div>
 		<form id="google_form" action="[% c.uri_for_action('/users/login') | html %]" method="post">
-			<input id='google_email' name='email' value='' type='hidden' />
+			<!-- input id='google_email' name='email' value='' type='hidden' / -->
 			<input id='google_id_token' name='id_token' value='' type='hidden' />
 		</form>
 	</div>
