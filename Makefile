@@ -96,7 +96,11 @@ encrypt-env: archive-env
 	@echo "==> 🔐 Encrypt env.zip"
 	@docker-compose -f docker-compose.dev.yml run --rm shell bash -c 'gpg --version && gpg --quiet --batch --yes --symmetric --cipher-algo AES256 --passphrase="$$(cat env_passphrase)" env.zip'
 
+# Adding `.env.dev stemweb/.env.dev` to create empty files so that the dockerized shell spawns successfully
+# (We depend on these files in other services declared in `docker-compose.dev.yml`, but we are not using these here)
+# As soon as the shell script runs through, the file will be populated with the decrypted env variables
 decrypt-env:
 	@echo "==> 🔓 Decrypt env.zip"
+	@touch .env.dev stemweb/.env.dev
 	@docker-compose -f docker-compose.dev.yml run --rm shell bash -c 'gpg --version && gpg --quiet --batch --yes --decrypt --passphrase="$$(cat env_passphrase)" --output env.zip env.zip.gpg'
 	@docker-compose -f docker-compose.dev.yml run --rm shell bash -c 'unzip -od . env.zip'
