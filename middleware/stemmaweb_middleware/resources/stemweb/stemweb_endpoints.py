@@ -20,7 +20,7 @@ class StemwebEndpoint(Enum):
     DISCOVERY = "/algorithms/available"
     CALCULATE = "/algorithms/process/{algo_id}"
     JOB_STATUS = "/algorithms/jobstatus/{run_id}"
-    RESULT = "/stemweb/result"
+    RESULT = "/result"
 
     @staticmethod
     def match(path: str) -> Optional["StemwebEndpoint"]:

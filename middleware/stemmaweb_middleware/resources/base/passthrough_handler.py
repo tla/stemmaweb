@@ -46,7 +46,7 @@ def handle_passthrough_request(
             method=args["method"],
             params=args["query_params"],
             files=files_to_bytes(request.files),
-            # See difference between the 'json' and 'data' arguments passed to `requests.request` here:
+            # See difference between the 'json' and 'data' arguments passed to `requests.request` here:  # noqa: E501
             # https://stackoverflow.com/questions/47188244/what-is-the-difference-between-the-data-and-json-named-arguments-with-reques#47188297  # noqa: E501
             **{"json" if request.is_json else "data": args["data"]},
         )

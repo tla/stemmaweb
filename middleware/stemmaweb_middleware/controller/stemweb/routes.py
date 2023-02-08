@@ -1,4 +1,5 @@
-from flask import Blueprint
+from flask import Blueprint, request
+from loguru import logger
 
 from stemmaweb_middleware.resources.base import APIClient, handle_passthrough_request
 from stemmaweb_middleware.resources.stemweb.permissions import (
@@ -29,6 +30,11 @@ def blueprint_factory(stemweb_client: APIClient):
         :return: a tuple containing a message and a 200 status code.
         """
         return f"[{permission_handler.name}] Passthrough is healthy", 200
+
+    @blueprint.route(f"/{ROUTE_PREFIX}/result", methods=ALLOWED_METHODS)
+    def results():
+        logger.debug(f"Received request to /stemweb/result: {request}")
+        return "OK"
 
     @blueprint.route(f"/{ROUTE_PREFIX}/<path:segments>", methods=ALLOWED_METHODS)
     def wildcard(segments: str):
