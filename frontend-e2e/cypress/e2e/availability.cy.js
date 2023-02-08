@@ -18,3 +18,9 @@ describe('Stemmarest is healthy', () => {
     cy.get('body').contains('Stemmarest is healthy');
   });
 });
+describe('Stemweb is healthy', () => {
+  it('passes', () => {
+    cy.visit(`${Cypress.env('CY_STEMMAWEB_MIDDLEWARE_URL')}/stemweb-health`);
+    cy.get('body').contains('Stemweb is healthy');
+  });
+});
