@@ -1,7 +1,5 @@
 #!/bin/bash
 
-. .env
-
 DIR_OF_THIS_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR_OF_THIS_SCRIPT" || exit 1
 
