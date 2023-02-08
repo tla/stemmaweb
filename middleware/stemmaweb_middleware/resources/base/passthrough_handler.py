@@ -24,8 +24,8 @@ def handle_passthrough_request(
         user_role=determine_user_role(current_user),
     )
 
-    stemmarest_endpoint = "/" + "/".join(path_segments)
-    logger.debug(f'Passthrough requested for "{stemmarest_endpoint}" with args {args}')
+    api_endpoint = "/" + "/".join(path_segments) + "/"
+    logger.debug(f'Passthrough requested for "{api_endpoint}" with args {args}')
     (
         violations,
         allowed_http_methods,
@@ -42,7 +42,7 @@ def handle_passthrough_request(
 
     try:
         response = client.request(
-            path=stemmarest_endpoint,
+            path=api_endpoint,
             method=args["method"],
             params=args["query_params"],
             data=args["data"],
