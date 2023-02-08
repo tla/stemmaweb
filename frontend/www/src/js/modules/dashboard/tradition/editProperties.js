@@ -1,3 +1,13 @@
+/** @typedef {import('@types/stemmaweb').BaseResponse} BaseResponse */
+
+/**
+ * Object to interact with the Stemmarest Middleware's API through high-level
+ * functions.
+ *
+ * @type {StemmarestService}
+ */
+const editPropertiesService = stemmarestService;
+
 class EditProperties extends HTMLElement {
   constructor() {
     super();
@@ -29,9 +39,14 @@ class EditProperties extends HTMLElement {
     this.render();
   }
 
+  /**
+   * This helper ensures the modal is placed nicely fit with the properties sidebar.
+   * 
+   * @todo: Add responsiveness on resize.
+   * 
+   * @returns {string} String representation of the needed properties of the style attribute. 
+   */
   #createDialogStyle() {
-    // This ensures the modal is placed nicely fit with the properties sidebar.
-    // TODO: Add responsiveness on resize.
     let edit_properties_modal_width = window
       .getComputedStyle($('sidebar_properties'))
       .getPropertyValue('width');
@@ -51,6 +66,8 @@ class EditProperties extends HTMLElement {
   }
 
   /**
+   * Creates and returns the HTML for a text field form control.
+   * 
    * @param {MetaItem} item
    * @returns {string}
    */
@@ -98,6 +115,8 @@ class EditProperties extends HTMLElement {
   }
 
   /**
+   * Creates and returns the HTML for a drop down selection form control.
+   * 
    * @param {MetaItem} item
    * @returns {string}
    */
@@ -124,13 +143,15 @@ class EditProperties extends HTMLElement {
   }
 
   /**
+   * Creates and returns the HTML for a checkbox form control.
+   * 
    * @param {MetaItem} item
    * @returns {string}
    */
   static #createCheckboxControl(item) {
     return `
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="" id="${item.label.toLowerCase()}_input" name="${item.label.toLowerCase()}_input">
+                <input class="form-check-input" type="checkbox" ${item.inputOptions.checked ? 'checked ' : ''}value="${item.label.toLowerCase()}" id="${item.label.toLowerCase()}_input" name="${item.label.toLowerCase()}_input">
                 <label
                     for="${item.label.toLowerCase()}_input"
                     id="edit_property_${item.label.toLowerCase()}_field"
@@ -159,7 +180,7 @@ class EditProperties extends HTMLElement {
     );
     const modal_body = `
             <form
-            id="add_tradition_form"
+            id="edit-tradition-properties-form"
             class="needs-validation"
             novalidate=""
             >
@@ -169,9 +190,84 @@ class EditProperties extends HTMLElement {
     StemmawebDialog.show(
       'Edit properties',
       modal_body,
-      {},
-      { elemStyle: this.#createDialogStyle() }
+      { onOk: this.processForm },
+      { 
+        okLabel: 'Save', 
+        elemStyle: this.#createDialogStyle() 
+      }
     );
+  }
+
+  /**
+  * @returns {{
+  *   name: string;
+  *   userId: string;
+  *   language: string | null;
+  *   direction: string;
+  *   isPublic: boolean;
+  * }}
+  */
+  static #extractFormValuesTradition() {
+   const name = $('name_input').value;
+   const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
+   const language = $('language_input').value || null;
+   const direction = $('direction_input').value;
+   const isPublic = $('access_input').checked;
+   return { name, userId, language, direction, isPublic };
+ }
+
+ /**
+  * @returns {Promise}
+  */
+ processForm() {
+  const form = document.querySelector(
+    '#edit-tradition-properties-form'
+  );
+  if (form.checkValidity()) {
+    const values = Object.values(
+      EditProperties.#extractFormValuesTradition()
+    );
+    const tradId = TRADITION_STORE.state.selectedTradition.id;
+    return editPropertiesService
+      .updateTraditionMetadata(tradId, ...values)
+      .then( EditProperties.#handleUpdateTraditionMetadataResponse );
+  } else {
+    form.classList.add('was-validated');
+    return Promise.resolve({
+      success: false,
+      message: 'Form validation error.'
+    });
+}
+}
+
+/** @param {BaseResponse<T>} resp */
+ static #handleUpdateTraditionMetadataResponse( resp ) {
+    if( resp.success ) {
+      StemmawebAlert.show( 'Metadata properties updated.', 'success');
+      // @todo: Should the next line be wrapped in a try..catch?
+      TRADITION_STORE.updateTradition( resp.data );
+      return Promise.resolve({
+        success: true,
+        message: 'Metadata properties updated.'
+      });
+    } else {
+      StemmawebAlert.show( `Error: ${resp.message}`, 'danger' );
+      return Promise.resolve({
+        success: false,
+        message: resp.message
+      });
+    }
+ }
+
+ /**
+   * Set Bootstrap validation and submit handling.
+   * We do this now here with method checkform so…
+   * @todo: probably remove together with the same in 
+   * {@link AddTraditionModal.#initForm()} in `addTradition.js`
+   * but that one still needs work.
+   * 
+   */
+  #initForm() {
   }
 
   render() {

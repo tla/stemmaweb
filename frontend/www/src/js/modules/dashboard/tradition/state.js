@@ -51,6 +51,26 @@ class TraditionStore extends StateStore {
     });
   }
 
+  /**
+   * Updates the tradition in `availableTraditions` having the same tradId 
+   * as the supplied tradition with the values of the supplied tradition. 
+   *
+   * This function is here so that the global state can be updated after a
+   * tradition is updated. 
+   *
+   * @param {Tradition} tradition
+   */
+  updateTradition( tradition ) {
+    const tradIdx = this.state.availableTraditions.findIndex( availableTradition => availableTradition.id == tradition.id );
+    if( tradIdx > -1 ) {
+      let availableTradition = this.state.availableTraditions[ tradIdx ];
+      availableTradition = Object.assign( availableTradition, tradition );
+      this.setState({
+        ...this.state
+      });
+    }
+  }
+
   /** @param {(function(TraditionState): void)|(function(TraditionState, TraditionState): void)} listener */
   subscribe(listener) {
     super.subscribe(listener);

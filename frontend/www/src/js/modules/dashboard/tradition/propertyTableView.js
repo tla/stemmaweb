@@ -50,20 +50,20 @@ class PropertyTableView extends HTMLElement {
    * }} SelectOption
    *
    * @typedef {{
-   *   size: number;
-   *   required: boolean;
    *   label?: string;
    * } & (
-   *   | {
+   *     {
    *       control: 'dropdown';
-   *       size: number;
-   *       required: boolean;
    *       selectOptions: SelectOption[];
    *     }
    *   | {
-   *       control: 'text' | 'checkbox';
+   *       control: 'text';
    *       size: number;
    *       required: boolean;
+   *     }
+   *   | {
+   *       control: 'checkbox';
+   *       checked: boolean;
    *     }
    * )} InputOptions
    */
@@ -128,7 +128,7 @@ class PropertyTableView extends HTMLElement {
       {
         label: labels.access,
         value: tradition.is_public ? 'Public' : 'Private',
-        inputOptions: { control: 'checkbox', label: 'Allow public access?' }
+        inputOptions: { control: 'checkbox', checked: tradition.is_public, label: 'Allow public access?' }
       },
       {
         label: labels.language,
@@ -137,8 +137,7 @@ class PropertyTableView extends HTMLElement {
       },
       {
         label: labels.witnesses,
-        value: tradition.witnesses,
-        inputOptions: { control: 'text', size: 80, required: true }
+        value: tradition.witnesses.join( ', ' )
       }
     ];
   }
@@ -237,7 +236,6 @@ class PropertyTableView extends HTMLElement {
           ${metaItems.map(this.renderMetaItem).join('\n')}
           </tbody>
         </table>
-        <another-button/>
       </div>
 
     </div>

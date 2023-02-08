@@ -30,7 +30,7 @@ class StateStore {
    */
   setState(newState) {
     // Only execute this operation if the state has actually changed.
-    const shouldSkip = objectsEqual(this._state, newState);
+    const shouldSkip = Object.is(this._state, newState);
     if (shouldSkip) return;
 
     this._prevState = this._state;

@@ -170,7 +170,7 @@ function initStemmaweb() {
         return `<div data-index="${i}">${svg}</div>`;
       })
       .on('click', function (e, d) {
-        // Add eventlisteners to slide indicators that will update the
+        // Add EventListeners to slide indicators that will update the
         // indicators and render the newly chosen stemma.
         d3.selectAll('#stemma_selector span svg').style(
           'fill',

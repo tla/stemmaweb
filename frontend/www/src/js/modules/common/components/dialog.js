@@ -83,7 +83,7 @@ class StemmawebDialog extends HTMLElement {
 
     // add the element to the DOM
     document.body.appendChild(element);
-
+    
     // access the node inside the shadow DOM
     const dialog = document.getElementById('modalDialog');
     const dialogInstance = bootstrap.Modal.getOrCreateInstance(dialog);
@@ -92,8 +92,16 @@ class StemmawebDialog extends HTMLElement {
     const actionButtons = dialog.querySelectorAll('.modal-footer button');
     actionButtons[0].addEventListener('click', actions.onClose || (() => {}));
     actionButtons[1].addEventListener('click', () => {
-      (actions.onOk || (() => {}))();
-      dialogInstance.hide();
+      const handlerResult = ( actions.onOk || (() => {}) )();
+      // Differentiate between handlers that are just handlers, and
+      // handlers that are type Promise
+      if( typeof handlerResult.then === 'function' ){
+        handlerResult.then( (promise) => { 
+          if( promise.success ) {
+            dialogInstance.hide();
+          }
+        } )
+      }
     });
 
     // show the dialog
