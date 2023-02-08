@@ -31,10 +31,20 @@ def blueprint_factory(stemweb_client: APIClient):
         """
         return f"[{permission_handler.name}] Passthrough is healthy", 200
 
-    @blueprint.route(f"/{ROUTE_PREFIX}/result", methods=ALLOWED_METHODS)
+    @blueprint.route(f"/{ROUTE_PREFIX}/result", methods=["GET", "POST"])
     def results():
-        logger.debug(f"Received request to /stemweb/result: {request}")
-        return "OK"
+        """
+        Handler catching incoming requests to `/stemweb/result`.
+        'GET' requests are expected to be received from the web client,
+        while 'POST' requests are expected to be received
+        from the Stemweb API with the results of an algorithm run.
+        """
+        if request.method == "GET":
+            logger.debug("Processing client request for /stemweb/result")
+            return "GET request to /stemweb/result", 200
+        else:
+            logger.debug("Processing posted result from Stemweb")
+            return "POST request to /stemweb/result", 200
 
     @blueprint.route(f"/{ROUTE_PREFIX}/<path:segments>", methods=ALLOWED_METHODS)
     def wildcard(segments: str):
