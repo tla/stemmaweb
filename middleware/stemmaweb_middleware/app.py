@@ -75,7 +75,10 @@ def register_blueprints(app: Flask):
 
     # Stemweb endpoint
     stemweb_client = app.config["STEMWEB_CLIENT"]
-    stemweb_blueprint = controller.stemweb.routes.blueprint_factory(stemweb_client)
+    stemweb_job_service = controller.stemweb.service.StemwebJobService()
+    stemweb_blueprint = controller.stemweb.routes.blueprint_factory(
+        stemweb_client, stemweb_job_service
+    )
     app.register_blueprint(stemweb_blueprint)
 
     # General health-check endpoint

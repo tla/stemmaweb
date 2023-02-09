@@ -32,3 +32,7 @@ class StemwebJobResult(pydantic.BaseModel):
             datetime.datetime: lambda dt: dt.strftime("%Y-%m-%d %H:%M:%S.%f"),
         }
         # Handles dumping datetime objects into raw datetime strings
+
+
+class StemwebJobResultPollResponse(pydantic.BaseModel):
+    results: list[StemwebJobResult]
