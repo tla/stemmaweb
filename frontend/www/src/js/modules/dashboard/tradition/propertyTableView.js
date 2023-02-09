@@ -87,8 +87,8 @@ class PropertyTableView extends HTMLElement {
   /**
    * Maps 'LR' etc. to more readable 'Left to right' form.
    *
-   * @param {string} direction - one of LR, RL, or BI.
-   * @returns {string} more user friendly direction label, one of "Left to right", "Right to left", or "Bi-directional".
+   * @param {"LR" | "RL" | "BI"} direction - abbreviation of a tradition's direction
+   * @returns {"Left to right" | "Right to left" | "Bi-directional"} user friendly label for the supplied abbreviation
    */
   static #mapDirection(direction) {
     const directionMap = this.#directionOptions.reduce(function (
