@@ -5,7 +5,7 @@ from flask_login import current_user as _current_user
 
 from stemmaweb_middleware.models import AuthUser, CurrentUser, StemmawebUser
 from stemmaweb_middleware.utils import abort
-
+from loguru import logger
 from .models import UserRole
 
 # Aliasing for automatic type-hinting
@@ -42,10 +42,12 @@ def hosts_required(allowed_hosts: list[str], func: Callable) -> Callable:
     """
 
     def wrapper(*args, **kwargs):
-        if request.host not in allowed_hosts:
+        hostname = request.remote_addr
+        logger.debug(f"Checking host '{hostname}' against allowed hosts {allowed_hosts}")
+        if hostname not in allowed_hosts:
             return abort(
                 status=403,
-                message=f"This resource is not accessible from host {request.host}.",
+                message=f"This resource is not accessible from host {hostname}.",
             )
         return func(*args, **kwargs)
 

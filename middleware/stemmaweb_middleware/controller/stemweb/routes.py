@@ -1,6 +1,10 @@
 from flask import Blueprint, Response, request
 from loguru import logger
-
+from flask_login import current_user
+from stemmaweb_middleware.permissions import (
+    UserRole,
+    require_min_user_role,
+)
 from stemmaweb_middleware.resources.base import APIClient, handle_passthrough_request
 from stemmaweb_middleware.resources.stemweb.permissions import (
     get_stemweb_permission_handler,
@@ -34,25 +38,44 @@ def blueprint_factory(stemweb_client: APIClient):
         """
         return f"[{permission_handler.name}] Passthrough is healthy", 200
 
+    @require_min_user_role(UserRole.USER)
+    def poll_results():
+        """
+        Handler catching incoming GET requests to `/stemweb/result`.
+        Only authenticated clients are allowed to call this endpoint.
+        The Stemweb API should use the POST `/stemweb/result` endpoint instead.
+        (`accept_result`)
+        """
+        logger.debug(f"Polling Stemweb results for user {current_user.__dict__}")
+        return success(status=200, body=dict(message='TODO'))
+
+    def accept_result():
+        """
+        Handler catching incoming POST requests to `/stemweb/result`.
+        Only the Stemweb API is allowed to call this endpoint to POST its results.
+        Clients should use the GET `/stemweb/result` endpoint instead.
+        (`poll_results`)
+        """
+        logger.debug("Processing result obtained from Stemweb")
+        body_or_error = try_parse_model(models.StemwebJobResult, request)
+        if isinstance(body_or_error, Response):
+            return body_or_error
+
+        job_result: models.StemwebJobResult = body_or_error
+        return success(status=200, body=job_result)
+
     @blueprint.route(f"/{ROUTE_PREFIX}/result", methods=["GET", "POST"])
     def results():
         """
         Handler catching incoming requests to `/stemweb/result`.
-        'GET' requests are expected to be received from the web client,
-        while 'POST' requests are expected to be received
-        from the Stemweb API with the results of an algorithm run.
+        After permission checks, the request is forwarded to the Stemweb API.
+
+        :return: a Flask response.
         """
         if request.method == "GET":
-            logger.debug("Processing client request for /stemweb/result")
-            return "GET request to /stemweb/result", 200
-        else:
-            logger.debug("Processing result obtained from Stemweb")
-            body_or_error = try_parse_model(models.StemwebJobResult, request)
-            if isinstance(body_or_error, Response):
-                return body_or_error
-
-            job_result: models.StemwebJobResult = body_or_error
-            return success(status=200, body=job_result)
+            return poll_results()
+        elif request.method == "POST":
+            return accept_result()
 
     @blueprint.route(f"/{ROUTE_PREFIX}/<path:segments>", methods=ALLOWED_METHODS)
     def wildcard(segments: str):
