@@ -1,10 +1,13 @@
-from flask import Blueprint, request
+from flask import Blueprint, Response, request
 from loguru import logger
 
 from stemmaweb_middleware.resources.base import APIClient, handle_passthrough_request
 from stemmaweb_middleware.resources.stemweb.permissions import (
     get_stemweb_permission_handler,
 )
+from stemmaweb_middleware.utils import success, try_parse_model
+
+from . import models
 
 
 def blueprint_factory(stemweb_client: APIClient):
@@ -43,8 +46,13 @@ def blueprint_factory(stemweb_client: APIClient):
             logger.debug("Processing client request for /stemweb/result")
             return "GET request to /stemweb/result", 200
         else:
-            logger.debug("Processing posted result from Stemweb")
-            return "POST request to /stemweb/result", 200
+            logger.debug("Processing result obtained from Stemweb")
+            body_or_error = try_parse_model(models.StemwebJobResult, request)
+            if isinstance(body_or_error, Response):
+                return body_or_error
+
+            job_result: models.StemwebJobResult = body_or_error
+            return success(status=200, body=job_result)
 
     @blueprint.route(f"/{ROUTE_PREFIX}/<path:segments>", methods=ALLOWED_METHODS)
     def wildcard(segments: str):
