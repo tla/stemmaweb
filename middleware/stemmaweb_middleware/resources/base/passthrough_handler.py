@@ -1,3 +1,5 @@
+import json
+
 from flask import Request, request
 from flask.wrappers import Response
 from loguru import logger
@@ -54,10 +56,18 @@ def handle_passthrough_request(
             logger.debug("Applying response transformer")
             response = response_transformer(response)
 
+        # Patching response headers
+        # Needed, since Stemweb returns a Content-Type of "text/html" in some cases
+        # even though the response is JSON.
+        # Checking and handling this client-side would be tedious, so we do it here.
+        mimetype = response.headers.get("Content-Type", None)
+        if __response_content_is_json(response.content):
+            mimetype = "application/json"
+
         return Response(
             response=response.content,
             status=response.status_code,
-            mimetype=response.headers.get("Content-Type", None),
+            mimetype=mimetype,
         )
     except Exception as e:
         return abort(
@@ -65,6 +75,19 @@ def handle_passthrough_request(
             message="An error occurred while processing the request.",
             body=dict(type=f"{type(e).__name__}", message=str(e)),
         )
+
+
+def __response_content_is_json(content: bytes) -> bool:
+    """
+    Checks if the given content is valid JSON.
+    :param content: the content to check.
+    :return: True if the content is valid JSON, False otherwise.
+    """
+    try:
+        json.loads(content)
+        return True
+    except json.JSONDecodeError:
+        return False
 
 
 def __extract_data_from_request(req: Request):
