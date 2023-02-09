@@ -1,10 +1,8 @@
 from flask import Blueprint, Response, request
-from loguru import logger
 from flask_login import current_user
-from stemmaweb_middleware.permissions import (
-    UserRole,
-    require_min_user_role,
-)
+from loguru import logger
+
+from stemmaweb_middleware.permissions import UserRole, require_min_user_role
 from stemmaweb_middleware.resources.base import APIClient, handle_passthrough_request
 from stemmaweb_middleware.resources.stemweb.permissions import (
     get_stemweb_permission_handler,
@@ -47,7 +45,7 @@ def blueprint_factory(stemweb_client: APIClient):
         (`accept_result`)
         """
         logger.debug(f"Polling Stemweb results for user {current_user.__dict__}")
-        return success(status=200, body=dict(message='TODO'))
+        return success(status=200, body=dict(message="TODO"))
 
     def accept_result():
         """
