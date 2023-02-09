@@ -4,15 +4,17 @@ from .utils import (
     current_user,
     determine_user_role,
     min_user_role_required,
+    require_host,
     require_min_user_role,
 )
 
 __all__ = [
-    "models",
-    "UserRole",
-    "min_user_role_required",
-    "require_min_user_role",
-    "determine_user_role",
     "current_user",
+    "determine_user_role",
+    "min_user_role_required",
+    "models",
     "predicates",
+    "require_host",
+    "require_min_user_role",
+    "UserRole",
 ]
