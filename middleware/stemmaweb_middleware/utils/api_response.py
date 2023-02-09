@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 import pydantic
 from flask.wrappers import Response
@@ -20,16 +21,22 @@ def abort(
     :return: A Flask Response.
     """
     log.error(f'Aborting with status "{status}", body "{body}" and message "{message}"')
-    if body is None:
-        body = dict()
-    if not isinstance(body, dict):
-        body = body.dict()
+    processed_body: dict[str, Any] = {}
+    body_is_pydantic_model = body is not None and not isinstance(body, dict)
+    if body_is_pydantic_model:
+        model: pydantic.BaseModel = body  # type: ignore
+        # Calling .json() on a pydantic BaseModel to apply custom encoders
+        processed_body = json.loads(model.json())
     if message is not None:
-        body["message"] = message
-    body["code"] = status
-    body.pop("image", None)
+        if "message" in processed_body:
+            log.warning(
+                "Overwriting existing message "
+                f'"{processed_body["message"]}" with "{message}"'
+            )
+        processed_body["message"] = message
+    processed_body["code"] = status
     return Response(
-        response=json.dumps(body), status=status, mimetype="application/json"
+        response=json.dumps(processed_body), status=status, mimetype="application/json"
     )
 
 
@@ -43,11 +50,24 @@ def success(
     :param body: The body to return with the response.
     :return: A Flask Response.
     """
-    if body is not None and isinstance(body, pydantic.BaseModel):
-        base_model: pydantic.BaseModel = body
-        body = base_model.dict()
     return Response(
-        response=json.dumps(body) if body is not None else None,
+        response=_to_response_data(body),
         status=status,
         mimetype="application/json",
     )
+
+
+def _to_response_data(
+    body: dict | pydantic.BaseModel | None,
+) -> str | None:
+    """
+    Convert a given data object to a dict or pydantic BaseModel.
+
+    :param body: The data to convert.
+    :return: The converted data.
+    """
+    if body is None:
+        return None
+    if isinstance(body, pydantic.BaseModel):
+        return body.json()  # type: ignore
+    return json.dumps(body)
