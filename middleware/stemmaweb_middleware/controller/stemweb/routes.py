@@ -50,10 +50,22 @@ def blueprint_factory(
         Only authenticated clients are allowed to call this endpoint.
         The Stemweb API should use the POST `/stemweb/result` endpoint instead.
         (`accept_result`)
+
+        Returns all job results for the current user by default.
+        If the `jobid` query parameter is provided, only the job result with the
+        corresponding id is returned.
         """
         user_id: str = current_user.id
-        logger.debug(f"Polling Stemweb results for user {user_id}")
+        jobid_query_param: str | None = request.args.get("jobid")
+        logger.debug(f"Polling Stemweb results for user {user_id}. Specific job: {jobid_query_param}")
         job_results = stemweb_job_service.get_job_results(user_id)
+        if jobid_query_param is not None:
+            job_results = [
+                job_result
+                for job_result in job_results
+                if job_result.jobid == jobid_query_param
+            ]
+
         body = models.StemwebJobResultPollResponse(results=job_results)
         return success(status=200, body=body)
 
