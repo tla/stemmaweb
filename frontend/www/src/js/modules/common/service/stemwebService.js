@@ -14,6 +14,12 @@
  * @typedef {import('types/stemmaweb').DjRelOwnerManyToMany} DjRelOwnerManyToMany
  *
  * @typedef {import('types/stemmaweb').DjRelOwnerManyToManyWithValues} DjRelOwnerManyToManyWithValues
+ *
+ * @typedef {import('types/stemmaweb').RunAlgorithmDTO} RunAlgorithmDTO
+ *
+ * @typedef {import('types/stemmaweb').RunAlgorithmStatusResponse} RunAlgorithmStatusResponse
+ *
+ * @typedef {import('types/stemmaweb').RunJobResult} RunJobResult
  */
 
 class StemwebModelHelper {
@@ -107,6 +113,69 @@ class StemwebService extends BaseService {
             fields
           };
         });
+      }
+
+      // in case of failure, just return the response with the error
+      return response;
+    });
+  }
+
+  /**
+   * @param userid {string}
+   * @param algorithmId {number}
+   * @param textid {RunAlgorithmDTO['textid']}
+   * @param data {RunAlgorithmDTO['data']}
+   * @param parameters {RunAlgorithmDTO['parameters']}
+   * @returns {Promise<BaseResponse<RunAlgorithmStatusResponse>>}
+   */
+  runAlgorithm(userid, algorithmId, textid, data, parameters) {
+    const return_host = 'http://reverse-proxy:80';
+    const return_path = '/stemmaweb/requests/stemweb/result';
+    /** @type {RunAlgorithmDTO} */
+    const dto = { userid, textid, data, parameters, return_host, return_path };
+    return this.fetch(`/algorithms/process/${algorithmId}`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+      headers: new Headers({
+        'Content-Type': 'application/json'
+      })
+    });
+  }
+
+  /**
+   * Lists the results of all jobs that have been run on the server by this
+   * user.
+   *
+   * @returns {Promise<BaseResponse<RunJobResult[]>>}
+   */
+  listRunResults() {
+    return this.fetch(`/result`).then((response) => {
+      if (response.success) {
+        /** @type {{ results: RunJobResult[] }} } */
+        const data = response.data;
+        return data.results;
+      }
+
+      // in case of failure, just return the response with the error
+      return response;
+    });
+  }
+
+  /**
+   * Gets the result of a job identified by the supplied `jobid` that has been
+   * run on the server by this user.
+   *
+   * This can be used to periodically poll the server for the result of a job.
+   *
+   * @param jobid {string} The job ID of the job to fetch the result for.
+   * @returns {Promise<BaseResponse<RunJobResult | null>>}
+   */
+  getRunResult(jobid) {
+    return this.fetch(`/result`, undefined, { jobid }).then((response) => {
+      if (response.success) {
+        /** @type {{ results: RunJobResult[] }} } */
+        const data = response.data;
+        return data.results.length > 0 ? data.results[0] : null;
       }
 
       // in case of failure, just return the response with the error

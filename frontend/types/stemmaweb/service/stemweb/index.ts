@@ -57,3 +57,32 @@ export type AlgorithmWithArgs = DjRelOwnerManyToManyWithValues<
   'args',
   DjangoModel<AlgorithmArg>
 >;
+
+export interface RunAlgorithmDTO {
+  userid: string;
+  textid: string;
+  data: string;
+  parameters: object;
+  return_host: string;
+  return_path: string;
+}
+
+export interface RunAlgorithmStatusResponse {
+  jobid: number;
+  status: number;
+}
+
+export interface RunJobResult {
+  jobid: string;
+  start_time: string;
+  end_time: string;
+  status: number;
+  algorithm: string;
+  userid: string;
+  textid: string;
+  parameters: object;
+  return_host: string;
+  return_path: string;
+  format: string;
+  result: string;
+}
