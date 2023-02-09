@@ -306,10 +306,7 @@ class StemmarestService {
         name: name,
         owner: userId,
     };
-    const endpoint = this.#endpoint(
-      `api/tradition/${tradId}`
-    );
-    return baseFetch( endpoint, {
+    return fetch(`api/tradition/${tradId}`, {
         method: 'PUT',
         body: JSON.stringify(formData),
         headers: new Headers({ 'Content-Type': 'application/json' })
