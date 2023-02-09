@@ -106,7 +106,8 @@ class EditProperties extends HTMLElement {
   }
 
   static #createSelectOption(option, selectedValue) {
-    const selected = option.value === selectedValue ? 'selected' : '';
+    console.log( option, selectedValue );
+    const selected = ( option.value == selectedValue ) ? 'selected' : '';
     return `
       <option value="${option.value}" ${selected}>
       ${option.display}
@@ -135,7 +136,7 @@ class EditProperties extends HTMLElement {
                 class="form-select"
             >
                 ${item.inputOptions.selectOptions.map(function (option) {
-                  return EditProperties.#createSelectOption(option, item.value);
+                  return EditProperties.#createSelectOption(option, item.inputOptions.selected);
                 })}
             </select>
             <br />

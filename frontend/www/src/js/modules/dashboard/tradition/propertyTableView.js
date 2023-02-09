@@ -87,10 +87,10 @@ class PropertyTableView extends HTMLElement {
   /**
    * Maps 'LR' etc. to more readable 'Left to right' form.
    *
-   * @param {string} key
-   * @returns {string}
+   * @param {string} direction - one of LR, RL, or BI.
+   * @returns {string} more user friendly direction label, one of "Left to right", "Right to left", or "Bi-directional".
    */
-  static #mapDirection(key) {
+  static #mapDirection(direction) {
     const directionMap = this.#directionOptions.reduce(function (
       options,
       option
@@ -99,7 +99,7 @@ class PropertyTableView extends HTMLElement {
       return options;
     },
     {});
-    return directionMap[key] || key;
+    return directionMap[direction] || direction;
   }
 
   /**
@@ -118,7 +118,8 @@ class PropertyTableView extends HTMLElement {
         value: this.#mapDirection(tradition.direction),
         inputOptions: {
           control: 'dropdown',
-          selectOptions: this.#directionOptions
+          selectOptions: this.#directionOptions,
+          selected: tradition.direction
         }
       },
       {
