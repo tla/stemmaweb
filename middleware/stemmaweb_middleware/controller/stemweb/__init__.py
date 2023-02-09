@@ -1,4 +1,4 @@
 """Package exposing Stemweb routes through the /stemweb endpoint."""
-from . import routes
+from . import models, routes
 
-__all__ = ["routes"]
+__all__ = ["models", "routes"]
