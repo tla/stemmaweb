@@ -8,8 +8,8 @@ describe("'Florilegium Coislinianum B' has the right owner and witnesses", funct
   it('passes', function(){
       cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
 
-      /* cy.wait(1000)
-      cy.get('#tradition_name').should(($tn) => { 
+      cy.wait(500)
+      /* cy.get('#tradition_name').should(($tn) => { 
           expect($tn.text().trim()).to.not.equal('Notre besoin'); }); // should fail. 
           // Does not fail because the tradition_name is not loaded so quickly.
           // Eventually it is 'Notre besoin'. It fails as it should, 
