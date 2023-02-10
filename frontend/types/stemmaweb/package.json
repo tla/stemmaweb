@@ -5,6 +5,7 @@
   "description": "",
   "main": "index.d.ts",
   "files": [
+    "./**/*.ts",
     "./**/*.d.ts"
   ],
   "keywords": [],

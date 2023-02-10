@@ -75,7 +75,7 @@ jobs:
 
       - name: Build `docker-compose.dev.yml` with empty environment variables
         run: |
-          touch .env.dev && \
+          touch .env.dev stemweb/.env.dev && \
           make build-dev
 
       - name: Decrypt environment variables stored in `env.zip.gpg`
