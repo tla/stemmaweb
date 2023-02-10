@@ -1,3 +1,4 @@
+import pydantic
 from flask import Blueprint, Response, request
 from flask_login import current_user
 from loguru import logger
@@ -14,7 +15,7 @@ from .service import StemwebJobServiceBase
 
 
 def blueprint_factory(
-        stemweb_client: APIClient, stemweb_job_service: StemwebJobServiceBase
+    stemweb_client: APIClient, stemweb_job_service: StemwebJobServiceBase
 ):
     """
     Creates a Flask blueprint to expose the Stemmarest API at `/stemweb/*`.
@@ -57,15 +58,38 @@ def blueprint_factory(
         """
         user_id: str = current_user.id
         jobid_query_param: str | None = request.args.get("jobid")
-        logger.debug(f"Polling Stemweb results for user {user_id}. Specific job: {jobid_query_param}")
-        job_results = stemweb_job_service.get_job_results(user_id)
-        if jobid_query_param is not None:
-            job_results = [
-                job_result
-                for job_result in job_results
-                if job_result.jobid == jobid_query_param
-            ]
 
+        # Directly requesting a specific job result from Stemweb
+        if jobid_query_param is not None:
+            logger.debug(
+                f"Polling Stemweb result for user {user_id}. "
+                f"Specific job: {jobid_query_param}"
+            )
+            # Using this approach we are not relying on Stemweb's feature to POST
+            # job results to us. Instead, we are directly querying the job status
+            # based on the job ID that we get each time we initiate an algo run process
+            response = stemweb_client.request(
+                "GET", f"/algorithms/jobstatus/{jobid_query_param}/"
+            )
+            if response.status_code == 200:
+                try:
+                    result = models.StemwebJobResult.parse_raw(response.content)
+                    return success(
+                        status=200,
+                        body=models.StemwebJobResultPollResponse(results=[result]),
+                    )
+                # Job with such ID not found
+                except pydantic.ValidationError:
+                    return success(
+                        status=404, body=models.StemwebJobResultPollResponse(results=[])
+                    )
+            else:
+                return success(
+                    status=404, body=models.StemwebJobResultPollResponse(results=[])
+                )
+
+        logger.debug(f"Polling all Stemweb results for user {user_id}.")
+        job_results = stemweb_job_service.get_job_results(user_id)
         body = models.StemwebJobResultPollResponse(results=job_results)
         return success(status=200, body=body)
 
