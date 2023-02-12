@@ -52,7 +52,7 @@ class PropertyTableView extends HTMLElement {
    * @typedef {{
    *   label?: string;
    * } & (
-   *     {
+   *   | {
    *       control: 'dropdown';
    *       selectOptions: SelectOption[];
    *     }
@@ -87,8 +87,10 @@ class PropertyTableView extends HTMLElement {
   /**
    * Maps 'LR' etc. to more readable 'Left to right' form.
    *
-   * @param {"LR" | "RL" | "BI"} direction - abbreviation of a tradition's direction
-   * @returns {"Left to right" | "Right to left" | "Bi-directional"} user friendly label for the supplied abbreviation
+   * @param {'LR' | 'RL' | 'BI'} direction - Abbreviation of a tradition's
+   *   direction
+   * @returns {'Left to right' | 'Right to left' | 'Bi-directional'} User
+   *   friendly label for the supplied abbreviation
    */
   static #mapDirection(direction) {
     const directionMap = this.#directionOptions.reduce(function (
@@ -129,7 +131,11 @@ class PropertyTableView extends HTMLElement {
       {
         label: labels.access,
         value: tradition.is_public ? 'Public' : 'Private',
-        inputOptions: { control: 'checkbox', checked: tradition.is_public, label: 'Allow public access?' }
+        inputOptions: {
+          control: 'checkbox',
+          checked: tradition.is_public,
+          label: 'Allow public access?'
+        }
       },
       {
         label: labels.language,
@@ -138,7 +144,7 @@ class PropertyTableView extends HTMLElement {
       },
       {
         label: labels.witnesses,
-        value: tradition.witnesses.join( ', ' )
+        value: tradition.witnesses.join(', ')
       }
     ];
   }

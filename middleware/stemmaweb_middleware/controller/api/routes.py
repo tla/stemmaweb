@@ -80,7 +80,7 @@ def blueprint_factory(stemmarest_client: StemmarestClient):
                 method=args["method"],
                 params=args["query_params"],
                 files=files_to_bytes(request.files),
-                **{"json" if request.is_json else "data": args["data"]}
+                **{"json" if request.is_json else "data": args["data"]},
             )
             if response_transformer is not None:
                 logger.debug("Applying response transformer")

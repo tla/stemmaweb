@@ -40,11 +40,12 @@ class EditProperties extends HTMLElement {
   }
 
   /**
-   * This helper ensures the modal is placed nicely fit with the properties sidebar.
-   * 
+   * This helper ensures the modal is placed nicely fit with the properties
+   * sidebar.
+   *
+   * @returns {string} String representation of the needed properties of the
+   *   style attribute.
    * @todo: Add responsiveness on resize.
-   * 
-   * @returns {string} String representation of the needed properties of the style attribute. 
    */
   #createDialogStyle() {
     let edit_properties_modal_width = window
@@ -67,7 +68,7 @@ class EditProperties extends HTMLElement {
 
   /**
    * Creates and returns the HTML for a text field form control.
-   * 
+   *
    * @param {MetaItem} item
    * @returns {string}
    */
@@ -106,8 +107,8 @@ class EditProperties extends HTMLElement {
   }
 
   static #createSelectOption(option, selectedValue) {
-    console.log( option, selectedValue );
-    const selected = ( option.value == selectedValue ) ? 'selected' : '';
+    console.log(option, selectedValue);
+    const selected = option.value == selectedValue ? 'selected' : '';
     return `
       <option value="${option.value}" ${selected}>
       ${option.display}
@@ -117,7 +118,7 @@ class EditProperties extends HTMLElement {
 
   /**
    * Creates and returns the HTML for a drop down selection form control.
-   * 
+   *
    * @param {MetaItem} item
    * @returns {string}
    */
@@ -136,7 +137,10 @@ class EditProperties extends HTMLElement {
                 class="form-select"
             >
                 ${item.inputOptions.selectOptions.map(function (option) {
-                  return EditProperties.#createSelectOption(option, item.inputOptions.selected);
+                  return EditProperties.#createSelectOption(
+                    option,
+                    item.inputOptions.selected
+                  );
                 })}
             </select>
             <br />
@@ -145,14 +149,16 @@ class EditProperties extends HTMLElement {
 
   /**
    * Creates and returns the HTML for a checkbox form control.
-   * 
+   *
    * @param {MetaItem} item
    * @returns {string}
    */
   static #createCheckboxControl(item) {
     return `
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" ${item.inputOptions.checked ? 'checked ' : ''}value="${item.label.toLowerCase()}" id="${item.label.toLowerCase()}_input" name="${item.label.toLowerCase()}_input">
+                <input class="form-check-input" type="checkbox" ${
+                  item.inputOptions.checked ? 'checked ' : ''
+                }value="${item.label.toLowerCase()}" id="${item.label.toLowerCase()}_input" name="${item.label.toLowerCase()}_input">
                 <label
                     for="${item.label.toLowerCase()}_input"
                     id="edit_property_${item.label.toLowerCase()}_field"
@@ -192,84 +198,79 @@ class EditProperties extends HTMLElement {
       'Edit properties',
       modal_body,
       { onOk: this.processForm },
-      { 
-        okLabel: 'Save', 
-        elemStyle: this.#createDialogStyle() 
+      {
+        okLabel: 'Save',
+        elemStyle: this.#createDialogStyle()
       }
     );
   }
 
   /**
-  * @returns {{
-  *   name: string;
-  *   userId: string;
-  *   language: string | null;
-  *   direction: string;
-  *   isPublic: boolean;
-  * }}
-  */
+   * @returns {{
+   *   name: string;
+   *   userId: string;
+   *   language: string | null;
+   *   direction: string;
+   *   isPublic: boolean;
+   * }}
+   */
   static #extractFormValuesTradition() {
-   const name = $('name_input').value;
-   const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
-   const language = $('language_input').value || null;
-   const direction = $('direction_input').value;
-   const isPublic = $('access_input').checked;
-   return { name, userId, language, direction, isPublic };
- }
+    const name = $('name_input').value;
+    const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
+    const language = $('language_input').value || null;
+    const direction = $('direction_input').value;
+    const isPublic = $('access_input').checked;
+    return { name, userId, language, direction, isPublic };
+  }
 
- /**
-  * @returns {Promise}
-  */
- processForm() {
-  const form = document.querySelector(
-    '#edit-tradition-properties-form'
-  );
-  if (form.checkValidity()) {
-    const values = Object.values(
-      EditProperties.#extractFormValuesTradition()
-    );
-    const tradId = TRADITION_STORE.state.selectedTradition.id;
-    return editPropertiesService
-      .updateTraditionMetadata(tradId, ...values)
-      .then( EditProperties.#handleUpdateTraditionMetadataResponse );
-  } else {
-    form.classList.add('was-validated');
-    return Promise.resolve({
-      success: false,
-      message: 'Form validation error.'
-    });
-}
-}
+  /** @returns {Promise} */
+  processForm() {
+    const form = document.querySelector('#edit-tradition-properties-form');
+    if (form.checkValidity()) {
+      const values = Object.values(
+        EditProperties.#extractFormValuesTradition()
+      );
+      const tradId = TRADITION_STORE.state.selectedTradition.id;
+      return editPropertiesService
+        .updateTraditionMetadata(tradId, ...values)
+        .then(EditProperties.#handleUpdateTraditionMetadataResponse);
+    } else {
+      form.classList.add('was-validated');
+      return Promise.resolve({
+        success: false,
+        message: 'Form validation error.'
+      });
+    }
+  }
 
-/** @param {BaseResponse<T>} resp */
- static #handleUpdateTraditionMetadataResponse( resp ) {
-    if( resp.success ) {
-      StemmawebAlert.show( 'Metadata properties updated.', 'success');
+  /** @param {BaseResponse<T>} resp */
+  static #handleUpdateTraditionMetadataResponse(resp) {
+    if (resp.success) {
+      StemmawebAlert.show('Metadata properties updated.', 'success');
       // @todo: Should the next line be wrapped in a try..catch?
-      TRADITION_STORE.updateTradition( resp.data );
+      TRADITION_STORE.updateTradition(resp.data);
       return Promise.resolve({
         success: true,
         message: 'Metadata properties updated.'
       });
     } else {
-      StemmawebAlert.show( `Error: ${resp.message}`, 'danger' );
+      StemmawebAlert.show(`Error: ${resp.message}`, 'danger');
       return Promise.resolve({
         success: false,
         message: resp.message
       });
     }
- }
+  }
 
- /**
-   * Set Bootstrap validation and submit handling.
-   * We do this now here with method checkform so…
-   * @todo: probably remove together with the same in 
+  /**
+   * Set Bootstrap validation and submit handling. We do this now here with
+   * method checkform so…
+   *
+   * @todo: probably remove together with the same in
    * {@link AddTraditionModal.#initForm()} in `addTradition.js`
    * but that one still needs work.
-   * 
    */
-  #initForm() {
-  }
+  #initForm() {}
 
   render() {
     this.innerHTML = `

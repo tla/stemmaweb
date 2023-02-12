@@ -291,7 +291,7 @@ class StemmarestService {
    * @param {boolean} isPublic
    * @returns {Promise<BaseResponse<T>>}
    */
-  updateTraditionMetadata( tradId, name, userId, language, direction, isPublic ) {
+  updateTraditionMetadata(tradId, name, userId, language, direction, isPublic) {
     if (userId === null) {
       return Promise.resolve({
         success: false,
@@ -299,18 +299,17 @@ class StemmarestService {
       });
     }
     const formData = {
-        direction: direction,
-        is_public: isPublic ? true : false,
-        id: tradId,
-        language: language,
-        name: name,
-        owner: userId,
+      direction: direction,
+      is_public: isPublic ? true : false,
+      id: tradId,
+      language: language,
+      name: name,
+      owner: userId
     };
     return fetch(`api/tradition/${tradId}`, {
-        method: 'PUT',
-        body: JSON.stringify(formData),
-        headers: new Headers({ 'Content-Type': 'application/json' })
-      });
+      method: 'PUT',
+      body: JSON.stringify(formData),
+      headers: new Headers({ 'Content-Type': 'application/json' })
+    });
   }
-
 }
