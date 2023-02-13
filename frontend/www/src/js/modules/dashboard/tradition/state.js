@@ -60,19 +60,35 @@ class TraditionStore extends StateStore {
    *
    * @param {Tradition} tradition
    */
-  updateTradition( tradition ) {
-    const tradIdx = this.state.availableTraditions.findIndex( availableTradition => availableTradition.id == tradition.id );
-    if( tradIdx > -1 ) {
-      let availableTradition = this.state.availableTraditions[ tradIdx ];
-      availableTradition = Object.assign( availableTradition, tradition );
+  updateTradition(tradition) {
+    const tradIdx = this.state.availableTraditions.findIndex(availableTradition => availableTradition.id == tradition.id);
+    const traditionFound = tradIdx > -1;
+    if (traditionFound) {
+      // Note that the convoluted way of updating (deleting and adding)
+      // is needed to convince `objectsEqual(this._state, newState)` in 
+      // Statestore.setState( newState) that the old and new objects are
+      // indeed different. The problem is that JS does a shallow property check
+      // and if only a property of a nested object changes, it considers
+      // the objects still equal.
+      const traditionToUpdate = this.state.availableTraditions[tradIdx];
+      const updatedTradition = {...traditionToUpdate, ...tradition};
+      this.state.availableTraditions.splice( tradIdx, 1 );
+      const availableTraditions = [
+        ...this.state.availableTraditions,
+        updatedTradition
+      ];
       this.setState({
-        ...this.state
+        ...this.state,
+        availableTraditions,
+        selectedTradition: updatedTradition
       });
     }
   }
 
-  /** @param {(function(TraditionState): void)|(function(TraditionState, TraditionState): void)} listener */
-  subscribe(listener) {
+/** 
+* @param { (state:TraditionState)=>void|(prevState:TraditionState,state:TraditionState)=>void } listener - The listener function to register.
+*/
+subscribe(listener) {
     super.subscribe(listener);
   }
 }
@@ -96,6 +112,7 @@ function initState() {
 // Attach the listener of `STEMMA_STORE` so that it is updated whenever the
 // selected tradition changes.
 TRADITION_STORE.subscribe(STEMMA_STORE.traditionListener);
+TRADITION_STORE.subscribe(SECTION_STORE.traditionListener);
 
 /** Load traditions asynchronously from the server. */
 window.addEventListener('load', initState);

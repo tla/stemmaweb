@@ -3,6 +3,8 @@
  *
  * @typedef {import('types/stemmaweb').Tradition} Tradition
  *
+ * @typedef {import('types/stemmaweb').Section} Section
+ * 
  * @typedef {import('types/stemmaweb').TraditionFileType} TraditionFileType
  *
  * @typedef {import('types/stemmaweb').Stemma} Stemma
@@ -199,6 +201,17 @@ class StemmarestService {
   }
 
   /**
+   * Fetches a list of sections for a particular tradition.
+   *
+   * @param {string} tradId
+   * @returns {Promise<BaseResponse<Section[]>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/sections}
+   */
+  listSections(tradId) {
+    return this.#fetch(`api/tradition/${tradId}/sections`);
+  }
+  
+  /**
    * Deletes a tradition from the Stemmarest API.
    *
    * @param {string} tradId
@@ -306,7 +319,7 @@ class StemmarestService {
         name: name,
         owner: userId,
     };
-    return fetch(`api/tradition/${tradId}`, {
+    return this.#fetch( `api/tradition/${tradId}`, {
         method: 'PUT',
         body: JSON.stringify(formData),
         headers: new Headers({ 'Content-Type': 'application/json' })

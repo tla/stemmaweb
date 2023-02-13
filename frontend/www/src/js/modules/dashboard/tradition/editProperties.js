@@ -137,7 +137,7 @@ class EditProperties extends HTMLElement {
             >
                 ${item.inputOptions.selectOptions.map(function (option) {
                   return EditProperties.#createSelectOption(option, item.inputOptions.selected);
-                })}
+                }).join('\n')}
             </select>
             <br />
         `;

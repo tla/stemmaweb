@@ -34,6 +34,7 @@ class AddTraditionModal extends HTMLElement {
     $('tradition_literal').innerText = 'section';
     $('add_tradition_partial').classList.remove('hide');
     $('new_section_partial').classList.remove('hide');
+    $('upload_for_tradition').innerHTML = AddTraditionModal.#availableTraditionsAsSelectOptions();
   }
 
   static #hide() {
@@ -142,9 +143,11 @@ class AddTraditionModal extends HTMLElement {
     });
   }
 
+  /** 
+   * This ensures the add_tradition_modal is placed nicely flush right of the menubar.
+   * @todo: Add responsiveness on resize. 
+   */
   #initStyles() {
-    // This ensures the add_tradition_modal is placed nicely flush right of the menubar.
-    // TODO: Add responsiveness on resize.
     const dashboard_stemmaweb_css = getStyleSheet('dashboard-stemmaweb');
     let add_tradition_modal_marginleft = window
       .getComputedStyle($('sidebarMenu'))
@@ -174,6 +177,19 @@ class AddTraditionModal extends HTMLElement {
     { value: 'graphml', name: 'Native GraphML Zip' },
     { value: 'stemmaweb', name: 'Legacy Stemmaweb GraphML' }
   ];
+
+  static #traditionAsSelectOption( tradition ) {
+    return `<option value="${tradition.id}">${tradition.name}</option>`
+  }
+
+  static #availableTraditionsAsSelectOptions() {
+    const selectOptions = TRADITION_STORE.state.availableTraditions.map( this.#traditionAsSelectOption ).join('\n');
+    return selectOptions;
+  }
+
+  static #hello() {
+    return '<option value="hello">hello</option>';
+  }
 
   render() {
     this.innerHTML = `
@@ -311,7 +327,7 @@ class AddTraditionModal extends HTMLElement {
                       name="for_tradition"
                       class="form-select"
                       id="upload_for_tradition"
-                    ></select>
+                    >${AddTraditionModal.#availableTraditionsAsSelectOptions()}</select>
                   </div>
 
                   <!-- Shows in either case -->

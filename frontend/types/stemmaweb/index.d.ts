@@ -61,6 +61,23 @@ export interface Stemma {
   identifier: string;
 }
 
+/** Type representing a **Section** as returned from the Stemmarest API. */
+export interface Section {
+
+  /** The graph rank of the section's end node. */
+  endRank: number;
+
+  /** The name of the section. */
+  name: string;
+
+  /** The internal ID of the section. */
+  id: string; 
+
+  /** The language of the section's text. */
+  language:string;
+
+}
+
 /**
  * Possible values to represent a user's role. The `guest` role is not
  * represented explicitly as it is the default role for unauthenticated

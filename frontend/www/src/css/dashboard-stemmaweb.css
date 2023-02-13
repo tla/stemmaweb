@@ -88,3 +88,27 @@ stemmaweb-alert {
 .nav-link {
   cursor: pointer;
 }
+
+li.nav-item {
+  padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);
+}
+
+.folder-icon {
+  padding-right: 0.5em;
+}
+
+ul#traditions-list {
+  margin-top: 1.2em;
+}
+
+ul#traditions-list a {
+  padding: unset;
+}
+
+section-list ul {
+  margin-top: 0.5em;
+}
+
+section-list ul li {
+  --bs-nav-link-padding-y: 0.1rem;
+}

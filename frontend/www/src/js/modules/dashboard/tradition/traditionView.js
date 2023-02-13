@@ -19,9 +19,7 @@ class TraditionView extends HTMLElement {
       <div
         class="d-flex justify-content-between flex-wrap align-items-center pt-2 pb-1 border-bottom"
       >
-        <h4 id="tradition_name" class="pt-3">
-          &nbsp;<!-- Tradition title placeholder -->
-        </h4>
+        <tradition-title></tradition-title>
         <div class="d-flex justify-content-end ms-5 pt-3 mb-2 lex-nowrap" id="stemma_buttons_container">
           <stemma-buttons></stemma-buttons>
         </div>
