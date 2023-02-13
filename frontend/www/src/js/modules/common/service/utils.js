@@ -30,21 +30,29 @@ function constructFetchUrl(baseUrl, params) {
  * @returns {Promise<BaseResponse<T>>} The response from the fetch call.
  */
 async function baseFetch(endpoint, options, params = {}) {
-  const res = await fetch(constructFetchUrl(endpoint, params), options);
-  const isJson = (res.headers.get('content-type') || '').includes(
-    'application/json'
-  );
-  if (res.ok) {
-    return {
-      success: true,
-      message: res.statusText,
-      ...(isJson ? { data: await res.json() } : {})
-    };
-  } else {
+  try {
+    const res = await fetch(constructFetchUrl(endpoint, params), options);
+    const isJson = (res.headers.get('content-type') || '').includes(
+      'application/json'
+    );
+    if (res.ok) {
+      return {
+        success: true,
+        message: res.statusText,
+        ...(isJson ? { data: await res.json() } : {})
+      };
+    } else {
+      return {
+        success: false,
+        message: res.statusText,
+        ...(isJson ? { data: await res.json() } : {})
+      };
+    }
+  } catch (e) {
+    console.error('Error while interacting with the middleware API:', e);
     return {
       success: false,
-      message: res.statusText,
-      ...(isJson ? { data: await res.json() } : {})
+      message: e.message
     };
   }
 }
