@@ -1,9 +1,9 @@
 # General-purpose bash environment for utility scripts
 FROM ubuntu:latest
 
-# install `curl`, `jq` and `gnupg2`
+# install core utilities
 RUN apt-get update &&  \
-    apt-get install -y curl jq gnupg2
+    apt-get install -y curl jq gnupg2 zip unzip
 
 WORKDIR /usr/src
 

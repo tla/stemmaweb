@@ -4,7 +4,7 @@ import secrets
 from environs import Env
 from loguru import logger
 
-from stemmaweb_middleware.stemmarest.stemmarest_client import StemmarestClient
+from stemmaweb_middleware.resources.base import APIClient
 from stemmaweb_middleware.utils import RecaptchaVerifier
 
 from . import constants
@@ -19,7 +19,11 @@ DEBUG = ENV == "development"
 STEMMAREST_ENDPOINT = env.str(
     "STEMMAREST_ENDPOINT", default="http://127.0.0.1:8080/stemmarest"
 )
-STEMMAREST_CLIENT = StemmarestClient(endpoint=STEMMAREST_ENDPOINT)
+STEMMAREST_CLIENT = APIClient(endpoint=STEMMAREST_ENDPOINT, name="Stemmarest")
+
+# Used for Stemweb Client setup
+STEMWEB_ENDPOINT = env.str("STEMWEB_ENDPOINT", default="http://127.0.0.1:8000")
+STEMWEB_CLIENT = APIClient(endpoint=STEMWEB_ENDPOINT, name="Stemweb")
 
 # Endpoints redirected from this host (`STEMMAWEB_HOST`)
 # to the stemmarest server (`STEMMAREST_ENDPOINT`)

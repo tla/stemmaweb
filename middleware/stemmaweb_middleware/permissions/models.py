@@ -1,5 +1,16 @@
+from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Callable, Iterable, NamedTuple, TypedDict
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Iterable,
+    NamedTuple,
+    Optional,
+    Protocol,
+    TypedDict,
+    TypeVar,
+)
 
 import pydantic
 
@@ -145,3 +156,26 @@ class PermissionCheckResult(NamedTuple):
     allowing role-based and user-data-based filtering.
     """
     response_transformer: ResponseTransformer | None
+
+
+class Matchable(Protocol):
+    @staticmethod
+    def match(path: str) -> Optional["Matchable"]:
+        pass
+
+
+EndpointType = TypeVar("EndpointType", bound=Matchable)
+
+
+class PermissionProvider(ABC, Generic[EndpointType]):
+    @abstractmethod
+    def get_permission_config(
+        self,
+        permission_arguments: PermissionArguments,
+    ) -> dict[EndpointType, dict[UserRole, list[PermissionConfig]]]:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def endpoint_type(self) -> type[EndpointType]:
+        raise NotImplementedError
