@@ -52,11 +52,11 @@ class TraditionStore extends StateStore {
   }
 
   /**
-   * Updates the tradition in `availableTraditions` having the same tradId 
-   * as the supplied tradition with the values of the supplied tradition. 
+   * Updates the tradition in `availableTraditions` having the same tradId as
+   * the supplied tradition with the values of the supplied tradition.
    *
    * This function is here so that the global state can be updated after a
-   * tradition is updated. 
+   * tradition is updated.
    *
    * @param {Tradition} tradition
    */

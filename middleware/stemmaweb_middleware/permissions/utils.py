@@ -1,6 +1,8 @@
 from typing import Callable
 
+from flask import request
 from flask_login import current_user as _current_user
+from loguru import logger
 
 from stemmaweb_middleware.models import AuthUser, CurrentUser, StemmawebUser
 from stemmaweb_middleware.utils import abort
@@ -9,6 +11,50 @@ from .models import UserRole
 
 # Aliasing for automatic type-hinting
 current_user: CurrentUser = _current_user
+
+
+def require_host(whitelist: str | list[str]) -> Callable:
+    """
+    Decorates a function to enforce that it is only called from a specific host.
+    Tests against the host of `flask.request`.
+
+    :param whitelist: the list of allowed hosts
+    :return: the decorated function which will return an error response
+             if the current host is not in the list of allowed hosts
+    """
+
+    allowed_hosts = whitelist if isinstance(whitelist, list) else [whitelist]
+
+    def decorator(func: Callable) -> Callable:
+        return hosts_required(allowed_hosts, func)
+
+    return decorator
+
+
+def hosts_required(allowed_hosts: list[str], func: Callable) -> Callable:
+    """
+    Wraps a function to enforce that it is only called from a specific host.
+    Tests against the host of `flask.request`.
+
+    :param allowed_hosts: the list of allowed hosts
+    :param func: the function to decorate
+    :return: the decorated function which will return an error response
+             if the current host is not in the list of allowed hosts
+    """
+
+    def wrapper(*args, **kwargs):
+        hostname = request.remote_addr
+        logger.debug(
+            f"Checking host '{hostname}' against allowed hosts {allowed_hosts}"
+        )
+        if hostname not in allowed_hosts:
+            return abort(
+                status=403,
+                message=f"This resource is not accessible from host {hostname}.",
+            )
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def require_min_user_role(user_role: UserRole) -> Callable:

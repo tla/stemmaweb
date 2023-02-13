@@ -6,7 +6,7 @@ from loguru import logger
 import stemmaweb_middleware.permissions as permissions
 from stemmaweb_middleware.extensions import login_manager, oauth
 from stemmaweb_middleware.models import AuthUser, StemmawebUser
-from stemmaweb_middleware.stemmarest import StemmarestClient
+from stemmaweb_middleware.resources.base import APIClient
 from stemmaweb_middleware.utils import (
     RecaptchaVerifier,
     abort,
@@ -19,7 +19,7 @@ from . import service as auth_service
 
 
 def blueprint_factory(
-    stemmarest_client: StemmarestClient, recaptcha_verifier: RecaptchaVerifier
+    stemmarest_client: APIClient, recaptcha_verifier: RecaptchaVerifier
 ) -> Blueprint:
     blueprint = Blueprint("auth", __name__)
     service = auth_service.StemmarestAuthService(stemmarest_client)
@@ -182,7 +182,7 @@ def blueprint_factory(
     def google_oauth_redirect():
         return oauth_redirect(
             provider="Google",
-            user_getter=service.load_user_google_oauth,
+            user_getter=service.load_user_google_oauth,  # type: ignore
             user_getter_args=(oauth,),
         )
 
@@ -203,7 +203,7 @@ def blueprint_factory(
         state = request.args.get("state")
         return oauth_redirect(
             provider="GitHub",
-            user_getter=service.load_user_github_oauth,
+            user_getter=service.load_user_github_oauth,  # type: ignore
             user_getter_args=(
                 oauth,
                 code,
