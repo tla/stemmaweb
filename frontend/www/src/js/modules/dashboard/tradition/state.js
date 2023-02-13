@@ -64,12 +64,14 @@ const TRADITION_STORE = new TraditionStore({
 
 function initState() {
   traditionStoreService.listTraditions().then((res) => {
-    /** @type {Tradition[]} */
-    const availableTraditions = res.data;
-    const selectedTradition = availableTraditions[0];
-    /** @type {TraditionState} */
-    const state = { availableTraditions, selectedTradition };
-    TRADITION_STORE.setState(state);
+    if (res.success) {
+      /** @type {Tradition[]} */
+      const availableTraditions = res.data;
+      const selectedTradition = availableTraditions[0];
+      /** @type {TraditionState} */
+      const state = { availableTraditions, selectedTradition };
+      TRADITION_STORE.setState(state);
+    }
   });
 }
 
