@@ -212,7 +212,7 @@ class StemmarestService extends BaseService {
       name: name,
       owner: userId
     };
-    return fetch(`api/tradition/${tradId}`, {
+    return this.fetch(`/api/tradition/${tradId}`, {
       method: 'PUT',
       body: JSON.stringify(formData),
       headers: new Headers({ 'Content-Type': 'application/json' })
