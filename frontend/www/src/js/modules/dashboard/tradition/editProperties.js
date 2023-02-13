@@ -107,7 +107,6 @@ class EditProperties extends HTMLElement {
   }
 
   static #createSelectOption(option, selectedValue) {
-    console.log(option, selectedValue);
     const selected = option.value == selectedValue ? 'selected' : '';
     return `
       <option value="${option.value}" ${selected}>

@@ -31,7 +31,7 @@ class SectionList extends HTMLElement {
         sectionService.listSections( this.getAttribute( 'trad-id' ) )
             .then( (resp) => { 
                 if( resp.success ) {
-                    console.log( resp.data );
+                    // console.log( resp.data );
                     this.#sections = resp.data;
                     this.#sections.forEach( (section) => this.createSectionName(section) );
                 } else {
