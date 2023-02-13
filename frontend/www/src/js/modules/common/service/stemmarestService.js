@@ -103,6 +103,17 @@ class StemmarestService extends BaseService {
     return this.fetch(`/api/tradition/${tradId}`);
   }
 
+   /**
+   * Fetches a list of sections for a particular tradition.
+   *
+   * @param {string} tradId
+   * @returns {Promise<BaseResponse<Section[]>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/sections}
+   */
+  listSections(tradId) {
+    return this.fetch(`/api/tradition/${tradId}/sections`);
+  }
+
   /**
    * Deletes a tradition from the Stemmarest API.
    *
