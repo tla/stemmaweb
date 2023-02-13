@@ -206,7 +206,7 @@ class StemmarestService extends BaseService {
     }
     const formData = {
       direction: direction,
-      is_public: isPublic ? true : false,
+      is_public: isPublic,
       id: tradId,
       language: language,
       name: name,
