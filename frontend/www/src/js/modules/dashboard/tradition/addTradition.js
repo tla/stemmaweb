@@ -187,10 +187,6 @@ class AddTraditionModal extends HTMLElement {
     return selectOptions;
   }
 
-  static #hello() {
-    return '<option value="hello">hello</option>';
-  }
-
   render() {
     this.innerHTML = `
       <div
