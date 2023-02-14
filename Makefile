@@ -102,5 +102,5 @@ encrypt-env: archive-env
 decrypt-env:
 	@echo "==> 🔓 Decrypt env.zip"
 	@touch .env.dev stemweb/.env.dev
-	@docker-compose -f docker-compose.dev.yml run --rm shell bash -c 'gpg --version && gpg --quiet --batch --yes --decrypt --passphrase="$$(cat env_passphrase)" --output env.zip env.zip.gpg'
+	@docker-compose -f docker-compose.dev.yml run --build --rm shell bash -c 'gpg --version && gpg --quiet --batch --yes --decrypt --passphrase="$$(cat env_passphrase)" --output env.zip env.zip.gpg'
 	@docker-compose -f docker-compose.dev.yml run --rm shell bash -c 'unzip -od . env.zip'
