@@ -3006,7 +3006,7 @@ function loadSVG(normalised) {
     }
     // Reload the SVG
     // $('#svgenlargement').empty().append(svgData.documentElement)
-    d3.select('#svgenlargement').node().append(svgData.documentElement);
+    d3.select('#svgenlargement').node().replaceChildren(svgData.documentElement);
     // TODO center the SVG vertically
     svgEnlargementLoaded();
   });
