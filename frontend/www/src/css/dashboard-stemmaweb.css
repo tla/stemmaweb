@@ -112,3 +112,11 @@ section-list ul {
 section-list ul li {
   --bs-nav-link-padding-y: 0.1rem;
 }
+
+.tradition-property-label-cell, .section-property-label-cell {
+  min-width: 6em;
+}
+
+.tradition-property-value-cell, .section-property-value-cell {
+  width: 100%;
+}

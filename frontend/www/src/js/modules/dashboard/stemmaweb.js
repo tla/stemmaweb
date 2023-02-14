@@ -59,14 +59,6 @@ function initStemmaweb() {
     return transition.delay(50).duration(1000).ease(d3.easeLinear);
   }
 
-  function quick_fade_in(sel) {
-    return sel
-      .style('opacity', 0)
-      .transition()
-      .duration(500)
-      .style('opacity', 1);
-  }
-
   /**
    * @param {string} dot
    * @returns {string}
@@ -77,57 +69,7 @@ function initStemmaweb() {
       '" {\n\t node [color=none style=filled fillcolor=white]'
     );
   }
-
-  /**
-   * Renders folder level list item for `Tradition` in the left
-   * navigation sidebar. 
-   * 
-   * @param tradition{Tradition}
-   */
-  function renderTraditionListItem( tradition ) {
-    return `
-    <div class="tradition-list-item d-flex">
-      <div class="folder-icon">${folderIcon}</div>
-      <div>
-        <a href="api/tradition/${tradition.id}" trad-id="${tradition.id}" class="nav-link">
-          ${tradition.name}
-       </a>
-      </div>
-    </div>`;
-  }
-
-  function toggleSectionList( evt, tradId ){
-    const sectionListElement = d3.select( `section-list[trad-id="${tradId}"]` )
-    sectionListElement.call( quick_fade_in )
-      .classed( 'show', !sectionListElement.classed( 'show' ) );
-  }
-
-  /**
-   * Renders the supplied array of `Tradition` as a list with clickable items.
-   *
-   * @param traditions {Tradition[]}
-   */
-  function renderTraditionList(traditions) {
-    // Clear the list
-    document.getElementById('traditions-list').innerHTML = '';
-    let traditionsList = d3
-      .select('#traditions-list')
-      .selectAll('li')
-      .data(traditions, (d) => d.id);
-    traditionsList.exit().remove();
-    traditionsList = traditionsList
-      .enter()
-      .append('li')
-      .merge(traditionsList);
-    traditionsList.classed('nav-item', true)
-      .html( renderTraditionListItem )
-      .select( 'div div.folder-icon' ).on( 'click', (evt,d) => { toggleSectionList( evt, d.id ) } );
-    traditionsList.append( 'div' )
-      .html( (d) => `<section-list trad-id="${d.id}" class="collapse"></section-list>` );
-    traditionsList
-      .select( 'div div a' ).on('click', selectTradition );
-  }
-
+  
   function fetch_rooted(trad, stemma, sigil) {
     service
       .reorientStemmaTree(trad.id, stemma.identifier, sigil)
@@ -223,18 +165,11 @@ function initStemmaweb() {
           render_stemma(graphDiv, tradition, selectedStemma || stemmata[0]);
         }
       });
-    const buttons = d3.select('#stemma_buttons');
-    if (buttons.classed('invisible')) {
-      buttons.call(quick_fade_in).classed('invisible', false);
+    const buttons = document.querySelector('#stemma_buttons');
+    if (buttons.classList.contains( 'invisible' )) {
+      fadeIn( buttons );
+      buttons.classList.remove( 'invisible' );
     }
-  }
-
-  function selectTradition( evt ) {
-    evt.preventDefault();
-    const selectedTradition = d3.select(this).datum();
-    // This will trigger `onTraditionStateChanged`
-    // in which we handle the rendering of the selected tradition.
-    TRADITION_STORE.setSelectedTradition(selectedTradition);
   }
 
   function set_downloads(dot) {
@@ -275,26 +210,6 @@ function initStemmaweb() {
 
   /**
    * This function will be called each time the state persisted in the
-   * `TRADITION_STORE` changes. It will update the UI to reflect the current
-   * state.
-   *
-   * @param {TraditionState} state
-   */
-  function onTraditionStateChanged(state) {
-    const { availableTraditions, selectedTradition } = state;
-    // render the tradition list
-    renderTraditionList(availableTraditions);
-    // render the current tradition if it is not null
-    if (selectedTradition) {
-      render_tradition(selectedTradition, [], null);
-    } else {
-      // otherwise, remove the current tradition from the UI
-      TraditionView.clearTradition();
-    }
-  }
-
-  /**
-   * This function will be called each time the state persisted in the
    * `STEMMA_STORE` changes. It will update the UI to reflect the current
    * state.
    *
@@ -308,7 +223,6 @@ function initStemmaweb() {
   }
 
   // 'Main'
-  TRADITION_STORE.subscribe(onTraditionStateChanged);
   STEMMA_STORE.subscribe(onStemmaStateChanged);
   feather.replace({ 'aria-hidden': 'true' });
 }

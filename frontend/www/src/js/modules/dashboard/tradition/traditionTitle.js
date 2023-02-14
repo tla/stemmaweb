@@ -5,6 +5,11 @@
  * 
  */
 
+/**
+ * Class representing the title of a tradition at the top of
+ * the screen. Fades in the title if a new tradition is
+ * selected.
+ */
 class TraditionTitle extends HTMLElement {
 
     #title = '';
@@ -18,12 +23,12 @@ class TraditionTitle extends HTMLElement {
             if ( prevState.selectedTradition == null ) {
                 this.#title = name;
                 this.render();
-                this.fadeIn();
+                fadeIn( this );
             } else {
                 if ( name != prevState.selectedTradition.name ) {
                     this.#title = name;
                     this.render();
-                    this.fadeIn();
+                    fadeIn( this );
                 }
             }
         });
@@ -31,15 +36,7 @@ class TraditionTitle extends HTMLElement {
 
     connectedCallback() {
         this.render();
-        this.fadeIn();
-    }
-
-    fadeIn(){
-        d3.select( this )
-            .style('opacity', 0)
-            .transition()
-            .duration(500)
-            .style('opacity', 1);
+        fadeIn( this );
     }
 
     render() {

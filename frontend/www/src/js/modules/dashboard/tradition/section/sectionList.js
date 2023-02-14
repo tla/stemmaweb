@@ -27,13 +27,16 @@ class SectionList extends HTMLElement {
         this.populate();
     }
 
+    /**
+     * Fetches sections for a tradition and iterates over them 
+     * to create a sections list.
+     */
     populate() {
         sectionService.listSections( this.getAttribute( 'trad-id' ) )
             .then( (resp) => { 
                 if( resp.success ) {
-                    // console.log( resp.data );
                     this.#sections = resp.data;
-                    this.#sections.forEach( (section) => this.createSectionName(section) );
+                    this.#sections.forEach( (section) => this.renderSectionName(section) );
                 } else {
                     StemmawebAlert.show(`Error: ${res.message}`, 'danger');
                 }
@@ -41,21 +44,34 @@ class SectionList extends HTMLElement {
     }
 
     /**
+     * Triggered when a user select on of the section listed in the left hand side tradition navigation tree.
      * 
      * @param {Section} section 
      */
     selectSection( section ) {
-        // This will trigger `onTraditionStateChanged`
-        // in which we handle the rendering of the selected section.
+        const traditionId = this.getAttribute( 'trad-id' );
+        /**
+         * This treats the case when multiple section lists in the left hand side bar (traditions tree) have been opened.
+         * In which case a user may click on a section in a tradition that is currently not selected. 
+         * In that case we update the selected tradition in TRADITION_STORE.
+         * @todo: Do we want to get the selected tradition this way, or should we have a convenience method TRADITION_STORE.getTradition( tradId )?
+         */
+        if( traditionId != TRADITION_STORE.state.selectedTradition.id ) {
+            const tradition = TRADITION_STORE.state.availableTraditions.find( availableTradition => availableTradition.id == traditionId );
+            TRADITION_STORE.setSelectedTradition( tradition );
+        };
+        // This will trigger state change on which SectionPropertiesView
+        // will handle the rendering of the selected section.
         SECTION_STORE.setSelectedSection( section );
     }
     
 
     /**
-     * 
+     * Creates and appends a section list item to the section list.
+     *  
      * @param {Section} section 
      */
-    createSectionName( section ) {
+    renderSectionName( section ) {
         const sectionListItem = document.createElement( 'li' );
         sectionListItem.setAttribute( 'class', 'nav-item' );
         sectionListItem.innerHTML = `<div class="section-name" sect-id="${section.id}">${textIcon}&nbsp;${section.name}</div>`;

@@ -23,10 +23,16 @@ class SectionPropertiesView extends HTMLElement {
 
     constructor() {
         super();
-        // Whenever a new tradition / related section is selected, update the table
-        SECTION_STORE.subscribe(({ parentTradition, selectedSection }) => {
+        // Whenever a tradition is selected that is not me, I go away.
+        TRADITION_STORE.subscribe( ( prevState, state ) => {
+            if( prevState.selectedTradition != state.selectedTradition ) {
+                this.innerHTML  = '';
+            };
+        });
+        // Whenever an item in the section list is selected, update the table
+        SECTION_STORE.subscribe( ( { parentTradition, selectedSection, availableSections } ) => {
             if( selectedSection != null ){
-                this.render(parentTradition, selectedSection);
+                this.render( selectedSection );
             }
         });
     }
@@ -42,8 +48,8 @@ class SectionPropertiesView extends HTMLElement {
     renderMetaItem(item) {
         return `
             <tr>
-                <td>${item.label}</td>
-                <td>${item.value}</td>
+                <td class="section-property-label-cell">${item.label}</td>
+                <td class="section-property-value-cell">${item.value}</td>
             </tr>
           `;
     }
@@ -55,6 +61,8 @@ class SectionPropertiesView extends HTMLElement {
     };
 
     /**
+     * Maps section metadata to appropriate labels.
+     * 
      * @param {Section} section Section to render the metadata for.
      * @returns {MetaItem[]} Array of metadata items to display.
     */
@@ -98,9 +106,11 @@ class SectionPropertiesView extends HTMLElement {
     }
 
     /**
+     * Creates an HTML representation of a table listing the names and 
+     * values of properties for the sections of a tradition.
      * 
      * @param {Section} section - Section to create view for. 
-     * @returns {string} Table representation of section properties. 
+     * @returns {string} HTML representation of section properties table. 
      */
     createSectionTable( section ){
         if( section ) {
@@ -111,7 +121,7 @@ class SectionPropertiesView extends HTMLElement {
                 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
                 >
                     <span>Section Properties</span>
-                    <span>edit-section-properties-button</span>    
+                    <edit-section-properties-button/>   
                 </h6>
                 <div class="table-responsive px-3 py-3">
                 <table class="table table-striped table-sm">
@@ -127,10 +137,12 @@ class SectionPropertiesView extends HTMLElement {
     }
 
     /**
-     * @param {Tradition} parentTradition 
+     * Creates a container to hold the HTML table representation yielded
+     * by @see SectionPropertiesView.createSectionTable.
+     *  
      * @param {Section} selectedSection 
      */
-    render( parentTradition, selectedSection) {
+    render( selectedSection) {
         if( selectedSection ) {}
         this.innerHTML = `
         <div class="position-sticky pt-3">

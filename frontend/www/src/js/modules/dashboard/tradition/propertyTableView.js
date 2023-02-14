@@ -204,8 +204,8 @@ class PropertyTableView extends HTMLElement {
   renderMetaItem(item) {
     return `
         <tr>
-          <td>${item.label}</td>
-          <td>${item.value}</td>
+          <td class="tradition-property-label-cell">${item.label}</td>
+          <td class="tradition-property-value-cell">${item.value}</td>
         </tr>
       `;
   }
@@ -234,9 +234,7 @@ class PropertyTableView extends HTMLElement {
       >
         <span>Properties</span>
         <edit-properties-button/>
-
       </h6>
-
       <div class="table-responsive px-3 py-3">
         <table class="table table-striped table-sm">
           <tbody id="tradition_info">
