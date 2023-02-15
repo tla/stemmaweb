@@ -120,3 +120,7 @@ section-list ul li {
 .tradition-property-value-cell, .section-property-value-cell {
   width: 100%;
 }
+
+social-login-options .btn {
+  font-size: calc( var(--bs-btn-font-size) * 4);
+}
