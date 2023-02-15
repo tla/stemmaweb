@@ -2,11 +2,11 @@
 build:
 	@echo "==> 🏗 Build Containers"
 	@docker build -t stemmaweb-middleware ./middleware
-	@docker-compose build
+	@docker compose build
 
 start: build
 	@echo "==> 🚀 Start"
-	@docker-compose up
+	@docker compose up
 
 # Spawns a new shell in the dev docker container
 shell:
@@ -20,11 +20,11 @@ shell:
 
 build-dev:
 	@echo "==> 🏗 Build Dev Containers"
-	@docker-compose --env-file .env.dev -f docker-compose.dev.yml build
+	@docker compose --env-file .env.dev -f docker-compose.dev.yml build
 
 dev: build-dev
 	@echo "==> 💻 Development"
-	@docker-compose --env-file .env.dev -f docker-compose.dev.yml up
+	@docker compose --env-file .env.dev -f docker-compose.dev.yml up
 
 
 # The command to be replaced in `stemmaweb-e2e`'s entrypoint
@@ -32,7 +32,7 @@ CY_NPM_COMMAND="cy:run"
 
 build-tests:
 	@echo "==> 🏗 Build Test Containers"
-	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker-compose --env-file .env.dev -f docker-compose.test.yml build
+	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker compose --env-file .env.dev -f docker-compose.test.yml build
 
 build-tests-arm:
 	@make build-tests CY_NPM_COMMAND="cy:run:arm"
@@ -43,7 +43,7 @@ tests: tests-down build-tests
 
 tests-down:
 	@echo "==> 🛑 Stop Test Containers"
-	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker-compose --env-file .env.dev -f docker-compose.test.yml down
+	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker compose --env-file .env.dev -f docker-compose.test.yml down
 
 tests-arm:
 	@make tests CY_NPM_COMMAND="cy:run:arm"
@@ -81,11 +81,11 @@ stop: stop-middleware stop-frontend
 
 dev-down:
 	@echo "==> 🛑 Stop Dev Containers"
-	@docker-compose --env-file .env.dev -f docker-compose.dev.yml down
+	@docker compose --env-file .env.dev -f docker-compose.dev.yml down
 
 archive-env:
 	@echo "==> 📦 Archive .env files into env.zip"
-	@docker-compose -f docker-compose.dev.yml run --rm shell bash -c 'zip -r env.zip $$(find . -maxdepth 2 -type f -name "*.env*" ! -name "*.example")'
+	@docker compose -f docker-compose.dev.yml run --rm shell bash -c 'zip -r env.zip $$(find . -maxdepth 2 -type f -name "*.env*" ! -name "*.example")'
 
 #################################################################################
 # The .env* files need to be encrypted and decrypted inside a Docker container
@@ -94,7 +94,7 @@ archive-env:
 
 encrypt-env: archive-env
 	@echo "==> 🔐 Encrypt env.zip"
-	@docker-compose -f docker-compose.dev.yml run --rm shell bash -c 'gpg --version && gpg --quiet --batch --yes --symmetric --cipher-algo AES256 --passphrase="$$(cat env_passphrase)" env.zip'
+	@docker compose -f docker-compose.dev.yml run --rm shell bash -c 'gpg --version && gpg --quiet --batch --yes --symmetric --cipher-algo AES256 --passphrase="$$(cat env_passphrase)" env.zip'
 
 # Adding `.env.dev stemweb/.env.dev` to create empty files so that the dockerized shell spawns successfully
 # (We depend on these files in other services declared in `docker-compose.dev.yml`, but we are not using these here)
@@ -102,5 +102,5 @@ encrypt-env: archive-env
 decrypt-env:
 	@echo "==> 🔓 Decrypt env.zip"
 	@touch .env.dev stemweb/.env.dev
-	@docker-compose -f docker-compose.dev.yml run --build --rm shell bash -c 'gpg --version && gpg --quiet --batch --yes --decrypt --passphrase="$$(cat env_passphrase)" --output env.zip env.zip.gpg'
-	@docker-compose -f docker-compose.dev.yml run --rm shell bash -c 'unzip -od . env.zip'
+	@docker compose -f docker-compose.dev.yml run --build --rm shell bash -c 'gpg --version && gpg --quiet --batch --yes --decrypt --passphrase="$$(cat env_passphrase)" --output env.zip env.zip.gpg'
+	@docker compose -f docker-compose.dev.yml run --rm shell bash -c 'unzip -od . env.zip'
