@@ -62,21 +62,18 @@ services:
   stemmaweb:
     container_name: stemmaweb
     build:
-        context: .
-        dockerfile: Dockerfile-dev
+      context: .
+      dockerfile: Dockerfile-dev
     volumes:
       - .:/usr/src
     env_file:
       - .env.dev
-    ports:
-      - "3000:3000"
-      - "5000:5000"
     entrypoint: >
       /bin/bash -c "make install-middleware && 
                     make install-frontend &&
                     make run &&
                     tail -F just-forcing-the-container-to-keep-running"
-    
+
   stemmaweb-e2e:
     container_name: stemmaweb-e2e
     build: frontend-e2e
