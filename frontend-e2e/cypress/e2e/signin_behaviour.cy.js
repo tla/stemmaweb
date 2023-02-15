@@ -15,7 +15,7 @@ beforeEach(() => {
 
 describe('User can\'t log in with the hash string', () => {
   it('passes', () => {
-    cy.contains('', 'Sign in').click();
+    cy.contains('Sign in').click();
     cy.wait(500);
     cy.get('#loginEmail').type('user@example.org', { delay: 50 });
     cy.wait(500);
@@ -29,14 +29,14 @@ describe('User can\'t log in with the hash string', () => {
 
 describe('User can log in with password UserPass, and log out again', () => {
   it('passes', () => {
-    cy.contains('', 'Sign in').click();
+    cy.contains('Sign in').click();
     cy.wait(500);
     cy.get('#loginEmail').type('user@example.org', { delay: 50 });
     cy.wait(500);
     cy.get('#loginPassword').type('UserPass', { delay: 50 });
     cy.wait(500);
     cy.contains('button', 'Sign in').click();
-    cy.contains('You are logged in');
+    cy.contains('Logged in as user@example.org');
 
     cy.log('User can log out again');
     cy.contains('Sign out').click();
@@ -47,8 +47,8 @@ describe('User can log in with password UserPass, and log out again', () => {
 
 describe('A new user can be created', () => {
   it('passes', () => {
-    cy.contains('', 'Sign in').click();
-    cy.contains('', 'Register').click();
+    cy.contains('Sign in').click();
+    cy.contains('Register').click();
 
     cy.wait(500);
     cy.get('#registerEmail').type('newuser@example.org', { delay: 50 });
@@ -67,9 +67,9 @@ describe('A new user can be created', () => {
     cy.get('#loginPassword').type('NewUserPass', { delay: 50 });
     cy.wait(500);
     cy.contains('button', 'Sign in').click();
-    cy.contains('You are logged in');
+    cy.contains('Logged in as newuser@example.org');
 
-    cy.log('User can log out again');
+    cy.log('The new user can log out again');
     cy.contains('Sign out').click();
     cy.contains('Sign in');
 
@@ -79,16 +79,16 @@ describe('A new user can be created', () => {
 // The new user can then log in
 describe('The new user can then log in, and log out again', () => {
   it('passes', () => {
-    cy.contains('', 'Sign in').click();
+    cy.contains('Sign in').click();
     cy.wait(500);
     cy.get('#loginEmail').type('newuser@example.org', { delay: 50 });
     cy.wait(500);
     cy.get('#loginPassword').type('NewUserPass', { delay: 50 });
     cy.wait(500);
     cy.contains('button', 'Sign in').click();
-    cy.contains('You are logged in');
+    cy.contains('Logged in as newuser@example.org');
 
-    cy.log('User can log out again');
+    cy.log('The new user can log out again');
     cy.contains('Sign out').click();
     cy.contains('Sign in');
   });
