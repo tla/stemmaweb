@@ -240,7 +240,7 @@ class StemmarestService extends BaseService {
    */
   moveSection( tradId, sectionId, priorSectionId ) {
     return this.fetch(`/api/tradition/${tradId}/section/${sectionId}/orderAfter/${priorSectionId}`, {
-      method: 'POST'
+      method: 'PUT'
     });
   }
 
