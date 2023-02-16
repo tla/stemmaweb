@@ -23,16 +23,6 @@ class SectionList extends HTMLElement {
     }
 
     /**
-     * @todo describe test when PR'ing.:
-     *   * User can reorder sections by dragging, subtests:
-     *      * Reorder fails on server side: alert is displayed, dragged section is returned to original position
-     *      * User 'drops' drag by accident (e.g. outisde droppable list): section is returned to original position
-     *      * Selected list item is highighted when dragged
-     *      * Selected list item is unhighlighted when dropped
-     *      * Selected list item can only be dropped on parent list
-     */
-
-    /**
      * 
      * @param {Event} evt - Event fired by Draggable.
      * @param {number} idx - Index of the draggable item in its Draggable list.
