@@ -4,8 +4,14 @@
 # This is identical with the `stemmaweb-e2e.container_name` property in `docker-compose.test.yml`
 TEST_CONTAINER_NAME="stemmaweb-e2e"
 
+# Using a docker stack independent of the dev or prod stack for running the tests
+DOCKER_COMPOSE_FILE="docker-compose.test.yml"
+
+# Using the dev environment variables for running the tests
+ENV_FILE=".env.dev"
+
 # Start the services in detached mode
-docker-compose --env-file .env.dev -f docker-compose.test.yml up -d
+docker-compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_FILE up -d
 
 # Check the exit status of the docker container responsible for starting the tests
 exit_status=$(docker wait $TEST_CONTAINER_NAME)
@@ -21,7 +27,7 @@ fi
 docker logs $TEST_CONTAINER_NAME
 
 # Stop the services
-docker-compose --env-file .env.dev -f docker-compose.test.yml down
+docker-compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_FILE down
 
 # Exit with the exit status of the docker container responsible for starting the tests
 exit "$exit_status"

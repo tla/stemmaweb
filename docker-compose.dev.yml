@@ -60,8 +60,6 @@ services:
     depends_on:
       - stemweb_mysql
       - stemweb_redis
-    volumes:
-      - ./stemweb/config/local_settings.py:/home/stemweb/Stemweb/local_settings.py
     ports:
       - "8000:8000"
       - "51000:51000"

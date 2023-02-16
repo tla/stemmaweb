@@ -1,3 +1,6 @@
+import hashlib
+from base64 import b64encode
+
 import requests
 from authlib.integrations.flask_client import OAuth
 
@@ -29,6 +32,9 @@ class StemmarestAuthService:
         :param user: The user to register.
         :return: A `requests.Response` object from the Stemmarest API.
         """
+        # Hash the passphrase that we received from the client request
+        user.passphrase = self.hash_passphrase(user.passphrase)
+        # Put the new user into the repository
         return self.client.request(
             method="PUT",
             path=f"/user/{user.id}",
@@ -63,7 +69,8 @@ class StemmarestAuthService:
         if user_or_none is None:
             return None
         user_from_response: StemmawebUser = user_or_none
-        passwords_match = user_from_response.passphrase == credentials.passphrase
+        hashed_input_passphrase: str = self.hash_passphrase(credentials.passphrase)
+        passwords_match = hashed_input_passphrase == user_from_response.passphrase
         return user_from_response if passwords_match else None
 
     def load_user_google_oauth(
@@ -236,3 +243,11 @@ class StemmarestAuthService:
 
         primary_email = next(filter(predicate, emails))
         return primary_email["email"]
+
+    @staticmethod
+    def hash_passphrase(pphrase: str) -> str:
+        m = hashlib.sha256()
+        m.update(pphrase.encode("utf-8"))
+        # Return the base64-encoded digest without padding, for
+        # backwards data compatibility with perl's Digest library
+        return b64encode(m.digest()).decode("ascii").rstrip("=")
