@@ -3,8 +3,6 @@ version: '3.9'
 services:
   stemmarest:
     image: "dhuniwien/stemmarest:latest"
-    ports:
-      - "8080:8080"
 
   stemmarest-initializer:
     build: bin
@@ -13,7 +11,7 @@ services:
     depends_on:
       - stemmarest
     volumes:
-      - ./bin/init-data/:/init-data
+      - ./bin/init-data/stemmarest/:/init-data
     entrypoint: >
       /bin/bash -c "./wait-for-it.sh --host=${STEMMAREST_HOST} --port=${STEMMAREST_PORT} -- /init-data/init_test_data.sh"
 
@@ -24,8 +22,6 @@ services:
     restart: always
     env_file:
       - stemweb/.env.dev
-    ports:
-      - "4306:3306"
 
   stemweb_redis:
     container_name: stemweb_redis
@@ -36,8 +32,6 @@ services:
       # "The TCP backlog setting of 511 cannot be enforced
       # because /proc/sys/net/core/somaxconn is set to the lower value of 128."
       net.core.somaxconn: 512     # maximal number of connections
-    ports:
-      - "7379:6379"
     volumes:
       - ./stemweb/redis/redis.conf:/usr/local/etc/redis/redis.conf # version 6 from  https://redis.io/topics/config
     command:
@@ -55,28 +49,22 @@ services:
       - stemweb_redis
     volumes:
       - ./stemweb/config/local_settings.py:/home/stemweb/Stemweb/local_settings.py
-    ports:
-      - "8000:8000"
-      - "51000:51000"
 
   stemmaweb:
     container_name: stemmaweb
     build:
-        context: .
-        dockerfile: Dockerfile-dev
+      context: .
+      dockerfile: Dockerfile-dev
     volumes:
       - .:/usr/src
     env_file:
       - .env.dev
-    ports:
-      - "3000:3000"
-      - "5000:5000"
     entrypoint: >
       /bin/bash -c "make install-middleware && 
                     make install-frontend &&
                     make run &&
                     tail -F just-forcing-the-container-to-keep-running"
-    
+
   stemmaweb-e2e:
     container_name: stemmaweb-e2e
     build: frontend-e2e
@@ -97,5 +85,3 @@ services:
     build: ./reverse-proxy
     depends_on:
       - stemmaweb
-    ports:
-      - "8888:80"
