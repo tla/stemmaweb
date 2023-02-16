@@ -11,7 +11,7 @@ services:
     depends_on:
       - stemmarest
     volumes:
-      - ./bin/init-data/:/init-data
+      - ./bin/init-data/stemmarest/:/init-data
     entrypoint: >
       /bin/bash -c "./wait-for-it.sh --host=${STEMMAREST_HOST} --port=${STEMMAREST_PORT} -- /init-data/init_test_data.sh"
 
