@@ -14,8 +14,8 @@ locally using `docker-compose`.
 
 ### Working with Cypress
 
-*The following instructions assume that you are working on a Unix-based system and your present working directory
-relative to the repository root is [frontend-e2e](../frontend-e2e).*
+_The following instructions assume that you are working on a Unix-based system and your present working directory
+relative to the repository root is [frontend-e2e](../frontend-e2e)._
 
 Install the dependencies:
 
