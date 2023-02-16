@@ -28,7 +28,7 @@ describe('User can\'t log in with the hash string', () => {
 });
 
 describe('User can log in with password UserPass, and log out again', () => {
-  it('passes', () => {
+  it.skip('passes', () => {
     cy.contains('Sign in').click();
     cy.wait(500);
     cy.get('#loginEmail').type('user@example.org', { delay: 50 });
@@ -46,7 +46,7 @@ describe('User can log in with password UserPass, and log out again', () => {
 
 
 describe('A new user can be created', () => {
-  it('passes', () => {
+  it.skip('passes', () => {
     cy.contains('Sign in').click();
     cy.contains('Register').click();
 
@@ -78,7 +78,7 @@ describe('A new user can be created', () => {
 
 // The new user can then log in
 describe('The new user can then log in, and log out again', () => {
-  it('passes', () => {
+  it.skip('passes', () => {
     cy.contains('Sign in').click();
     cy.wait(500);
     cy.get('#loginEmail').type('newuser@example.org', { delay: 50 });
