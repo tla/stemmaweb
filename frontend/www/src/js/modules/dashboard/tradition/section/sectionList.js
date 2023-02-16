@@ -7,7 +7,7 @@
  */
 
 /**
- * Object to interact with the Stemmarest Middleware's API 
+ * Object to interact with the Stemmarest Middleware's API  
  * through high-level functions.
  *
  * @type {StemmarestService}
@@ -22,9 +22,56 @@ class SectionList extends HTMLElement {
         super();
     }
 
+    /**
+     * @todo describe test when PR'ing.:
+     *   * User can reorder sections by dragging, subtests:
+     *      * Reorder fails on server side: alert is displayed, dragged section is returned to original position
+     *      * User 'drops' drag by accident (e.g. outisde droppable list): section is returned to original position
+     *      * Selected list item is highighted when dragged
+     *      * Selected list item is unhighlighted when dropped
+     *      * Selected list item can only be dropped on parent list
+     */
+
+    /**
+     * 
+     * @param {Event} evt - Event fired by Draggable.
+     * @param {number} idx - Index of the draggable item in its Draggable list.
+     */
+    toggleHighlightDragged( evt, idx ){
+        // NOTE: array index is zero based, but n-th child is counted "naturally". (Why btw?!)
+        evt.target.children.item(idx).classList.toggle( 'dragging-highlight' );
+    }
+
+    getSectionId( evt, idx ) {
+        const sectionListItem = evt.target.children.item( idx )
+        return sectionListItem ? sectionListItem.querySelector( 'div' ).getAttribute( 'sect-id' ) : 'none';
+    }
+
     connectedCallback() {
         this.render();
         this.populate();
+        Sortable.create( 
+            this.querySelector( 'ul' ), 
+            { 
+                onStart: (evt) => { this.toggleHighlightDragged( evt, evt.oldIndex ) },
+                onEnd: (evt) => { this.toggleHighlightDragged( evt, evt.newIndex ) },
+                onUpdate: (evt) => { 
+                    // NOTE: array index is zero based, but n-th child is counted "naturally". (Why btw?!)
+                    // figure out tradition.id, section.id, priorSectionId.
+                    const moveSectionId = this.getSectionId( evt, evt.newIndex );
+                    const moveAfterSectionId = this.getSectionId( evt, evt.newIndex-1 );
+                    sectionService.moveSection( this.getAttribute( 'trad-id' ), moveSectionId, moveAfterSectionId )
+                        .then( (resp) => {
+                            if( !resp.success ) {
+                                this.connectedCallback();
+                                const alertInfo = 'Sections could not be reordered due to a server error. The original order has been restored.<br/>';
+                                StemmawebAlert.show( `${alertInfo} (Server responded with: “${resp.message}”.)`, 'danger', 7000 );
+                            }
+                        }
+                    );
+                }
+            }
+        );
     }
 
     /**
@@ -75,7 +122,7 @@ class SectionList extends HTMLElement {
         const sectionListItem = document.createElement( 'li' );
         sectionListItem.setAttribute( 'class', 'nav-item' );
         sectionListItem.innerHTML = `<div class="section-name" sect-id="${section.id}">${textIcon}&nbsp;${section.name}</div>`;
-        sectionListItem.addEventListener( 'click', () => { this.selectSection( section ) } );
+        sectionListItem.addEventListener( 'mousedown', () => { this.selectSection( section ) } );
         this.querySelector( 'ul' ).appendChild( sectionListItem );
     }
 

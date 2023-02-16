@@ -229,4 +229,19 @@ class StemmarestService extends BaseService {
       headers: new Headers({ 'Content-Type': 'application/json' })
     });
   }
+
+  /**
+   * 
+   * @param {string} tradId - Id of the tradition that the section belongs to
+   * @param (string) sectionId
+   * @param {string} priorSectionId 
+   * 
+   * @returns * @returns {Promise<BaseResponse<T>>}
+   */
+  moveSection( tradId, sectionId, priorSectionId ) {
+    return this.fetch(`/api/tradition/${tradId}/section/${sectionId}/orderAfter/${priorSectionId}`, {
+      method: 'POST'
+    });
+  }
+
 }

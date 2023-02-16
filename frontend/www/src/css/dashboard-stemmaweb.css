@@ -113,6 +113,10 @@ section-list ul li {
   --bs-nav-link-padding-y: 0.1rem;
 }
 
+section-list ul li.dragging-highlight {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
 .tradition-property-label-cell, .section-property-label-cell {
   min-width: 6em;
 }
