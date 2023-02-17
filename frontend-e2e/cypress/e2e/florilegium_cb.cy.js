@@ -25,7 +25,7 @@ describe("'Florilegium Coislinianum B' has the right owner and witnesses", funct
     }); // should pass
     // is there a better way to assert 'does not contain text xyz'?
 
-    cy.get('#traditions_list')
+    cy.get('#traditions-list')
       .contains(/^Florilegium Coislinianum B$/)
       .click();
     cy.get('#tradition_name').contains(/^Florilegium Coislinianum B$/);
