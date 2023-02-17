@@ -13,7 +13,7 @@
     "@hpcc-js/wasm": "^1.18.0",
     "bootstrap": "^5.2.2",
     "d3": "^7.6.1",
-    "d3-graphviz": "^4.4.0",
+    "d3-graphviz": "^5.0.2",
     "feather-icons": "^4.29.0",
     "save-svg-as-png": "^1.4.17"
   },
