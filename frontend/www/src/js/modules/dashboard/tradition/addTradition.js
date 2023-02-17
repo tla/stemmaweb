@@ -149,10 +149,7 @@ class AddTraditionModal extends HTMLElement {
    */
   #initStyles() {
     const dashboard_stemmaweb_css = getStyleSheet('dashboard-stemmaweb');
-    console.log( dashboard_stemmaweb_css );
     const addTraditionModalMarginLeft = $('sidebarMenu').getBoundingClientRect().width;
-    console.log( addTraditionModalMarginLeft );
-    console.log( this );
     this.querySelector( 'div div' ).style.marginLeft = `${addTraditionModalMarginLeft}px`;
     this.querySelector( 'div div' ).style.marginTop = '50px'
   }
