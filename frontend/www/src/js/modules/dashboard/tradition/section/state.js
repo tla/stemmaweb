@@ -41,6 +41,8 @@ class SectionStore extends StateStore {
    * time a new tradition is selected, the `SectionState` managed by the supplied
    * `sectionStore` is updated.
    *
+   * @todo This is almost exactly the same as the one in stemma/state.js. Extract, abstract?
+   * 
    * @returns {(state: TraditionState) => void}
    */
   get traditionListener() {
@@ -66,6 +68,32 @@ class SectionStore extends StateStore {
     }
     return onTraditionStateChange;
   }
+
+  /**
+   * Updates the Section in `availableSections` having the same sectionId as
+   * the supplied section with the values of the supplied section.
+   *
+   * This function is here so that the global state can be updated after a
+   * tradition is updated.
+   *
+   * @todo: This is almost exactly the same as `updateTradition` in tradition/state.js. Extract, abstract?
+   * 
+   * @param {Section} section
+   */
+    updateSection(section) {
+      const sectionIdx = this.state.availableSections.findIndex(availableSection => availableSection.id == section.id);
+      const sectionFound = sectionIdx > -1;
+      if (sectionFound) {
+        const availableSections = this.state.availableSections;
+        availableSections[ sectionIdx ] = section;
+        this.setState({
+          ...this.state,
+          availableSections,
+          selectedSection: section
+        });
+      }
+    }
+  
 }
 
 const SECTION_STORE = new SectionStore({

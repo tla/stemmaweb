@@ -200,15 +200,15 @@ class StemmarestService extends BaseService {
   /**
    * Updates metadata for a tradition.
    *
+   * @param {string | null} userId
    * @param {string} tradId - The ID of the tradition being queried
    * @param {string} name - The (new) name of the tradition.
-   * @param {string | null} userId
    * @param {string | null} language
    * @param {string} direction
    * @param {boolean} isPublic
    * @returns {Promise<BaseResponse<T>>}
    */
-  updateTraditionMetadata(tradId, name, userId, language, direction, isPublic) {
+  updateTraditionMetadata( userId, tradId, name, language, direction, isPublic) {
     if (userId === null) {
       return Promise.resolve({
         success: false,
@@ -241,6 +241,35 @@ class StemmarestService extends BaseService {
   moveSection( tradId, sectionId, priorSectionId ) {
     return this.fetch(`/api/tradition/${tradId}/section/${sectionId}/orderAfter/${priorSectionId}`, {
       method: 'PUT'
+    });
+  }
+
+  /**
+   * Updates metadata for a section.
+   *
+   * @param {string | null} userId
+   * @param {string} tradId - The ID of the tradition to which the section belongs.
+   * @param {string} sectionId - The ID of the section.
+   * @param {string} name - The (new) name of the section.
+   * @param {string | null} language
+   * @returns {Promise<BaseResponse<T>>}
+   */
+  updateSectionMetadata( userId, tradId, sectionId, name, language ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to edit a tradition.'
+      });
+    }
+    const formData = {
+      id: sectionId,
+      language: language,
+      name: name,
+    };
+    return this.fetch(`/api/tradition/${tradId}/section/${sectionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(formData),
+      headers: new Headers({ 'Content-Type': 'application/json' })
     });
   }
 

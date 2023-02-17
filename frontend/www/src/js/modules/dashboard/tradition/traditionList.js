@@ -26,12 +26,8 @@ class TraditionList extends HTMLElement {
         super();
         // Listen for any state change regarding traditions.
         TRADITION_STORE.subscribe( ( prevState, state ) => {
-            /** 
-             * We ignore any state change except when traditions are fetched for the 
-             * very first time. Re-rendering the navigation tree is rather pointless.
-             * However, we still need to 
-             * @todo: change to support reordering of sections.
-             */
+            // We ignore any state change except when traditions are fetched for the 
+            // very first time. Re-rendering the navigation tree is rather pointless.
             if( prevState.selectedTradition == null ){
                 this.render( state.availableTraditions );
             }

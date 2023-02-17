@@ -149,14 +149,12 @@ class AddTraditionModal extends HTMLElement {
    */
   #initStyles() {
     const dashboard_stemmaweb_css = getStyleSheet('dashboard-stemmaweb');
-    let add_tradition_modal_marginleft = window
-      .getComputedStyle($('sidebarMenu'))
-      .getPropertyValue('width');
-    dashboard_stemmaweb_css.insertRule(
-      '#add_tradition_modal.modal.fade div.modal-dialog { margin-left: ' +
-        add_tradition_modal_marginleft +
-        '; margin-top: 50px; transform: none; }'
-    );
+    console.log( dashboard_stemmaweb_css );
+    const addTraditionModalMarginLeft = $('sidebarMenu').getBoundingClientRect().width;
+    console.log( addTraditionModalMarginLeft );
+    console.log( this );
+    this.querySelector( 'div div' ).style.marginLeft = `${addTraditionModalMarginLeft}px`;
+    this.querySelector( 'div div' ).style.marginTop = '50px'
   }
 
   /**
@@ -186,7 +184,7 @@ class AddTraditionModal extends HTMLElement {
     const selectOptions = TRADITION_STORE.state.availableTraditions.map( this.#traditionAsSelectOption ).join('\n');
     return selectOptions;
   }
-
+//#add_tradition_modal.modal.fade div.modal-dialog 
   render() {
     this.innerHTML = `
       <div

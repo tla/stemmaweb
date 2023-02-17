@@ -28,7 +28,6 @@ class SectionList extends HTMLElement {
      * @param {number} idx - Index of the draggable item in its Draggable list.
      */
     toggleHighlightDragged( evt, idx ){
-        // NOTE: array index is zero based, but n-th child is counted "naturally". (Why btw?!)
         evt.target.children.item(idx).classList.toggle( 'dragging-highlight' );
     }
 
