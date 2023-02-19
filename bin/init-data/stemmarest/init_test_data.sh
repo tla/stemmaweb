@@ -72,7 +72,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo; echo Creating Florilegium
-$CURL --request POST --form name="Florilegium Coislinianum B" --form empty=yes --form filetype=csv --form userId=user@example.org --form language=Greek --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+$CURL --request POST --form name='Florilegium "Coislinianum B"' --form empty=yes --form filetype=csv --form userId=user@example.org --form language=Greek --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
 FLOR_ID=`jq -r -e ".tradId" /tmp/stemmarest.response`
 if [ -z $FLOR_ID ]; then
   echo Failed to create Florilegium
@@ -82,7 +82,7 @@ else
 fi
 echo Uploading three sections
 for e in w x y; do 
-  $CURL --request POST --form name="section $e" --form file=@data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response
+  $CURL --request POST --form name="section '$e'" --form file=@data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response
   SECTID=`jq -r -e ".sectionId" /tmp/stemmarest.response`
   if [ -z $SECTID ]; then
     echo Failed to create section $e
@@ -99,7 +99,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo; echo Creating Legend fragment
-$CURL --request POST --form name="Legend fragment" --form file=@data/legendfrag.xml --form filetype=stemmaweb --form userId=user@example.org --form language=Armenian --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+$CURL --request POST --form name="Legend's fragment" --form file=@data/legendfrag.xml --form filetype=stemmaweb --form userId=user@example.org --form language=Armenian --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
 LEGEND_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`
 if [ -z $LEGEND_ID ]; then
   echo Failed to create Legend fragment
