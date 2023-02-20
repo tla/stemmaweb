@@ -28,12 +28,18 @@ class TraditionList extends HTMLElement {
         TRADITION_STORE.subscribe( ( prevState, state ) => {
             // We ignore any state change except when traditions are fetched for the 
             // very first time. Re-rendering the navigation tree is rather pointless.
-            if( prevState.selectedTradition == null ){
+            if ( prevState.selectedTradition == null ) {
                 this.render( state.availableTraditions );
-            }
-            // The case when a tradition was deleted or added.
-            if( prevState.availableTraditions.length !=  state.availableTraditions.length ){
-                this.render( state.availableTraditions );
+                console.log( 'prevstate null' );
+            } else {
+                // The case when a tradition was deleted or added.
+                if ( prevState.availableTraditions.length !=  state.availableTraditions.length ) {
+                    this.render( state.availableTraditions );
+                }
+                // The case where a name was changed in the metadata.
+                if ( prevState.selectedTradition.name != state.selectedTradition.name ) {
+                    this.querySelector( `a[trad-id="${state.selectedTradition.id}"].nav-link span.tradition-nav-name` ).innerHTML = state.selectedTradition.name;
+                }
             }
         });
       }
@@ -81,7 +87,7 @@ class TraditionList extends HTMLElement {
                 <div class="folder-icon">${folderIcon}</div>
                 <div>
                     <a href="api/tradition/${tradition.id}" trad-id="${tradition.id}" class="nav-link">
-                        ${tradition.name}
+                        <span class="tradition-nav-name">${tradition.name}</span>
                     </a>
                 </div>
             </div>

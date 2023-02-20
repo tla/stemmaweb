@@ -25,12 +25,13 @@ class SectionPropertiesView extends HTMLElement {
         super();
         // Whenever a tradition is selected that is not me, I go away.
         TRADITION_STORE.subscribe( ( prevState, state ) => {
-            if( prevState.selectedTradition != state.selectedTradition ) {
+            // Check on id because other metadata may have changed.
+            if( prevState.selectedTradition && ( prevState.selectedTradition.id != state.selectedTradition.id ) ) {
                 this.innerHTML  = '';
             };
         });
         // Whenever an item in the section list is selected, update the table
-        SECTION_STORE.subscribe( ( { parentTradition, selectedSection, availableSections } ) => {
+        SECTION_STORE.subscribe( ( { availableSections, selectedSection } ) => {
             if( selectedSection ){
                 this.render( selectedSection );
             }
@@ -56,6 +57,7 @@ class SectionPropertiesView extends HTMLElement {
 
     /** @type {SectionMetaLabels} */
     static #sectionMetadataLabels = {
+        id: 'Section',
         name: 'Name',
         language: 'Language'
     };
@@ -69,6 +71,10 @@ class SectionPropertiesView extends HTMLElement {
     static metadataFromSection(section) {
         const labels = SectionPropertiesView.#sectionMetadataLabels;
         return [
+            {
+                label: labels.id,
+                value: section.id
+            },
             {
                 label: labels.name,
                 value: section.name,

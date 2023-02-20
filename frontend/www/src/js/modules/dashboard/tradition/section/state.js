@@ -1,17 +1,14 @@
 /**
  * @typedef {import('@types/stemmaweb').SectionState} SectionState
  *
- * @typedef {import('@types/stemmaweb').TraditionState} TraditionState
- *
- * @typedef {import('@types/stemmaweb').Tradition} Tradition
- *
- * @typedef {import('@types/stemmaweb').Stemma} Stemma
+ * @typedef {import('@types/stemmaweb').Section} Section
  */
 
 /** @type {StemmarestService} */
 const sectionStoreService = stemmarestService;
 
 class SectionStore extends StateStore {
+
   /** @param {SectionState} initialState */
   constructor(initialState) {
     super(initialState);
@@ -22,82 +19,97 @@ class SectionStore extends StateStore {
     return super.state;
   }
 
-  /** @param {(function(SectionState): void)|(function(SectionState, SectionState): void)} listener */
-  subscribe(listener) {
-    super.subscribe(listener);
-  }
-
-  /**
-   * Sets the supplied `section` as the selected section.
-   *
-   * @param {Section} section The section to select.
-   */
-  setSelectedSection(section) {
-    this.setState({ ...this.state, selectedSection: section });
-  }
-
-  /**
-   * Constructs a listener to be attached to the `TraditionStore` so that each
-   * time a new tradition is selected, the `SectionState` managed by the supplied
-   * `sectionStore` is updated.
-   *
-   * @todo This is almost exactly the same as the one in stemma/state.js. Extract, abstract?
-   * 
-   * @returns {(state: TraditionState) => void}
-   */
-  get traditionListener() {
-    /** @type {SectionStore} */
-    const sectionStore = this;
-    /** @param {TraditionState} traditionState */
-    function onTraditionStateChange(traditionState) {
-      if (traditionState.selectedTradition) {
-        const parentTradition = traditionState.selectedTradition;
-        sectionStoreService.listSections(parentTradition.id).then((res) => {
-          if (res.success) {
-            /** @type {Section[]} */
-            const availableSections = res.data;
-            const selectedSection = null;
-            sectionStore.setState({
-              availableSections,
-              selectedSection,
-              parentTradition
-            });
-          }
-        });
+  /** @param {Section} selectedSection */
+  setSelectedSection( selectedSection ) {
+    sectionStoreService.listSections( TRADITION_STORE.state.selectedTradition.id ).then((res) => {
+      if (res.success) {
+        const availableSections = res.data;
+        // refresh state of Section,it may be stale.
+        selectedSection = availableSections.find( (availableSection) => { return availableSection.id == selectedSection.id } );
+        const state = { availableSections, selectedSection };
+        this.setState( state );
+      } else {
+        StemmawebAlert.show( `Error: ${resp.message}`, 'danger' );
       }
-    }
-    return onTraditionStateChange;
+    });
   }
 
   /**
-   * Updates the Section in `availableSections` having the same sectionId as
-   * the supplied section with the values of the supplied section.
+   * Fetches and appends the tradition with the supplied `tradId` to
+   * `availableTraditions`. Fails silently if an error occurs during the service
+   * call.
    *
-   * This function is here so that the global state can be updated after a
-   * tradition is updated.
+   * This function is needed so that the global state can be updated after a new
+   * section is created. After creating a new section, only the ID is
+   * returned by Stemmarest, hence the need to fetch the whole tradition by ID.
    *
-   * @todo: This is almost exactly the same as `updateTradition` in tradition/state.js. Extract, abstract?
-   * 
-   * @param {Section} section
+   * @param {string} traditionId
+   * @param {string} sectionId
    */
-    updateSection(section) {
-      const sectionIdx = this.state.availableSections.findIndex(availableSection => availableSection.id == section.id);
-      const sectionFound = sectionIdx > -1;
-      if (sectionFound) {
-        const availableSections = this.state.availableSections;
-        availableSections[ sectionIdx ] = section;
+  appendSection( sectionId, traditionId ) {
+    sectionStoreService.getSection( tradId, sectionId ).then((res) => {
+      if (res.success) {
+        const sectionToAppend = res.data;
+        const availableSections = [
+          ...this.state.availableSections,
+          sectionToAppend
+        ];
         this.setState({
           ...this.state,
           availableSections,
-          selectedSection: section
+          selectedSection: sectionToAppend
         });
       }
+    });
+  }
+
+  /**
+   * Updates the section in `availableSections` having the same sectionId as
+   * the supplied section with the values of the supplied section.
+   *
+   * This function is here so that the global state can be updated after a
+   * section is updated.
+   *
+   * @todo: Shouldn't StemmaRestService do this?
+   * 
+   * @param {Section} section
+   */
+  updateSection(section) {
+    const sectionIdx = this.state.availableSections.findIndex( ( availableSection ) => { return availableSection.id == section.id } );
+    const sectionFound = sectionIdx > -1;
+    if ( sectionFound ) {
+      const availableSections = this.state.availableSections;
+      availableSections[ sectionIdx ] = section;
+      this.setState({
+        ...this.state,
+        availableSections,
+        selectedSection: section
+      });
     }
-  
+  }
+
+/** 
+* @param { (state:SectionState)=>void|(prevState:SectionState,state:SectionState)=>void } listener - The listener function to register.
+*/
+subscribe(listener) {
+    super.subscribe(listener);
+  }
 }
 
 const SECTION_STORE = new SectionStore({
-  availableSections: [],
   selectedSection: null,
-  parentTradition: null
+  availableSections: []
 });
+
+function initSectionState() {
+  sectionStoreService.listSections( TRADITION_STORE.state.selectedTradition.id ).then((res) => {
+    if (res.success) {
+      /** @type {Section[]} */
+      const availableSections = res.data;
+      const selectedSection = null;
+      /** @type {SectionState} */
+      const state = { availableSections, selectedSection };
+      SECTION_STORE.setState( state );
+    }
+  });
+}

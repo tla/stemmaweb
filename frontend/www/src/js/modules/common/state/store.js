@@ -56,4 +56,19 @@ class StateStore {
   subscribe(listener) {
     this.listeners.push(listener);
   }
+
+  /**
+   * Unregister a listener function that was called whenever the state is
+   * updated.
+   *
+   * @param {((state: T) => void) | ((prevState: T, state: T) => void)} listener
+   *   The listener function to unregister.
+   */
+  unsubscribe(listener) {
+    const listenerIdx = this.listeners.findIndex( (availableListener) => listener===availableListener );
+    if( listenerIdx ){
+      this.listeners.splice( listenerIdx, 1 );
+    }
+  }
+
 }

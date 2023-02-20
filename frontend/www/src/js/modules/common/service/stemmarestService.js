@@ -106,12 +106,12 @@ class StemmarestService extends BaseService {
    /**
    * Fetches a list of sections for a particular tradition.
    *
-   * @param {string} tradId
+   * @param {string} traditionId
    * @returns {Promise<BaseResponse<Section[]>>}
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/sections}
    */
-  listSections(tradId) {
-    return this.fetch(`/api/tradition/${tradId}/sections`);
+  listSections( traditionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/sections`);
   }
 
   /**
@@ -258,7 +258,7 @@ class StemmarestService extends BaseService {
     if (userId === null) {
       return Promise.resolve({
         success: false,
-        message: 'You need to be logged in to edit a tradition.'
+        message: 'You need to be logged in to edit a section.'
       });
     }
     const formData = {

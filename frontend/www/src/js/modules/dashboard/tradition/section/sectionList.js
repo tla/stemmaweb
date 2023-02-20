@@ -20,6 +20,18 @@ class SectionList extends HTMLElement {
 
     constructor() {
         super();
+        const traditionId = this.getAttribute( 'trad-id' );
+        SECTION_STORE.subscribe( ( state, prevState ) => {
+            if( TRADITION_STORE.state.selectedTradition.id == traditionId ) {
+                if( state.selectedSection && prevState.selectedSection ) {
+                    if( state.selectedSection.id == prevState.selectedSection.id ) {
+                        if( state.selectedSection.name != prevState.selectedSection.name ) {
+                            this.querySelector( `ul li div[sect-id="${state.selectedSection.id}"] span` ).innerHTML = prevState.selectedSection.name;
+                        };
+                    };
+                };
+            };
+        })
     }
 
     /**
@@ -68,10 +80,14 @@ class SectionList extends HTMLElement {
      * to create a sections list.
      */
     populate() {
-        sectionService.listSections( this.getAttribute( 'trad-id' ) )
+        const traditionId = this.getAttribute( 'trad-id' );
+        sectionService.listSections( traditionId )
             .then( (resp) => { 
                 if( resp.success ) {
-                    this.#sections = resp.data;
+                    this.#sections = resp.data.map( ( section ) => { 
+                        section.traditionId = traditionId;
+                        return section;
+                    });
                     this.#sections.forEach( (section) => this.renderSectionName(section) );
                 } else {
                     StemmawebAlert.show(`Error: ${res.message}`, 'danger');
@@ -86,18 +102,11 @@ class SectionList extends HTMLElement {
      */
     selectSection( section ) {
         const traditionId = this.getAttribute( 'trad-id' );
-        /**
-         * This treats the case when multiple section lists in the left hand side bar (traditions tree) have been opened.
-         * In which case a user may click on a section in a tradition that is currently not selected. 
-         * In that case we update the selected tradition in TRADITION_STORE.
-         * @todo: Do we want to get the selected tradition this way, or should we have a convenience method TRADITION_STORE.getTradition( tradId )?
-         */
-        if( traditionId != TRADITION_STORE.state.selectedTradition.id ) {
-            const tradition = TRADITION_STORE.state.availableTraditions.find( availableTradition => availableTradition.id == traditionId );
-            TRADITION_STORE.setSelectedTradition( tradition );
-        };
-        // This will trigger state change on which SectionPropertiesView
-        // will handle the rendering of the selected section.
+        TRADITION_STORE.setSelectedTradition( 
+            TRADITION_STORE.state.availableTraditions.find( 
+                (tradition) => { return tradition.id == traditionId } 
+            )
+        );
         SECTION_STORE.setSelectedSection( section );
     }
     
@@ -110,7 +119,7 @@ class SectionList extends HTMLElement {
     renderSectionName( section ) {
         const sectionListItem = document.createElement( 'li' );
         sectionListItem.setAttribute( 'class', 'nav-item' );
-        sectionListItem.innerHTML = `<div class="section-name" sect-id="${section.id}">${textIcon}&nbsp;${section.name}</div>`;
+        sectionListItem.innerHTML = `<div sect-id="${section.id}">${textIcon}&nbsp;<span class="section-name">${section.name}</span></div>`;
         sectionListItem.addEventListener( 'mousedown', () => { this.selectSection( section ) } );
         this.querySelector( 'ul' ).appendChild( sectionListItem );
     }

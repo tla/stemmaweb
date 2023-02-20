@@ -85,7 +85,7 @@ class EditProperties extends HTMLElement {
     const language = $('language_input').value || null;
     const direction = $('direction_input').value;
     const isPublic = $('access_input').checked;
-    return { userId, name, language, direction, isPublic };
+    return { name, language, direction, isPublic };
   }
 
   /** @returns {Promise} */
@@ -98,7 +98,7 @@ class EditProperties extends HTMLElement {
       const tradId = TRADITION_STORE.state.selectedTradition.id;
       const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
       return editPropertiesService
-        .updateTraditionMetadata( userID, tradId, ...values )
+        .updateTraditionMetadata( userId, tradId, ...values )
         .then(EditProperties.#handleUpdateTraditionMetadataResponse);
     } else {
       form.classList.add('was-validated');

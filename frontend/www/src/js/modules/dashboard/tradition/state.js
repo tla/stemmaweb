@@ -20,6 +20,7 @@ class TraditionStore extends StateStore {
 
   /** @param {Tradition} selectedTradition */
   setSelectedTradition(selectedTradition) {
+    // selectedTradition = this.state.availableTraditions.find( (availableTradition) => { return availableTradition.id == selectedTradition.id } );
     this.setState({ ...this.state, selectedTradition });
   }
 
@@ -96,6 +97,7 @@ function initState() {
       /** @type {TraditionState} */
       const state = { availableTraditions, selectedTradition };
       TRADITION_STORE.setState(state);
+      initSectionState();
     }
   });
 }
@@ -103,7 +105,6 @@ function initState() {
 // Attach the listener of `STEMMA_STORE` so that it is updated whenever the
 // selected tradition changes.
 TRADITION_STORE.subscribe(STEMMA_STORE.traditionListener);
-TRADITION_STORE.subscribe(SECTION_STORE.traditionListener);
 
 /** Load traditions asynchronously from the server. */
-window.addEventListener('load', initState);
+window.addEventListener( 'load', initState );
