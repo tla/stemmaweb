@@ -30,7 +30,6 @@ class TraditionList extends HTMLElement {
             // very first time. Re-rendering the navigation tree is rather pointless.
             if ( prevState.selectedTradition == null ) {
                 this.render( state.availableTraditions );
-                console.log( 'prevstate null' );
             } else {
                 // The case when a tradition was deleted or added.
                 if ( prevState.availableTraditions.length !=  state.availableTraditions.length ) {
