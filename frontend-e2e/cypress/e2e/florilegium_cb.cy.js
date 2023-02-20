@@ -26,12 +26,12 @@ describe("'Florilegium Coislinianum B' has the right owner and witnesses", funct
     }); // should pass
     // is there a better way to assert 'does not contain text xyz'?
     cy.get('#tradition_name').should('not.have.text', expectedName)
-    cy.get('#traditions_list')
+    cy.get('tradition-list')
       .contains(expectedName)
       .click();
     cy.get('#tradition_name').contains(expectedName);
     cy.get('#sidebar_properties').contains('user@example.org');
     // Sort the witness list for better reliability
-    cy.get('#sidebar_properties').contains('A,B,C,D,E,F,G,H,K,P,Q,S,T');
+    cy.get('#sidebar_properties').contains('A, B, C, D, E, F, G, H, K, P, Q, S, T');
   });
 });
