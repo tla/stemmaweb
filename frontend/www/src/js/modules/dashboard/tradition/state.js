@@ -20,7 +20,7 @@ class TraditionStore extends StateStore {
 
   /** @param {Tradition} selectedTradition */
   setSelectedTradition(selectedTradition) {
-    // selectedTradition = this.state.availableTraditions.find( (availableTradition) => { return availableTradition.id == selectedTradition.id } );
+    selectedTradition = this.state.availableTraditions.find( (availableTradition) => { return availableTradition.id == selectedTradition.id } );
     this.setState({ ...this.state, selectedTradition });
   }
 
