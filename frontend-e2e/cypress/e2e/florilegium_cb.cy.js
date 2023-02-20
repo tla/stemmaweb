@@ -25,8 +25,8 @@ describe("'Florilegium Coislinianum B' has the right owner and witnesses", funct
       expect($tn.text().trim()).to.not.equal('Florilegium Coislinianum B');
     }); // should pass
     // is there a better way to assert 'does not contain text xyz'?
-    cy.get('#tradition_name').should('not.have.text', expectedName)
-    cy.get('#traditions_list')
+    cy.get('.tradition-nav-name').should('not.have.text', expectedName)
+    cy.get('traditions-list')
       .contains(expectedName)
       .click();
     cy.get('#tradition_name').contains(expectedName);
