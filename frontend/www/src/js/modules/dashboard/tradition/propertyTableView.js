@@ -137,7 +137,7 @@ class PropertyTableView extends HTMLElement {
       },
       {
         label: labels.witnesses,
-        value: tradition.witnesses,
+        value: tradition.witnesses.sort(),
         inputOptions: { control: 'text', size: 80, required: true }
       }
     ];

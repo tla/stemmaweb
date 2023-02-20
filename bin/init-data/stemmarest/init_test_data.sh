@@ -28,8 +28,14 @@ else
     CURL="curl --silent"
 fi
 
-echo Creating test user
+echo Creating test user 1
 $CURL --request PUT --header 'Content-Type: application/json' --data '{ "role":"user", "id":"user@example.org", "email":"user@example.org", "passphrase":"0NT3bCujDh6wvf5UTfXsjmlRhyEG6xvT1/kgiZPyjGk"}' $STEMMAREST_ENDPOINT/user/user@example.org
+#if [ $? -ne 0 ]; then
+#  echo Failed to create test user
+#  exit 1
+#fi
+echo; echo Creating test user 2
+$CURL --request PUT --header 'Content-Type: application/json' --data '{ "role":"user", "id":"benutzer@example.org", "email":"benutzer@example.org", "passphrase":"tVqCZ5ZTmWvxGIaqRTOkNK0ZNdnlZ+CcVfggdKEGnGI"}' $STEMMAREST_ENDPOINT/user/benutzer@example.org
 #if [ $? -ne 0 ]; then
 #  echo Failed to create test user
 #  exit 1
@@ -66,7 +72,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo; echo Creating Florilegium
-$CURL --request POST --form name="Florilegium Coislinianum B" --form empty=yes --form filetype=csv --form userId=user@example.org --form language=Greek --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+$CURL --request POST --form name='Florilegium "Coislinianum B"' --form empty=yes --form filetype=csv --form userId=user@example.org --form language=Greek --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
 FLOR_ID=`jq -r -e ".tradId" /tmp/stemmarest.response`
 if [ -z $FLOR_ID ]; then
   echo Failed to create Florilegium
@@ -76,7 +82,7 @@ else
 fi
 echo Uploading three sections
 for e in w x y; do 
-  $CURL --request POST --form name="section $e" --form file=@data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response
+  $CURL --request POST --form name="section '$e'" --form file=@data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response
   SECTID=`jq -r -e ".sectionId" /tmp/stemmarest.response`
   if [ -z $SECTID ]; then
     echo Failed to create section $e
@@ -92,8 +98,28 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+echo; echo Creating Legend fragment
+$CURL --request POST --form name="Legend's fragment" --form file=@data/legendfrag.xml --form filetype=stemmaweb --form userId=user@example.org --form language=Armenian --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+LEGEND_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`
+if [ -z $LEGEND_ID ]; then
+  echo Failed to create Legend fragment
+  exit 1
+else
+  echo Created tradition $LEGEND_ID
+fi
+echo ...and its second section
+$CURL --request POST --form name="section 2" --form file=@data/lf2.xml --form filetype=stemmaweb $STEMMAREST_ENDPOINT/tradition/$LEGEND_ID/section > /tmp/stemmarest.response
+SECTID=`jq -r -e ".sectionId" /tmp/stemmarest.response`
+if [ -z $SECTID ]; then
+  echo Failed to create section 2
+  exit 1
+else
+  echo ...added section 2
+fi
+
+
 echo; echo Creating Matthew 401
-$CURL --request POST --form name="Matthew 401" --form file=@data/milestone-401.zip --form filetype=graphml --form userId=user@example.org --form language=Armenian --form public=yes $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+$CURL --request POST --form name="Matthew 401" --form file=@data/milestone-401.zip --form filetype=graphml --form userId=benutzer@example.org --form language=Armenian --form public=yes $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
 MATTHEW_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`
 if [ -z $MATTHEW_ID ]; then
   echo Failed to create Matthew 401
@@ -101,3 +127,37 @@ if [ -z $MATTHEW_ID ]; then
 else
   echo Created tradition $MATTHEW_ID
 fi
+# Stemma is included in zip data!
+
+echo; echo Creating John verse
+$CURL --request POST --form name="John verse" --form file=@data/john.xml --form filetype=stemmaweb --form userId=benutzer@example.org --form language=Greek --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+JOHN_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`
+if [ -z $JOHN_ID ]; then
+  echo Failed to create John verse
+  exit 1
+else
+  echo Created tradition $JOHN_ID
+fi
+# No stemma
+
+echo; echo Creating Arabic test snippet 
+$CURL --request POST --form name="Arabic snippet" --form file=@data/arabic_snippet.csv --form filetype=csv --form userId=benutzer@example.org --form language=Arabic --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+ASNIP_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`
+if [ -z $ASNIP_ID ]; then
+  echo Failed to create Arabic snippet
+  exit 1
+else
+  echo Created tradition $ASNIP_ID
+fi
+# No stemma
+
+echo; echo Creating admin-owned tradition 
+$CURL --request POST --form name="Verbum uncorrected" --form file=@data/collatecorr.xml --form filetype=stemmaweb --form userId=admin@example.org --form language=Latin --form public=no $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+ASNIP_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`
+if [ -z $ASNIP_ID ]; then
+  echo Failed to create Arabic snippet
+  exit 1
+else
+  echo Created tradition $ASNIP_ID
+fi
+# No stemma
