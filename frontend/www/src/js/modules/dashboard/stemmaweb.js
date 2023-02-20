@@ -4,6 +4,8 @@
  * @typedef {import('@types/stemmaweb').StemmaState} StemmaState
  *
  * @typedef {import('@types/stemmaweb').Tradition} Tradition
+ * 
+ * @typedef {import('@types/stemmaweb').Section} Section
  *
  * @typedef {import('@types/stemmaweb').Stemma} Stemma
  *
@@ -15,6 +17,8 @@ const d3 = window.d3;
 
 /** @type {import('feather-icons')} */
 const feather = window.feather;
+const textIcon = feather.icons['file-text'].toSvg();
+const folderIcon = feather.icons['folder'].toSvg();
 
 /** @type {import('bootstrap')} */
 const bootstrap = window.bootstrap;
@@ -55,14 +59,6 @@ function initStemmaweb() {
     return transition.delay(50).duration(1000).ease(d3.easeLinear);
   }
 
-  function quick_fade_in(sel) {
-    return sel
-      .style('opacity', 0)
-      .transition()
-      .duration(500)
-      .style('opacity', 1);
-  }
-
   /**
    * @param {string} dot
    * @returns {string}
@@ -73,37 +69,7 @@ function initStemmaweb() {
       '" {\n\t node [color=none style=filled fillcolor=white]'
     );
   }
-
-  /**
-   * Renders the supplied `traditions` array as a list with clickable items.
-   *
-   * @param traditions {Tradition[]}
-   */
-  function render_tradition_list(traditions) {
-    // Clear the list
-    document.getElementById('traditions_list').innerHTML = '';
-    let traditions_list = d3
-      .select('#traditions_list')
-      .selectAll('li')
-      .data(traditions, (d) => d.id);
-    traditions_list.exit().remove();
-    traditions_list = traditions_list
-      .enter()
-      .append('li')
-      .merge(traditions_list);
-    traditions_list.classed('nav-item', true);
-    const links = traditions_list
-      .append('a')
-      .classed('nav-link', true)
-      .attr('trad-id', (d) => d.id)
-      .attr('href', function (d) {
-        return 'api/tradition/' + d.id;
-      });
-    links.html(feather.icons['file-text'].toSvg());
-    links.append('span').text((d) => d.name);
-    links.on('click', select_tradition);
-  }
-
+  
   function fetch_rooted(trad, stemma, sigil) {
     service
       .reorientStemmaTree(trad.id, stemma.identifier, sigil)
@@ -170,7 +136,7 @@ function initStemmaweb() {
         return `<div data-index="${i}">${svg}</div>`;
       })
       .on('click', function (e, d) {
-        // Add eventlisteners to slide indicators that will update the
+        // Add EventListeners to slide indicators that will update the
         // indicators and render the newly chosen stemma.
         d3.selectAll('#stemma_selector span svg').style(
           'fill',
@@ -199,30 +165,18 @@ function initStemmaweb() {
           render_stemma(graphDiv, tradition, selectedStemma || stemmata[0]);
         }
       });
-
-    // After we have started the rendering of the stemma
-    // we fade in the title of the tradition
-    // and the buttons for download etc.
-    d3.select('#tradition_name').call(quick_fade_in).text(tradition.name);
-    const buttons = d3.select('#stemma_buttons');
-    if (buttons.classed('invisible')) {
-      buttons.call(quick_fade_in).classed('invisible', false);
+    const buttons = document.querySelector('#stemma_buttons');
+    if (buttons.classList.contains( 'invisible' )) {
+      fadeIn( buttons );
+      buttons.classList.remove( 'invisible' );
     }
-  }
-
-  function select_tradition(evt) {
-    evt.preventDefault();
-    const selectedTradition = d3.select(this).datum();
-    // This will trigger `onTraditionStateChanged`
-    // in which we handle the rendering of the selected tradition.
-    TRADITION_STORE.setSelectedTradition(selectedTradition);
   }
 
   function set_downloads(dot) {
     d3.select('#download_dot').on('click', function (evt) {
       evt.preventDefault();
       download('stemma.dot', dot, 'text/plain');
-    });
+    }); 
     d3.select('#download_svg').on('click', function (evt) {
       evt.preventDefault();
       download(
@@ -256,26 +210,6 @@ function initStemmaweb() {
 
   /**
    * This function will be called each time the state persisted in the
-   * `TRADITION_STORE` changes. It will update the UI to reflect the current
-   * state.
-   *
-   * @param {TraditionState} state
-   */
-  function onTraditionStateChanged(state) {
-    const { availableTraditions, selectedTradition } = state;
-    // render the tradition list
-    render_tradition_list(availableTraditions);
-    // render the current tradition if it is not null
-    if (selectedTradition) {
-      render_tradition(selectedTradition, [], null);
-    } else {
-      // otherwise, remove the current tradition from the UI
-      TraditionView.clearTradition();
-    }
-  }
-
-  /**
-   * This function will be called each time the state persisted in the
    * `STEMMA_STORE` changes. It will update the UI to reflect the current
    * state.
    *
@@ -289,7 +223,6 @@ function initStemmaweb() {
   }
 
   // 'Main'
-  TRADITION_STORE.subscribe(onTraditionStateChanged);
   STEMMA_STORE.subscribe(onStemmaStateChanged);
   feather.replace({ 'aria-hidden': 'true' });
 }

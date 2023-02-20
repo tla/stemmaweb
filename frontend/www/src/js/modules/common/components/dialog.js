@@ -92,8 +92,23 @@ class StemmawebDialog extends HTMLElement {
     const actionButtons = dialog.querySelectorAll('.modal-footer button');
     actionButtons[0].addEventListener('click', actions.onClose || (() => {}));
     actionButtons[1].addEventListener('click', () => {
-      (actions.onOk || (() => {}))();
-      dialogInstance.hide();
+      const handlerResult = (actions.onOk || (() => {}))();
+      // Differentiate between handlers that are just handlers, and
+      // handlers that are type Promise.
+      if ( !handlerResult ) {
+        // If there is no result from a handler we assume 200 OK and close the dialog.
+        dialogInstance.hide();
+      } else {
+        // If the result is a successful Promise we close 
+        // the dialog, but it remains open when it failed.
+        if (typeof handlerResult.then === 'function') {
+          handlerResult.then((promise) => {
+            if (promise.success) {
+              dialogInstance.hide();
+            }
+          });
+        }
+      }
     });
 
     // show the dialog

@@ -88,3 +88,43 @@ stemmaweb-alert {
 .nav-link {
   cursor: pointer;
 }
+
+li.nav-item {
+  padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);
+}
+
+.folder-icon {
+  padding-right: 0.5em;
+}
+
+ul#traditions-list {
+  margin-top: 1.2em;
+}
+
+ul#traditions-list a {
+  padding: unset;
+}
+
+section-list ul {
+  margin-top: 0.5em;
+}
+
+section-list ul li {
+  --bs-nav-link-padding-y: 0.1rem;
+}
+
+section-list ul li.dragging-highlight {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.tradition-property-label-cell, .section-property-label-cell {
+  min-width: 6em;
+}
+
+.tradition-property-value-cell, .section-property-value-cell {
+  width: 100%;
+}
+
+social-login-options .btn {
+  font-size: calc( var(--bs-btn-font-size) * 4);
+}
