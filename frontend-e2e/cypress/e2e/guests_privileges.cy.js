@@ -98,7 +98,7 @@ describe('A guest should not see any private tradition listed in the toc', () =>
     it.skip('issue', () => {
         test_traditions.forEach((tradition) => {
             if (tradition.access == "Private") {
-                cy.get('#traditions-list').contains(tradition.title).should('not.be.visible');
+                cy.get('#traditions-list').contains(tradition.title).should('not.exist');
             }
         });
     });
