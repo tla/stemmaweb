@@ -37,52 +37,72 @@ benutzer@example.org (pw BenutzerKW) has three traditions
 admin@example.org (pw AdminPass) has one tradition
 
     Verbum uncorrected, private
-
  */
 
 const test_traditions = [
     {   title : "Notre besoin",
-        tradition_id : "13ffdd57-fbbb-4935-9bcd-387ddfcaa14b",
+        // tradition_id : "",
+        // stemma: "Stemweb stemma duplicate",
         owner : "user@example.org",
         access : "Public",
+        language: "French",
+        // direction: "Left to Right",
         witnesses : ["A", "B", "C", "D", "F", "J", "L", "M", "S", "T1", "T2", "U", "V"]
     },
     {   title : "Florilegium \"Coislinianum B\"",
-        tradition_id : "d87fd1f5-492b-43bf-b1b3-9b17cc188053",
+        // tradition_id : "",
+        // stemma: "stemma of Tomas",
         owner : "user@example.org",
         access : "Private",
+        language: "Greek",
+        // direction: "Left to Right",
         witnesses : ["A", "B", "C", "D", "E", "F", "G", "H", "K", "P", "Q", "S", "T"]
     },
     {   title : "Legend's fragment",
-        tradition_id : "2934befb-4c19-4a6e-834a-0e81e030d55b",
+        // tradition_id : "",
+        // stemma : "",
         owner : "user@example.org",
         access : "Private",
+        language: "", // "Latin" (dashboard), // Armenian (https://github.com/tla/stemmaweb/commit/970f5c070cb9c884a20e304282ccc244ba6914c3, https://github.com/tla/stemmaweb/commit/1117e7cf90f87323076a1acc7d5e30f833b87fbf)
+        // direction: "Left to Right",
         witnesses : ["A", "Ab", "B", "BA", "BL", "BLu", "BS", "BSt", "BU", "Bc", "C", "Dr", "Ef", "F", "G", "Gh", "H", "Ho", "JG", "K", "L", "Li", "M", "MN", "N", "O", "P", "Q", "S", "Sk", "St", "T", "U", "V", "Vg", "X", "Y"]
     },
 
     {   title : "Ժամանակագրութիւն checked", // == Matthew 401 ?
-        tradition_id : "4aaf8973-7ac9-402a-8df9-19a2a050e364",
+        // tradition_id : "",
+        // stemma: "First attempt",
         owner : "benutzer@example.org",
         access : "Public",
+        language: "Armenian",
+        // direction: "Left to Right",
         witnesses : ["A", "B", "Bz430", "Bz644", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M1775", "M2855", "M2899", "M3380", "M6605", "M6686", "M8232", "O", "V", "W", "W243", "W246", "X", "Y", "Z"]
     },
     {   title : "John verse",
-        tradition_id : "2003399b-d291-4562-bbe9-2945e20c8ef7",
+        // tradition_id : "",
+        // stemma: "",
         owner : "benutzer@example.org",
         access : "Private",
+        language: "Greek",
+        // direction: "Left to Right",
         witnesses : ["P60", "P66", "base", "w1", "w11", "w13", "w17", "w19", "w2", "w21", "w211", "w22", "w28", "w290", "w3", "w30", "w32", "w33", "w34", "w36", "w37", "w38", "w39", "w41", "w44", "w45", "w54", "w7"]
     },
     {   title : "Arabic snippet",
-        tradition_id : "29547a33-6c3d-47c0-b0a0-70960d2c9ef3",
+        // tradition_id : "",
+        // stemma : "",
         owner : "benutzer@example.org",
         access : "Private",
+        language: "Arabic",
+        // ? direction: "Right to Left",
         witnesses : ["A", "B"]
     },
 
     {   title : "Verbum uncorrected",
-        tradition_id : "b64b519f-7d10-4698-80ff-9f241aad0cac",
+        // tradition_id : "",
+        // stemma : "",
         owner : "admin@example.org",
         access : "Private",
+        language: "Latin",
+        // direction: "Left to Right",
         witnesses : ["Ba96", "Er16", "Go325", "Gr314", "Kf133", "Kr185", "Kr299", "Mü11475", "Mü22405", "Mü28315", "MüU151", "Sg524", "Wi3818"]
     },
 ];
