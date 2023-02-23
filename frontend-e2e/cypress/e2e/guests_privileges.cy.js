@@ -181,8 +181,27 @@ describe('A guest should not be offered to "Edit Collation" of any tradition', (
 
 // A guest should be able to ...
 
-/* describe('A guest should see all public traditions listed in the toc and be able to see their svg graphs', () => {
-    it.skip('to do', () => {
+// un-skip when issue solved, re-tag 'issue' to 'passes':
+describe('A guest should see all public traditions listed in the toc, and only those', () => {
+    it.skip('passes', () => {
+        // the number of displayed traditions should be equal to the number of public traditions
+        // const count = test_traditions.length; // all traditions
+        const count = test_traditions.filter(({access}) => access === 'Public').length;
+        cy.log("count: " + count);
+        cy.get('ul#traditions-list').children().should('have.length', count);
+
+        // It should be the public traditions' titles which are displayed
+        // test_traditions.forEach((tradition) => { // all traditions
+        test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
+            cy.log("title: " + tradition.title);
+            cy.get('ul#traditions-list').contains(tradition.title).should('be.visible');
+        });
+    });
+});
+
+
+/* describe('A guest should be able to see their svg graphs', () => {
+    it('passes', () => {
     });
 });
 
