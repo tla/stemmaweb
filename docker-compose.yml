@@ -35,25 +35,15 @@ services:
       - stemweb_mysql
       - stemweb_redis
 
-  stemmarest-initializer:
-    build: bin
-    env_file:
-      - .env.prod
-    depends_on:
-      - stemmarest
-    volumes:
-      - ./bin/init-data/:/init-data
-    entrypoint: >
-      /bin/bash -c "sleep 10 && /init-data/init_test_data.sh"
-
   stemmaweb:
     build: .
+    depends_on:
+      - stemmarest
+      - stemweb
     env_file:
       - .env.prod
-
-  reverse-proxy:
-    build: ./reverse-proxy
-    depends_on:
-      - stemmaweb
+    volumes:
+      - ./frontend/config/env.js.prod:/usr/src/app/stemmaweb_middleware/stemmaweb/src/js/env.js
     ports:
-      - "8888:80"
+      - "3000:${GUNICORN_PORT:-3000}"
+

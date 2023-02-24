@@ -3,7 +3,7 @@ import logging
 from flask import Flask
 from loguru import logger
 
-from . import constants, controller, extensions
+from . import constants, controller, extensions, settings
 
 
 def create_app(config_object="stemmaweb_middleware.settings"):
@@ -13,7 +13,8 @@ def create_app(config_object="stemmaweb_middleware.settings"):
 
     :param config_object: The configuration object to use.
     """
-    app = Flask(__name__.split(".")[0])
+    settings.flask_args
+    app = Flask(__name__.split(".")[0], **settings.flask_args)
     app.config.from_object(config_object)
     app.secret_key = app.config["SECRET_KEY"]
 
@@ -81,7 +82,7 @@ def register_blueprints(app: Flask):
     )
     app.register_blueprint(stemweb_blueprint)
 
-    # General health-check endpoint
+    # General health-check and static service endpoint
     health_blueprint = controller.health.routes.blueprint_factory(
         stemmarest_client=stemmarest_client, stemweb_client=stemweb_client
     )

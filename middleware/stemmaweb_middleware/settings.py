@@ -14,6 +14,10 @@ env.read_env()
 
 ENV = env.str("FLASK_ENV", default="production")
 DEBUG = ENV == "development"
+# In case we are serving the frontend from Flask, we set the static folder to some
+# reasonable value such as 'stemmaweb' and serve it from the root path.
+flask_args = {'static_folder': env.str("STEMMAWEB_STATIC", default=None), 
+              'static_url_path': '/' if env.str('STEMMAWEB_STATIC') else None}
 
 # Used for Stemmarest Client setup
 STEMMAREST_ENDPOINT = env.str(
@@ -28,7 +32,7 @@ STEMWEB_CLIENT = APIClient(endpoint=STEMWEB_ENDPOINT, name="Stemweb")
 # Endpoints redirected from this host (`STEMMAWEB_HOST`)
 # to the stemmarest server (`STEMMAREST_ENDPOINT`)
 STEMMAWEB_MIDDLEWARE_URL = env.str(
-    "STEMMAWEB_MIDDLEWARE_URL", default="http://127.0.0.1:3000"
+    "STEMMAWEB_MIDDLEWARE_URL", default=""
 )
 
 # Used for Flask-Login
@@ -39,7 +43,7 @@ SECRET_KEY = env.str("SECRET_KEY", default=secrets.token_hex())
 GOOGLE_CLIENT_ID = env.str("GOOGLE_CLIENT_ID", None)
 GOOGLE_CLIENT_SECRET = env.str("GOOGLE_CLIENT_SECRET", None)
 STEMMAWEB_FRONTEND_URL = env.str(
-    "STEMMAWEB_FRONTEND_URL", default="http://127.0.0.1:5000"
+    "STEMMAWEB_FRONTEND_URL", default=""
 )
 
 if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
