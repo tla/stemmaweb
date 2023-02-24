@@ -48,18 +48,14 @@ services:
 
   stemmaweb:
     container_name: stemmaweb
-    build:
-      context: .
-      dockerfile: Dockerfile-dev
-    volumes:
-      - .:/usr/src
+    build: .
+    depends_on:
+      - stemmarest
+      - stemweb
     env_file:
-      - .env.dev
-    entrypoint: >
-      /bin/bash -c "make install-middleware && 
-                    make install-frontend &&
-                    make run &&
-                    tail -F just-forcing-the-container-to-keep-running"
+      - .env.prod
+    volumes:
+      - ./frontend/config/env.js.prod:/usr/src/app/stemmaweb_middleware/stemmaweb/src/js/env.js
 
   stemmaweb-e2e:
     container_name: stemmaweb-e2e
@@ -76,8 +72,3 @@ services:
                     npm install -g npm@latest &&
                     npm install &&
                     npm run ${CY_NPM_COMMAND}"
-
-  reverse-proxy:
-    build: ./reverse-proxy
-    depends_on:
-      - stemmaweb

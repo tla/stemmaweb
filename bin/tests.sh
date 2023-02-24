@@ -8,7 +8,7 @@ TEST_CONTAINER_NAME="stemmaweb-e2e"
 DOCKER_COMPOSE_FILE="docker-compose.test.yml"
 
 # Using the dev environment variables for running the tests
-ENV_FILE=".env.dev"
+ENV_FILE=".env.test"
 
 # Start the services in detached mode
 docker-compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_FILE up -d
