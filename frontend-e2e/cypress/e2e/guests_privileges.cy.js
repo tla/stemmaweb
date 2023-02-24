@@ -39,71 +39,101 @@ admin@example.org (pw AdminPass) has one tradition
     Verbum uncorrected, private
  */
 
+// checked against init_test_data.sh
+// TODO: check sectionscount
 const test_traditions = [
     {   title : "Notre besoin",
-        // tradition_id : "",
-        // stemma: "Stemweb stemma duplicate",
+        filetype : "stemmaweb",
         owner : "user@example.org",
+        language : "French",
         access : "Public",
-        language: "French",
-        // direction: "Left to Right",
-        witnesses : ["A", "B", "C", "D", "F", "J", "L", "M", "S", "T1", "T2", "U", "V"]
+        // sectionscount : 1,
+
+        // tradition_id : "", // random
+        direction : "Left to Right", // implied (language : French)
+        witnesses : ["A", "B", "C", "D", "F", "J", "L", "M", "S", "T1", "T2", "U", "V"], // besoin_stemma.json, besoin_stemma_2.json
+        stemmata : [
+            "Stemweb stemma", // identifier in besoin_stemma.json"
+            "Stemweb stemma duplicate" // identifier in besoin_stemma_2.json
+        ]
     },
     {   title : "Florilegium \"Coislinianum B\"",
-        // tradition_id : "",
-        // stemma: "stemma of Tomas",
+        filetype : "csv",
         owner : "user@example.org",
+        language : "Greek",
         access : "Private",
-        language: "Greek",
-        // direction: "Left to Right",
-        witnesses : ["A", "B", "C", "D", "E", "F", "G", "H", "K", "P", "Q", "S", "T"]
+        // sectionscount : 3, // init_test_data.sh sections w x y.
+
+        // tradition_id : "",
+        direction : "Left to Right",
+        witnesses : ["A", "B", "C", "D", "E", "F", "G", "H", "K", "P", "Q", "S", "T"], // from the dashboard, looks ok from the florilegium csv files
+        stemmata : [
+            "stemma of Tomas" // identifier in florilegium_stemma.json
+        ]
     },
-    {   title : "Legend's fragment",
-        // tradition_id : "",
-        // stemma : "",
+    {   title : "Legend's fragment", // name given in init_test_data.sh, full title in legendfrag.xml: "Legend of Bishop Henry",
+        filetype : "stemmaweb",
         owner : "user@example.org",
+        language : "Latin", // in legendfrag.xml (not Armenian, ok)
         access : "Private",
-        language: "", // "Latin" (dashboard), // Armenian (https://github.com/tla/stemmaweb/commit/970f5c070cb9c884a20e304282ccc244ba6914c3, https://github.com/tla/stemmaweb/commit/1117e7cf90f87323076a1acc7d5e30f833b87fbf)
-        // direction: "Left to Right",
-        witnesses : ["A", "Ab", "B", "BA", "BL", "BLu", "BS", "BSt", "BU", "Bc", "C", "Dr", "Ef", "F", "G", "Gh", "H", "Ho", "JG", "K", "L", "Li", "M", "MN", "N", "O", "P", "Q", "S", "Sk", "St", "T", "U", "V", "Vg", "X", "Y"]
+        // sectionscount : 2,
+
+        // tradition_id : "",
+        direction : "Left to Right",
+        witnesses : ["A", "Ab", "B", "BA", "BL", "BLu", "BS", "BSt", "BU", "Bc", "C", "Dr", "Ef", "F", "G", "Gh", "H", "Ho", "JG", "K", "L", "Li", "M", "MN", "N", "O", "P", "Q", "S", "Sk", "St", "T", "U", "V", "Vg", "X", "Y"],
+        stemmata : []
     },
 
-    {   title : "Ժամանակագրութիւն checked", // == Matthew 401 ?
-        // tradition_id : "",
-        // stemma: "First attempt",
+    {   title : "Ժամանակագրութիւն checked", // just milestone "Matthew 401"; title taken from the graphml/zip file
+        filetype : "graphml",
         owner : "benutzer@example.org",
+        language : "Armenian",
         access : "Public",
-        language: "Armenian",
-        // direction: "Left to Right",
-        witnesses : ["A", "B", "Bz430", "Bz644", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M1775", "M2855", "M2899", "M3380", "M6605", "M6686", "M8232", "O", "V", "W", "W243", "W246", "X", "Y", "Z"]
+        // sectionscount : 1,
+
+        // tradition_id : "",
+        direction : "Left to Right",
+        witnesses : ["A", "B", "Bz430", "Bz644", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M1775", "M2855", "M2899", "M3380", "M6605", "M6686", "M8232", "O", "V", "W", "W243", "W246", "X", "Y", "Z"],
+        stemmata : [
+            "First attempt" // Stemma is included in zip data
+        ]
     },
     {   title : "John verse",
-        // tradition_id : "",
-        // stemma: "",
+        filetype : "stemmaweb",
         owner : "benutzer@example.org",
+        language : "Greek",
         access : "Private",
-        language: "Greek",
-        // direction: "Left to Right",
-        witnesses : ["P60", "P66", "base", "w1", "w11", "w13", "w17", "w19", "w2", "w21", "w211", "w22", "w28", "w290", "w3", "w30", "w32", "w33", "w34", "w36", "w37", "w38", "w39", "w41", "w44", "w45", "w54", "w7"]
+        // sectionscount : 1,
+
+        // tradition_id : "",
+        direction : "Left to Right",
+        witnesses : ["P60", "P66", "base", "w1", "w11", "w13", "w17", "w19", "w2", "w21", "w211", "w22", "w28", "w290", "w3", "w30", "w32", "w33", "w34", "w36", "w37", "w38", "w39", "w41", "w44", "w45", "w54", "w7"],
+        stemmata : []
     },
     {   title : "Arabic snippet",
-        // tradition_id : "",
-        // stemma : "",
+        filetype : "csv",
         owner : "benutzer@example.org",
+        language : "Arabic",
         access : "Private",
-        language: "Arabic",
-        // ? direction: "Right to Left",
-        witnesses : ["A", "B"]
+        // sectionscount : 1,
+
+        // tradition_id : "",
+        direction : "Right to Left", // implied (language : Arabic)
+        witnesses : ["A", "B"], // arabic_snippet.csv
+        stemmata : []
     },
 
     {   title : "Verbum uncorrected",
-        // tradition_id : "",
-        // stemma : "",
+        filetype : "stemmaweb",
         owner : "admin@example.org",
+        language : "Latin",
         access : "Private",
-        language: "Latin",
-        // direction: "Left to Right",
-        witnesses : ["Ba96", "Er16", "Go325", "Gr314", "Kf133", "Kr185", "Kr299", "Mü11475", "Mü22405", "Mü28315", "MüU151", "Sg524", "Wi3818"]
+        // sectionscount : 1,
+
+        // tradition_id : "",
+        direction : "Left to Right",
+        witnesses : ["Ba96", "Er16", "Go325", "Gr314", "Kf133", "Kr185", "Kr299", "Mü11475", "Mü22405", "Mü28315", "MüU151", "Sg524", "Wi3818"], // looks good
+        stemmata : []
     },
 ];
 
