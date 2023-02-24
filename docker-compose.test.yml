@@ -16,9 +16,8 @@ services:
       /bin/bash -c "./wait-for-it.sh --host=${STEMMAREST_HOST} --port=${STEMMAREST_PORT} -- /init-data/init_test_data.sh"
 
   stemweb_mysql:
-    platform: linux/amd64
     container_name: stemweb_mysql
-    image: mysql:5.7
+    image: mariadb:10.4
     restart: always
     env_file:
       - stemweb/.env.dev
@@ -38,7 +37,6 @@ services:
       redis-server /usr/local/etc/redis/redis.conf
 
   stemweb:
-    platform: linux/amd64
     container_name: stemweb
     image: dhuniwien/stemweb_py37:latest
     restart: always

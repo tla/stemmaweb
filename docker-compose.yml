@@ -5,9 +5,8 @@ services:
     image: dhuniwien/stemmarest:latest
 
   stemweb_mysql:
-    platform: linux/amd64
     container_name: stemweb_mysql
-    image: mysql:5.7
+    image: mariadb:10.4
     restart: always
     env_file:
       - stemweb/.env.prod
