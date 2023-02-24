@@ -17,7 +17,7 @@ DEBUG = ENV == "development"
 # In case we are serving the frontend from Flask, we set the static folder to some
 # reasonable value such as 'stemmaweb' and serve it from the root path.
 flask_args = {'static_folder': env.str("STEMMAWEB_STATIC", default=None), 
-              'static_url_path': '/' if env.str('STEMMAWEB_STATIC') else None}
+              'static_url_path': '/' if env.str('STEMMAWEB_STATIC', default=None) else None}
 
 # Used for Stemmarest Client setup
 STEMMAREST_ENDPOINT = env.str(
