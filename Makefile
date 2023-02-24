@@ -36,6 +36,7 @@ CY_NPM_COMMAND="cy:run"
 
 build-tests:
 	@echo "==> 🏗 Build Test Containers"
+	@docker build -t stemmaweb-middleware ./middleware
 	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker compose --env-file .env.test -f docker-compose.test.yml build
 
 build-tests-arm:

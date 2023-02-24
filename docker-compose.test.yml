@@ -7,7 +7,7 @@ services:
   stemmarest-initializer:
     build: bin
     env_file:
-      - .env.dev
+      - .env.test
     depends_on:
       - stemmarest
     volumes:
@@ -20,7 +20,7 @@ services:
     image: mariadb:10.4
     restart: always
     env_file:
-      - stemweb/.env.dev
+      - stemweb/.env.prod
 
   stemweb_redis:
     container_name: stemweb_redis
@@ -41,7 +41,7 @@ services:
     image: dhuniwien/stemweb_py37:latest
     restart: always
     env_file:
-      - stemweb/.env.dev
+      - stemweb/.env.prod
     depends_on:
       - stemweb_mysql
       - stemweb_redis
@@ -53,18 +53,18 @@ services:
       - stemmarest
       - stemweb
     env_file:
-      - .env.prod
+      - .env.test
     volumes:
       - ./frontend/config/env.js.prod:/usr/src/app/stemmaweb_middleware/stemmaweb/src/js/env.js
 
   stemmaweb-e2e:
     container_name: stemmaweb-e2e
     build: frontend-e2e
-    env_file:
-      - .env.dev
     depends_on:
       - stemmaweb
       - stemmarest-initializer
+    env_file:
+      - .env.test
     volumes:
       - ./frontend-e2e/:/app
     entrypoint: >
