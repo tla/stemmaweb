@@ -129,8 +129,8 @@ class StemwebService extends BaseService {
    * @returns {Promise<BaseResponse<RunAlgorithmStatusResponse>>}
    */
   runAlgorithm(userid, algorithmId, textid, data, parameters) {
-    const return_host = 'http://reverse-proxy:80';
-    const return_path = '/stemmaweb/requests/stemweb/result';
+    const return_host = this.baseUrl;
+    const return_path = '/result';
     /** @type {RunAlgorithmDTO} */
     const dto = { userid, textid, data, parameters, return_host, return_path };
     return this.fetch(`/algorithms/process/${algorithmId}`, {
