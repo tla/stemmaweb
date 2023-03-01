@@ -292,7 +292,6 @@ describe('A guest should be offered to download a public "Tradition"', () => {
             // click through all traditions
             cy.get('#traditions-list').contains(tradition.title).click();
             cy. get('#stemma_buttons').contains(label).should('be.visible').and('be.enabled');
-
         });
     });
 });
