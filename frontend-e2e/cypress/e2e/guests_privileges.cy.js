@@ -283,12 +283,21 @@ describe('A guest should be able to see the first stemma svg graph of public tra
     });
 });
 
-/* describe('A guest should be able to download a public "Tradition"', () => {
-    it.skip('to do', () => {
-    });
-}); 
+describe('A guest should be offered to download a public "Tradition"', () => {
+    it('passes', () => {
+        const label = 'Tradition';
+        // Private traditions should not be visible for a guest: is verified in another test
+        test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
+            cy.log('title: ' + tradition.title);
+            // click through all traditions
+            cy.get('#traditions-list').contains(tradition.title).click();
+            cy. get('#stemma_buttons').contains(label).should('be.visible').and('be.enabled');
 
-describe('A guest should be offered to download "Stemma" where a stemma is available"', () => {
+        });
+    });
+});
+
+/* describe('A guest should be offered to download "Stemma" where a stemma is available"', () => {
     it.skip('to do', () => {
         cy.get('#traditions_list')
             .contains(/^Notre besoin$/)
