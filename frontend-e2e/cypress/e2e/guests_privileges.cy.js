@@ -207,7 +207,7 @@ describe('A guest should not be offered to "Edit Collation" of any tradition', (
     });
 });
 
-// A guest should not be offered to edit the properties
+// un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should not be offered to edit Properties', () => {
     it.skip('issue', () => {
         cy.get('#sidebar_properties').find('h6').find('svg').should('not.be.visible');
