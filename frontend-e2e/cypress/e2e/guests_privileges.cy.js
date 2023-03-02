@@ -254,6 +254,7 @@ describe('A guest should be offered to download a public "Tradition"', () => {
 // select stemma, see preview
 // see the respective Stemma identifier(, see its correct Witnesses ?),
 // 'Examine Stemma' and 'Download Stemma' in all available formats.
+// TODO, issue: disable or hide certain elements when no stemma available, etc. see below
 describe('A guest should be offered to "Examine Stemma" of a public tradition only for any of its stemmata', () => {
     it('passes', () => {
         const label_examine = 'Examine Stemma';
