@@ -307,12 +307,32 @@ describe('A guest should be able to see the first stemma svg graph of public tra
         cy.get('a#download_png');
         cy.get('a#download_dot');
     });
-});
-
-describe('A guest should be offered to "Examine Stemma", e.g. of "Notre besoin"', () => {
-    it.skip('to do', () => {
-    });
 }); */
+
+describe('A guest should be offered to "Examine Stemma" of a public tradition only for any of its stemmata', () => {
+    it('passes', () => {
+        const label = 'Examine Stemma';
+        // Private traditions should not be visible for a guest: is verified in another test
+        test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
+            // click through all public traditions
+            cy.log('title: ' + tradition.title);
+            cy.get('#traditions-list').contains(tradition.title).click();
+
+            // click through each of its stemmata
+            if (Array.isArray(tradition.stemmata) && tradition.stemmata.length) {
+                cy.get('#stemma_selector').children().each(($stemmaselector, idx) => {
+                    $stemmaselector.find('svg').click();
+                    cy.log('idx, tradition.stemmata[idx]: ' + idx + ', ' + tradition.stemmata[idx]);
+                    cy.wait(3000); // stemma svg fades in
+                    cy.get('#stemma_buttons').contains(label).should('be.visible').and('be.enabled');
+                });
+            } else {
+                cy.get('#stemma_selector').should('not.be.visible');
+                // TODO, issue: cy.get('#stemma_buttons').contains(label).should('be.visible').and('be.enabled'); // when there is no stemma, the button should not be visible or enabled
+            }
+        });
+    });
+});
 
 
 // A guest should see ...
