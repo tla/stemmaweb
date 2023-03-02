@@ -208,10 +208,11 @@ describe('A guest should not be offered to "Edit Collation" of any tradition', (
 });
 
 // A guest should not be offered to edit the properties
-/* describe('A guest should not be offered to edit Properties', () => {
-    it.skip('to do', () => {
+describe('A guest should not be offered to edit Properties', () => {
+    it.skip('issue', () => {
+        cy.get('#sidebar_properties').find('h6').find('svg').should('not.be.visible');
     });
-}); */
+});
 
 
 // A guest should be able to ...
