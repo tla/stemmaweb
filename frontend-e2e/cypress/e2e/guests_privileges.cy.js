@@ -158,12 +158,8 @@ describe('A guest should not see any private tradition listed in the toc', () =>
 });
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
-describe('A guest should not be able to upload a tradition: not see the feather-plus-circle (next to the toc header "Text dirtectory"),', () => {
+describe('A guest should not be able to upload a tradition: not see the feather-plus-circle (next to the toc header "Text directory"),', () => {
     it.skip('issue', () => {
-        // cy.contains('h6', 'Text dirtectory').find('svg circle'); // is there
-        // cy.contains('h6', 'Text dirtectory').find('svg circle').should('exist'); // is there // trying out 'exist'
-        // cy.contains('h6', 'Text dirtectory').find('svg circle').should('not.exist'); // it might exist in the dom but should not be visible
-        // cy.contains('h6', 'Text dirtectory').find('svg').should('be.visible'); // is visible
         cy.contains('h6', 'Text directory').find('svg').should('not.be.visible'); // currently, fails as expected.
     });
 });
