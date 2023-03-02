@@ -327,7 +327,9 @@ describe('A guest should be offered to "Sign in" (the actual sign-in behaviour i
     });
 });
 
-/* describe('A guest should be able to navigate to the "About" page https://stemmaweb.net/', () => {
-    it.skip('to do', () => {
+describe('A guest should be offered to navigate to the "About" page', () => {
+    it('passes', () => {
+        cy.get('header').find('a').contains('About');
+        // TODO: check the right address is linked and visited
     });
-}); */
+});
