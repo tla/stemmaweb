@@ -9,7 +9,8 @@ as far as the public traditions are concerned,
     - not be able to delete any tradition:
         - not see the 'Delete' button,
         - ? not be able to delete a tradition in another way,
-    - not be offered to 'Edit Collation'.
+    - not be offered to 'Edit Collation',
+    - not be offered to edit Properties.
 
     - see all public test traditions listed in the toc,
     - be able to download 'Tradition' (e.g. Notre besoin),
@@ -210,6 +211,12 @@ describe('A guest should not be offered to "Edit Collation" of any tradition', (
     });
 });
 
+// A guest should not be offered to edit the properties
+/* describe('A guest should not be offered to edit Properties', () => {
+    it.skip('to do', () => {
+    });
+}); */
+
 
 // A guest should be able to ...
 
@@ -240,95 +247,69 @@ describe('A guest should be offered to download a public "Tradition"', () => {
             // click through all traditions
             cy.get('#traditions-list').contains(tradition.title).click();
             cy. get('#stemma_buttons').contains(label).should('be.visible').and('be.enabled');
+            // TODO test functionality
         });
     });
 });
 
-// TODO: describe('A guest should be able to see any stemma svg graph of public traditions and download each of them', () => {
-describe('A guest should be able to see the first stemma svg graph of public traditions', () => {
-    it('passes', () => {
-        // Verification that only public traditions are listed in the first place happens in another test.
-
-        // TODO: verify "Download Stemma" is only visible or enabled for traditions with a stemma.
-        // TODO: verify "Download Stemma" is linked separately for any provided stemma.
-        // TODO: verify the dropdownlist offers the available formats, e.g. svg, png, dot.
-        // TODO (issue?): re-clicking (manually) on a selector_circle which is active hides the respective stemma on immediate further clicks.
-
-        test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
-            cy.log('================');
-            cy.log('title: ' + tradition.title);
-            // click through all traditions
-            cy.get('#traditions-list').contains(tradition.title).click();
-
-            // traditions with stemma
-            if (Array.isArray(tradition.stemmata) && tradition.stemmata.length) {
-
-                // the (first) svg should be displayed, with its identifier/title being (in)visible(??)
-                cy.get('#graph').find('svg').as('my_stemma');
-                cy.get('@my_stemma').should('be.visible');
-                cy.log('first stemma identifier: ' + tradition.stemmata[0]);
-                cy.get('@my_stemma').find('title').contains(tradition.stemmata[0]).should('not.be.visible'); // if it should be visible => TODO: add issue
-
-                // number of stemma_selector circle items should be equal to the length of stemma items for each tradition
-                cy.get('#stemma_selector').find('svg').should('have.length', tradition.stemmata.length);
-
-                /* // TODO: verify for each available stemma
-                // TODO: re-click on selector does not hide the stemma
-                // TODO, problem: always finds 'title' of idx 1, never of idx 0. Why?
-                cy.get('#stemma_selector').find('svg').each(($selector_circle, idx) => {
-                    cy.log('idx, tradition.stemmata[idx]: ' + idx + ', ' + tradition.stemmata[idx]);
-                    $selector_circle.click();
-                    cy.get('#graph').find('svg').as('my_stemma');
-                    cy.get('@my_stemma').should('be.visible');
-                    cy.get('@my_stemma').find('title').first().invoke('text').then( (txt) => {
-                        cy.log('mytext: ' + txt);
-                    });
-                    // cy.get('@my_stemma').find('title').first().contains(tradition.stemmata[idx]).should('not.be.visible'); // if it should be visible => TODO: add issue
-                }); */
-
-            } else { // traditions without a stemma
-                // TODO: tradition has no stemma, no stemma svg and no selector should be displayed
-                cy.log('tradition has no stemma, no stemma svg and no selector should be displayed');
-            }
-        });
-
-    });
-});
-
-/* describe('A guest should be offered to download "Stemma" where a stemma is available"', () => {
-    it.skip('to do', () => {
-        cy.get('#traditions_list')
-            .contains(/^Notre besoin$/)
-            .click();
-        cy.get('#tradition_name').contains(/^Notre besoin$/);
-        cy.contains('Stemma').click();
-        cy.get('a#download_svg');
-        // check file downloaded: https://stackoverflow.com/questions/66478056/cypress-how-to-verify-if-a-file-is-downloaded 
-        cy.get('a#download_png');
-        cy.get('a#download_dot');
-    });
-}); */
-
+// A guest should be offered for each stemma of a public tradition,
+// and only when a stemma is available, to:
+// select stemma, see preview
+// see the respective Stemma identifier(, see its correct Witnesses ?),
+// 'Examine Stemma' and 'Download Stemma' in all available formats.
 describe('A guest should be offered to "Examine Stemma" of a public tradition only for any of its stemmata', () => {
     it('passes', () => {
-        const label = 'Examine Stemma';
+        const label_examine = 'Examine Stemma';
+        const label_download_stemma = 'Stemma';
         // Private traditions should not be visible for a guest: is verified in another test
         test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
             // click through all public traditions
             cy.log('title: ' + tradition.title);
             cy.get('#traditions-list').contains(tradition.title).click();
 
-            // click through each of its stemmata
+            // click through each of its stemmata // select stemma
             if (Array.isArray(tradition.stemmata) && tradition.stemmata.length) {
+                // TODO (issue?), check if it makes a problem: re-clicking (manually) on a selector_circle which is active 
+                // hides the respective stemma svg on all immediate further clicks. Strangely, passes the test.
+
                 cy.get('#stemma_selector').children().each(($stemmaselector, idx) => {
-                    $stemmaselector.find('svg').click();
+                    $stemmaselector.find('svg').click(); // circle shaped selectors at the bottom of the page
                     cy.log('idx, tradition.stemmata[idx]: ' + idx + ', ' + tradition.stemmata[idx]);
                     cy.wait(3000); // stemma svg fades in
-                    cy.get('#stemma_buttons').contains(label).should('be.visible').and('be.enabled');
+                    // see preview
+                    cy.get('#graph').find('svg').should('be.visible');
+                    // see the respective Stemma identifier
+                    cy.get('#tradition_info').contains('tr', 'Stemma').as('stemma_row').should('be.visible');
+                    // TODO: check it is the correct stemma identifier
+                    // cy.get('@stemma_row').contains(tradition.stemmata[idx]); // TODO: Problem with stemma id 'RHM 1641561271_0', is never asserted (Matthew 401). Others are ok.
+
+                    // TODO?: assert the stemma's correct Witnesses
+
+                    // 'Examine Stemma'
+                    cy.get('#stemma_buttons').contains(label_examine).should('be.visible').and('be.enabled');
+                    // 'Download Stemma' in all available formats.
+                    cy.get('#stemma_buttons').find('#stemma_image_downloadbtn').contains(label_download_stemma).as('download_stemma_button').should('be.visible').and('be.enabled');
+                    cy.get('@download_stemma_button').click();
+                    // cy.get('@download_stemma_button').parent().find('a').should('have.length', 3); // TODO: which formats are availabel?
+                    // TODO: test functionality
                 });
-            } else {
-                cy.get('#stemma_selector').should('not.be.visible');
-                // TODO, issue: cy.get('#stemma_buttons').contains(label).should('be.visible').and('be.enabled'); // when there is no stemma, the button should not be visible or enabled
+            } else { // if no stemma is available:
+                // no preview selector
+                cy.get('#stemma_selector').find('svg').should('not.be.visible');
+                // no preview
+                cy.get('#graph').find('svg').should('not.exist');
+                // no 'Stemma' identifier in the properties table
+                cy.get('#tradition_info').contains('Stemma').should('not.exist');
+
+                // no 'Examine Stemma' offered
+                // cy.get('#stemma_buttons').contains(label_examine); // TODO remove line, write issue
+                cy.get('#stemma_buttons').contains('TODO: ' + label_examine).should('not.exist'); // TODO eventually: remove and use next line instead
+                // cy.get('#stemma_buttons').contains(label_examine).should('not.be.enabled'); // or .should('not.exist')
+
+                // no 'Download Stemma' offered
+                // cy.get('#stemma_buttons').find('#stemma_image_downloadbtn').contains(label_download_stemma); // TODO remove line, write issue
+                cy.get('#stemma_buttons').find('#stemma_image_downloadbtn').contains('TODO: ' + label_download_stemma).should('not.exist'); // TODO eventually: remove and use next line instead
+                // cy.get('#stemma_buttons').find('#stemma_image_downloadbtn').contains(label_download_stemma).should('not.be.enabled'); // or .should('not.exist')
             }
         });
     });
