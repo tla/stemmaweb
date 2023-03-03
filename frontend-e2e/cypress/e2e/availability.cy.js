@@ -7,7 +7,7 @@ describe('Stemmaweb is available', () => {
 
 describe('Middleware is healthy', () => {
   it('passes', () => {
-    cy.visit(`${Cypress.env('CY_STEMMAWEB_MIDDLEWARE_URL')}/`);
+    cy.visit(`${Cypress.env('CY_STEMMAWEB_MIDDLEWARE_URL')}/health`);
     cy.get('body').contains('Middleware is healthy');
   });
 });

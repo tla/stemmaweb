@@ -15,7 +15,7 @@ for ENV_VAR in "${ENV_VARS_TO_COPY[@]}"; do
     # Check if the environment variable is set
     if [[ -z "${!ENV_VAR}" ]]; then
         # If the environment variable is not set, print an error message and exit
-        echo -e "\e[1;31mERROR: Environment variable $ENV_VAR is not set\e[0m"
+        echo -e "\e[1;31mERROR: Environment variable $ENV_VAR is not set\e[0m" >&2
         exit 1
     fi
 

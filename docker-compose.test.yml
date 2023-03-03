@@ -7,7 +7,7 @@ services:
   stemmarest-initializer:
     build: bin
     env_file:
-      - .env.dev
+      - .env.test
     depends_on:
       - stemmarest
     volumes:
@@ -16,12 +16,11 @@ services:
       /bin/bash -c "./wait-for-it.sh --host=${STEMMAREST_HOST} --port=${STEMMAREST_PORT} -- /init-data/init_test_data.sh"
 
   stemweb_mysql:
-    platform: linux/amd64
     container_name: stemweb_mysql
-    image: mysql:5.7
+    image: mariadb:10.4
     restart: always
     env_file:
-      - stemweb/.env.dev
+      - stemweb/.env.prod
 
   stemweb_redis:
     container_name: stemweb_redis
@@ -38,39 +37,34 @@ services:
       redis-server /usr/local/etc/redis/redis.conf
 
   stemweb:
-    platform: linux/amd64
     container_name: stemweb
     image: dhuniwien/stemweb_py37:latest
     restart: always
     env_file:
-      - stemweb/.env.dev
+      - stemweb/.env.prod
     depends_on:
       - stemweb_mysql
       - stemweb_redis
 
   stemmaweb:
     container_name: stemmaweb
-    build:
-      context: .
-      dockerfile: Dockerfile-dev
-    volumes:
-      - .:/usr/src
+    build: .
+    depends_on:
+      - stemmarest
+      - stemweb
     env_file:
-      - .env.dev
-    entrypoint: >
-      /bin/bash -c "make install-middleware && 
-                    make install-frontend &&
-                    make run &&
-                    tail -F just-forcing-the-container-to-keep-running"
+      - .env.test
+    volumes:
+      - ./frontend/config/env.js.prod:/usr/src/app/stemmaweb_middleware/stemmaweb/src/js/env.js
 
   stemmaweb-e2e:
     container_name: stemmaweb-e2e
     build: frontend-e2e
-    env_file:
-      - .env.dev
     depends_on:
       - stemmaweb
       - stemmarest-initializer
+    env_file:
+      - .env.test
     volumes:
       - ./frontend-e2e/:/app
     entrypoint: >
@@ -78,8 +72,3 @@ services:
                     npm install -g npm@latest &&
                     npm install &&
                     npm run ${CY_NPM_COMMAND}"
-
-  reverse-proxy:
-    build: ./reverse-proxy
-    depends_on:
-      - stemmaweb

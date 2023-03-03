@@ -2,11 +2,15 @@
 build:
 	@echo "==> 🏗 Build Containers"
 	@docker build -t stemmaweb-middleware ./middleware
-	@docker compose build
+	@docker compose --env-file .env.prod build
 
 start: build
 	@echo "==> 🚀 Start"
-	@docker compose up
+	@docker compose --env-file .env.prod up
+
+down:
+	@echo "==> 🛑 Stop Containers"
+	@docker compose down
 
 # Spawns a new shell in the dev docker container
 shell:
@@ -32,7 +36,8 @@ CY_NPM_COMMAND="cy:run"
 
 build-tests:
 	@echo "==> 🏗 Build Test Containers"
-	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker compose --env-file .env.dev -f docker-compose.test.yml build
+	@docker build -t stemmaweb-middleware ./middleware
+	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker compose --env-file .env.test -f docker-compose.test.yml build
 
 build-tests-arm:
 	@make build-tests CY_NPM_COMMAND="cy:run:arm"
@@ -43,7 +48,7 @@ tests: tests-down build-tests
 
 tests-down:
 	@echo "==> 🛑 Stop Test Containers"
-	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker compose --env-file .env.dev -f docker-compose.test.yml down
+	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker compose --env-file .env.test -f docker-compose.test.yml down
 
 tests-arm:
 	@make tests CY_NPM_COMMAND="cy:run:arm"

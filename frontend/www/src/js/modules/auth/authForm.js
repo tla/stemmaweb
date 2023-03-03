@@ -75,6 +75,11 @@ class LoginForm extends HTMLElement {
 
   static handleSubmit(event) {
     event.preventDefault();
+    const form = this.querySelector( 'login-form form' );
+    if ( !form.checkValidity() ) {
+      form.classList.add('was-validated');
+      return;
+    }
     const values = LoginForm.fieldValues;
     executeWithCaptcha(AuthActionName.LOGIN_WITH_EMAIL, (token) => {
       authFormService
@@ -132,7 +137,7 @@ class LoginForm extends HTMLElement {
            id="${LoginForm.ID}"
            role="tabpanel"
            aria-labelledby="tab-login">
-        <form>
+        <form class="needs-validation" novalidate="">
           <div class="text-center mb-3">
             <p>Sign in with:</p>
             <social-login-options></social-login-options>
@@ -141,23 +146,25 @@ class LoginForm extends HTMLElement {
           <p class="text-center">or:</p>
 
           <!-- Email input -->
-          <div class="form-floating mb-4">
+          <div class="mb-4">
+            <label for="${LoginForm.FIELD_IDS.email}" class="form-label">Email</label>
+            <br/>
             <input id="${LoginForm.FIELD_IDS.email}"
                    type="email"
-                   class="form-control"
-                   placeholder="Email"
+                   class="form-control has-validation"
                    required>
-            <label for="${LoginForm.FIELD_IDS.email}">Email</label>
+             <div class="invalid-feedback">Please provide an email address.</div>
           </div>
 
           <!-- Password input -->
-          <div class="form-floating mb-4">
+          <div class="mb-4">
+            <label for="${LoginForm.FIELD_IDS.password}" class="form-label">Password</label>
+            <br/>
             <input id="${LoginForm.FIELD_IDS.password}"
                    type="password"
-                   class="form-control"
-                   placeholder="Password"
+                   class="form-control has-validation"
                    required>
-            <label for="${LoginForm.FIELD_IDS.password}">Password</label>
+            <div class="invalid-feedback">Please provide a password.</div>
           </div>
 
           <!-- Submit button -->
@@ -166,11 +173,10 @@ class LoginForm extends HTMLElement {
           <!-- Register buttons -->
           <div class="text-center">
             <p>No account yet?
-            <a href="#${RegisterForm.ID}"
-               onclick="AuthForm.setMode('register')">Register
-            </a>
+            <a href="#${RegisterForm.ID}" onclick="AuthForm.setMode('register')">Register</a>
             </p>
           </div>
+
         </form>
       </div>
     `;
@@ -215,7 +221,15 @@ class RegisterForm extends HTMLElement {
 
   static handleSubmit(event) {
     event.preventDefault();
+    const form = this.querySelector( 'register-form form' );
+    if ( !form.checkValidity() ) {
+      form.classList.add('was-validated');
+      return;
+    }
     const values = RegisterForm.fieldValues;
+    /**
+     * @todo: make warning style in-form.
+     */
     if (values.password !== values.confirmPassword) {
       StemmawebAlert.show(
         `<strong>Error:</strong> Passwords do not match.`,
@@ -279,9 +293,8 @@ class RegisterForm extends HTMLElement {
           }"
           id="${RegisterForm.ID}"
           role="tabpanel"
-          aria-labelledby="tab-register"
-        >
-          <form>
+          aria-labelledby="tab-register">
+          <form class="needs-validation" novalidate="">
             <div class="text-center mb-3">
               <p>Sign up with:</p>
               <social-login-options></social-login-options>
@@ -290,39 +303,50 @@ class RegisterForm extends HTMLElement {
             <p class="text-center">or:</p>
 
             <!-- Email input -->
-            <div class="form-floating mb-4">
+            <div class="mb-4">
+              <label for="${RegisterForm.FIELD_IDS.email}" class="form-label">Email</label>
+              <br/>
               <input id="${RegisterForm.FIELD_IDS.email}"
                      type="email"
-                     class="form-control"
-                     placeholder="Email"
+                     class="form-control has-validation"
                      required>
-              <label for="${RegisterForm.FIELD_IDS.email}">Email</label>
+              <div class="invalid-feedback">Please provide an email address.</div>
             </div>
 
             <!-- Password input -->
-            <div class="form-floating mb-4">
+            <div class="mb-4">
+              <label for="${RegisterForm.FIELD_IDS.password}" class="form-label">Password</label>
+              <br/>
               <input id="${RegisterForm.FIELD_IDS.password}"
                      type="password"
-                     class="form-control"
-                     placeholder="Password"
+                     class="form-control has-validation"
                      required>
-              <label for="${RegisterForm.FIELD_IDS.password}">Password</label>
+              <div class="invalid-feedback">Please provide a strong password.</div>
             </div>
 
             <!-- Confirm Password input -->
-            <div class="form-floating mb-4">
-              <input id="${RegisterForm.FIELD_IDS.confirmPassword}"
-                     type="password"
-                     class="form-control"
-                     placeholder="Confirm password"
-                     required>
+            <div class="mb-4">
               <label for="${
                 RegisterForm.FIELD_IDS.confirmPassword
-              }">Confirm password</label>
+              }" class="form-label">Confirm password</label>
+              <br/>
+              <input id="${RegisterForm.FIELD_IDS.confirmPassword}"
+                     type="password"
+                     class="form-control has-validation"
+                     required>
+              <div class="invalid-feedback">Please retype password.</div>
             </div>
 
             <!-- Submit button -->
             <button type="submit" class="btn btn-primary btn-block mb-4">Sign Up</button>
+
+            <!-- Register buttons -->
+            <div class="text-center">
+              <p>Have an account already?
+                <a href="#${RegisterForm.ID}" onclick="AuthForm.setMode('login')">Login</a>
+              </p>
+            </div>
+  
           </form>
         </div>
     `;
@@ -361,43 +385,12 @@ class AuthForm extends HTMLElement {
 
   render() {
     this.innerHTML = `
-    <!-- Pills navs -->
-    <ul class="nav nav-pills nav-justified mb-3" id="ex1" role="tablist">
-      <li class="nav-item" role="presentation">
-        <a
-          class="nav-link ${this.inLoginMode() ? 'active' : ''}"
-          id="tab-login"
-          data-mdb-toggle="pill"
-          role="tab"
-          aria-controls="${LoginForm.ID}"
-          aria-selected="${this.inLoginMode()}"
-          onclick="AuthForm.setMode('login')"
-          >Login</a
-        >
-      </li>
-      <li class="nav-item" role="presentation">
-        <a
-          class="nav-link ${!this.inLoginMode() ? 'active' : ''}"
-          id="tab-register"
-          data-mdb-toggle="pill"
-          role="tab"
-          aria-controls="${RegisterForm.ID}"
-          aria-selected="${!this.inLoginMode()}"
-          onclick="AuthForm.setMode('register')"
-          >Register</a
-        >
-      </li>
-    </ul>
-    <!-- Pills navs -->
-
-    <!-- Pills content -->
     <div class="tab-content">
       <login-form active=${this.inLoginMode() ? 'true' : 'false'}></login-form>
       <register-form active=${
         !this.inLoginMode() ? 'true' : 'false'
       }></register-form>
     </div>
-    <!-- Pills content -->
     `;
   }
 }
@@ -420,16 +413,16 @@ class AuthModal extends HTMLElement {
   render() {
     this.innerHTML = `
     <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-fullscreen">
+      <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="authModalLabel">Login</h5>
+            <h5 class="modal-title" id="authModalLabel">Sign in to Stemmaweb</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <div class="mt-4 container">
               <div class="row justify-content-center align-items-center">
-                <div class="col-sm-12 col-md-8 col-lg-6">
+                <div class="col-sm-12 col-md-8 col-lg-10">
                   <auth-form></auth-form>
                 </div>
               </div>

@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "sortablejs": "^1.15.0"
+  },
+  "devDependencies": {
+    "cypress": "^12.5.1"
+  }
+}

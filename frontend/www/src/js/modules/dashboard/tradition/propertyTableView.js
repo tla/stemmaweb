@@ -50,20 +50,20 @@ class PropertyTableView extends HTMLElement {
    * }} SelectOption
    *
    * @typedef {{
-   *   size: number;
-   *   required: boolean;
    *   label?: string;
    * } & (
    *   | {
    *       control: 'dropdown';
-   *       size: number;
-   *       required: boolean;
    *       selectOptions: SelectOption[];
    *     }
    *   | {
-   *       control: 'text' | 'checkbox';
+   *       control: 'text';
    *       size: number;
    *       required: boolean;
+   *     }
+   *   | {
+   *       control: 'checkbox';
+   *       checked: boolean;
    *     }
    * )} InputOptions
    */
@@ -87,10 +87,12 @@ class PropertyTableView extends HTMLElement {
   /**
    * Maps 'LR' etc. to more readable 'Left to right' form.
    *
-   * @param {string} key
-   * @returns {string}
+   * @param {'LR' | 'RL' | 'BI'} direction - Abbreviation of a tradition's
+   *   direction
+   * @returns {'Left to right' | 'Right to left' | 'Bi-directional'} User
+   *   friendly label for the supplied abbreviation
    */
-  static #mapDirection(key) {
+  static #mapDirection(direction) {
     const directionMap = this.#directionOptions.reduce(function (
       options,
       option
@@ -99,7 +101,7 @@ class PropertyTableView extends HTMLElement {
       return options;
     },
     {});
-    return directionMap[key] || key;
+    return directionMap[direction] || direction;
   }
 
   /**
@@ -118,7 +120,8 @@ class PropertyTableView extends HTMLElement {
         value: this.#mapDirection(tradition.direction),
         inputOptions: {
           control: 'dropdown',
-          selectOptions: this.#directionOptions
+          selectOptions: this.#directionOptions,
+          selected: tradition.direction
         }
       },
       {
@@ -128,7 +131,11 @@ class PropertyTableView extends HTMLElement {
       {
         label: labels.access,
         value: tradition.is_public ? 'Public' : 'Private',
-        inputOptions: { control: 'checkbox', label: 'Allow public access?' }
+        inputOptions: {
+          control: 'checkbox',
+          checked: tradition.is_public,
+          label: 'Allow public access?'
+        }
       },
       {
         label: labels.language,
@@ -137,7 +144,7 @@ class PropertyTableView extends HTMLElement {
       },
       {
         label: labels.witnesses,
-        value: tradition.witnesses.sort(),
+        value: tradition.witnesses.sort().join( ', ' ),
         inputOptions: { control: 'text', size: 80, required: true }
       }
     ];
@@ -198,8 +205,8 @@ class PropertyTableView extends HTMLElement {
   renderMetaItem(item) {
     return `
         <tr>
-          <td>${item.label}</td>
-          <td>${item.value}</td>
+          <td class="tradition-property-label-cell">${item.label}</td>
+          <td class="tradition-property-value-cell">${item.value}</td>
         </tr>
       `;
   }
@@ -228,16 +235,13 @@ class PropertyTableView extends HTMLElement {
       >
         <span>Properties</span>
         <edit-properties-button/>
-
       </h6>
-
       <div class="table-responsive px-3 py-3">
         <table class="table table-striped table-sm">
           <tbody id="tradition_info">
           ${metaItems.map(this.renderMetaItem).join('\n')}
           </tbody>
         </table>
-        <another-button/>
       </div>
 
     </div>

@@ -20,6 +20,7 @@ class TraditionStore extends StateStore {
 
   /** @param {Tradition} selectedTradition */
   setSelectedTradition(selectedTradition) {
+    selectedTradition = this.state.availableTraditions.find( (availableTradition) => { return availableTradition.id == selectedTradition.id } );
     this.setState({ ...this.state, selectedTradition });
   }
 
@@ -51,8 +52,33 @@ class TraditionStore extends StateStore {
     });
   }
 
-  /** @param {(function(TraditionState): void)|(function(TraditionState, TraditionState): void)} listener */
-  subscribe(listener) {
+  /**
+   * Updates the tradition in `availableTraditions` having the same tradId as
+   * the supplied tradition with the values of the supplied tradition.
+   *
+   * This function is here so that the global state can be updated after a
+   * tradition is updated.
+   *
+   * @param {Tradition} tradition
+   */
+  updateTradition(tradition) {
+    const tradIdx = this.state.availableTraditions.findIndex(availableTradition => availableTradition.id == tradition.id);
+    const traditionFound = tradIdx > -1;
+    if (traditionFound) {
+      const availableTraditions = this.state.availableTraditions;
+      availableTraditions[ tradIdx ] = tradition;
+      this.setState({
+        ...this.state,
+        availableTraditions,
+        selectedTradition: tradition
+      });
+    }
+  }
+
+/** 
+* @param { (state:TraditionState)=>void|(prevState:TraditionState,state:TraditionState)=>void } listener - The listener function to register.
+*/
+subscribe(listener) {
     super.subscribe(listener);
   }
 }
@@ -71,6 +97,7 @@ function initState() {
       /** @type {TraditionState} */
       const state = { availableTraditions, selectedTradition };
       TRADITION_STORE.setState(state);
+      initSectionState();
     }
   });
 }
@@ -80,4 +107,4 @@ function initState() {
 TRADITION_STORE.subscribe(STEMMA_STORE.traditionListener);
 
 /** Load traditions asynchronously from the server. */
-window.addEventListener('load', initState);
+window.addEventListener( 'load', initState );

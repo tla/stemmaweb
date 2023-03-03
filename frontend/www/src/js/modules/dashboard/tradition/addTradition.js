@@ -34,6 +34,7 @@ class AddTraditionModal extends HTMLElement {
     $('tradition_literal').innerText = 'section';
     $('add_tradition_partial').classList.remove('hide');
     $('new_section_partial').classList.remove('hide');
+    $('upload_for_tradition').innerHTML = AddTraditionModal.#availableTraditionsAsSelectOptions();
   }
 
   static #hide() {
@@ -142,18 +143,15 @@ class AddTraditionModal extends HTMLElement {
     });
   }
 
+  /** 
+   * This ensures the add_tradition_modal is placed nicely flush right of the menubar.
+   * @todo: Add responsiveness on resize. 
+   */
   #initStyles() {
-    // This ensures the add_tradition_modal is placed nicely flush right of the menubar.
-    // TODO: Add responsiveness on resize.
     const dashboard_stemmaweb_css = getStyleSheet('dashboard-stemmaweb');
-    let add_tradition_modal_marginleft = window
-      .getComputedStyle($('sidebarMenu'))
-      .getPropertyValue('width');
-    dashboard_stemmaweb_css.insertRule(
-      '#add_tradition_modal.modal.fade div.modal-dialog { margin-left: ' +
-        add_tradition_modal_marginleft +
-        '; margin-top: 50px; transform: none; }'
-    );
+    const addTraditionModalMarginLeft = $('sidebarMenu').getBoundingClientRect().width;
+    this.querySelector( 'div div' ).style.marginLeft = `${addTraditionModalMarginLeft}px`;
+    this.querySelector( 'div div' ).style.marginTop = '50px'
   }
 
   /**
@@ -175,6 +173,15 @@ class AddTraditionModal extends HTMLElement {
     { value: 'stemmaweb', name: 'Legacy Stemmaweb GraphML' }
   ];
 
+  static #traditionAsSelectOption( tradition ) {
+    return `<option value="${tradition.id}">${tradition.name}</option>`
+  }
+
+  static #availableTraditionsAsSelectOptions() {
+    const selectOptions = TRADITION_STORE.state.availableTraditions.map( this.#traditionAsSelectOption ).join('\n');
+    return selectOptions;
+  }
+//#add_tradition_modal.modal.fade div.modal-dialog 
   render() {
     this.innerHTML = `
       <div
@@ -311,7 +318,7 @@ class AddTraditionModal extends HTMLElement {
                       name="for_tradition"
                       class="form-select"
                       id="upload_for_tradition"
-                    ></select>
+                    >${AddTraditionModal.#availableTraditionsAsSelectOptions()}</select>
                   </div>
 
                   <!-- Shows in either case -->
