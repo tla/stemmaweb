@@ -7,6 +7,7 @@
 /** @type {StemmarestService} */
 const sectionStoreService = stemmarestService;
 
+
 class SectionStore extends StateStore {
 
   /** @param {SectionState} initialState */
@@ -35,32 +36,15 @@ class SectionStore extends StateStore {
   }
 
   /**
-   * Fetches and appends the tradition with the supplied `tradId` to
-   * `availableTraditions`. Fails silently if an error occurs during the service
-   * call.
-   *
-   * This function is needed so that the global state can be updated after a new
-   * section is created. After creating a new section, only the ID is
-   * returned by Stemmarest, hence the need to fetch the whole tradition by ID.
-   *
-   * @param {string} traditionId
+   * Informs all SectionLists (well, at least those that registered 
+   * a listener for the event) that a section was added.
+   * 
    * @param {string} sectionId
+   * @param {string} traditionId
    */
   appendSection( sectionId, traditionId ) {
-    sectionStoreService.getSection( tradId, sectionId ).then((res) => {
-      if (res.success) {
-        const sectionToAppend = res.data;
-        const availableSections = [
-          ...this.state.availableSections,
-          sectionToAppend
-        ];
-        this.setState({
-          ...this.state,
-          availableSections,
-          selectedSection: sectionToAppend
-        });
-      }
-    });
+    const sectionAppendedEvent = new CustomEvent( 'sectionAppended', { detail: { sectionId: sectionId, traditionId: traditionId } } );
+    document.querySelectorAll( 'section-list' ).forEach( (elem) => { elem.dispatchEvent( sectionAppendedEvent ) } );
   }
 
   /**
@@ -69,8 +53,6 @@ class SectionStore extends StateStore {
    *
    * This function is here so that the global state can be updated after a
    * section is updated.
-   *
-   * @todo: Shouldn't StemmaRestService do this?
    * 
    * @param {Section} section
    */

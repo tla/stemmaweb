@@ -82,7 +82,7 @@ class EditSectionProperties extends HTMLElement {
             const sectionId = SECTION_STORE.state.selectedSection.id;
             // Note that `editPropertiesService` is reused from EditProperties.js.
             return editPropertiesService
-                .updateSectionMetadata( userId, tradId, sectionId, ...values)
+                .updateSectionMetadata( userId, tradId, sectionId, ...values )
                 .then( EditSectionProperties.#handleUpdateSectionMetadataResponse );
         } else {
             form.classList.add('was-validated');

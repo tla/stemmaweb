@@ -20,11 +20,17 @@ class SectionList extends HTMLElement {
 
     constructor() {
         super();
+        this.addEventListener( 'sectionAppended', this.sectionAppendedListener );
         const traditionId = this.getAttribute( 'trad-id' );
         SECTION_STORE.subscribe( ( state, prevState ) => {
+            // IF this is me…
             if( TRADITION_STORE.state.selectedTradition.id == traditionId ) {
+                // AND if this is not a first time load…
                 if( state.selectedSection && prevState.selectedSection ) {
+                    // AND if this is some update concerning the currently selected Section…
                     if( state.selectedSection.id == prevState.selectedSection.id ) {
+                        // AND if this is a name change…
+                        // well, THEN we do something (i.e. change the name in the Tradion/Section tree view).
                         if( state.selectedSection.name != prevState.selectedSection.name ) {
                             this.querySelector( `ul li div[sect-id="${state.selectedSection.id}"] span` ).innerHTML = prevState.selectedSection.name;
                         };
@@ -32,6 +38,18 @@ class SectionList extends HTMLElement {
                 };
             };
         })
+    }
+
+    /**
+     *  Redraw this section list if a section was added.
+     *  State object `SECTION_STORE` triggers this event, which it
+     *  is instructed to by `AddTraditionModal#handleResponseSection`
+     *  (in `addTradition.js`).
+     */
+    sectionAppendedListener( evt ) {
+        if ( this.getAttribute( 'trad-id' ) == evt.detail.traditionId ) {
+            this.connectedCallback();
+        }
     }
 
     /**

@@ -91,25 +91,57 @@ class AddTraditionModal extends HTMLElement {
    * }}
    */
   static #extractFormValuesTradition() {
-    const name = $('new_name').value;
-    const file = $('uploadfile').files[0];
-    const fileType = $('new_filetype').value;
-    const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
-    const language = $('new_lang').value || null;
-    const direction = $('direction').value;
-    const isPublic = $('new_public').checked;
-    return { name, file, fileType, userId, language, direction, isPublic };
+    return {
+      name: $('new_name').value,
+      file: $('uploadfile').files[0],
+      fileType: $('new_filetype').value,
+      userId: AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null,
+      language: $('new_lang').value || null,
+      direction: $('direction').value,
+      isPublic: $('new_public').checked
+    }
+  }
+
+  /**
+   * @returns {{
+  *   name: string;
+  *   file: File;
+  *   fileType: import('@types/stemmarest').TraditionFileType;
+  *   userId: string;
+  *   parentId: string;
+  * }}
+  */
+  static #extractFormValuesSection() {
+    return { 
+      name: $('new_name').value,
+      file: $('uploadfile').files[0],
+      fileType: $('new_filetype').value,
+      userId: AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null,
+      parentId: $('upload_for_tradition').value
+    }
   }
 
   /** @param {BaseResponse<{ tradId: string }>} res */
   static #handleResponseTradition(res) {
     if (res.success) {
-      StemmawebAlert.show('Tradition Created', 'success');
+      StemmawebAlert.show('Tradition created', 'success');
       AddTraditionModal.#hide();
-
-      // Append the newly added tradition to the list of traditions
+      // Inform state about the newly added tradition.
       const { tradId } = res.data;
       TRADITION_STORE.appendTradition(tradId);
+    } else {
+      StemmawebAlert.show(`Error: ${res.message}`, 'danger');
+    }
+  }
+
+  /** @param {BaseResponse<{ sectionId: string }>} res */
+  static #handleResponseSection(res, parentId) {
+    if (res.success) {
+      StemmawebAlert.show('Section created', 'success');
+      AddTraditionModal.#hide();
+      // Inform state about the addition of this section.
+      const { sectionId } = res.data;
+      SECTION_STORE.appendSection( sectionId, parentId );
     } else {
       StemmawebAlert.show(`Error: ${res.message}`, 'danger');
     }
@@ -129,12 +161,22 @@ class AddTraditionModal extends HTMLElement {
           evt.preventDefault();
           evt.stopPropagation();
           if (form.checkValidity()) {
-            const values = Object.values(
-              AddTraditionModal.#extractFormValuesTradition()
-            );
-            addTraditionService
-              .addTradition(...values)
-              .then(AddTraditionModal.#handleResponseTradition);
+            const isSection = !document.querySelector( '#new_section_partial' ).classList.contains( 'hide' );
+            if( isSection ) {
+              const formValuesDictionary = AddTraditionModal.#extractFormValuesSection()
+              const values = Object.values( formValuesDictionary );
+              addTraditionService
+                .addSection(...values)
+                .then( (resp) => { AddTraditionModal.#handleResponseSection( resp, formValuesDictionary.parentId ) } );
+            } else {
+              const values = Object.values(
+                AddTraditionModal.#extractFormValuesTradition()
+              );
+              console.log( values );
+              addTraditionService
+                .addTradition(...values)
+                .then(AddTraditionModal.#handleResponseTradition);
+            }
           }
           form.classList.add('was-validated');
         },

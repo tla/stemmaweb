@@ -103,17 +103,6 @@ class StemmarestService extends BaseService {
     return this.fetch(`/api/tradition/${tradId}`);
   }
 
-   /**
-   * Fetches a list of sections for a particular tradition.
-   *
-   * @param {string} traditionId
-   * @returns {Promise<BaseResponse<Section[]>>}
-   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/sections}
-   */
-  listSections( traditionId ) {
-    return this.fetch(`/api/tradition/${traditionId}/sections`);
-  }
-
   /**
    * Deletes a tradition from the Stemmarest API.
    *
@@ -154,7 +143,7 @@ class StemmarestService extends BaseService {
       formData.append('language', language);
     }
     formData.append('direction', direction);
-    formData.append('public', isPublic ? 'yes' : 'no');
+    formData.append('public', isPublic );
     return this.fetch('/api/tradition', {
       method: 'POST',
       'Content-Type': 'multipart/form-data',
@@ -230,6 +219,46 @@ class StemmarestService extends BaseService {
     });
   }
 
+  /**
+   * Fetches a list of sections for a particular tradition.
+   *
+   * @param {string} traditionId
+   * @returns {Promise<BaseResponse<Section[]>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/sections}
+   */
+   listSections( traditionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/sections`);
+  }
+
+  /**
+   * Adds a new Section to a Tradition using the Stemmarest API.
+   *
+   * @param {string} name - The name of the tradition to be added.
+   * @param {File} file - The file containing the tradition to be added.
+   * @param {TraditionFileType} fileType
+   * @param {string | null} userId
+   * @returns {Promise<BaseResponse<{ tradId: string }>>}
+   */
+    addSection( name, file, fileType, userId, parentId ) {
+      if (userId === null) {
+        return Promise.resolve({
+          success: false,
+          message: 'You need to be logged in to add a section.'
+        });
+      }
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('file', file);
+      formData.append('filetype', fileType);
+      formData.append('userId', userId);
+      formData.append('parentId', parentId);
+      return this.fetch( `/api/tradition/${parentId}/section`, {
+        method: 'POST',
+        'Content-Type': 'multipart/form-data',
+        body: formData
+      });
+    }
+  
   /**
    * 
    * @param {string} tradId - Id of the tradition that the section belongs to
