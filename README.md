@@ -8,15 +8,20 @@ the [Stemmarest](http://dhuniwien.github.io/tradition_repo/) data model.
 - [Overview](#overview)
 - [Trying it out](#trying-it-out--eventually-)
 - [Development](#development)
+    - [Decrypting Environment Variables](#decrypting-environment-variables)
+    - [Encrypting Environment Variables](#encrypting-environment-variables)
     - [Docker](#docker)
     - [Local](#local)
+- [Testing](#testing)
 
 ## Overview
 
-The system is made up of three main components:
+The system is made up of four main components:
 
 - The [Stemmarest](http://dhuniwien.github.io/tradition_repo/) backend, which
   provides a RESTful API for accessing and manipulating text traditions.
+- The [Stemweb](https://github.com/DHUniWien/Stemweb) backend, which
+  provides a RESTful API for running stemmatological algorithms.
 - The [Stemmaweb Middleware](./middleware/README.md) which provides an authentication and authorization
   layer on top of the Stemmarest API. The frontend communicates only with this layer directly.
 - The [Stemmaweb Frontend](./frontend/README.md) which provides a web interface for
@@ -26,7 +31,7 @@ The system is made up of three main components:
 
 A prerequisite for using Stemmaweb is to have [Make](https://www.gnu.org/software/make/),
 [Docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) installed on your machine. You
-also need to configure the environment variables, to do so you can use `.env.prod.example` as a template. After filling
+also need to configure the environment variables. To do so you can use `.env.prod.example` as a template. After filling
 in the missing values (or leaving them as they are), rename the file to `.env.prod`.
 
 Once you have these, you can run the following command to get a working instance of Stemmaweb:
