@@ -29,7 +29,7 @@ def config(
             ),
         )
     ]
-    tradition_config_guest = []
+    tradition_config_guest: list[PermissionConfig] = []
     tradition_config_user = [*base_config]
     tradition_config_admin = [*base_config]
     tradition_config = {
