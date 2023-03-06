@@ -129,4 +129,53 @@ over the Stemmarest component. The rule states that only logged-in users can del
 role *User* or *Admin*.
 
 We know from the [Stemmarest docs](https://dhuniwien.github.io/tradition_repo/) that we need to send a `DELETE` request
-to `/tradition/{tradId}/` in order to delete a tradition. 
+to `/tradition/{tradId}/` in order to delete a tradition. The easiest way to restrict guests from being able to make
+a `DELETE` request, or any other request which would modify the state of the server, we can restrict the guest
+permissions to read-only and declare the user and admin roles to have read-write permissions.
+
+We can use the following configuration to implement the desired behavior:
+
+```python
+# Extract from stemmaweb_middleware/resources/stemmarest/permissions/declarations/tradition.py
+def config(
+        service: StemmarestPermissionService, args: PermissionArguments
+) -> dict[UserRole, list[PermissionConfig]]:
+    """Role-based configuration for the `/tradition/*` Stemmarest endpoint."""
+    read_write = PermissionConfig(
+        endpoint_access=EndpointAccess(
+            name="Allow read-write",
+            description="Allowing read-write access",
+            predicate=perm_predicates_base.always_true,
+            if_true={Permission.READ, Permission.WRITE},
+        ),
+    )
+    read_only = PermissionConfig(
+        endpoint_access=EndpointAccess(
+            name="Allow read-only",
+            description="Allowing read-only access",
+            predicate=perm_predicates_base.always_true,
+            if_true={Permission.READ},
+        ),
+    )
+    tradition_config_guest = [read_only]
+    tradition_config_user = [read_write]
+    tradition_config_admin = [read_write]
+    tradition_config = {
+        UserRole.GUEST: tradition_config_guest,
+        UserRole.USER: tradition_config_user,
+        UserRole.ADMIN: tradition_config_admin,
+    }
+    return tradition_config
+```
+
+Since we do not need any fine-grained logic implementation in `EndpointAccess.predicate`, we are using a simple
+utility function `perm_predicates_base.always_true` (accessed
+through `import stemmaweb_middleware.permissions.predicates as perm_predicates_base`). As the function name implies,
+it always returns `True`, which means that regardless of the value of the `PermissionArguments args` parameter,
+the predicate will always evaluate to `True` and the permissions defined in `if_true` will be applied.
+
+While this example does not access the `service` and `args` parameters, they could be use to define more complex
+permission rules. For example, we could define a rule that only allows the user to delete a stemmata if the user owns
+the enclosing tradition. In this case, we might need to make calls to the Stemmarest backend to check if the user
+owns the tradition with the given ID. For this, we can use the `service` parameter, which exposes an `APIClient`
+instance, which can be used to make calls to the Stemmarest backend.
