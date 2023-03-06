@@ -15,6 +15,19 @@ class StemmarestPermissionHandler(BasePermissionHandler[StemmarestEndpoint]):
 def get_stemmarest_permission_handler(
     client: APIClient,
 ) -> StemmarestPermissionHandler:
+    """
+    Creates a new Stemmarest permission handler
+    via chained dependency injection.
+
+    The supplied ``client`` is used to create a ``StemmarestPermissionService``.
+    The ``StemmarestPermissionService`` is used
+    to create a ``StemmarestPermissionProvider``.
+    The ``StemmarestPermissionProvider`` is used
+    to create the ``StemmarestPermissionHandler``.
+
+    :param client: The ``APIClient`` to use.
+    :return: The new ``StemmarestPermissionHandler``.
+    """
     service = StemmarestPermissionService(client)
     provider = StemmarestPermissionProvider(service)
     handler = StemmarestPermissionHandler(provider)

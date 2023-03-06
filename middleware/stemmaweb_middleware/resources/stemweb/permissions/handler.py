@@ -15,6 +15,19 @@ class StemwebPermissionHandler(BasePermissionHandler[StemwebEndpoint]):
 def get_stemweb_permission_handler(
     client: APIClient,
 ) -> StemwebPermissionHandler:
+    """
+        Creates a new Stemweb permission handler
+        via chained dependency injection.
+
+        The supplied ``client`` is used to create a ``StemwebPermissionService``.
+        The ``StemwebPermissionService`` is used
+        to create a ``StemwebPermissionProvider``.
+        The ``StemwebPermissionProvider`` is used
+        to create the ``StemwebPermissionHandler``.
+
+        :param client: The ``APIClient`` to use.
+        :return: The new ``StemwebPermissionHandler``.
+        """
     service = StemwebPermissionService(client)
     provider = StemwebPermissionProvider(service)
     handler = StemwebPermissionHandler(provider)

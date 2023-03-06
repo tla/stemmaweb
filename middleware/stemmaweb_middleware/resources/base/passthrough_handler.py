@@ -39,7 +39,9 @@ def handle_passthrough_request(
             status=403,
             message="The caller has insufficient permissions "
             "to access this resource.",
-            body=dict(violations=violations),
+            body=dict(
+                violations=violations, allowed_http_methods=list(allowed_http_methods)
+            ),
         )
 
     try:
