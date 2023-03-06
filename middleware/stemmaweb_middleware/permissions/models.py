@@ -134,16 +134,12 @@ class EndpointAccess(pydantic.BaseModel):
     If no (valid) session cookie is present, the user is a guest. If a session
     cookie is present, we extract the user ID from it and check the database for
     the user's actual role.
-
-    If `inverted` is set to True, the predicate is inverted, that is, if the predicate
-    evaluates to True, the permissions are **not** granted.
     """
 
     name: str
     description: str | None = None
     predicate: EndpointAccessPredicate
     if_true: set[Permission]
-    inverted: bool = False
 
     def to_violation_str(self):
         """
