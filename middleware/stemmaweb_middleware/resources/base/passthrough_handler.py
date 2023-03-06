@@ -28,12 +28,15 @@ def handle_passthrough_request(
 
     api_endpoint = "/" + "/".join(path_segments) + "/"
     logger.debug(f'Passthrough requested for "{api_endpoint}" with args {args}')
+
+    # The heavy-lifting for permission checking is done in `permission_handler.check`
     (
         violations,
         allowed_http_methods,
         response_transformer,
     ) = permission_handler.check(args=args)
 
+    # If the user is not allowed to access the requested endpoint, we abort the request
     if request.method not in allowed_http_methods or len(violations) > 0:
         return abort(
             status=403,
@@ -44,6 +47,7 @@ def handle_passthrough_request(
             ),
         )
 
+    # Otherwise, we allow the request to pass through
     try:
         response = client.request(
             path=api_endpoint,
