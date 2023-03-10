@@ -26,7 +26,9 @@ class SectionStore extends StateStore {
       if (res.success) {
         const availableSections = res.data;
         // refresh state of Section,it may be stale.
-        selectedSection = availableSections.find( (availableSection) => { return availableSection.id == selectedSection.id } );
+        if( selectedSection ) {
+          selectedSection = availableSections.find( (availableSection) => { return availableSection.id == selectedSection.id } );
+        }
         const state = { availableSections, selectedSection };
         this.setState( state );
       } else {
@@ -42,9 +44,29 @@ class SectionStore extends StateStore {
    * @param {string} sectionId
    * @param {string} traditionId
    */
-  appendSection( sectionId, traditionId ) {
+  sectionAppended( sectionId, traditionId ) {
     const sectionAppendedEvent = new CustomEvent( 'sectionAppended', { detail: { sectionId: sectionId, traditionId: traditionId } } );
     document.querySelectorAll( 'section-list' ).forEach( (elem) => { elem.dispatchEvent( sectionAppendedEvent ) } );
+  }
+
+  /**
+   * Informs all SectionLists (well, at least those that registered 
+   * a listener for the event) that a section was deleted.
+   * 
+   * @param {string} sectionId
+   * @param {string} traditionId
+   */
+  sectionDeleted( sectionId, traditionId ) {
+    // const sectionsWithoutDeleted = availableSections.filter(
+    //   (sect) => sect.id !== section.id
+    // );
+    // this.setState({
+    //   availableSections: sectionsWithoutDeleted,
+    //   selectedSection: null
+    // });
+    const sectionDeletedEvent = new CustomEvent( 'sectionDeleted', { detail: { sectionId: sectionId, traditionId: traditionId } } );
+    document.querySelectorAll( 'section-list' ).forEach( (elem) => { elem.dispatchEvent( sectionDeletedEvent ) } );
+    document.querySelectorAll( 'section-properties-view' ).forEach( (elem) => { elem.dispatchEvent( sectionDeletedEvent ) } );
   }
 
   /**

@@ -141,7 +141,7 @@ class AddTraditionModal extends HTMLElement {
       AddTraditionModal.#hide();
       // Inform state about the addition of this section.
       const { sectionId } = res.data;
-      SECTION_STORE.appendSection( sectionId, parentId );
+      SECTION_STORE.sectionAppended( sectionId, parentId );
     } else {
       StemmawebAlert.show(`Error: ${res.message}`, 'danger');
     }

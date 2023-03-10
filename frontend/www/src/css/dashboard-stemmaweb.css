@@ -128,3 +128,8 @@ section-list ul li.dragging-highlight {
 social-login-options .btn {
   font-size: calc( var(--bs-btn-font-size) * 4);
 }
+
+delete-section-button .btn-outline-danger {
+  color: var(--bs-btn-color);
+  padding-right: 0.5em;
+}

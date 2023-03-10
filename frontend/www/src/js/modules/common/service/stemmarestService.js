@@ -226,10 +226,22 @@ class StemmarestService extends BaseService {
    * @returns {Promise<BaseResponse<Section[]>>}
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/sections}
    */
-   listSections( traditionId ) {
+  listSections( traditionId ) {
     return this.fetch(`/api/tradition/${traditionId}/sections`);
   }
 
+  /**
+   * Deletes a section using the Stemmarest API.
+   *
+   * @param {string} sectionId
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
+   */
+  deleteSection( traditionId, sectionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}`, {
+      method: 'DELETE'
+    });
+  }
+  
   /**
    * Adds a new Section to a Tradition using the Stemmarest API.
    *
@@ -239,25 +251,25 @@ class StemmarestService extends BaseService {
    * @param {string | null} userId
    * @returns {Promise<BaseResponse<{ tradId: string }>>}
    */
-    addSection( name, file, fileType, userId, parentId ) {
-      if (userId === null) {
-        return Promise.resolve({
-          success: false,
-          message: 'You need to be logged in to add a section.'
-        });
-      }
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('file', file);
-      formData.append('filetype', fileType);
-      formData.append('userId', userId);
-      formData.append('parentId', parentId);
-      return this.fetch( `/api/tradition/${parentId}/section`, {
-        method: 'POST',
-        'Content-Type': 'multipart/form-data',
-        body: formData
+  addSection( name, file, fileType, userId, parentId ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to add a section.'
       });
     }
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('file', file);
+    formData.append('filetype', fileType);
+    formData.append('userId', userId);
+    formData.append('parentId', parentId);
+    return this.fetch( `/api/tradition/${parentId}/section`, {
+      method: 'POST',
+      'Content-Type': 'multipart/form-data',
+      body: formData
+    });
+  }
   
   /**
    * 

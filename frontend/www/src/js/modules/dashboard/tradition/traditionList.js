@@ -56,6 +56,7 @@ class TraditionList extends HTMLElement {
     selectTradition( evt, tradition ) {
         evt.preventDefault();
         TRADITION_STORE.setSelectedTradition( tradition );
+        SECTION_STORE.setSelectedSection( null );
     }
         
     /**
@@ -66,6 +67,7 @@ class TraditionList extends HTMLElement {
      */
     toggleSectionList( tradition ){
         TRADITION_STORE.setSelectedTradition( tradition );
+        SECTION_STORE.setSelectedSection( null );
         const sectionListElement = this.querySelector( `section-list[trad-id="${tradition.id}"]` );
         fadeIn( sectionListElement ); 
         sectionListElement.classList.toggle( 'show' );
