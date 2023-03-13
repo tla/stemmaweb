@@ -299,7 +299,7 @@ describe('A guest should be offered to "Examine Stemma" of a public tradition on
                 });
             } else { // if no stemma is available:
                 // no preview selector
-                cy.get('#stemma_selector').find('svg').should('not.be.visible');
+                cy.get('#stemma_selector').find('svg').should('not.exist');
                 // no preview
                 cy.get('#graph').find('svg').should('not.exist');
                 // no 'Stemma' identifier in the properties table
