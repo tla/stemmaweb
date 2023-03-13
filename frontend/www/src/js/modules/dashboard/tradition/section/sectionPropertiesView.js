@@ -23,11 +23,13 @@ class SectionPropertiesView extends HTMLElement {
 
     constructor() {
         super();
+        // If I was deleted, I go away.
+        this.addEventListener( 'sectionDeleted', () => { console.log( 'hi', this ); this.innerHTML = '' } );
         // Whenever a tradition is selected that is not me, I go away.
         TRADITION_STORE.subscribe( ( prevState, state ) => {
             // Check on id because other metadata may have changed.
             if( prevState.selectedTradition && ( prevState.selectedTradition.id != state.selectedTradition.id ) ) {
-                this.innerHTML  = '';
+                this.innerHTML = '';
             };
         });
         // Whenever an item in the section list is selected, update the table
@@ -129,7 +131,10 @@ class SectionPropertiesView extends HTMLElement {
                 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
                 >
                     <span>Section Properties</span>
-                    <edit-section-properties-button/>   
+                    <div class="property-buttons">
+                        <delete-section-button></delete-section-button>
+                        <edit-section-properties-button></edit-section-properties-button> 
+                    </div>
                 </h6>
                 <div class="table-responsive px-3 py-3">
                 <table class="table table-striped table-sm">

@@ -20,7 +20,8 @@ class SectionList extends HTMLElement {
 
     constructor() {
         super();
-        this.addEventListener( 'sectionAppended', this.sectionAppendedListener );
+        this.addEventListener( 'sectionAppended', this.rerenderList );
+        this.addEventListener( 'sectionDeleted', this.rerenderList );
         const traditionId = this.getAttribute( 'trad-id' );
         SECTION_STORE.subscribe( ( state, prevState ) => {
             // IF this is me…
@@ -41,12 +42,12 @@ class SectionList extends HTMLElement {
     }
 
     /**
-     *  Redraw this section list if a section was added.
+     *  Redraw this section list if a section was added (or deleted).
      *  State object `SECTION_STORE` triggers this event, which it
      *  is instructed to by `AddTraditionModal#handleResponseSection`
      *  (in `addTradition.js`).
      */
-    sectionAppendedListener( evt ) {
+    rerenderList( evt ) {
         if ( this.getAttribute( 'trad-id' ) == evt.detail.traditionId ) {
             this.connectedCallback();
         }
