@@ -25,7 +25,7 @@ A guest should further
 
 /*  test users & traditions (https://github.com/tla/stemmaweb/pull/152):
 
-changes in https://github.com/tla/stemmaweb/issues/166:
+changes in https://github.com/tla/stemmaweb/pull/167:
 set 'Notre besoin' and 'John verse' to be public;
 'Matthew 401' stays private in line with existing data.
 
@@ -262,7 +262,7 @@ describe('A guest should be offered to download a public "Tradition"', () => {
 // 'Examine Stemma' and 'Download Stemma' in all available formats.
 // TODO, issue: disable or hide certain elements when no stemma available, etc. see below
 describe('A guest should be offered to "Examine Stemma" of a public tradition only for any of its stemmata', () => {
-    it('passes', () => { 
+    it('passes', () => {
         const label_examine = 'Examine Stemma';
         const label_download_stemma = 'Stemma';
         // Private traditions should not be visible for a guest: is verified in another test
