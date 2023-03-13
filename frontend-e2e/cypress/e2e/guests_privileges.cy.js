@@ -24,6 +24,12 @@ A guest should further
 */
 
 /*  test users & traditions (https://github.com/tla/stemmaweb/pull/152):
+
+changes in https://github.com/tla/stemmaweb/issues/166:
+set 'Notre besoin' and 'John verse' to be public;
+'Matthew 401' stays private in line with existing data.
+
+
 user@example.org (pw UserPass) has three traditions
 
     Notre besoin, public
@@ -32,8 +38,8 @@ user@example.org (pw UserPass) has three traditions
 
 benutzer@example.org (pw BenutzerKW) has three traditions
 
-    Matthew 401, public
-    John verse, private
+    Matthew 401, private
+    John verse, public
     Arabic snippet, private
 
 admin@example.org (pw AdminPass) has one tradition
@@ -90,7 +96,7 @@ const test_traditions = [
         filetype : "graphml",
         owner : "benutzer@example.org",
         language : "Armenian",
-        access : "Public",
+        access : "Private",
         // sectionscount : 1,
 
         // tradition_id : "",
@@ -105,7 +111,7 @@ const test_traditions = [
         filetype : "stemmaweb",
         owner : "benutzer@example.org",
         language : "Greek",
-        access : "Private",
+        access : "Public",
         // sectionscount : 1,
 
         // tradition_id : "",
@@ -158,7 +164,7 @@ describe('A guest should not see any private tradition listed in the toc', () =>
 });
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
-describe('A guest should not be able to upload a tradition: not see the feather-plus-circle (next to the toc header "Text directory"),', () => {
+describe('A guest should not be able to upload a tradition: not see the feather-plus-circle (next to the toc header "Text directory")', () => {
     it.skip('issue', () => {
         cy.contains('h6', 'Text directory').find('svg').should('not.be.visible'); // currently, fails as expected.
     });
@@ -256,7 +262,7 @@ describe('A guest should be offered to download a public "Tradition"', () => {
 // 'Examine Stemma' and 'Download Stemma' in all available formats.
 // TODO, issue: disable or hide certain elements when no stemma available, etc. see below
 describe('A guest should be offered to "Examine Stemma" of a public tradition only for any of its stemmata', () => {
-    it('passes', () => {
+    it('passes', () => { 
         const label_examine = 'Examine Stemma';
         const label_download_stemma = 'Stemma';
         // Private traditions should not be visible for a guest: is verified in another test
