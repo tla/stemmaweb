@@ -55,7 +55,7 @@ const test_traditions = [
         owner : "user@example.org",
         language : "French",
         access : "Public",
-        // sectionscount : 1,
+        sectionscount : 1,
 
         // tradition_id : "", // random
         direction : "Left to Right", // implied (language : French)
@@ -70,7 +70,7 @@ const test_traditions = [
         owner : "user@example.org",
         language : "Greek",
         access : "Private",
-        // sectionscount : 3, // init_test_data.sh sections w x y.
+        sectionscount : 3, // init_test_data.sh sections w x y.
 
         // tradition_id : "",
         direction : "Left to Right",
@@ -84,7 +84,7 @@ const test_traditions = [
         owner : "user@example.org",
         language : "Latin", // in legendfrag.xml (not Armenian, ok)
         access : "Private",
-        // sectionscount : 2,
+        sectionscount : 2,
 
         // tradition_id : "",
         direction : "Left to Right",
@@ -97,7 +97,7 @@ const test_traditions = [
         owner : "benutzer@example.org",
         language : "Armenian",
         access : "Private",
-        // sectionscount : 1,
+        sectionscount : 1,
 
         // tradition_id : "",
         direction : "Left to Right",
@@ -112,7 +112,7 @@ const test_traditions = [
         owner : "benutzer@example.org",
         language : "Greek",
         access : "Public",
-        // sectionscount : 1,
+        sectionscount : 1,
 
         // tradition_id : "",
         direction : "Left to Right",
@@ -124,7 +124,7 @@ const test_traditions = [
         owner : "benutzer@example.org",
         language : "Arabic",
         access : "Private",
-        // sectionscount : 1,
+        sectionscount : 1,
 
         // tradition_id : "",
         direction : "Right to Left", // implied (language : Arabic)
@@ -137,7 +137,7 @@ const test_traditions = [
         owner : "admin@example.org",
         language : "Latin",
         access : "Private",
-        // sectionscount : 1,
+        sectionscount : 1,
 
         // tradition_id : "",
         direction : "Left to Right",
@@ -269,6 +269,7 @@ describe('A guest should be offered to "Examine Stemma" of a public tradition on
         test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
             // click through all public traditions
             cy.log('title: ' + tradition.title);
+            // cy.wait(1000);
             cy.get('#traditions-list').contains(tradition.title).click();
 
             // click through each of its stemmata // select stemma
