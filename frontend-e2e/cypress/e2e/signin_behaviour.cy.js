@@ -36,6 +36,7 @@ describe('User can log in with password UserPass, and log out again', () => {
     cy.get('#loginPassword').type('UserPass', { delay: 50 });
     cy.wait(500);
     cy.contains('button', 'Sign in').click();
+    cy.wait(500);
     cy.contains('Logged in as user@example.org');
 
     cy.log('User can log out again');
