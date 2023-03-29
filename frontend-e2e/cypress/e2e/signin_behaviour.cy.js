@@ -16,11 +16,11 @@ beforeEach(() => {
 describe('User can\'t log in with the hash string', () => {
   it('passes', { defaultCommandTimeout: 10000 }, () => {
     cy.contains('Sign in').click();
-    cy.wait(500);
+    // cy.wait(500);
     cy.get('#loginEmail').type('user@example.org', { delay: 50 });
-    cy.wait(500);
+    // cy.wait(500);
     cy.get('#loginPassword').type('0NT3bCujDh6wvf5UTfXsjmlRhyEG6xvT1/kgiZPyjGk', { delay: 50 });
-    cy.wait(500);
+    // cy.wait(500);
     // cy.get('#loginEmail').should('have.value', 'user@example.org');
     cy.contains('button', 'Sign in').click();
     cy.contains('Unable to login'); // or assert: (fetch) POST 401 /stemmaweb/requests/login ?
@@ -30,13 +30,13 @@ describe('User can\'t log in with the hash string', () => {
 describe('User can log in with password UserPass, and log out again', () => {
   it('passes', { defaultCommandTimeout: 10000 }, () => {
     cy.contains('Sign in').click();
-    cy.wait(500);
+    // cy.wait(500);
     cy.get('#loginEmail').type('user@example.org', { delay: 50 });
-    cy.wait(500);
+    // cy.wait(500);
     cy.get('#loginPassword').type('UserPass', { delay: 50 });
-    cy.wait(500);
+    // cy.wait(500);
     cy.contains('button', 'Sign in').click();
-    cy.wait(500);
+    // cy.wait(500);
     cy.contains('Logged in as user@example.org');
 
     cy.log('User can log out again');
@@ -51,22 +51,22 @@ describe('A new user can be created', () => {
     cy.contains('Sign in').click();
     cy.contains('Register').click();
 
-    cy.wait(500);
+    // cy.wait(500);
     cy.get('#registerEmail').type('newuser@example.org', { delay: 50 });
-    cy.wait(500);
+    // cy.wait(500);
     cy.get('#registerPassword').type('NewUserPass', { delay: 50 });
-    cy.wait(500);
+    // cy.wait(500);
     cy.get('#registerConfirmPassword').type('NewUserPass', { delay: 50 });
-    cy.wait(500);
+    // cy.wait(500);
     cy.contains('button', /Sign (u|U)p/).click();
     // cy.contains('button', 'Sign up').click();
 
     cy.log('The new user can then log in');
-    cy.wait(500);
+    // cy.wait(500);
     cy.get('#loginEmail').type('newuser@example.org', { delay: 50 });
-    cy.wait(500);
+    // cy.wait(500);
     cy.get('#loginPassword').type('NewUserPass', { delay: 50 });
-    cy.wait(500);
+    // cy.wait(500);
     cy.contains('button', 'Sign in').click();
     cy.contains('Logged in as newuser@example.org');
 
@@ -81,11 +81,11 @@ describe('A new user can be created', () => {
 describe('The new user can then log in, and log out again', () => {
   it('passes', { defaultCommandTimeout: 10000 }, () => {
     cy.contains('Sign in').click();
-    cy.wait(500);
+    // cy.wait(500);
     cy.get('#loginEmail').type('newuser@example.org', { delay: 50 });
-    cy.wait(500);
+    // cy.wait(500);
     cy.get('#loginPassword').type('NewUserPass', { delay: 50 });
-    cy.wait(500);
+    // cy.wait(500);
     cy.contains('button', 'Sign in').click();
     cy.contains('Logged in as newuser@example.org');
 
