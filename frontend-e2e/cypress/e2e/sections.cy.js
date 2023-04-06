@@ -25,6 +25,11 @@ const test_traditions = [
         language : "French",
         access : "Public",
         sectionscount : 1,
+        sections : [
+            {   name: 'DEFAULT',
+                language : 'French'
+            },
+        ],
 
         // tradition_id : "", // random
         direction : "Left to Right", // implied (language : French)
@@ -40,6 +45,17 @@ const test_traditions = [
         language : "Greek",
         access : "Private",
         sectionscount : 3, // init_test_data.sh sections w x y.
+        sections : [
+            {   name: 'section \'w\'',
+                language : 'Greek'
+            },
+            {   name: 'section \'x\'',
+                language : 'Greek'
+            },
+            {   name: 'section \'y\'',
+                language : 'Greek'
+            },
+        ],
 
         // tradition_id : "",
         direction : "Left to Right",
@@ -54,6 +70,14 @@ const test_traditions = [
         language : "Latin", // in legendfrag.xml (not Armenian, ok)
         access : "Private",
         sectionscount : 2,
+        sections : [
+            {   name: 'DEFAULT',
+                language : 'Latin'
+            },
+            {   name: 'section 2',
+                language : 'Latin'
+            },
+        ],
 
         // tradition_id : "",
         direction : "Left to Right",
@@ -67,6 +91,11 @@ const test_traditions = [
         language : "Armenian",
         access : "Private",
         sectionscount : 1,
+        sections : [
+            {   name: 'milestone-401',
+                language : 'Armenian'
+            },
+        ],
 
         // tradition_id : "",
         direction : "Left to Right",
@@ -82,6 +111,11 @@ const test_traditions = [
         language : "Greek",
         access : "Public",
         sectionscount : 1,
+        sections : [
+            {   name: 'DEFAULT',
+                language : 'Greek'
+            },
+        ],
 
         // tradition_id : "",
         direction : "Left to Right",
@@ -94,6 +128,11 @@ const test_traditions = [
         language : "Arabic",
         access : "Private",
         sectionscount : 1,
+        sections : [
+            {   name: 'DEFAULT',
+                language : 'Arabic'
+            },
+        ],
 
         // tradition_id : "",
         direction : "Right to Left", // implied (language : Arabic)
@@ -107,6 +146,11 @@ const test_traditions = [
         language : "Latin",
         access : "Private",
         sectionscount : 1,
+        sections : [
+            {   name: 'DEFAULT',
+                language : 'Latin'
+            },
+        ],
 
         // tradition_id : "",
         direction : "Left to Right",
