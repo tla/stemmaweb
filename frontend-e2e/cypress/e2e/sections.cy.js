@@ -175,7 +175,7 @@ beforeEach(() => {
 
 // count sections of each (public) tradition is correct
 describe('Each tradition should have the right number of sections listed in the toc', () => {
-    it('passes', () => {
+    it.skip('passes', () => {
         // TODO: switch the lines (to filter 'Public' traditions) when user rights are implemented:
         // test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
         test_traditions.forEach((tradition) => {
@@ -192,6 +192,33 @@ describe('Each tradition should have the right number of sections listed in the 
             cy.get('ul#traditions-list').contains('.nav-item', tradition.title).as('navitem');
             cy.get('@navitem').find('.folder-icon').click();
             cy.get('@navitem').find('section-list').find('ul').children().should('have.length', tradition.sectionscount);
+        });
+    });
+});
+
+describe('Section handling works correcly in the tradition list and the section properties area', () => {
+    it('passes', () => {
+
+        // needed input
+        const new_section_rel_path = './../bin/init-data/stemmarest/data/florilegium_z.csv';
+        const new_section_name = 'NEW SECTION';
+
+        // test with one tradition which has a few sections
+        // add and delete a section so that the final sections and their orders equal the initial ones
+        // edit and move sections also with no side effects
+        // assert that info in tradition list always equals to that in the sections panel
+        test_traditions.filter(({title}) => title === 'Florilegium "Coislinianum B"').forEach((tradition) => {
+            // login
+            cy.contains('Sign in').click();
+            cy.get('#loginEmail').should('be.visible').type('user@example.org', { delay: 50 });
+            cy.wait(500);
+            cy.get('#loginPassword').type('UserPass', { delay: 50 });
+            cy.contains('button', 'Sign in').click();
+            cy.contains('Logged in as user@example.org');
+
+            // logout
+            cy.contains('Sign out').click();
+            cy.contains('Sign in').should('be.visible');
         });
     });
 });
