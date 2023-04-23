@@ -1,3 +1,11 @@
+.btn-primary {
+  --bs-btn-bg: #6f9ee3;
+  --bs-btn-border-color: #6282b0;
+  --bs-btn-hover-bg: #4084e8;
+  --bs-btn-disabled-bg: #c7d4e7;
+  --bs-btn-disabled-border-color: #adb5bf;
+}
+
 .brand-dark {
   color: rgba(255, 255, 255, 0.7);
 }
@@ -133,3 +141,4 @@ delete-section-button .btn-outline-danger {
   color: var(--bs-btn-color);
   padding-right: 0.5em;
 }
+

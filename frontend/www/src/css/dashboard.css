@@ -98,3 +98,28 @@ body {
   border-color: transparent;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
 }
+
+#logo_hiit {
+  width: 100%;
+}
+
+#logo_eadh {
+  width: 30%;
+  float: right;
+  padding-top: 1em;
+  padding-left: 1em;
+}
+
+#run-stemweb-form {
+  border-top: 1px solid rgba(0,0,0,0.15);
+  padding-top: 1em;
+}
+
+#algorithm-info {
+  border: 1px solid rgba(0,0,0,0.15);
+  height: 10em;
+  overflow-y: scroll;
+  font-size: 80%;
+  padding: 0.5em;
+  margin-bottom: 1em;
+}

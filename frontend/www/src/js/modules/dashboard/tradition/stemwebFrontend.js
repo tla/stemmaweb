@@ -1,0 +1,137 @@
+/** @typedef {import('@types/stemmaweb').BaseResponse} BaseResponse */
+
+/**
+ * Object to interact with the Stemmarest Middleware's API through high-level
+ * functions.
+ *
+ * @type {StemmarestService}
+ */
+// const stemwebService = stemmarestService;  NOTE: stemwebService is probably just there (js/moduels/common/service/stemwebService.js)
+
+// This class does not extend HTMLElement because the added html element causes the buttons in
+// in stemmaButtons.js not to line up neatly. So it's just a class that is associated with
+// the button through the constructor.
+class StemwebFrontend {
+
+  #algorithmSelect;
+  #stemwebAlgorithmInfos;
+
+  toStemwebAlgorithmInfo( algorithmFromResponse ){
+      const algorithmInfo = { 
+        name: algorithmFromResponse.fields.name,
+        desc: algorithmFromResponse.fields.desc,
+        order: algorithmFromResponse.pk
+      };
+      var metaItems = algorithmFromResponse.fields.args.filter( arg => { return arg.fields.external==true } )
+      metaItems = metaItems.map( arg => { 
+          return {
+            label: arg.fields.name,
+            value: '',
+            inputOptions: { control: 'text', size: 10, required: true, dataType: arg.fields.value }
+          } 
+        } 
+      );
+      algorithmInfo.metaItems = metaItems
+      return algorithmInfo
+  }
+
+  constructor() {
+    stemwebService.listAvailableAlgorithms().then( ( responseResult ) => {
+      if( typeof responseResult.success == 'undefined' ) {
+        this.#stemwebAlgorithmInfos = responseResult.map( this.toStemwebAlgorithmInfo );
+        this.#stemwebAlgorithmInfos.sort( (a,b) => a.order - b.order );
+        //// As long as there aren't any real arguments (only RHM has one)
+        //// it is probably useful to have this test additions here to gauge behavior.
+        // this.#stemwebAlgorithmInfos[1].metaItems.push( {
+        //   label: 'test1',
+        //   value: 'test value 1',
+        //   inputOptions: { control: 'text', size: 10, required: true, dataType: 'string' }
+        // });
+        // this.#stemwebAlgorithmInfos[1].metaItems.push( {
+        //   label: 'test2',
+        //   value: 'test value 2',
+        //   inputOptions: { control: 'text', size: 10, required: true, dataType: 'string' }
+        // });
+        const algorithmSelectOptions = this.#stemwebAlgorithmInfos.map( algorithmInfo => { return { value: algorithmInfo.order, display: algorithmInfo.name } } );
+        const algorithmSelectControl = {
+          label: 'Algorithm to run',
+          value: 'algorithmChosen',
+          inputOptions: { 
+            control: 'dropdown', 
+            selectOptions: algorithmSelectOptions,
+            selected: algorithmSelectOptions[0].value
+          }
+        } 
+        this.#algorithmSelect = formControlFactory.renderFormControl( algorithmSelectControl );
+      } else {
+        // If there is a succes property it is always false, which means something went wrong.
+        // TODO: What should this mean? Hide button? Report "Not available" in dialog?
+        console.error( `Failed to fetch StemWeb algorithms: ${responseResult.message}.` );
+      }
+    } );
+  }
+
+  get algorithmSelect() {
+    return this.#algorithmSelect;
+  }
+
+  get stemwebAlgorithmInfos() {
+    return this.#stemwebAlgorithmInfos;
+  }
+
+  setDescriptionAndControls( evt ) {
+    const algorithmInfo = stemwebFrontend.stemwebAlgorithmInfos.filter( info => info.order==evt.target.value )[0]
+    const argControls = algorithmInfo.metaItems.map( formControlFactory.renderFormControl ).join( '\n' );
+    document.querySelector( '#algorithm-info' ).innerHTML = algorithmInfo.desc; 
+    const argsElement = document.querySelector( '#algorithm-args' )
+    argsElement.innerHTML = argControls; 
+    fadeIn( argsElement );
+  }
+
+  showDialog() {
+    const info_html = `
+        <p>
+          <img id="logo_hiit" src="images/logo_hiit.jpg"></image>
+          <img id="logo_eadh" src="images/logo_eadh-150.png"></image>
+        </p>
+        <p>Stemweb is a webservice provided by the Helsinki Institute for Information Technology HIIT. 
+        The integration into Stemmaweb was generously supported by a small project grant from the 
+        European Association for Digital Humanities.</p>`
+    const modal_body = `
+    ${info_html}
+    <form
+        id="run-stemweb-form"
+        class="needs-validation"
+        novalidate=""
+    >
+      <span data-bs-toggle="collapse" data-bs-target="#algorithm-info-panel">
+        ${feather.icons['info'].toSvg()}
+      </span>
+      ${stemwebFrontend.algorithmSelect}
+      <div class="collapse" id="algorithm-info-panel">
+        <div id="algorithm-info">${stemwebFrontend.stemwebAlgorithmInfos[0].desc}</div>
+      </div>
+      <div id="algorithm-args-panel">
+        <div id="algorithm-args">${stemwebFrontend.stemwebAlgorithmInfos[0].metaItems.map( formControlFactory.renderFormControl ).join( '\n' )}</div>
+      </div>
+    </form>
+    `;
+    StemmawebDialog.show(
+      'Generate a Stemweb tree',
+      modal_body,
+      {
+        onOk: () => { console.log( 'ok clicked' ) }
+      },
+      {
+        okLabel: 'Run',
+        okType: 'primary',
+        closeLabel: 'Cancel',
+        closeType: 'secondary'
+      }
+    );
+    document.querySelector( 'select#algorithm-to-run_input' ).addEventListener( 'change', stemwebFrontend.setDescriptionAndControls );
+  }
+
+}
+
+stemwebFrontend = new StemwebFrontend();
