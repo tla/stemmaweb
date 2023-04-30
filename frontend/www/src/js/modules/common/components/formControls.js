@@ -40,21 +40,22 @@ class FormControlFactory {
             >
                 ${FormControlFactory.#createLabel(item)}
             </label>
-            <input
-                id="${item.label.toLowerCase()}_input"
-                type="text"
-                name="${item.label.toLowerCase()}_input"
-                value="${item.value}"
-                class="form-control ${item.inputOptions.required ? 'has-validation' : ''}"
-                ${
-                    item.inputOptions.size
-                    ? 'size="' + item.inputOptions.size + '"'
-                    : ''
-                }
-                ${item.inputOptions.required ? 'required=""' : ''}
-            />
-            ${item.inputOptions.required ? invalidFeedback : ''}
-            <br />
+            <div class="form-textfield">
+                <input
+                    id="${item.label.toLowerCase()}_input"
+                    type="text"
+                    name="${item.label.toLowerCase()}_input"
+                    value="${item.value}"
+                    class="form-control ${item.inputOptions.required ? 'has-validation' : ''}"
+                    ${
+                        item.inputOptions.size
+                        ? 'size="' + item.inputOptions.size + '"'
+                        : ''
+                    }
+                    ${item.inputOptions.required ? 'required=""' : ''}
+                />
+                ${item.inputOptions.required ? invalidFeedback : ''}
+            </div>
         `;
     }
 
@@ -99,7 +100,6 @@ class FormControlFactory {
                 return FormControlFactory.#createSelectOption(option, item.inputOptions.selected);
                 } ).join('\n') }
             </select>
-            <br />
         `;
     }  
 
@@ -123,7 +123,6 @@ class FormControlFactory {
                 ${FormControlFactory.#createLabel(item)}
                 </label>
             </div>
-            <br />
         `;
     }
 

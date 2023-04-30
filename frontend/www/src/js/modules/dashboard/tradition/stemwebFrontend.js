@@ -1,13 +1,5 @@
 /** @typedef {import('@types/stemmaweb').BaseResponse} BaseResponse */
 
-/**
- * Object to interact with the Stemmarest Middleware's API through high-level
- * functions.
- *
- * @type {StemmarestService}
- */
-// const stemwebService = stemmarestService;  NOTE: stemwebService is probably just there (js/moduels/common/service/stemwebService.js)
-
 // This class does not extend HTMLElement because the added html element causes the buttons in
 // in stemmaButtons.js not to line up neatly. So it's just a class that is associated with
 // the button through the constructor.
@@ -79,6 +71,49 @@ class StemwebFrontend {
     return this.#stemwebAlgorithmInfos;
   }
 
+  mapToHTMLTable( arr ) {
+    var rows = Array();
+    var cells; 
+    while( ( cells = arr.splice( 0, 3 ) ).length > 0 ){
+      cells = cells.map( (control) => { return `<td>${control}</td>` } );
+      cells = `<tr>${cells.join('')}</tr>`;
+      console.log( cells );
+      rows.push( cells );
+    } 
+    if( rows.length > 0 ) {
+      const variantControlsLabel = `<label for="variant-types-controls" id="variant-types-controls-label" class="form-label">
+          Include variants of type:
+        </label>\n`
+      return `${variantControlsLabel}<table class="variant-types-controls">${rows.join('\n')}</table>`;
+    } else {
+      return '';
+    }
+  }
+
+  setRelationTypesControls() {
+    stemmarestService.listRelationTypes( TRADITION_STORE.state.selectedTradition.id )
+      .then( (resp) => { 
+        if( resp.success ) {
+          const metaItems = resp.data.map( variantTypeItem => { return {
+              label: variantTypeItem.name,
+              value: variantTypeItem.name,
+              inputOptions: { 
+                control: 'checkbox', 
+                checked: true,
+                label: variantTypeItem.name
+              }
+          } });
+          const controls = metaItems.map( 
+            metaItem => { return formControlFactory.renderFormControl( metaItem ) }
+          );
+          var controlsHTML = stemwebFrontend.mapToHTMLTable( controls );
+          document.querySelector( '#algorithm-variants-panel' ).innerHTML = controlsHTML; 
+        } else {
+          StemmawebAlert.show(`Error: ${res.message}`, 'danger');
+        }
+    });
+  }
+
   setDescriptionAndControls( evt ) {
     const algorithmInfo = stemwebFrontend.stemwebAlgorithmInfos.filter( info => info.order==evt.target.value )[0]
     const argControls = algorithmInfo.metaItems.map( formControlFactory.renderFormControl ).join( '\n' );
@@ -114,6 +149,8 @@ class StemwebFrontend {
       <div id="algorithm-args-panel">
         <div id="algorithm-args">${stemwebFrontend.stemwebAlgorithmInfos[0].metaItems.map( formControlFactory.renderFormControl ).join( '\n' )}</div>
       </div>
+      <div id="algorithm-variants-panel">
+      </div>
     </form>
     `;
     StemmawebDialog.show(
@@ -130,6 +167,7 @@ class StemwebFrontend {
       }
     );
     document.querySelector( 'select#algorithm-to-run_input' ).addEventListener( 'change', stemwebFrontend.setDescriptionAndControls );
+    stemwebFrontend.setRelationTypesControls();
   }
 
 }

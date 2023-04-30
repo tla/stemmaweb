@@ -72,6 +72,21 @@
   font-size: 90%;
 }
 
+.form-textfield, 
+.form-select, 
+.form-check,
+.form-upload {
+  margin-bottom: 1.5em;
+}
+
+table.variant-types-controls .form-check, table.variant-types-controls .form-label {
+  margin-bottom: 0em;
+}
+
+table.variant-types-controls td {
+  padding-right: 2em;
+}
+
 .indicator-svg:hover {
   cursor: pointer;
 }
@@ -141,4 +156,3 @@ delete-section-button .btn-outline-danger {
   color: var(--bs-btn-color);
   padding-right: 0.5em;
 }
-
