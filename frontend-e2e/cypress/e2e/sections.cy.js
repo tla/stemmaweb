@@ -208,6 +208,8 @@ describe('Section handling works correcly in the tradition list and the section 
         // edit and move sections also with no side effects
         // assert that info in tradition list always equals to that in the sections panel
         test_traditions.filter(({title}) => title === 'Florilegium "Coislinianum B"').forEach((tradition) => {
+            cy.log('tradition.title : ' + tradition.title); // Florilegium "Coislinianum B"
+
             // login
             cy.contains('Sign in').click();
             cy.get('#loginEmail').should('be.visible').type('user@example.org', { delay: 50 });
@@ -215,6 +217,27 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.get('#loginPassword').type('UserPass', { delay: 50 });
             cy.contains('button', 'Sign in').click();
             cy.contains('Logged in as user@example.org');
+
+            // click on the tradition and unfold the sections
+            cy.get('ul#traditions-list').contains('.nav-item', tradition.title).as('navitem');
+            cy.get('@navitem').find('.folder-icon').click();
+            cy.get('@navitem').find('section-list').find('ul').children().as('sections');
+
+            // ensure count sections on website equals count sections of testtradition in test_traditions list (3)
+            // cy.log('@sections.length: ' + '@sections'.length); // 9 ???
+            cy.get('@sections').then((sections) => {
+                // cy.log('sections.length: ' + sections.length); // 3
+                // cy.log('tradition.sections.length: ' + tradition.sections.length); // 3
+                expect(sections.length).to.eq(tradition.sections.length);
+            });
+
+            // The 3 sections should be: w, x, y
+            // ensure the order of the sections equals to that in the traditions_list
+            cy.get('@sections').each(($ele, index) => {
+                // cy.log('Name of section ' + index + ": " + $ele.text());
+                // cy.log('tradition.sections[index].name: ' + tradition.sections[index].name);
+                expect(tradition.sections[index].name).to.eq('' + $ele.text().trim());
+            });
 
             // logout
             cy.contains('Sign out').click();
