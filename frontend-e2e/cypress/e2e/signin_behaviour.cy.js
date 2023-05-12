@@ -3,6 +3,8 @@
     - User can log in with password UserPass
     - User can log out again
     - A new user can be created (I used newuser@example.org / NewUserPass)
+      // newuser + current date+time, because at the moment user names can be overwritten,
+      // later it should not be possible to create a user with a name that is already registered.
     - The new user can then log in
 
     // - Creating user with existing name/id should fail. Don't overwrite users' passwords by re-registering existing ids.
@@ -45,6 +47,15 @@ describe('User can log in with password UserPass, and log out again', () => {
   });
 });
 
+const m = new Date();
+const dateString = // YYYY/mm/dd hh:m:sec
+    m.getUTCFullYear() + // + "/" +
+    ("0" + (m.getUTCMonth()+1)).slice(-2) + // + "/" +
+    ("0" + m.getUTCDate()).slice(-2) + // + " " +
+    ("0" + m.getUTCHours()).slice(-2) + // + ":" +
+    ("0" + m.getUTCMinutes()).slice(-2) + // + ":" +
+    ("0" + m.getUTCSeconds()).slice(-2);
+const newuser = 'newuser' + dateString + '@example.org';
 
 describe('A new user can be created', () => {
   it('passes', { defaultCommandTimeout: 10000 }, () => {
@@ -52,7 +63,7 @@ describe('A new user can be created', () => {
     cy.contains('Register').click();
 
     // cy.wait(500);
-    cy.get('#registerEmail').type('newuser@example.org', { delay: 50 });
+    cy.get('#registerEmail').type(newuser, { delay: 50 });
     // cy.wait(500);
     cy.get('#registerPassword').type('NewUserPass', { delay: 50 });
     // cy.wait(500);
@@ -63,12 +74,12 @@ describe('A new user can be created', () => {
 
     cy.log('The new user can then log in');
     // cy.wait(500);
-    cy.get('#loginEmail').type('newuser@example.org', { delay: 50 });
+    cy.get('#loginEmail').type(newuser, { delay: 50 });
     // cy.wait(500);
     cy.get('#loginPassword').type('NewUserPass', { delay: 50 });
     // cy.wait(500);
     cy.contains('button', 'Sign in').click();
-    cy.contains('Logged in as newuser@example.org');
+    cy.contains('Logged in as ' + newuser);
 
     cy.log('The new user can log out again');
     cy.contains('Sign out').click();
@@ -82,12 +93,12 @@ describe('The new user can then log in, and log out again', () => {
   it('passes', { defaultCommandTimeout: 10000 }, () => {
     cy.contains('Sign in').click();
     // cy.wait(500);
-    cy.get('#loginEmail').type('newuser@example.org', { delay: 50 });
+    cy.get('#loginEmail').type(newuser, { delay: 50 });
     // cy.wait(500);
     cy.get('#loginPassword').type('NewUserPass', { delay: 50 });
     // cy.wait(500);
     cy.contains('button', 'Sign in').click();
-    cy.contains('Logged in as newuser@example.org');
+    cy.contains('Logged in as ' + newuser);
 
     cy.log('The new user can log out again');
     cy.contains('Sign out').click();
