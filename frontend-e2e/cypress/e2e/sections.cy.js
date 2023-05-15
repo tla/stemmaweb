@@ -1,6 +1,6 @@
 /*  Sections handling should work without side effects
 
-https://github.com/tla/stemmaweb/pull/162: 
+https://github.com/tla/stemmaweb/pull/162:
 This one implements issue #10 (https://github.com/tla/stemmaweb/issues/10), deleting of sections.
 Tests to be added:
 * add a section
@@ -175,7 +175,7 @@ beforeEach(() => {
 
 // count sections of each (public) tradition is correct
 describe('Each tradition should have the right number of sections listed in the toc', () => {
-    it.skip('passes', () => {
+    it.skip('passes', () => { // skipped, because number of sections currently varies in course of other test(s)
         // TODO: switch the lines (to filter 'Public' traditions) when user rights are implemented:
         // test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
         test_traditions.forEach((tradition) => {
@@ -200,8 +200,10 @@ describe('Section handling works correcly in the tradition list and the section 
     it('passes', () => {
 
         // needed input
+        const new_section_name = 'NEW SECTION BY CY';
+        // relative path starting from frontend-e2e folder
+        // TODO: check if there is a standard cy way to refer to rel paths
         const new_section_rel_path = './../bin/init-data/stemmarest/data/florilegium_z.csv';
-        const new_section_name = 'NEW SECTION';
 
         // test with one tradition which has a few sections
         // add and delete a section so that the final sections and their orders equal the initial ones
@@ -238,6 +240,48 @@ describe('Section handling works correcly in the tradition list and the section 
                 // cy.log('tradition.sections[index].name: ' + tradition.sections[index].name);
                 expect(tradition.sections[index].name).to.eq('' + $ele.text().trim());
             });
+
+            // Add section
+            /* Click on the plus-feather next to "Text Directory",
+            click on "Add a section to an existing tradition" within the modal that appears,
+            enter name: new_section_name,
+            add file: new_section_rel_path,
+            select data format: comma-separated values (spreadsheet collation),
+            choose tradition to which the section should be added at the end: Florilegium "Coislinianum B"
+            click on: Save changes. */
+            cy.contains('#sidebarMenu', 'Text directory').find('svg.feather-plus-circle').click();
+            cy.get('.modal-content').find('#button_new_section').click();
+            cy.get('#add_tradition_modal').as('add_tradition_or_section').should('be.visible');
+            cy.get('@add_tradition_or_section').find('input#new_name').click().type(new_section_name, { delay: 50 });
+            cy.get('@add_tradition_or_section').find('input#uploadfile').selectFile(new_section_rel_path);
+            cy.get('@add_tradition_or_section').find('select#new_filetype').select('Comma-separated values (spreadsheet collation)').should('have.value', 'csv');
+            cy.get('@add_tradition_or_section').find('select#upload_for_tradition').select('Florilegium "Coislinianum B"');
+
+            cy.contains('button', 'Save changes').click();
+
+            // Delete section
+            /* Click on the folder icon next to the tradition-nav-name to unfold the sections,
+            click on the relevant section name,
+            in the property panel assert that the relevant section name is displayed,
+            click on the trash bin icon next to it,
+            assert that the relevant section name is no longer displayed in the tradition list.
+            Assert the correct number of sections.
+            */
+
+            // TODO: put in a function for re-use
+            cy.reload(true); // necessary just in cypress
+            // click on the tradition and unfold the sections
+            cy.get('ul#traditions-list').contains('.nav-item', tradition.title).as('navitem');
+            cy.get('@navitem').find('.folder-icon').click();
+            cy.get('@navitem').find('section-list').find('ul').children().as('sections');
+            cy.wait(500);
+            cy.get('@sections').find('.section-name').contains(new_section_name).click();
+            
+            cy.get('delete-section-button').click();
+            cy.get('button').contains('Yes, delete it').click();
+            cy.wait(500);
+            cy.reload(true); // the delete modal does close usually but not in cypress
+            // TODO: the further assertions
 
             // logout
             cy.contains('Sign out').click();
