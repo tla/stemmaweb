@@ -238,7 +238,7 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.get('@sections').each(($ele, index) => {
                 // cy.log('Name of section ' + index + ": " + $ele.text());
                 // cy.log('tradition.sections[index].name: ' + tradition.sections[index].name);
-                expect(tradition.sections[index].name).to.eq('' + $ele.text().trim());
+                expect(tradition.sections[index].name).to.eq($ele.text().trim());
             });
 
             // Add section
@@ -260,7 +260,7 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.contains('button', 'Save changes').click();
 
             // Delete section
-            /* Click on the folder icon next to the tradition-nav-name to unfold the sections,
+            /* Click on the folder icon of the relevant tradition to unfold the sections,
             click on the relevant section name,
             in the property panel assert that the relevant section name is displayed,
             click on the trash bin icon next to it,
@@ -272,16 +272,25 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.reload(true); // necessary just in cypress
             // click on the tradition and unfold the sections
             cy.get('ul#traditions-list').contains('.nav-item', tradition.title).as('navitem');
+            // Click on the folder icon of the relevant tradition to unfold the sections,
             cy.get('@navitem').find('.folder-icon').click();
             cy.get('@navitem').find('section-list').find('ul').children().as('sections');
             cy.wait(500);
+            // click on the relevant section name,
             cy.get('@sections').find('.section-name').contains(new_section_name).click();
             
+            // in the property panel assert that the relevant section name is displayed,
+            cy.get('#section_info').contains('tr', 'Name').as('section_name_row');
+            cy.get('@section_name_row').contains(new_section_name);
+
+            // click on the trash bin icon next to it,
             cy.get('delete-section-button').click();
             cy.get('button').contains('Yes, delete it').click();
             cy.wait(500);
             cy.reload(true); // the delete modal does close usually but not in cypress
-            // TODO: the further assertions
+
+            // assert that the relevant section name is no longer displayed in the tradition list.
+            // Assert the correct number of sections.
 
             // logout
             cy.contains('Sign out').click();
