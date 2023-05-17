@@ -260,14 +260,6 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.contains('button', 'Save changes').click();
 
             // Delete section
-            /* Click on the folder icon of the relevant tradition to unfold the sections,
-            click on the relevant section name,
-            in the property panel assert that the relevant section name is displayed,
-            click on the trash bin icon next to it,
-            assert that the relevant section name is no longer displayed in the tradition list.
-            Assert the correct number of sections.
-            */
-
             // TODO: put in a function for re-use
             cy.reload(true); // necessary just in cypress
             // click on the tradition and unfold the sections
@@ -289,8 +281,23 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.wait(500);
             cy.reload(true); // the delete modal does close usually but not in cypress
 
-            // assert that the relevant section name is no longer displayed in the tradition list.
-            // Assert the correct number of sections.
+            // assert that the new_section_name is no longer displayed in the tradition list,
+            // assert the correct number of sections: Restore original section list.
+
+            // click on the tradition and unfold the sections
+            cy.get('ul#traditions-list').contains('.nav-item', tradition.title).as('navitem');
+            cy.get('@navitem').find('.folder-icon').click();
+            cy.get('@navitem').find('section-list').find('ul').children().as('sections');
+            // ensure count sections on website equals count sections of testtradition in test_traditions list (3)
+            cy.get('@sections').then((sections) => {
+                expect(sections.length).to.eq(tradition.sections.length);
+            });
+            // ensure the order of the sections equals to that in the traditions_list
+            cy.get('@sections').each(($ele, index) => {
+                expect($ele.text().trim()).to.eq(tradition.sections[index].name);
+                // new_section_name is never found
+                expect($ele.text().trim()).not.contains(new_section_name);
+            });
 
             // logout
             cy.contains('Sign out').click();
