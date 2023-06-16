@@ -161,16 +161,6 @@ const test_traditions = [
 
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
-
-/*     // Notre besoin and Legend's fragment belong to user@example.org
-    cy.contains('Sign in').click();
-    cy.wait(500);
-    cy.get('#loginEmail').type('user@example.org', { delay: 50 });
-    cy.wait(500);
-    cy.get('#loginPassword').type('UserPass', { delay: 50 });
-    cy.wait(500);
-    cy.contains('button', 'Sign in').click();
-    cy.contains('Logged in as user@example.org'); */
 });
 
 // count sections of each (public) tradition is correct
@@ -212,21 +202,13 @@ describe('Section handling works correcly in the tradition list and the section 
         test_traditions.filter(({title}) => title === 'Florilegium "Coislinianum B"').forEach((tradition) => {
             cy.log('tradition.title : ' + tradition.title); // Florilegium "Coislinianum B"
 
-            // // login
-            // cy.contains('Sign in').click();
-            // cy.get('#loginEmail').should('be.visible').type('user@example.org', { delay: 50 });
-            // cy.wait(500);
-            // cy.get('#loginPassword').type('UserPass', { delay: 50 });
-            // cy.contains('button', 'Sign in').click();
-            // cy.contains('Logged in as user@example.org');
-
-            cy.intercept('POST', '/stemmaweb/requests/login').as('loginrequest');
+            // login
+            cy.intercept('POST', 'http://localhost:8888/stemmaweb/requests/login').as('loginrequest');
 
             // fill in form...
             cy.contains('Sign in').click();
             cy.get('#loginEmail').type('user@example.org', { delay: 50 });
             cy.get('#loginPassword').type('UserPass', { delay: 50 });
-            cy.log("CLICKING SIGN-IN BUTTON:");
             cy.contains('button', 'Sign in').click();
 
             cy.wait('@loginrequest').then(interception => {
