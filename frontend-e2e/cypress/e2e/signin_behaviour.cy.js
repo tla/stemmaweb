@@ -22,7 +22,9 @@ describe('User can\'t log in with the hash string', () => {
     // fill in form...
     cy.contains('Sign in').click();
     // cy.wait(500);
-    cy.get('#loginEmail').type('user@example.org', { delay: 50 });
+    cy.get('#loginEmail').as('login_email');
+    cy.wait(500);
+    cy.get('@login_email').type('user@example.org', { delay: 50 });
     // cy.wait(500);
     cy.get('#loginPassword').type('0NT3bCujDh6wvf5UTfXsjmlRhyEG6xvT1/kgiZPyjGk', { delay: 50 });
     // cy.wait(500);
@@ -43,7 +45,9 @@ describe('User can log in with password UserPass, and log out again', () => {
     cy.intercept('POST', '/stemmaweb/requests/login').as('loginrequest');
     cy.contains('Sign in').click();
     // cy.wait(500);
-    cy.get('#loginEmail').type('user@example.org', { delay: 50 });
+    cy.get('#loginEmail').as('login_email');
+    cy.wait(500);
+    cy.get('@login_email').type('user@example.org', { delay: 50 });
     // cy.wait(500);
     cy.get('#loginPassword').type('UserPass', { delay: 50 });
     // cy.wait(500);
@@ -115,7 +119,9 @@ describe('The new user can then log in, and log out again', () => {
   it('passes', { defaultCommandTimeout: 10000 }, () => {
     cy.contains('Sign in').click();
     // cy.wait(500);
-    cy.get('#loginEmail').type(newuser, { delay: 50 });
+    cy.get('#loginEmail').as('login_email');
+    cy.wait(500);
+    cy.get('@login_email').type(newuser, { delay: 50 });
     // cy.wait(500);
     cy.get('#loginPassword').type('NewUserPass', { delay: 50 });
     // cy.wait(500);

@@ -207,7 +207,11 @@ describe('Section handling works correcly in the tradition list and the section 
 
             // fill in form...
             cy.contains('Sign in').click();
-            cy.get('#loginEmail').type('user@example.org', { delay: 50 });
+            //cy.get('#loginEmail').type('user@example.org', { delay: 50 });
+            cy.get('#loginEmail').as('login_email');
+            cy.wait(500);
+            cy.get('@login_email').type('user@example.org', { delay: 50 });
+
             cy.get('#loginPassword').type('UserPass', { delay: 50 });
             cy.contains('button', 'Sign in').click();
 
