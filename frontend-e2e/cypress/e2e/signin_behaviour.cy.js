@@ -22,7 +22,7 @@ describe('User can\'t log in with the hash string', () => {
     // fill in form...
     cy.contains('Sign in').click();
     // cy.wait(500);
-    cy.get('#loginEmail').as('login_email');
+    cy.get('#loginEmail').should('be.visible').as('login_email');
     cy.wait(500);
     cy.get('@login_email').type('user@example.org', { delay: 50 });
     // cy.wait(500);
@@ -45,7 +45,7 @@ describe('User can log in with password UserPass, and log out again', () => {
     cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
     cy.contains('Sign in').click();
     // cy.wait(500);
-    cy.get('#loginEmail').as('login_email');
+    cy.get('#loginEmail').should('be.visible').as('login_email');
     cy.wait(500);
     cy.get('@login_email').type('user@example.org', { delay: 50 });
     // cy.wait(500);
@@ -94,8 +94,8 @@ describe('A new user can be created', () => {
 
     cy.log('The new user can then log in');
     cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
-    // cy.wait(500);
-    cy.get('#loginEmail').as('login_email');
+    cy.wait(500);
+    cy.get('#loginEmail').should('be.visible').as('login_email');
     cy.wait(500);
     cy.get('@login_email').type(newuser, { delay: 50 });
     // cy.wait(500);
@@ -118,14 +118,18 @@ describe('A new user can be created', () => {
 describe('The new user can then log in, and log out again', () => {
   it('passes', { defaultCommandTimeout: 10000 }, () => {
     cy.contains('Sign in').click();
-    // cy.wait(500);
-    cy.get('#loginEmail').as('login_email');
+    cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
+    cy.wait(500);
+    cy.get('#loginEmail').should('be.visible').as('login_email');
     cy.wait(500);
     cy.get('@login_email').type(newuser, { delay: 50 });
     // cy.wait(500);
     cy.get('#loginPassword').type('NewUserPass', { delay: 50 });
     // cy.wait(500);
     cy.contains('button', 'Sign in').click();
+    cy.wait('@loginrequest').then(interception => {
+      cy.expect(interception.response.statusCode).to.eq(200);
+    });
     cy.contains('Logged in as ' + newuser);
 
     cy.log('The new user can log out again');
