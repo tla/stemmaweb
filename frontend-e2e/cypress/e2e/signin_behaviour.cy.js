@@ -17,7 +17,7 @@ beforeEach(() => {
 
 describe('User can\'t log in with the hash string', () => {
   it('passes', { defaultCommandTimeout: 10000 }, () => {
-    cy.intercept('POST', '/stemmaweb/requests/login').as('loginrequest');
+    cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
 
     // fill in form...
     cy.contains('Sign in').click();
@@ -42,7 +42,7 @@ describe('User can\'t log in with the hash string', () => {
 
 describe('User can log in with password UserPass, and log out again', () => {
   it('passes', { defaultCommandTimeout: 10000 }, () => {
-    cy.intercept('POST', '/stemmaweb/requests/login').as('loginrequest');
+    cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
     cy.contains('Sign in').click();
     // cy.wait(500);
     cy.get('#loginEmail').as('login_email');
@@ -93,7 +93,7 @@ describe('A new user can be created', () => {
     // cy.contains('button', 'Sign up').click();
 
     cy.log('The new user can then log in');
-    cy.intercept('POST', '/stemmaweb/requests/login').as('loginrequest');
+    cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
     // cy.wait(500);
     cy.get('#loginEmail').as('login_email');
     cy.wait(500);
