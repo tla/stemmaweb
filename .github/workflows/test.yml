@@ -82,4 +82,13 @@ jobs:
         run: make decrypt-env
 
       - name: Run the end-to-end tests
-        run: make tests
+        run: |
+          make tests
+          # Zip up the results for upload
+          (cd /app/cypress/videos/ && tar -czvf test_videos.tgz *.mp4)
+      
+      - name: Upload test run videos
+        uses: actions/upload-artifact@v3
+        with:
+          name: test_videos.tgz
+          path: /app/cypress/videos/test_videos.tgz
