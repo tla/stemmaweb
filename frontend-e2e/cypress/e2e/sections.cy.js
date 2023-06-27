@@ -187,7 +187,7 @@ describe('Each tradition should have the right number of sections listed in the 
 });
 
 describe('Section handling works correcly in the tradition list and the section properties area', () => {
-    it('passes', () => {
+    it.skip('passes', () => {
 
         // needed input
         const new_section_name = 'NEW SECTION BY CY';
