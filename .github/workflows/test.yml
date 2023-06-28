@@ -88,5 +88,5 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: test_videos.tgz
-          path: /app/cypress/videos/
+          name: cypress_videos
+          path: frontend-e2e/cypress/videos
