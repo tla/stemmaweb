@@ -166,14 +166,14 @@ sub get_graph :Chained('section') :PathPart :Args(0) {
 
 =head2 help
 
- GET relation/help/$language
+ GET relation/$textid/help
 
 Returns the help window HTML.
 
 =cut
 
-sub help :Local :Args(1) {
-    my ($self, $c, $lang) = @_;
+sub help :Chained('text') :PathPart :Args(0) {
+    my ($self, $c) = @_;
     $c->stash->{'template'} = 'relatehelp.tt';
 }
 

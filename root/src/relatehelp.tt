@@ -76,46 +76,5 @@
     <p>If at any point it becomes too difficult to follow, please re-load the relationship mapper. The corrected graph will appear in its clean format.</p>
     <img src="[% c.uri_for( '/images/08_merged_reloaded.png' ) %]">
 
-    <!--
-[% IF language != 'NONE' %-]
-   <h3>Adding [% language %] morphological information to readings</h3>
-
-   <p>It is also possible to add morphological information to the readings in this text (that is, lemma and morphological tagging).  Double click on any reading to bring up the morphology info.  The options therein are:</p>
-
-   <ul>
-  	<li>Indicate if the word is a nonsense word</li>
-  	<li>Indicate if the word (whether sensical or not) cannot be grammatically correct here</li>
-  	<li>Indicate the "normal" form of the word for lemmatization purposes.  Any readings linked to this one via 'spelling' or 'orthographic' links will appear when the entry text box is clicked.</li>
-  	<li>Indicate the correct morphological form of this reading.  The shorthand syntax is:<br/>
-  		&lt;LEMMA&gt; // cat@&lt;CATEGORY&gt; (type@&lt;TYPE&gt; etc.)<br/>
-  		Each form must have at least a lemma and a category, and may have a number of additional features depending on the category (e.g. type, gender, number, case.) The possible options are as follows:
-  		<ul>
-[% FOREACH stype IN tagset.structures -%]
-[% IF stype.desc != 'use_features' -%]
-  			<li>Category [% stype.id -%] ([% stype.desc %])
-[% END -%]
-[% IF stype.use_features.size -%]
-   has features [% stype.use_features.join(', ') %]
-[% END -%]
-  			</li>
-[% END -%]
-  		</ul>
-  		<ul>
-[% FOREACH ftype IN tagset.features.keys.sort -%]
-  			<li>Feature [% ftype %] can have values:
-  				<ul>
-[% FOREACH fval IN tagset.features.$ftype.values -%]
-  					<li>[% fval.short %] =&gt; [% fval.long %]</li>
-[% END -%]
-  				</ul>
-  			</li>
-[% END -%]
-  		</ul>
-  	</li>
-    </ul>
-
-    <p>If initial lemmatization has been performed on the text, a number of readings may appear in yellow rather than green; this means that there are multiple possible morphologies for the reading in question. Double click on the reading to select and save the correct morphology.</p>
-[% END -%]
-   -->
   </div>
 [% PROCESS footer.tt %]
