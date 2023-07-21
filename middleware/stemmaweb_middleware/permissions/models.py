@@ -115,12 +115,37 @@ EndpointAccessPredicate = Callable[[PermissionArguments], bool]
 
 
 class EndpointAccess(pydantic.BaseModel):
+    """
+    Model describing the access to an endpoint.
+    It defines a ``name`` and ``description`` for debugging purposes,
+    as well as a ``predicate`` callback function that gets evaluated
+    whenever an endpoint associated with an instance of this class is accessed.
+    In case of a positive evaluation, the ``if_true`` permissions are granted.
+    The permissions represent the HTTP methods that are allowed for the endpoint.
+
+    This is necessary, since there are endpoints such as Stemmarest's
+    ``/tradition/{tradId}/``, where only GET is allowed for guests,
+    while PUT, and DELETE are allowed for users and admins.
+
+    Using an ``EndpointAccess`` instance, we can enforce this logic
+    by creating a ``predicate`` that checks the ``PermissionArguments``
+    for a user's role. Under the hood, we check the session cookie,
+    based on which the user role can be determined.
+    If no (valid) session cookie is present, the user is a guest. If a session
+    cookie is present, we extract the user ID from it and check the database for
+    the user's actual role.
+    """
+
     name: str
     description: str | None = None
     predicate: EndpointAccessPredicate
     if_true: set[Permission]
 
     def to_violation_str(self):
+        """
+        :return: a string representation of the violation.
+                 Gets returned to the frontend in case of permission violations.
+        """
         res = self.name
         if self.description is not None:
             res += f": {self.description}"
@@ -159,6 +184,21 @@ class PermissionCheckResult(NamedTuple):
 
 
 class Matchable(Protocol):
+    """
+    Protocol for classes that implement a `match` method, used
+    to match against a path.
+
+    The actual classes complying with this protocol currently are
+    stemmarest_endpoints.py::StemmarestEndpoint and
+    stemweb_endpoints.py::StemwebEndpoint.
+
+    The matching mechanism is used for the passthrough logic,
+    so that whenever a Flask wildcard route is invoked, we can
+    associate the requested endpoint with a static, managed endpoint.
+    This is necessary so that we can associate permissions with given endpoints
+    in an explicit, declarative way.
+    """
+
     @staticmethod
     def match(path: str) -> Optional["Matchable"]:
         pass
@@ -168,14 +208,29 @@ EndpointType = TypeVar("EndpointType", bound=Matchable)
 
 
 class PermissionProvider(ABC, Generic[EndpointType]):
+    """
+    Interface for classes to provide permission configuration for a given resource.
+    We use permission providers for Stemweb and Stemmarest endpoints.
+    """
+
     @abstractmethod
     def get_permission_config(
         self,
         permission_arguments: PermissionArguments,
     ) -> dict[EndpointType, dict[UserRole, list[PermissionConfig]]]:
+        """
+        Returns a dictionary of permissions per user role for a given endpoint
+        based on the supplied ``permission_arguments``.
+
+        :param permission_arguments: the arguments arriving with the request
+        :return: a dictionary of permissions per user role for a given endpoint
+        """
         raise NotImplementedError
 
     @property
     @abstractmethod
     def endpoint_type(self) -> type[EndpointType]:
+        """
+        :return: the type of the endpoint this provider is responsible for
+        """
         raise NotImplementedError
