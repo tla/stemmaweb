@@ -16,7 +16,7 @@ beforeEach(() => {
 });
 
 describe('User can\'t log in with the hash string', () => {
-  it.skip('passes', { defaultCommandTimeout: 10000 }, () => {
+  it('passes', { defaultCommandTimeout: 10000 }, () => {
     cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
 
     // fill in form...
@@ -41,7 +41,7 @@ describe('User can\'t log in with the hash string', () => {
 });
 
 describe('User can log in with password UserPass, and log out again', () => {
-  it.skip('passes', { defaultCommandTimeout: 10000 }, () => {
+  it('passes', { defaultCommandTimeout: 10000 }, () => {
     cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
     cy.contains('Sign in').click();
     // cy.wait(500);
@@ -78,7 +78,7 @@ const dateString = // YYYY/mm/dd hh:m:sec
 const newuser = 'newuser' + dateString + '@example.org';
 
 describe('A new user can be created', () => {
-  it.skip('passes', { defaultCommandTimeout: 10000 }, () => {
+  it.skip('under construction', { defaultCommandTimeout: 10000 }, () => {// to do: set db to initial state: delete user after the tests // elsewise, test is passing locally.
     cy.contains('Sign in').click();
     cy.contains('Register').click();
 
@@ -116,7 +116,7 @@ describe('A new user can be created', () => {
 
 // The new user can then log in
 describe('The new user can then log in, and log out again', () => {
-  it.skip('passes', { defaultCommandTimeout: 10000 }, () => {
+  it.skip('under construction', { defaultCommandTimeout: 10000 }, () => { // to do: set db to initial state: delete user after the tests // elsewise, test is passing locally.
     cy.contains('Sign in').click();
     cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
     cy.wait(500);

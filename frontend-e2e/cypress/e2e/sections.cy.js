@@ -165,7 +165,8 @@ beforeEach(() => {
 
 // count sections of each (public) tradition is correct
 describe('Each tradition should have the right number of sections listed in the toc', () => {
-    it.skip('passes', () => { // skipped, because number of sections currently varies in course of other test(s)
+    it.skip('under construction', () => { // set db to initial state
+        // skipped, because number of sections currently varies in course of other test(s)
         // TODO: switch the lines (to filter 'Public' traditions) when user rights are implemented:
         // test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
         test_traditions.forEach((tradition) => {
@@ -187,7 +188,7 @@ describe('Each tradition should have the right number of sections listed in the 
 });
 
 describe('Section handling works correcly in the tradition list and the section properties area', () => {
-    it.skip('passes', () => {
+    it.skip('under construction', () => { // set db to initial state
 
         // needed input
         const new_section_name = 'NEW SECTION BY CY';
