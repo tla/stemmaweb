@@ -137,3 +137,29 @@ describe('The new user can then log in, and log out again', () => {
     cy.contains('Sign in');
   });
 });
+
+describe('Creating a user with an already existing email address, i.e. user id, (whether user or admin) should fail', () => {
+  it.skip('issue', { defaultCommandTimeout: 10000 }, () => {
+    // to do: set db to initial state: delete user after the tests.
+
+    /* Issue: it is possible to create a new user with an already existing user name and any password,
+    the previous password will not work any more.
+
+    TODO:
+    if possible, get the example user from a variable, else hard-code 'user@example.org'
+    click and type to create a user with the same id.
+    The process should not succeed; there should be an error message
+
+    Or, register a user x@y.org with a new password, log in and out,
+    register the same username again with the same new password.
+    */
+  });
+});
+
+
+describe('After logout, the previous login credentials should not be retrieved in the respective input fields', () => {
+  it.skip('issue', { defaultCommandTimeout: 10000 }, () => {
+    // to do: set db to initial state: delete user after the tests.
+    // ...
+  });
+});

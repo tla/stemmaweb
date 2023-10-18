@@ -177,7 +177,7 @@ describe('A guest should not be able to upload a tradition: in another way than 
 }); */
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
-describe('A guest should not be able to delete any tradition: not be offered the "Delete" button"', () => {
+describe('A guest should not be able to delete any tradition: not be offered the "Delete" button', () => {
     it.skip('issue', () => {
         const label = 'Delete';
         cy.contains(label).should('not.be.visible'); // not even before listing the traditions in the toc
