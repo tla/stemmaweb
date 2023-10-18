@@ -1,6 +1,7 @@
 /*  Sections handling should work without side effects
 
-https://github.com/tla/stemmaweb/pull/162:
+(1)
+https://github.com/tla/stemmaweb/pull/162#issue-1618601168:
 This one implements issue #10 (https://github.com/tla/stemmaweb/issues/10), deleting of sections.
 Tests to be added:
 * add a section
@@ -12,7 +13,18 @@ Tests to be added:
 * editing sections should be unaffected
 * etc.
 
-* after editing a section name, the names in the section box and in the tradition list should be equal.
+!! after editing a section name, the names in the section box and in the tradition list should be equal.
+
+(2)
+https://github.com/tla/stemmaweb/pull/128#issuecomment-1433344593:
+reordering of sections. Functionalities to be tested:
+
+    User can reorder sections by dragging, subtests:
+        Reorder fails on server side: alert is displayed, dragged section is returned to original position
+        User 'drops' drag by accident (e.g. outisde droppable list): section is returned to original position
+        Selected list item is highighted when dragged
+        Selected list item is unhighlighted when dropped
+        Selected list item can only be dropped on parent list (dropping elsewhere has no effects/consequences)
 
 */
 
@@ -165,8 +177,8 @@ beforeEach(() => {
 
 // count sections of each (public) tradition is correct
 describe('Each tradition should have the right number of sections listed in the toc', () => {
-    it.skip('under construction', () => { // set db to initial state
-        // skipped, because number of sections currently varies in course of other test(s)
+    it.skip('under construction', () => { // to do: user rights and db initial state.
+        // TODO: number of sections currently varies in course of other test(s)
         // TODO: switch the lines (to filter 'Public' traditions) when user rights are implemented:
         // test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
         test_traditions.forEach((tradition) => {
@@ -188,7 +200,7 @@ describe('Each tradition should have the right number of sections listed in the 
 });
 
 describe('Section handling works correcly in the tradition list and the section properties area', () => {
-    it.skip('under construction', () => { // set db to initial state
+    it.skip('under construction', () => { // to do: set db to initial state
 
         // needed input
         const new_section_name = 'NEW SECTION BY CY';
@@ -308,5 +320,11 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.contains('Sign out').click();
             cy.contains('Sign in').should('be.visible');
         });
+    });
+});
+
+describe('User can reorder sections by dragging', () => {
+    it.skip('under construction', () => { // to do: set db to initial state
+        // ...
     });
 });
