@@ -1,7 +1,7 @@
 // Creating user with existing email address (user / admin) should fail.
 
 describe("Creating a user with the existing test user's id should fail", function () {
-  it.skip('passes', function () {
+  it.skip('under construction', function () {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
 
     // TODO:

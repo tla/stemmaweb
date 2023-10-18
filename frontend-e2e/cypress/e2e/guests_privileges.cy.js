@@ -242,7 +242,7 @@ describe('A guest should see all public traditions listed in the toc, and only t
 });
 
 describe('A guest should be offered to download a public "Tradition"', () => {
-    it.skip('passes', () => {
+    it('passes', () => {
         const label = 'Tradition';
         // Private traditions should not be visible for a guest: is verified in another test
         test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
@@ -262,7 +262,7 @@ describe('A guest should be offered to download a public "Tradition"', () => {
 // 'Examine Stemma' and 'Download Stemma' in all available formats.
 // TODO, issue: disable or hide certain elements when no stemma available, etc. see below
 describe('A guest should be offered to "Examine Stemma" of a public tradition only for any of its stemmata', () => {
-    it.skip('passes', () => {
+    it.skip('under construction', () => {
         const label_examine = 'Examine Stemma';
         const label_download_stemma = 'Stemma';
         // Private traditions should not be visible for a guest: is verified in another test
@@ -324,19 +324,19 @@ describe('A guest should be offered to "Examine Stemma" of a public tradition on
 // A guest should see ...
 
 describe('A guest should see the heading "Stemmaweb — a collection of tools for the analysis of collated texts"', () => {
-    it.skip('passes', () => {
+    it('passes', () => {
         cy.get('header').contains('a', 'Stemmaweb — a collection of tools for the analysis of collated texts').should('be.visible');
     });
 });
 
 describe('A guest should be offered to "Sign in" (the actual sign-in behaviour is examined in another test)', () => {
-    it.skip('passes', () => {
+    it('passes', () => {
         cy.get('header').contains('a', 'Sign in').should('be.visible');
     });
 });
 
 describe('A guest should be offered to navigate to the "About" page', () => {
-    it.skip('passes', () => {
+    it('passes', () => {
         cy.get('header').find('a').contains('About');
         // TODO: check the right address is linked and visited
     });
