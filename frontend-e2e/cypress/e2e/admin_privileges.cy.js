@@ -8,7 +8,7 @@
 */
 
 describe('Users except admins should not be allowed to see and manipulate other users\'s traditions', () => {
-    it.skip('issue', () => { // currently, logged in as XYZ, one can even delete another user's tradition
+    it.skip('issue #170', () => { // currently, logged in as XYZ, one can even delete another user's tradition
         // set db to initial state
     });
 });
