@@ -154,7 +154,7 @@ beforeEach(() => {
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should not see any private tradition listed in the toc', () => {
-    it.skip('issue #170', () => {
+    it.skip('issue #170, #157, #155', () => {
         test_traditions.forEach((tradition) => {
             if (tradition.access == "Private") {
                 cy.get('#traditions-list').contains(tradition.title).should('not.exist');
@@ -165,7 +165,7 @@ describe('A guest should not see any private tradition listed in the toc', () =>
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should not be able to upload a tradition: not see the feather-plus-circle (next to the toc header "Text directory")', () => {
-    it.skip('issue #170', () => {
+    it.skip('issue #170, #157', () => {
         cy.contains('h6', 'Text directory').find('svg').should('not.be.visible'); // currently, fails as expected.
     });
 });
@@ -178,7 +178,7 @@ describe('A guest should not be able to upload a tradition: in another way than 
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should not be able to delete any tradition: not be offered the "Delete" button', () => {
-    it.skip('issue #170', () => {
+    it.skip('issue #170, #157', () => {
         const label = 'Delete';
         cy.contains(label).should('not.be.visible'); // not even before listing the traditions in the toc
         test_traditions.forEach((tradition) => {
@@ -201,7 +201,7 @@ describe('A guest should not be able to delete a tradition: in another way than 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should not be offered to "Edit Collation" of any tradition', () => {
     const label = 'Edit Collation';
-    it.skip('issue #170', () => {
+    it.skip('issue #170, #157', () => {
         cy.contains(label).should('not.be.visible'); // not even before listing the traditions in the toc
         test_traditions.forEach((tradition) => {
             if (tradition.access == "Public") {
@@ -215,7 +215,7 @@ describe('A guest should not be offered to "Edit Collation" of any tradition', (
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should not be offered to edit Properties', () => {
-    it.skip('issue #170', () => {
+    it.skip('issue #170, #157', () => {
         cy.get('#sidebar_properties').find('h6').find('svg').should('not.be.visible');
     });
 });
@@ -225,7 +225,7 @@ describe('A guest should not be offered to edit Properties', () => {
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should see all public traditions listed in the toc, and only those', () => {
-    it.skip('issue #170', () => {
+    it.skip('issue #170, #157', () => {
         // the number of displayed traditions should be equal to the number of public traditions
         // const count = test_traditions.length; // all traditions
         const count = test_traditions.filter(({access}) => access === 'Public').length;
