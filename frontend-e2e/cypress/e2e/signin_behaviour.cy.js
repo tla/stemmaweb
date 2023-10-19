@@ -139,7 +139,7 @@ describe('The new user can then log in, and log out again', () => {
 });
 
 describe('Creating a user with an already existing email address, i.e. user id, (whether user or admin) should fail', () => {
-  it.skip('issue', { defaultCommandTimeout: 10000 }, () => {
+  it.skip('issue #181', { defaultCommandTimeout: 10000 }, () => {
     // to do: set db to initial state: delete user after the tests.
 
     /* Issue: it is possible to create a new user with an already existing user name and any password,
@@ -158,7 +158,7 @@ describe('Creating a user with an already existing email address, i.e. user id, 
 
 
 describe('After logout, the previous login credentials should not be retrieved in the respective input fields', () => {
-  it.skip('issue', { defaultCommandTimeout: 10000 }, () => {
+  it.skip('issue #180', { defaultCommandTimeout: 10000 }, () => {
     // to do: set db to initial state: delete user after the tests.
     // ...
   });
