@@ -3,6 +3,12 @@
 Stemmaweb is a web application for viewing and manipulating text traditions based on
 the [Stemmarest](http://dhuniwien.github.io/tradition_repo/) data model.
 
+## Production version
+
+Note that this branch is a development version of Stemmaweb! For the code currently running in production at https://stemmaweb.net/stemmaweb/, please consult the `master` branch of this repository.
+
+## Current development
+
 **Table of Contents**
 
 - [Overview](#overview)
