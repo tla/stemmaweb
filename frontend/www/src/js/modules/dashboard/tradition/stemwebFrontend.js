@@ -77,7 +77,6 @@ class StemwebFrontend {
     while( ( cells = arr.splice( 0, 3 ) ).length > 0 ){
       cells = cells.map( (control) => { return `<td>${control}</td>` } );
       cells = `<tr>${cells.join('')}</tr>`;
-      console.log( cells );
       rows.push( cells );
     } 
     if( rows.length > 0 ) {
