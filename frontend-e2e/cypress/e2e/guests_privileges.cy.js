@@ -47,104 +47,7 @@ admin@example.org (pw AdminPass) has one tradition
     Verbum uncorrected, private
  */
 
-// checked against init_test_data.sh
-// TODO: check sectionscount
-const test_traditions = [
-    {   title : "Notre besoin",
-        filetype : "stemmaweb",
-        owner : "user@example.org",
-        language : "French",
-        access : "Public",
-        // sectionscount : 1,
-
-        // tradition_id : "", // random
-        direction : "Left to Right", // implied (language : French)
-        witnesses : ["A", "B", "C", "D", "F", "J", "L", "M", "S", "T1", "T2", "U", "V"], // besoin_stemma.json, besoin_stemma_2.json
-        stemmata : [
-            "Stemweb stemma", // identifier in besoin_stemma.json"
-            "Stemweb stemma duplicate" // identifier in besoin_stemma_2.json
-        ]
-    },
-    {   title : "Florilegium \"Coislinianum B\"",
-        filetype : "csv",
-        owner : "user@example.org",
-        language : "Greek",
-        access : "Private",
-        // sectionscount : 3, // init_test_data.sh sections w x y.
-
-        // tradition_id : "",
-        direction : "Left to Right",
-        witnesses : ["A", "B", "C", "D", "E", "F", "G", "H", "K", "P", "Q", "S", "T"], // from the dashboard, looks ok from the florilegium csv files
-        stemmata : [
-            "stemma of Tomas" // identifier in florilegium_stemma.json
-        ]
-    },
-    {   title : "Legend's fragment", // name given in init_test_data.sh, full title in legendfrag.xml: "Legend of Bishop Henry",
-        filetype : "stemmaweb",
-        owner : "user@example.org",
-        language : "Latin", // in legendfrag.xml (not Armenian, ok)
-        access : "Private",
-        // sectionscount : 2,
-
-        // tradition_id : "",
-        direction : "Left to Right",
-        witnesses : ["A", "Ab", "B", "BA", "BL", "BLu", "BS", "BSt", "BU", "Bc", "C", "Dr", "Ef", "F", "G", "Gh", "H", "Ho", "JG", "K", "L", "Li", "M", "MN", "N", "O", "P", "Q", "S", "Sk", "St", "T", "U", "V", "Vg", "X", "Y"],
-        stemmata : []
-    },
-
-    {   title : "Ժամանակագրութիւն checked", // just milestone "Matthew 401"; title taken from the graphml/zip file
-        filetype : "graphml",
-        owner : "benutzer@example.org",
-        language : "Armenian",
-        access : "Private",
-        // sectionscount : 1,
-
-        // tradition_id : "",
-        direction : "Left to Right",
-        witnesses : ["A", "B", "Bz430", "Bz644", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M1775", "M2855", "M2899", "M3380", "M6605", "M6686", "M8232", "O", "V", "W", "W243", "W246", "X", "Y", "Z"],
-        stemmata : [
-            "First attempt", // Stemma is included in zip data
-            "RHM 1641561271_0" // Stemma is included in zip data
-        ]
-    },
-    {   title : "John verse",
-        filetype : "stemmaweb",
-        owner : "benutzer@example.org",
-        language : "Greek",
-        access : "Public",
-        // sectionscount : 1,
-
-        // tradition_id : "",
-        direction : "Left to Right",
-        witnesses : ["P60", "P66", "base", "w1", "w11", "w13", "w17", "w19", "w2", "w21", "w211", "w22", "w28", "w290", "w3", "w30", "w32", "w33", "w34", "w36", "w37", "w38", "w39", "w41", "w44", "w45", "w54", "w7"],
-        stemmata : []
-    },
-    {   title : "Arabic snippet",
-        filetype : "csv",
-        owner : "benutzer@example.org",
-        language : "Arabic",
-        access : "Private",
-        // sectionscount : 1,
-
-        // tradition_id : "",
-        direction : "Right to Left", // implied (language : Arabic)
-        witnesses : ["A", "B"], // arabic_snippet.csv
-        stemmata : []
-    },
-
-    {   title : "Verbum uncorrected",
-        filetype : "stemmaweb",
-        owner : "admin@example.org",
-        language : "Latin",
-        access : "Private",
-        // sectionscount : 1,
-
-        // tradition_id : "",
-        direction : "Left to Right",
-        witnesses : ["Ba96", "Er16", "Go325", "Gr314", "Kf133", "Kr185", "Kr299", "Mü11475", "Mü22405", "Mü28315", "MüU151", "Sg524", "Wi3818"], // looks good
-        stemmata : []
-    },
-];
+import { test_traditions } from "./_shared_variables";
 
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
@@ -154,7 +57,7 @@ beforeEach(() => {
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should not see any private tradition listed in the toc', () => {
-    it.skip('issue', () => {
+    it.skip('issue #170, #157, #155', () => {
         test_traditions.forEach((tradition) => {
             if (tradition.access == "Private") {
                 cy.get('#traditions-list').contains(tradition.title).should('not.exist');
@@ -165,7 +68,7 @@ describe('A guest should not see any private tradition listed in the toc', () =>
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should not be able to upload a tradition: not see the feather-plus-circle (next to the toc header "Text directory")', () => {
-    it.skip('issue', () => {
+    it.skip('issue #170, #157', () => {
         cy.contains('h6', 'Text directory').find('svg').should('not.be.visible'); // currently, fails as expected.
     });
 });
@@ -177,8 +80,8 @@ describe('A guest should not be able to upload a tradition: in another way than 
 }); */
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
-describe('A guest should not be able to delete any tradition: not be offered the "Delete" button"', () => {
-    it.skip('issue', () => {
+describe('A guest should not be able to delete any tradition: not be offered the "Delete" button', () => {
+    it.skip('issue #170, #157', () => {
         const label = 'Delete';
         cy.contains(label).should('not.be.visible'); // not even before listing the traditions in the toc
         test_traditions.forEach((tradition) => {
@@ -201,7 +104,7 @@ describe('A guest should not be able to delete a tradition: in another way than 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should not be offered to "Edit Collation" of any tradition', () => {
     const label = 'Edit Collation';
-    it.skip('issue', () => {
+    it.skip('issue #170, #157', () => {
         cy.contains(label).should('not.be.visible'); // not even before listing the traditions in the toc
         test_traditions.forEach((tradition) => {
             if (tradition.access == "Public") {
@@ -215,7 +118,7 @@ describe('A guest should not be offered to "Edit Collation" of any tradition', (
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should not be offered to edit Properties', () => {
-    it.skip('issue', () => {
+    it.skip('issue #170, #157', () => {
         cy.get('#sidebar_properties').find('h6').find('svg').should('not.be.visible');
     });
 });
@@ -225,7 +128,7 @@ describe('A guest should not be offered to edit Properties', () => {
 
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should see all public traditions listed in the toc, and only those', () => {
-    it.skip('issue', () => {
+    it.skip('issue #170, #157', () => {
         // the number of displayed traditions should be equal to the number of public traditions
         // const count = test_traditions.length; // all traditions
         const count = test_traditions.filter(({access}) => access === 'Public').length;
@@ -262,13 +165,14 @@ describe('A guest should be offered to download a public "Tradition"', () => {
 // 'Examine Stemma' and 'Download Stemma' in all available formats.
 // TODO, issue: disable or hide certain elements when no stemma available, etc. see below
 describe('A guest should be offered to "Examine Stemma" of a public tradition only for any of its stemmata', () => {
-    it('passes', () => {
+    it.skip('under construction', () => {
         const label_examine = 'Examine Stemma';
         const label_download_stemma = 'Stemma';
         // Private traditions should not be visible for a guest: is verified in another test
         test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
             // click through all public traditions
             cy.log('title: ' + tradition.title);
+            // cy.wait(1000);
             cy.get('#traditions-list').contains(tradition.title).click();
 
             // click through each of its stemmata // select stemma

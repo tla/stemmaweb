@@ -24,43 +24,11 @@ services:
     entrypoint: >
       /bin/bash -c "./wait-for-it.sh --host=${STEMMAREST_HOST} --port=${STEMMAREST_PORT} -- /init-data/init_test_data.sh"
 
-  stemweb_mysql:
-    container_name: stemweb_mysql
-    image: mariadb:10.4
-    restart: always
-    env_file:
-      - stemweb/.env.dev
-    ports:
-      - "4306:3306"
-
-  stemweb_redis:
-    container_name: stemweb_redis
-    image: redis:alpine
-    restart: always
-    sysctls:
-      # change this Linux Kernel Parameter (default is 128) within container because of this WARNING
-      # "The TCP backlog setting of 511 cannot be enforced
-      # because /proc/sys/net/core/somaxconn is set to the lower value of 128."
-      net.core.somaxconn: 512     # maximal number of connections
-    ports:
-      - "7379:6379"
-    volumes:
-      - ./stemweb/redis/redis.conf:/usr/local/etc/redis/redis.conf # version 6 from  https://redis.io/topics/config
-    command:
-      redis-server /usr/local/etc/redis/redis.conf
-
   stemweb:
     container_name: stemweb
-    image: dhuniwien/stemweb_py37:latest
-    restart: always
-    env_file:
-      - stemweb/.env.dev
-    depends_on:
-      - stemweb_mysql
-      - stemweb_redis
+    build: stemweb_mock
     ports:
       - "8000:8000"
-      - "51000:51000"
 
   stemmaweb:
     container_name: stemmaweb
