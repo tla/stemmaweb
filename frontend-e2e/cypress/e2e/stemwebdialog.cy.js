@@ -24,7 +24,18 @@ beforeEach(() => {
 });
 
 describe('Stemweb dialog should work properly', () => {
-    it.skip('under construction', () => {
-        // ...
+    it('under construction', () => {
+        // click on button "Run Stemweb" should open Stemweb dialog
+        cy.contains('Run Stemweb').click();
+        cy.get('stemmaweb-dialog').as('stemwebmodal');
+        cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
+        // Dropdown should show names of Stemweb algorithms (currently: RHM, Neighbour joining, and Neighbour net)
+        // Click info badge ('i') should show description of algorithm
+        // Click on RHM should reveal argument field 'Iterations'
+        // Click on other algorithms should not show any argument fields
+        // Click on Cancel closes dialog
+        // Click on anywhere outside dialog closes dialog
+        // Click on "Run" (not implemented yet, just closes dialog for now)
+        // cy.get('@stemwebmodal').should('not.be.visible');
     });
 });
