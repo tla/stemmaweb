@@ -34,8 +34,10 @@ describe('Stemweb dialog should work properly', () => {
         // Click on RHM should reveal argument field 'Iterations'
         // Click on other algorithms should not show any argument fields
         // Click on Cancel closes dialog
+        cy.get('@stemwebmodal').should('be.visible');
+        cy.get('@stemwebmodal').find('button').contains('Cancel').click();
         // Click on anywhere outside dialog closes dialog
         // Click on "Run" (not implemented yet, just closes dialog for now)
-        // cy.get('@stemwebmodal').should('not.be.visible');
+        cy.get('@stemwebmodal').should('not.be.visible');
     });
 });
