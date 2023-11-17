@@ -136,4 +136,12 @@ const test_traditions = [
         stemmata : []
     },
 ];
-export {test_traditions};
+
+const stemweb_algorithms = [
+    "RHM",
+    "Neighbour joining",
+    "Neighbour net",
+    "Pars"
+];
+
+export {test_traditions, stemweb_algorithms};
