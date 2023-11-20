@@ -40,6 +40,9 @@ describe('Stemweb dialog should work properly', () => {
         .each(($el, index, $list) => {
             cy.log(index, $el.text());
             // TODO compare texts without asterisks.
+            cy.get($el).should(($el) => {
+                expect($el.text().trim()).equal(stemweb_algorithms[index]);
+            });
         });
 
         // Click info badge ('i') should show description of algorithm
