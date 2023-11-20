@@ -139,8 +139,8 @@ const test_traditions = [
 
 const stemweb_algorithms = [
     "RHM",
-    "Neighbour joining",
-    "Neighbour net",
+    "Neighbour Joining",
+    "Neighbour Net",
     "Pars"
 ];
 

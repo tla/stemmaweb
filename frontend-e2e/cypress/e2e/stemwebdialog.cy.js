@@ -32,14 +32,13 @@ describe('Stemweb dialog should work properly', () => {
         cy.get('stemmaweb-dialog').as('stemwebmodal');
         cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
 
-        // Dropdown should show names of Stemweb algorithms (currently: RHM, fNeighbour joining, and Neighbour net)
-        // TODO also 'Pars'?
+        // Dropdown should show names of Stemweb algorithms (currently: RHM, Neighbour Joining, and Neighbour Net, and Pars)
         // TODO select does not drop down the options on click in cypress
         cy.get('@stemwebmodal').find('select>option')
         .should('have.length', len_stemweb_algorithms)
         .each(($el, index, $list) => {
             cy.log(index, $el.text());
-            // TODO compare texts without asterisks.
+            cy.log("stemweb_algorithms[" + index + "]: " + stemweb_algorithms[index]);
             cy.get($el).should(($el) => {
                 expect($el.text().trim()).equal(stemweb_algorithms[index]);
             });
