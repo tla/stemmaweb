@@ -18,7 +18,7 @@ Tests to add:
 
 */
 
-import { stemweb_algorithms } from './_shared_variables.js';
+import stemweb_algorithms from '../fixtures/stemweb_algorithms.json'
 const len_stemweb_algorithms = stemweb_algorithms.length;
 
 beforeEach(() => {
