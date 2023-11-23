@@ -43,11 +43,19 @@ describe('Stemweb dialog should work properly', () => {
                 .invoke("text").then((txt) => {
                     const selected = txt.trim();
                     expect(selected).equal(optionText); // ok, desired option is selected
-                    expect(optionText).equal(stemweb_algorithms[index]); // and it matches the test data
+                    expect(optionText).equal(stemweb_algorithms[index].text); // and it matches the test data
+
+                    // Click info badge ('i') should show description of algorithm
+                    cy.get('@stemwebmodal').find('form').find('svg') // .its('length').then((len) => {cy.log(len)});
+                    .should('have.length', 1)
+                    .click();
+                    cy.get('@stemwebmodal').find('#algorithm-info')
+                    .invoke('html').then((innerHTML) => {
+                        expect(innerHTML).equal(stemweb_algorithms[index].description);
+                    });
                 });
         });
 
-        // Click info badge ('i') should show description of algorithm
         // Click on RHM should reveal argument field 'Iterations'
         // Click on other algorithms should not show any argument fields
         // Click on Cancel closes dialog
