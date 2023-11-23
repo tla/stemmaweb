@@ -53,11 +53,17 @@ describe('Stemweb dialog should work properly', () => {
                     .invoke('html').then((innerHTML) => {
                         expect(innerHTML).equal(stemweb_algorithms[index].description);
                     });
+
+                    // Click on RHM should reveal argument field 'Iterations'
+                    if (optionText === 'RHM') {
+                        cy.get('@stemwebmodal').find('#iterations_input').should('be.visible');
+                    // Click on other algorithms should not show any argument fields
+                    } else {
+                        cy.get('@stemwebmodal').find('#iterations_input').should('not.exist');
+                    }
                 });
         });
 
-        // Click on RHM should reveal argument field 'Iterations'
-        // Click on other algorithms should not show any argument fields
         // Click on Cancel closes dialog
         cy.get('@stemwebmodal').should('be.visible');
         cy.get('@stemwebmodal').find('button').contains('Cancel').trigger('mouseover').click();
