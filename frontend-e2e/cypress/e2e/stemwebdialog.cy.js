@@ -67,8 +67,15 @@ describe('Stemweb dialog should work properly', () => {
         // Click on Cancel closes dialog
         cy.get('@stemwebmodal').should('be.visible');
         cy.get('@stemwebmodal').find('button').contains('Cancel').trigger('mouseover').click();
-        // Click on anywhere outside dialog closes dialog
-        // Click on "Run" (not implemented yet, just closes dialog for now)
         cy.get('@stemwebmodal').should('not.be.visible');
+
+        // Click on "Run" (not implemented yet, just closes dialog for now)
+        cy.contains('Run Stemweb').click();
+        cy.get('stemmaweb-dialog').as('stemwebmodal');
+        cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
+        cy.get('@stemwebmodal').find('button').contains('Run').trigger('mouseover').click();
+        cy.get('@stemwebmodal').should('not.be.visible'); // <div.modal-content> still existing
+
+        // Click on anywhere outside dialog closes dialog
     });
 });
