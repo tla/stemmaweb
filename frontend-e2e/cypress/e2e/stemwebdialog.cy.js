@@ -56,10 +56,10 @@ describe('Stemweb dialog should work properly', () => {
 
                     // Click on RHM should reveal argument field 'Iterations'
                     if (optionText === 'RHM') {
-                        cy.get('@stemwebmodal').find('#iterations_input').should('be.visible');
+                        cy.get('@stemwebmodal').find('#algorithm-args').find('#iterations_input').should('be.visible');
                     // Click on other algorithms should not show any argument fields
                     } else {
-                        cy.get('@stemwebmodal').find('#iterations_input').should('not.exist');
+                        cy.get('@stemwebmodal').find('#algorithm-args').children().should('not.exist');
                     }
                 });
         });
