@@ -29,7 +29,7 @@ describe('Stemweb dialog should work properly', () => {
     it('under construction', () => {
         // click on button "Run Stemweb" should open Stemweb dialog
         cy.contains('Run Stemweb').click();
-        cy.get('stemmaweb-dialog').as('stemwebmodal');
+        cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
         cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
 
         // Dropdown should show names of Stemweb algorithms
@@ -71,7 +71,7 @@ describe('Stemweb dialog should work properly', () => {
 
         // Click on "Run" (not implemented yet, just closes dialog for now)
         cy.contains('Run Stemweb').click();
-        cy.get('stemmaweb-dialog').as('stemwebmodal');
+        cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
         cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
         cy.get('@stemwebmodal').find('button').contains('Run').its('length').then((len) => {cy.log('length:' + len)});
         cy.get('@stemwebmodal').find('button').contains('Run').trigger('mouseover').click();
