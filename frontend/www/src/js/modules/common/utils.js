@@ -73,3 +73,24 @@ function $(query, all = false) {
 function objectsEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
+
+
+/**
+ * Compares two strings alphbetically .
+ *
+ * @param {any} a - The first string to be compared.
+ * @param {any} b - The second string to be compared.
+ * @returns {boolean} - An integer indicating whether a comes before (-1), is equal to (0), or should follow (1) b. 
+ */
+function compareAlphabetic( a, b ) {
+  const nameA = a.name.toUpperCase(); // ignore upper and lowercase
+  const nameB = b.name.toUpperCase(); // ignore upper and lowercase
+  if (nameA < nameB) {
+    return -1;
+  }
+  if (nameA > nameB) {
+    return 1;
+  }
+  // names must be equal
+  return 0;
+}

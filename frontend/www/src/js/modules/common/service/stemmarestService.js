@@ -314,4 +314,16 @@ class StemmarestService extends BaseService {
     });
   }
 
+  /**
+   * Fetches a list of relation types for a particular tradition.
+   *
+   * @param {string} traditionId
+   * @returns {Promise<BaseResponse<Section[]>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/relationtypes}
+   */
+    listRelationTypes( traditionId ) {
+      return this.fetch(`/api/tradition/${traditionId}/relationtypes`);
+    }
+  
+  
 }

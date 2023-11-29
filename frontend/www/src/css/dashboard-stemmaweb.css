@@ -1,3 +1,11 @@
+.btn-primary {
+  --bs-btn-bg: #6f9ee3;
+  --bs-btn-border-color: #6282b0;
+  --bs-btn-hover-bg: #4084e8;
+  --bs-btn-disabled-bg: #c7d4e7;
+  --bs-btn-disabled-border-color: #adb5bf;
+}
+
 .brand-dark {
   color: rgba(255, 255, 255, 0.7);
 }
@@ -62,6 +70,21 @@
 .form-control,
 .form-select {
   font-size: 90%;
+}
+
+.form-textfield, 
+.form-select, 
+.form-check,
+.form-upload {
+  margin-bottom: 1.5em;
+}
+
+table.variant-types-controls .form-check, table.variant-types-controls .form-label {
+  margin-bottom: 0em;
+}
+
+table.variant-types-controls td {
+  padding-right: 2em;
 }
 
 .indicator-svg:hover {

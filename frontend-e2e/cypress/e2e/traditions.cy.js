@@ -24,7 +24,7 @@ Cypress tests to be added:
 
 */
 
-import { test_traditions } from './_shared_variables.js';
+import test_traditions from '../fixtures/test_traditions.json';
 
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);

@@ -278,32 +278,34 @@ class AddTraditionModal extends HTMLElement {
                       >text / tradition</span
                     ></label
                   >
-                  <input
-                    id="new_name"
-                    type="text"
-                    name="name"
-                    class="form-control has-validation"
-                    size="40"
-                    required=""
-                  />
-                  <div class="invalid-feedback">
-                    We need at least a name to reference to this
-                    <span id="tradition_literal">tradition</span>…
+                  <div class="form-textfield">
+                    <input
+                      id="new_name"
+                      type="text"
+                      name="name"
+                      class="form-control has-validation"
+                      size="40"
+                      required=""
+                    />
+                    <div class="invalid-feedback">
+                      We need at least a name to reference to this
+                      <span id="tradition_literal">tradition</span>…
+                    </div>
                   </div>
-                  <br />
-                  <label for="uploadfile" class="form-label"
-                    >Collation file to upload</label
-                  >
-                  <input
-                    class="form-control"
-                    type="file"
-                    id="uploadfile"
-                    required=""
-                  />
-                  <div class="invalid-feedback">
-                    We need a collation file to upload…
+                  <div class="form-upload">
+                    <label for="uploadfile" class="form-label"
+                      >Collation file to upload</label
+                    >
+                    <input
+                      class="form-control"
+                      type="file"
+                      id="uploadfile"
+                      required=""
+                    />
+                    <div class="invalid-feedback">
+                      We need a collation file to upload…
+                    </div>
                   </div>
-                  <br />
                   <label for="new_filetype" class="form-label">Data format</label>
                   <select name="filetype" class="form-select" id="new_filetype">
                     ${AddTraditionModal.#fileTypes
@@ -313,21 +315,21 @@ class AddTraditionModal extends HTMLElement {
                       )
                       .join('\n')}
                   </select>
-                  <br />
 
                   <!-- Shows when 'Create a new tradition' button is clicked -->
                   <div id="new_tradition_partial" class="hide">
                     <label for="new_lang" class="form-label"
                       >Primary language of the text</label
                     >
-                    <input
-                      id="new_lang"
-                      type="text"
-                      name="language"
-                      class="form-control"
-                      size="20"
-                    />
-                    <br />
+                    <div class="form-textfield">
+                      <input
+                        id="new_lang"
+                        type="text"
+                        name="language"
+                        class="form-control"
+                        size="20"
+                      />
+                    </div>
                     <label for="direction" class="form-label"
                       >Text direction</label
                     >
@@ -336,7 +338,6 @@ class AddTraditionModal extends HTMLElement {
                       <option value="RL">Right to Left</option>
                       <option value="BI">Bi-directional</option>
                     </select>
-                    <br />
                     <div class="form-check">
                       <input
                         class="form-check-input"
@@ -364,7 +365,6 @@ class AddTraditionModal extends HTMLElement {
                   </div>
 
                   <!-- Shows in either case -->
-                  <br />
                   <div id="add_tradition_modal_savecancel" class="py-3">
                     <button
                       type="button"
