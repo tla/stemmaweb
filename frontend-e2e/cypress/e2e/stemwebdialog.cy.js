@@ -73,9 +73,19 @@ describe('Stemweb dialog should work properly', () => {
         cy.contains('Run Stemweb').click();
         cy.get('stemmaweb-dialog').as('stemwebmodal');
         cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
+        cy.get('@stemwebmodal').find('button').contains('Run').its('length').then((len) => {cy.log('length:' + len)});
         cy.get('@stemwebmodal').find('button').contains('Run').trigger('mouseover').click();
-        cy.get('@stemwebmodal').should('not.be.visible'); // fuzzy! TODO
+        cy.get('@stemwebmodal').should('not.be.visible'); // fuzzy
 
         // Click on anywhere outside dialog closes dialog
+        cy.contains('Run Stemweb').click();
+        cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
+        cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
+        cy.get('@stemwebmodal').closest("#modalDialog").then((elem) => {
+            cy.log("#modalDialog:", elem);
+        });
+        cy.get('@stemwebmodal').closest("#modalDialog").its('length').then((len) => {cy.log('length:' + len)}); // seems to help against fuzziness
+        cy.get('@stemwebmodal').closest("#modalDialog").trigger('mouseover', { 'timeout': 10000 }).click('left');
+        cy.get('@stemwebmodal').should('not.be.visible');
     });
 });
