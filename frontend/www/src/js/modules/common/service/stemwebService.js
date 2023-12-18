@@ -123,16 +123,16 @@ class StemwebService extends BaseService {
   /**
    * @param userid {string}
    * @param algorithmId {number}
-   * @param textid {RunAlgorithmDTO['textid']}
+   * @param tradid {RunAlgorithmDTO['tradid']}
    * @param data {RunAlgorithmDTO['data']}
    * @param parameters {RunAlgorithmDTO['parameters']}
    * @returns {Promise<BaseResponse<RunAlgorithmStatusResponse>>}
    */
-  runAlgorithm(userid, algorithmId, textid, data, parameters) {
+  runAlgorithm( userid, algorithmId, tradid, data, parameters ) {
     const return_host = this.baseUrl;
     const return_path = '/result';
     /** @type {RunAlgorithmDTO} */
-    const dto = { userid, textid, data, parameters, return_host, return_path };
+    const dto = { userid, tradid, data, parameters, return_host, return_path };
     return this.fetch(`/algorithms/process/${algorithmId}`, {
       method: 'POST',
       body: JSON.stringify(dto),

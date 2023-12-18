@@ -155,8 +155,8 @@ class StemwebFrontend {
     StemmawebDialog.show(
       'Generate a Stemweb tree',
       modal_body,
-      {
-        onOk: () => { console.log( 'ok clicked' ) }
+      {    
+        onOk: () => { stemwebFrontend.processForm() }
       },
       {
         okLabel: 'Run',
@@ -167,6 +167,41 @@ class StemwebFrontend {
     );
     document.querySelector( 'select#algorithm-to-run_input' ).addEventListener( 'change', stemwebFrontend.setDescriptionAndControls );
     stemwebFrontend.setRelationTypesControls();
+  }
+
+  processForm() {
+    const tradId = TRADITION_STORE.state.selectedTradition.id;
+    const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
+    const algorithmId =  $('algorithm-to-run_input').value;
+    const algorithmArgs = Array.from( $('#algorithm-args input') ).map(
+      (input_element) => [ input_element.name, input_element.value ] 
+    );
+    const variants = Array.from( $('#algorithm-variants-panel input') ).map(
+      (checkbox_element) => [ checkbox_element.name, checkbox_element.checked ] 
+    );
+    const parameters = algorithmArgs.concat( variants );
+    console.log( parameters );
+    return stemwebService
+      .runAlgorithm( userId, algorithmId, tradId, null, parameters )
+      .then( stemwebFrontend.handleRunAlgorithmResponse );
+  }
+
+  handleRunAlgorithmResponse( resp ) {
+    if (resp.success) {
+      StemmawebAlert.show('Job added.', 'success');
+      // // @todo: Should the next line be wrapped in a try..catch?
+      // TRADITION_STORE.updateTradition(resp.data);
+      return Promise.resolve({
+        success: true,
+        message: 'Job added.'
+      });
+    } else {
+      StemmawebAlert.show(`Error: ${resp.message}`, 'danger');
+      return Promise.resolve({
+        success: false,
+        message: resp.message
+      });
+    }
   }
 
 }
