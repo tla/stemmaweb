@@ -1,0 +1,22 @@
+[
+    {
+        "value" : "2",
+        "text" : "RHM",
+        "description" : "The Roos-Heikkila-Myllymaki (RHM) method is similar to the maximum parsimony method. Both of them optimize a bifurcating tree structure to minimize a cost function. In RHM, the cost function is based on data compression which measures not only whether two variants are the same or not but also how different they are. The comparison is done in blocks of about ten words, which implies that change of word order is also handled in a sensible way: a change in word order will typically result in a smaller cost than changing the words into completely new ones. Because the comparison is based on the actual words, RHM requires that the actual text versions are given as the input in CSV (comma-separated values) format. RHM utilizes a stochastic search technique to minimize the cost of the stemma. The search procedure may easily get stuck in a suboptimal stemma unless the number of iterations is large enough. The best way to find out whether the number of iterations is large enough is to run RHM several times and to see if the resulting stemmata are similar or not. If not, it usually helps to increase the number of iterations. Note that it is often not possible to obtain identical stemmata in every run even if the number of iterations is very large."
+    },
+    {
+        "value" : "3",
+        "text" : "Neighbour Joining",
+        "description" : "Neighbor-Joining (NJ) is a classical phylogenetic algorithm which operates in a bottom-up fashion, combining at each step two taxa or groups of taxa. Choosing which groups of taxa to combine is based on distances between the taxa. NJ is very fast and it is guaranteed to converge to the true underlying phylogenetic tree (or stemma) if one exists as the length of the sequences (or texts) increases. However, in practice it is often slightly less accurate than, for instance, maximum parsimony or RHM. Note that the version implemented in this server takes as input a set of sequences in Nexus format and computes their pairwise distances using Hamming distance (the number of differences divided by the length of the sequences). This may or may not be desirable. If another distance is preferred, or if for instance, a so called Jukes-Cantor correction is called for, it is necessary to use some other tools. NJ is available in most phylogenetic software tools."
+    },
+    {
+        "value" : "4",
+        "text" : "Neighbour Net",
+        "description" : "Neighbour Net algorithm"
+    },
+    {
+        "value" : "100",
+        "text" : "Pars",
+        "description" : "The program \"pars\", from the Phylip bio-statistical software package, produces a maximum-parsimony distance tree of the witnesses. More information on maximum parsimony can be found <a href=\"https://wiki.hiit.fi/display/stemmatology/Maximum+parsimony\">here</a>. Please note that Phylip \"pars\" only supports a maximum of eight variants readings in any one variant location in the text. If your text displays more divergence than this at any point, please consider disregarding orthographic and spelling variation below, or use one of the other algorithms."
+    }
+]
