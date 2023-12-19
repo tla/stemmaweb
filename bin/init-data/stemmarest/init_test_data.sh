@@ -57,6 +57,9 @@ else
   echo Created tradition $BESOIN_ID
 fi
 
+echo; echo Adding stemweb_jobid 1 to Notre besoin
+$CURL --request PUT --header 'Content-Type: application/json' --data '{"stemweb_jobid":1}' $STEMMAREST_ENDPOINT/tradition/$BESOIN_ID
+
 echo ...and its stemma
 $CURL --request POST --header 'Content-Type: application/json' --data @data/besoin_stemma.json $STEMMAREST_ENDPOINT/tradition/$BESOIN_ID/stemma
 if [ $? -ne 0 ]; then
@@ -80,6 +83,8 @@ if [ -z $FLOR_ID ]; then
 else
   echo Created tradition $FLOR_ID
 fi
+echo; echo Adding stemweb_jobid 2 to Florilegium
+$CURL --request PUT --header 'Content-Type: application/json' --data '{"stemweb_jobid":2}' $STEMMAREST_ENDPOINT/tradition/$FLOR_ID
 echo Uploading three sections
 for e in w x y; do 
   $CURL --request POST --form name="section '$e'" --form file=@data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response
@@ -149,6 +154,8 @@ if [ -z $ASNIP_ID ]; then
 else
   echo Created tradition $ASNIP_ID
 fi
+echo; echo Adding stemweb_jobid 3 to Arabic test snippet
+$CURL --request PUT --header 'Content-Type: application/json' --data '{"stemweb_jobid":3}' $STEMMAREST_ENDPOINT/tradition/$ASNIP_ID
 # No stemma
 
 echo; echo Creating admin-owned tradition 

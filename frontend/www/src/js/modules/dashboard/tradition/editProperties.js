@@ -113,7 +113,6 @@ class EditProperties extends HTMLElement {
   static #handleUpdateTraditionMetadataResponse(resp) {
     if (resp.success) {
       StemmawebAlert.show('Metadata properties updated.', 'success');
-      // @todo: Should the next line be wrapped in a try..catch?
       TRADITION_STORE.updateTradition(resp.data);
       return Promise.resolve({
         success: true,

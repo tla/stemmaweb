@@ -189,6 +189,7 @@ class StemwebFrontend {
   handleRunAlgorithmResponse( resp ) {
     if (resp.success) {
       StemmawebAlert.show('Job added.', 'success');
+      console.log( 'handleRunAlgorithmResponse =>', resp.data );
       // // @todo: Should the next line be wrapped in a try..catch?
       // TRADITION_STORE.updateTradition(resp.data);
       return Promise.resolve({

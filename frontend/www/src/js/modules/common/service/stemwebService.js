@@ -143,43 +143,21 @@ class StemwebService extends BaseService {
   }
 
   /**
-   * Lists the results of all jobs that have been run on the server by this
-   * user.
-   *
-   * @returns {Promise<BaseResponse<RunJobResult[]>>}
-   */
-  listRunResults() {
-    return this.fetch(`/result`).then((response) => {
-      if (response.success) {
-        /** @type {{ results: RunJobResult[] }} } */
-        const data = response.data;
-        return data.results;
-      }
-
-      // in case of failure, just return the response with the error
-      return response;
-    });
-  }
-
-  /**
    * Gets the result of a job identified by the supplied `jobid` that has been
    * run on the server by this user.
    *
    * This can be used to periodically poll the server for the result of a job.
    *
    * @param jobid {string} The job ID of the job to fetch the result for.
-   * @returns {Promise<BaseResponse<RunJobResult | null>>}
+   * @returns {Promise<BaseResponse>>}
    */
-  getRunResult(jobid) {
-    return this.fetch(`/result`, undefined, { jobid }).then((response) => {
-      if (response.success) {
-        /** @type {{ results: RunJobResult[] }} } */
-        const data = response.data;
-        return data.results.length > 0 ? data.results[0] : null;
-      }
-
-      // in case of failure, just return the response with the error
-      return response;
-    });
+  getRunResult( job_id ) {
+    if( job_id ) {
+      return this.fetch( `/algorithms/jobstatus/${job_id}` ).then((response) => {
+        return response;
+      });
+    } else {
+      return Promise.resolve( { success: true, message:'OK', data: { jobid: job_id, result: "No job id given.", status: undefined } } );
+    }
   }
 }
