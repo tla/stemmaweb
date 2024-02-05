@@ -85,22 +85,13 @@ describe('Stemweb dialog should work properly', () => {
         cy.get('@stemwebmodal').should('not.be.visible');
 
         // Click on "Run" shows a success message 'Job added'
+        // and closes dialog
         // TODO: for any algorithm
-        // TODO: and closes dialog
         cy.contains('Run Stemweb').click();
         cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
         cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
-        // cy.get('@stemwebmodal').find('button').contains('Run').its('length').then((len) => {cy.log('length:' + len)});
-        cy.get('@stemwebmodal').find('button').contains('Run').trigger('mouseover').click();
-        // cy.get('@stemwebmodal').should('not.be.visible'); // still visible in frontend-e2e cypress although not in dev
-        // shows 'Job added' <stemmaweb-alert>
-        cy.get('stemmaweb-alert').contains('Job added'); // .find('.btn-close').click();
-
-        // cy.get('@stemwebmodal').should('not.be.visible'); // still visible in frontend-e2e cypress although not in dev
-        // workaround -- evel
-        /* cy.get('@stemwebmodal').closest("#modalDialog").as('mdialog');
-        cy.get('@mdialog').find('form').trigger('mouseover', { 'timeout': 10000 }).click(); // first click inside, then outside of the modal in order to close it in cypress
-        cy.get('@mdialog').trigger('mouseover', { 'timeout': 10000 }).click('left');
-        cy.get('@stemwebmodal').should('not.be.visible'); */
+        cy.get('@stemwebmodal').find('button').contains('Run').wait(500).trigger('mouseover').click(); // wait() for the event listener to close the modal to be attached (https://www.cypress.io/blog/2019/01/22/when-can-the-test-click)
+        cy.get('stemmaweb-alert').contains('Job added');
+        cy.get('@stemwebmodal').should('not.be.visible');
     });
 });
