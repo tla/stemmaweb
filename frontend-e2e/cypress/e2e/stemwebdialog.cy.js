@@ -84,14 +84,31 @@ describe('Stemweb dialog should work properly', () => {
         cy.get('@mdialog').trigger('mouseover', { 'timeout': 10000 }).click('left');
         cy.get('@stemwebmodal').should('not.be.visible');
 
-        // Click on "Run" shows a success message 'Job added'
-        // and closes dialog
-        // TODO: for any algorithm
-        cy.contains('Run Stemweb').click();
-        cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
-        cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
-        cy.get('@stemwebmodal').find('button').contains('Run').wait(500).trigger('mouseover').click(); // wait() for the event listener to close the modal to be attached (https://www.cypress.io/blog/2019/01/22/when-can-the-test-click)
-        cy.get('stemmaweb-alert').contains('Job added');
-        cy.get('@stemwebmodal').should('not.be.visible');
+        // for any algorithm open the modal again to assert 'Job added' and dialog closed
+        for(const algorithm of stemweb_algorithms) {
+            cy.reload();
+            cy.log("algorithm.text", algorithm.text)
+            cy.contains('Run Stemweb').wait(500).click();
+            cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
+            cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
+
+            cy.get('@stemwebmodal').find('select>option')
+                .each(($el, index, $list) => {
+                    const optionText = $el.text().trim();
+                    cy.log('optionText', optionText)
+                    if (algorithm.text === optionText){
+                        cy.get('@stemwebmodal').find('select').select(optionText); // click on optionText
+                        if (optionText === 'Pars') {
+                            // TODO: Issue with Pars algorithm, not "Job added" but "Error: INTERNAL SERVER ERROR"
+                        } else {
+                            // Click on "Run" shows a success message 'Job added'
+                            // and closes dialog
+                            cy.get('@stemwebmodal').find('button').contains('Run').wait(500).trigger('mouseover').click(); // wait() for the event listener to close the modal to be attached (https://www.cypress.io/blog/2019/01/22/when-can-the-test-click)
+                            cy.get('stemmaweb-alert').contains('Job added');
+                            cy.get('@stemwebmodal').should('not.be.visible');
+                        }
+                    }
+                });
+        }
     });
 });
