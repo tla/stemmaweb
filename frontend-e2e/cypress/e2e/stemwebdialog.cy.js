@@ -26,7 +26,7 @@ beforeEach(() => {
 });
 
 describe('Stemweb dialog should work properly', () => {
-    it('under construction', () => {
+    it('passes', () => {
         cy.viewport(1600, 900);
 
         // click on button "Run Stemweb" should open Stemweb dialog
@@ -99,7 +99,7 @@ describe('Stemweb dialog should work properly', () => {
                     if (algorithm.text === optionText){
                         cy.get('@stemwebmodal').find('select').select(optionText); // click on optionText
                         if (optionText === 'Pars') {
-                            // TODO: Issue with Pars algorithm, not "Job added" but "Error: INTERNAL SERVER ERROR"
+                            // TODO: Issue #187 with Pars algorithm, not "Job added" but "Error: INTERNAL SERVER ERROR"
                         } else {
                             // Click on "Run" shows a success message 'Job added'
                             // and closes dialog
