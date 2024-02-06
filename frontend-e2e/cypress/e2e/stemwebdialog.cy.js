@@ -42,7 +42,7 @@ describe('Stemweb dialog should work properly', () => {
             const optionText = $el.text().trim();
             cy.get('@stemwebmodal').find('select').select(optionText); // click on optionText
             cy.get('@stemwebmodal').find('select option:selected') // get the selected option
-                .invoke("text").then((txt) => {
+                .invoke('text').then((txt) => {
                     const selected = txt.trim();
                     expect(selected).equal(optionText); // ok, desired option is selected
                     expect(optionText).equal(stemweb_algorithms[index].text); // and it matches the test data
@@ -68,34 +68,33 @@ describe('Stemweb dialog should work properly', () => {
 
         // Click on Cancel closes dialog
         cy.get('@stemwebmodal').should('be.visible');
-        cy.get('@stemwebmodal').find('button').contains('Cancel').trigger('mouseover').click();
+        cy.get('@stemwebmodal').find('button').contains('Cancel').wait(500).click();
         cy.get('@stemwebmodal').should('not.be.visible');
 
         // Click on anywhere outside dialog closes dialog
         cy.contains('Run Stemweb').click();
         cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
         cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
-        cy.get('@stemwebmodal').closest("#modalDialog").then((elem) => {
-            cy.log("#modalDialog:", elem);
+        cy.get('@stemwebmodal').closest('#modalDialog').then((elem) => {
+            cy.log('#modalDialog:' + elem);
         });
-        cy.get('@stemwebmodal').closest("#modalDialog").as('mdialog');
+        cy.get('@stemwebmodal').closest('#modalDialog').as('mdialog');
         // cy.get('@mdialog').its('length').then((len) => {cy.log('length:' + len)});
-        cy.get('@mdialog').find('form').trigger('mouseover', { 'timeout': 10000 }).click(); // first click inside, then outside of the modal in order to close it in cypress
-        cy.get('@mdialog').trigger('mouseover', { 'timeout': 10000 }).click('left');
+        cy.get('@mdialog').wait(500).click('left');
         cy.get('@stemwebmodal').should('not.be.visible');
 
         // for any algorithm open the modal again to assert 'Job added' and dialog closed
         for(const algorithm of stemweb_algorithms) {
             cy.reload();
-            cy.log("algorithm.text", algorithm.text)
+            cy.log('algorithm.text: ' + algorithm.text)
             cy.contains('Run Stemweb').wait(500).click();
             cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
             cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
 
             cy.get('@stemwebmodal').find('select>option')
-                .each(($el, index, $list) => {
+                .each(($el) => {
                     const optionText = $el.text().trim();
-                    cy.log('optionText', optionText)
+                    cy.log('optionText:' + optionText)
                     if (algorithm.text === optionText){
                         cy.get('@stemwebmodal').find('select').select(optionText); // click on optionText
                         if (optionText === 'Pars') {
@@ -103,7 +102,7 @@ describe('Stemweb dialog should work properly', () => {
                         } else {
                             // Click on "Run" shows a success message 'Job added'
                             // and closes dialog
-                            cy.get('@stemwebmodal').find('button').contains('Run').wait(500).trigger('mouseover').click(); // wait() for the event listener to close the modal to be attached (https://www.cypress.io/blog/2019/01/22/when-can-the-test-click)
+                            cy.get('@stemwebmodal').find('button').contains('Run').wait(500).click(); // wait() for the event listener to close the modal to be attached (https://www.cypress.io/blog/2019/01/22/when-can-the-test-click)
                             cy.get('stemmaweb-alert').contains('Job added');
                             cy.get('@stemwebmodal').should('not.be.visible');
                         }
