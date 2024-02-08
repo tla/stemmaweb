@@ -158,7 +158,7 @@ describe('Runs a StemWeb algorithm and fetches results (backend)', () => {
                 cy.get('stemmaweb-alert').contains('Job added');
                 cy.get('@stemwebmodal').should('not.be.visible');
                 // Arabic snippet shows a status of: Job: 3. Status: Error. Result: Pretend we had an error here.
-                cy.get('stemweb-job-status').contains('#job_status', '3').and('contain.text', 'Error');
+                cy.get('stemweb-job-status').contains('#job_status', '3').and('contain.text', 'Error').and('contain.text', 'Pretend we had an error here.');
             } else if (traditionTitle.startsWith("Notre besoin")) {
                 cy.get('#traditions-list').contains(traditionTitle).click();
                 cy.contains('Run Stemweb').click();
@@ -185,7 +185,7 @@ describe('Runs a StemWeb algorithm and fetches results (backend)', () => {
                     cy.get('stemweb-job-status').contains('#job_status', '2').and('contain.text', 'Running');
                 } else if (traditionTitle.startsWith("Arabic snippet")) {
                     // Arabic snippet shows a status of: Job: 3. Status: Error. Result: Pretend we had an error here.
-                    cy.get('stemweb-job-status').contains('#job_status', '3').and('contain.text', 'Error');
+                    cy.get('stemweb-job-status').contains('#job_status', '3').and('contain.text', 'Error').and('contain.text', 'Pretend we had an error here.');
                 } else if (traditionTitle.startsWith("Notre besoin")) {
                     // Notre Besoin tradition shows a status of: Job: 1. Status: Done
                     cy.get('stemweb-job-status').contains('#job_status', '1').and('contain.text', 'Done');
