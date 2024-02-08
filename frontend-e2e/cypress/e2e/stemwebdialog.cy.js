@@ -1,13 +1,13 @@
 /*  gui element to run stemweb
 https://github.com/tla/stemmaweb/pull/172#issue-1680053781
 
+1)
 refactor: small tweaks to button colors
 refactor: replace space in ids for inputs in dropdowns with '-' (todo issued as #171)
 feature: alphabetic compare function in utils.js
 refactor: changed adding of eventlisteners in stemmaButtons.js
 
 Tests to add:
-
     click on button "Run Stemweb" should open Stemweb dialog
     Dropdown should show names of Stemweb algorithms (currently: RHM, Neighbour joining, and Neighbour net)
     Click info badge ('i') should show description of algorithm
@@ -16,19 +16,34 @@ Tests to add:
     Click on Cancel or anywhere outside dialog closes dialog
     Click on "Run" shows a success message 'Job added' and closes dialog
 
+2)
+Run a StemWeb algorithm and fetch results (backend) #103
+https://github.com/tla/stemmaweb/pull/185#issue-2050160053
+Cypress tests that could be added:
+    Florilegium shows a status of:
+        Job: 2
+        Status: Running
+    Arabic snippet shows a status of:
+        Job: 3
+        Status: Error
+        Result: Pretend we had an error here.
+    Notre Besoin traditions shows a status of:
+        Job: 1
+        Status: Done
+
 */
 
+import test_traditions from '../fixtures/test_traditions.json';
 import stemweb_algorithms from '../fixtures/stemweb_algorithms.json'
 const len_stemweb_algorithms = stemweb_algorithms.length;
 
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
+    cy.viewport(1600, 900);
 });
 
 describe('Stemweb dialog should work properly', () => {
     it('passes', () => {
-        cy.viewport(1600, 900);
-
         // click on button "Run Stemweb" should open Stemweb dialog
         cy.contains('Run Stemweb').click();
         cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
@@ -109,5 +124,56 @@ describe('Stemweb dialog should work properly', () => {
                     }
                 });
         }
+    });
+});
+
+describe('Runs a StemWeb algorithm and fetches results (backend)', () => {
+    // https://github.com/tla/stemmaweb/issues/103
+    // https://github.com/tla/stemmaweb/pull/185
+
+    it('under construction', () => {
+        test_traditions.forEach((tradition) => {
+            const traditionTitle = tradition.title;
+            cy.log('traditionTitle: ' + traditionTitle);
+            
+            // get the toc entry for the tradition which starts with Florilegium and click on it,
+            // the same for Arabic snippet and for Notre besoin.
+            if (traditionTitle.startsWith("Florilegium")) {
+                cy.get('#traditions-list').contains(traditionTitle).click();
+                cy.contains('Run Stemweb').click();
+                cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
+                cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
+                cy.get('@stemwebmodal').find('button').contains('Run').wait(500).click();
+                cy.get('stemmaweb-alert').contains('Job added');
+                cy.get('@stemwebmodal').should('not.be.visible');
+                // Florilegium shows a status of: Job: 2. Status: Running
+                // data to be asserted within the stemweb-job-status element
+                cy.get('stemweb-job-status').contains('#job_status', '2').and('contain.text', 'Running');
+            } else if (traditionTitle.startsWith("Arabic snippet")) {
+                cy.get('#traditions-list').contains(traditionTitle).click();
+                cy.contains('Run Stemweb').click();
+                cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
+                cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
+                cy.get('@stemwebmodal').find('button').contains('Run').wait(500).click();
+                cy.get('stemmaweb-alert').contains('Job added');
+                cy.get('@stemwebmodal').should('not.be.visible');
+                // Arabic snippet shows a status of: Job: 3. Status: Error. Result: Pretend we had an error here.
+                cy.get('stemweb-job-status').contains('#job_status', '3').and('contain.text', 'Error');
+            } else if (traditionTitle.startsWith("Notre besoin")) {
+                cy.get('#traditions-list').contains(traditionTitle).click();
+                cy.contains('Run Stemweb').click();
+                cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
+                cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
+                cy.get('@stemwebmodal').find('button').contains('Run').wait(500).click();
+                cy.get('stemmaweb-alert').contains('Job added');
+                cy.get('@stemwebmodal').should('not.be.visible');
+                // Notre Besoin tradition shows a status of: Job: 1. Status: Done
+                cy.get('stemweb-job-status').contains('#job_status', '1').and('contain.text', 'Done');
+            // traditions for which Stemweb has not been run should not display the stemweb-job-status
+            } else {
+                cy.get('#traditions-list').contains(traditionTitle).click();
+                cy.get('stemweb-job-status').should('not.be.visible');
+            }
+        });
     });
 });
