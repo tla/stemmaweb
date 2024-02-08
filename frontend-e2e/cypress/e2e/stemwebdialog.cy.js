@@ -131,7 +131,7 @@ describe('Runs a StemWeb algorithm and fetches results (backend)', () => {
     // https://github.com/tla/stemmaweb/issues/103
     // https://github.com/tla/stemmaweb/pull/185
 
-    it('under construction', () => {
+    it('passes', () => {
         test_traditions.forEach((tradition) => {
             const traditionTitle = tradition.title;
             cy.log('traditionTitle: ' + traditionTitle);
