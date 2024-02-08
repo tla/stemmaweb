@@ -135,7 +135,7 @@ describe('Runs a StemWeb algorithm and fetches results (backend)', () => {
         test_traditions.forEach((tradition) => {
             const traditionTitle = tradition.title;
             cy.log('traditionTitle: ' + traditionTitle);
-            
+
             // get the toc entry for the tradition which starts with Florilegium and click on it,
             // the same for Arabic snippet and for Notre besoin.
             if (traditionTitle.startsWith("Florilegium")) {
@@ -174,6 +174,27 @@ describe('Runs a StemWeb algorithm and fetches results (backend)', () => {
                 cy.get('#traditions-list').contains(traditionTitle).click();
                 cy.get('stemweb-job-status').should('not.be.visible');
             }
+
+            // stemweb-job-status should still be there after coming back from clicking on other traditions
+            test_traditions.reverse().forEach((tradition) => {
+                const traditionTitle = tradition.title;
+                cy.log('traditionTitle: ' + traditionTitle);
+                cy.get('#traditions-list').contains(traditionTitle).click();
+                if (traditionTitle.startsWith("Florilegium")) {
+                    // Notre Besoin tradition shows a status of: Job: 1. Status: Done
+                    cy.get('stemweb-job-status').contains('#job_status', '2').and('contain.text', 'Running');
+                } else if (traditionTitle.startsWith("Arabic snippet")) {
+                    // Arabic snippet shows a status of: Job: 3. Status: Error. Result: Pretend we had an error here.
+                    cy.get('stemweb-job-status').contains('#job_status', '3').and('contain.text', 'Error');
+                } else if (traditionTitle.startsWith("Notre besoin")) {
+                    // Notre Besoin tradition shows a status of: Job: 1. Status: Done
+                    cy.get('stemweb-job-status').contains('#job_status', '1').and('contain.text', 'Done');
+                } else {
+                    // traditions for which Stemweb has not been run should not display the stemweb-job-status
+                    cy.get('#traditions-list').contains(traditionTitle).click();
+                    cy.get('stemweb-job-status').should('not.be.visible');
+                }
+            });
         });
     });
 });
