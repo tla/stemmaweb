@@ -6,6 +6,7 @@ const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
+    cy.viewport(1600, 900);
     cy.loginViaUi(admin);
 });
 

@@ -30,6 +30,7 @@ Cypress.Commands.add('loginViaUi', (userObj) => {
     cy.get('#loginEmail').wait(500).type(userObj.username, { delay: 50 });
     cy.get('#loginPassword').wait(500).type(userObj.password, { delay: 50 });
     cy.get('button').contains('Sign in').wait(500).click();
+    cy.get('#authModal').should('not.be.visible');
     cy.contains('Logged in as ' + userObj.username);
     cy.contains('header a', 'Sign out');
     cy.get('header').should('not.contain', 'Sign in');
