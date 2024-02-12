@@ -11,8 +11,10 @@ beforeEach(() => {
 
 afterEach(() => {
     cy.logoutViaUi(admin);
-  });
+});
 
+// on the homepage, the admin should see all traditions listed
+// to do: traditions should be sorted alphabetically
 describe('all traditions are listed', () => {
     it('passes', () => {
         // the number of displayed traditions should be equal to the total number of test_traditions
