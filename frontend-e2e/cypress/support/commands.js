@@ -35,3 +35,10 @@ Cypress.Commands.add('loginViaUi', (userObj) => {
     cy.get('header').should('not.contain', 'Sign in');
     cy.log('Signed in as ' + userObj.username + '!');
 });
+
+// Logout via user interface
+Cypress.Commands.add('logoutViaUi', (userObj) => {
+    cy.contains('header a', 'Sign out').click();
+    cy.contains('header a', 'Sign in');
+    cy.get('header').should('not.contain', 'Sign out');
+});

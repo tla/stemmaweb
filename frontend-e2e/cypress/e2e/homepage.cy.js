@@ -8,6 +8,10 @@ beforeEach(() => {
     cy.loginViaUi(admin);
 });
 
+afterEach(() => {
+    cy.logoutViaUi(admin);
+  });
+
 describe('all traditions are listed', () => {
     it('under construction', () => {
         cy.get('ul#traditions-list > li .tradition-nav-name').each(($ele, index) => {
