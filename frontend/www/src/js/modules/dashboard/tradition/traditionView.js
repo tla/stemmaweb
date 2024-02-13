@@ -5,12 +5,15 @@ class TraditionView extends HTMLElement {
 
   connectedCallback() {
     this.render();
+    tabOverride.tabSize(4);
+    const stemmaDotEditor = document.querySelector( '#stemma-dot-editor' );
+    tabOverride.set( stemmaDotEditor );
   }
 
   static clearTradition() {
-    document.getElementById('tradition_name').innerHTML = '';
-    document.getElementById('graph_area').innerHTML = '';
-    document.getElementById('stemma_selector').innerHTML = '';
+    document.getElementById('tradition-name').innerHTML = '';
+    document.getElementById('graph-area').innerHTML = '';
+    document.getElementById('stemma-selector').innerHTML = '';
     StemmaButtons.hide();
   }
 
@@ -26,15 +29,31 @@ class TraditionView extends HTMLElement {
       </div>
 
 
-      <div class="my-4 w-100" id="graph_area"></div>
+      <div id="stemma-editor-graph-container">
 
-      <div
-        class="my-4 w-100 d-flex justify-content-center"
-        id="stemma_selector"
-      >
-        <!-- svg_slide_indicators go here -->
+        <div id="stemma-editor-container">
+          <textarea id="stemma-dot-editor">
+          </textarea>
+        </div>
+
+        <div id="graph_container">
+          <edit-stemma-button></edit-stemma-button>
+  
+          <div class="my-4 w-100" id="graph-area">
+          </div>
+
+          <div id="stemma-selector-container" class="collapse show">
+          <div
+            class="my-4 w-100 d-flex justify-content-center"
+            id="stemma-selector"
+          >
+            <!-- svg_slide_indicators go here -->
+          </div>
+          </div>
+        </div>
+      
       </div>
-    `;
+      `;
   }
 }
 

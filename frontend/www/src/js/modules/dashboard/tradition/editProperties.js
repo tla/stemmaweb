@@ -90,6 +90,7 @@ class EditProperties extends HTMLElement {
 
   /** @returns {Promise} */
   processForm() {
+    console.log( 'I‘m trying, ok?' );
     const form = document.querySelector('#edit-tradition-properties-form');
     if (form.checkValidity()) {
       const values = Object.values(

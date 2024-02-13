@@ -110,6 +110,7 @@ class StemmarestService extends BaseService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
    */
   deleteTradition(tradId) {
+    // Todo: check userId?
     return this.fetch(`/api/tradition/${tradId}`, {
       method: 'DELETE'
     });
@@ -176,6 +177,7 @@ class StemmarestService extends BaseService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemma/[name]/reorient/[nodeId]}
    */
   reorientStemmaTree(tradId, name, nodeId) {
+    // Todo: check useId?
     // Note: see issue #92, API/middleware needs updating for non ASCII sigils
     const endpoint = this.endpoint(
       `/api/tradition/${tradId}/stemma/${name}/reorient/${nodeId}`
@@ -230,6 +232,37 @@ class StemmarestService extends BaseService {
     return this.fetch(`/api/tradition/${traditionId}/sections`);
   }
 
+  /** 
+   * Save a stemma.
+   * 
+   * @param {string | null} userId.
+   * @param {string} tradId - The ID of the tradition being queried.
+   * @param {string} stemma_name - The name of the stemma.
+   * @param {string} stemma_dot - The stemma in dot language representation.
+   * @returns {Promise<BaseResponse<T>>}
+   * 
+   * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/name/ }
+   */
+  saveStemma( userId, tradId, stemma_name, stemma_dot ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to edit a tradition.'
+      });
+    }
+    const formData = {
+      identifier: stemma_name,
+      dot: stemma_dot
+      // jobid: null,
+      // newick: null
+    };
+    return this.fetch(`/api/tradition/${tradId}/stemma/${stemma_name}`, {
+      method: 'PUT',
+      body: JSON.stringify( formData) ,
+      headers: new Headers({ 'Content-Type': 'application/json' })
+    });
+  }
+  
   /**
    * Deletes a section using the Stemmarest API.
    *

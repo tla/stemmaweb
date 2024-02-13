@@ -41,10 +41,10 @@ const service = stemmarestService;
  * @returns {Graphviz}
  */
 function graphvizRoot() {
-  const graph_area = d3.select('#graph_area');
-  const selection = graph_area.select('#graph');
+  const graphArea = d3.select('#graph-area');
+  const selection = graphArea.select('#graph');
   const graph = selection.empty()
-    ? graph_area.append('div').attr('id', 'graph')
+    ? graphArea.append('div').attr('id', 'graph')
     : selection;
   graph.style('height', '100%');
   return graph
@@ -59,17 +59,6 @@ function initStemmaweb() {
     return transition.delay(50).duration(1000).ease(d3.easeLinear);
   }
 
-  /**
-   * @param {string} dot
-   * @returns {string}
-   */
-  function ellipse_border_to_none(dot) {
-    return dot.replace(
-      '" {',
-      '" {\n\t node [color=none style=filled fillcolor=white]'
-    );
-  }
-  
   function fetch_rooted(trad, stemma, sigil) {
     service
       .reorientStemmaTree(trad.id, stemma.identifier, sigil)
@@ -89,14 +78,18 @@ function initStemmaweb() {
    * @param {Graphviz} graph_root
    * @param {Tradition} tradition
    * @param {Stemma} stemma
+   *   // Todo: this should eventually use stemmaRenderer.js!!
    */
   function render_stemma(graph_root, tradition, stemma) {
-    graph_root.renderDot(ellipse_border_to_none(stemma.dot));
+    graph_root.renderDot( stemmaRenderer.ellipse_border_to_none(stemma.dot));
     d3.select('g#graph0')
       .selectAll('.node')
       .on('click', function (e, d) {
-        fetch_rooted(tradition, stemma, d.key);
-        render_stemma(graph_root, tradition, stemma);
+        // If the stemma editor is showing, we don't want re-rooting the stemma to be enabled.
+        if( document.querySelector( '#stemma-selector-container' ).classList.contains( "show" ) ){
+          fetch_rooted(tradition, stemma, d.key);
+          render_stemma(graph_root, tradition, stemma);
+        }
       });
     set_downloads(stemma.dot);
   }
@@ -111,17 +104,17 @@ function initStemmaweb() {
    */
   function render_tradition(tradition, stemmata, selectedStemma) {
     // console.log( data );
-    const graph_area = d3.select('#graph_area');
+    const graphArea = d3.select('#graph-area');
     // After getting the stemmata data we subdue the graph area,
     // so we can paint on it unseen and then fade it in
-    graph_area.style('opacity', '0.0');
-    graph_area.select('*').remove();
+    graphArea.style('opacity', '0.0');
+    graphArea.select('*').remove();
     const graphDiv = graphvizRoot();
     // Here we put in the slide indicators that will allow the user to
     // switch to different stemmata.
-    const stemma_selector = d3.select('#stemma_selector');
-    stemma_selector.selectAll('*').remove();
-    stemma_selector
+    const stemmaSelector = d3.select('#stemma-selector');
+    stemmaSelector.selectAll('*').remove();
+    stemmaSelector
       .selectAll('span')
       .data(stemmata)
       .enter()
@@ -138,12 +131,12 @@ function initStemmaweb() {
       .on('click', function (e, d) {
         // Add EventListeners to slide indicators that will update the
         // indicators and render the newly chosen stemma.
-        d3.selectAll('#stemma_selector span svg').style(
+        d3.selectAll('#stemma-selector span svg').style(
           'fill',
           'rgb(255,255,255)'
         );
         d3.select(this).select('svg').style('fill', 'rgb(180,180,180)');
-        graph_area.style('opacity', '0.0');
+        graphArea.style('opacity', '0.0');
 
         // Update the state with the selected stemma
         STEMMA_STORE.setSelectedStemma(d);
@@ -157,7 +150,7 @@ function initStemmaweb() {
       // 'drop in' has been selected as the default undefaultable transition.
       // .transition( function(){ return mellow_transition( d3.transition() ) } )
       .on('renderEnd', function () {
-        graph_area.transition().call(mellow_transition).style('opacity', '1.0');
+        graphArea.transition().call(mellow_transition).style('opacity', '1.0');
       })
       // Render the stemma (also set button values and update metadata)
       .on('initEnd', function () {
@@ -181,14 +174,14 @@ function initStemmaweb() {
       evt.preventDefault();
       download(
         'stemma.svg',
-        d3.select('#graph_area div').html(),
+        d3.select('#graph-area div').html(),
         'image/svg+xml'
       );
     });
     d3.select('#download_png').on('click', function (evt) {
       evt.preventDefault();
       saveSvgAsPng(
-        d3.select('#graph_area div').select('svg').node(),
+        d3.select('#graph-area div').select('svg').node(),
         'stemma.png'
       );
     });
