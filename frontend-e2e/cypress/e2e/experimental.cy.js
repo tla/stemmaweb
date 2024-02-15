@@ -11,3 +11,27 @@ describe('intercept traditions', () => {
     });
   });
 });
+
+describe('intercept login request', () => {
+  it.only('see if it works on github, locally it does', { defaultCommandTimeout: 10000 }, () => {
+    cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
+    cy.viewport(1600, 900);
+
+    cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
+
+    cy.get('header').contains('a', 'Sign in').wait(500).click();
+    cy.get('#loginEmail').wait(500).type('user@example.org', { delay: 50 });
+    cy.get('#loginPassword').wait(500).type('UserPass', { delay: 50 });
+    cy.get('auth-modal').contains('button', 'Sign in').wait(500).click();
+
+    cy.wait('@loginrequest').then(interception => {
+      // const res_str = JSON.stringify(interception.response);
+      // cy.log('res_str: ' + res_str);
+      cy.expect(interception.response.statusCode).to.eq(200);
+    });
+
+    cy.get('header').contains('a', 'Logged in as user@example.org');
+    cy.get('header').should('not.contain', 'Sign in');
+    cy.get('header').contains('a', 'Sign out'); // for now, don't click without interception
+  });
+});
