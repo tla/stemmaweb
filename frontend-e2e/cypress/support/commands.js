@@ -25,8 +25,10 @@
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
 // Login via user interface
+// TODO: also for headless mode
 Cypress.Commands.add('loginViaUi', (userObj) => {
-/* // passes locally, fails on github
+    if (Cypress.env('CY_MODE') === 'headed') { // skip when in headless mode
+        cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
     cy.contains('header a', 'Sign in').click();
     cy.get('#loginEmail').wait(500).type(userObj.username, { delay: 50 });
     cy.get('#loginPassword').wait(500).type(userObj.password, { delay: 50 });
@@ -36,14 +38,16 @@ Cypress.Commands.add('loginViaUi', (userObj) => {
     cy.contains('header a', 'Sign out');
     cy.get('header').should('not.contain', 'Sign in');
     cy.log('Signed in as ' + userObj.username + '!');
-*/
+    }
 });
 
 // Logout via user interface
+// TODO: also for headless mode
 Cypress.Commands.add('logoutViaUi', (userObj) => {
-/* // passes locally, fails on github
+    if (Cypress.env('CY_MODE') === 'headed') { // skip when in headless mode
+        cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
     cy.contains('header a', 'Sign out').click();
     cy.contains('header a', 'Sign in');
     cy.get('header').should('not.contain', 'Sign out');
-*/
+    }
 });

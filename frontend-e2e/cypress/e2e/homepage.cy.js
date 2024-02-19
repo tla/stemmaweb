@@ -7,11 +7,11 @@ const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     cy.viewport(1600, 900);
-    cy.loginViaUi(admin);
+    cy.loginViaUi(admin); // TODO: also for headless mode
 });
 
 afterEach(() => {
-    cy.logoutViaUi(admin);
+    cy.logoutViaUi(admin); // TODO: also for headless mode
 });
 
 // on the homepage, the admin should see all traditions listed
