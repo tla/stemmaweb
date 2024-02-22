@@ -27,6 +27,7 @@ class EditStemma extends HTMLElement {
         // unless last re-render is active or only very shortly finished (TODO: How?)
         stemmaRenderer.render_stemma( stemmaRenderer.ellipse_border_to_none( editor_dot ) );
       } catch( { name, message } ) {
+        // console.log( name, message );
         // Nothing happens when we do not have a well formed dot string.
       }
     });
