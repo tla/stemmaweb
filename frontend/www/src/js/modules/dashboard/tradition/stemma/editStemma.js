@@ -11,7 +11,7 @@ const editStemmaService = stemmarestService;
 class EditStemma extends HTMLElement {
   constructor() {
     super();
-    this.addEventListener( 'click', this.handleLeaveEditor );
+    this.buttonAction = null;
   }
 
   connectedCallback() {
@@ -20,12 +20,14 @@ class EditStemma extends HTMLElement {
 
     // Attach a listener to know when we might need to re-render the stemma.
     stemmaDotEditorTextarea.addEventListener( 'keyup', (evt) => {
-      const editor_dot = stemmaDotEditorTextarea.value
+      const editorDot = stemmaDotEditorTextarea.value
       try {
-        var ast = dotParser.parse( editor_dot );
+        var ast = dotParser.parse( editorDot );
         // If no error we start to re-render
         // unless last re-render is active or only very shortly finished (TODO: How?)
-        stemmaRenderer.render_stemma( stemmaRenderer.ellipse_border_to_none( editor_dot ) );
+        const editorStemma = { dot: editorDot }
+        const tradition = STEMMA_STORE.state.tradition;
+        stemmaRenderer.renderStemma( tradition, editorStemma );
       } catch( { name, message } ) {
         // console.log( name, message );
         // Nothing happens when we do not have a well formed dot string.
@@ -52,6 +54,14 @@ class EditStemma extends HTMLElement {
       };
     })
     this.render();
+    document.querySelector( '#edit-stemma-button-link' ).addEventListener( 'click', (evt) => {
+      this.buttonAction = 'edit';
+      this.handleLeaveEditor( evt ) 
+    });
+    document.querySelector( '#add-stemma-button-link' ).addEventListener( 'click', (evt) => { 
+      this.buttonAction = 'add';
+      this.handleLeaveEditor( evt ) 
+    });
   }
 
   toggleStemmaEditor() {
@@ -78,7 +88,6 @@ class EditStemma extends HTMLElement {
   handleLeaveEditor( evt ) {
     const stemmaDotEditorTextarea = document.querySelector( '#stemma-dot-editor' );
     const stemmaEditorContainerElement = document.querySelector( '#stemma-editor-container' );
-    // TODO: Prevent saving/leaving if dot doesn't parse.
     if( evt.target != stemmaDotEditorTextarea ){
       if( stemmaEditorContainerElement.classList.contains( 'expanded' ) ){
         StemmawebDialog.show(
@@ -87,16 +96,21 @@ class EditStemma extends HTMLElement {
           {
             onOk: () => { 
               // Save stemma
-              console.log( 'OK pressed' );
               try {
                 const editor_dot = stemmaDotEditorTextarea.value;
                 var ast = dotParser.parse( editor_dot );
                 // If no error we can try to save the stemma.
                 const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
                 const tradId = TRADITION_STORE.state.selectedTradition.id;
-                const stemma_name = STEMMA_STORE.state.selectedStemma.identifier;
                 const stemma_dot = stemmaDotEditorTextarea.value;
-                return( editStemmaService.saveStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleSaveStemma( resp ) } ) );
+                var stemma_name = STEMMA_STORE.state.selectedStemma.identifier;
+                // Distinguish edit from add stemma, if add do a POST instead of a PUT
+                if( this.buttonAction == 'add' ) {
+                  stemma_name = ast[0].id;
+                  return( editStemmaService.addStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleSaveStemma( resp ) } ) );
+                } else {
+                  return( editStemmaService.saveStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleSaveStemma( resp ) } ) );
+                }
               } catch( { name, message } ) {
                 StemmawebAlert.show(`Cannot save stemma: ${name} - ${message}`, 'danger');
                 return Promise.resolve({
@@ -107,8 +121,8 @@ class EditStemma extends HTMLElement {
             },
             onAlt: () => { 
               // reset the stemma rendered to the stemma in current state
-              const dot = STEMMA_STORE.state.selectedStemma.dot;
-              stemmaRenderer.render_stemma( stemmaRenderer.ellipse_border_to_none( dot ) );
+              const { tradition, selectedStemma } = STEMMA_STORE.state;
+              stemmaRenderer.renderStemma( tradition, selectedStemma );
               this.toggleStemmaEditor();
             }
           },
@@ -139,10 +153,16 @@ class EditStemma extends HTMLElement {
         message: 'Stemma saved.'
       });
     } else {
-      StemmawebAlert.show(`Error: ${resp.message}`, 'danger');
+      const detail = resp.data || '';
+      const errorDetail = detail.error || '';
+      var message = `${resp.message}`;
+      if( errorDetail.length > 0 ){
+        message = `${message}; ${errorDetail}`
+      }
+      StemmawebAlert.show(`Error: ${message}`, 'danger');
       return Promise.resolve({
         success: false,
-        message: resp.message
+        message: message
       });
     }
   }
@@ -150,15 +170,34 @@ class EditStemma extends HTMLElement {
   render() {
     this.innerHTML = `
             <a
-            class="link-secondary"
-            href="#"
-            aria-label="Edit this stemma">
-                <div class="has-pop-caption">
+              id="edit-stemma-button-link"
+              class="link-secondary"
+              href="#"
+              aria-label="Edit this stemma">
+                <div>
                   ${feather.icons['edit'].toSvg()}
+                </div>
+            </a>
+            <a
+              id="add-stemma-button-link"
+              class="link-secondary"
+              href="#"
+              aria-label="Add a stemma to this tradition">
+                <div>
+                  ${feather.icons['plus-circle'].toSvg()}
+                </div>
+            </a>
+            <a
+              id="delete-stemma-button-link"
+              class="link-secondary"
+              href="#"
+              aria-label="delete this stemma">
+                <div class="delete-stemma-danger">
+                  ${feather.icons['trash'].toSvg()}
                 </div>
             </a>
         `;
   }
 }
 
-customElements.define('edit-stemma-button', EditStemma);
+customElements.define('edit-stemma-buttons', EditStemma);

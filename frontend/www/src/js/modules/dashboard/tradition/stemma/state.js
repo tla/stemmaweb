@@ -58,16 +58,16 @@ class StemmaStore extends StateStore {
     /** @param {TraditionState} traditionState */
     function onTraditionStateChange(traditionState) {
       if (traditionState.selectedTradition) {
-        const parentTradition = traditionState.selectedTradition;
-        stemmaStoreService.listStemmata(parentTradition.id).then((res) => {
-          if (res.success) {
+        const tradition = traditionState.selectedTradition;
+        stemmaStoreService.listStemmata( tradition.id ).then((res) => {
+          if( res.success ){
             /** @type {Stemma[]} */
             const availableStemmata = res.data;
             const selectedStemma = availableStemmata[0] || null;
             stemmaStore.setState({
               availableStemmata,
               selectedStemma,
-              parentTradition
+              tradition
             });
           }
         });
@@ -80,5 +80,5 @@ class StemmaStore extends StateStore {
 const STEMMA_STORE = new StemmaStore({
   availableStemmata: [],
   selectedStemma: null,
-  parentTradition: null
+  tradition: null
 });

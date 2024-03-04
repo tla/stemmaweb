@@ -263,6 +263,37 @@ class StemmarestService extends BaseService {
     });
   }
   
+  /** 
+   * Add a stemma.
+   * 
+   * @param {string | null} userId.
+   * @param {string} tradId - The ID of the tradition being queried.
+   * @param {string} stemma_name - The name of the stemma.
+   * @param {string} stemma_dot - The stemma in dot language representation.
+   * @returns {Promise<BaseResponse<T>>}
+   * 
+   * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/ }
+   */
+  addStemma( userId, tradId, stemma_name, stemma_dot ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to edit a tradition.'
+      });
+    }
+    const formData = {
+      identifier: stemma_name,
+      dot: stemma_dot
+      // jobid: null,
+      // newick: null
+    };
+    return this.fetch(`/api/tradition/${tradId}/stemma/`, {
+      method: 'POST',
+      body: JSON.stringify( formData ),
+      headers: new Headers({ 'Content-Type': 'application/json' })
+    });
+  }
+
   /**
    * Deletes a section using the Stemmarest API.
    *

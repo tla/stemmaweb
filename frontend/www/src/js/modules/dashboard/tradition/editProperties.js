@@ -49,7 +49,7 @@ class EditProperties extends HTMLElement {
 
   showDialog() {
     const metaItems = PropertyTableView.sortedMetaItems(
-      EditProperties.metadataFromTradition( STEMMA_STORE.state.parentTradition )
+      EditProperties.metadataFromTradition( STEMMA_STORE.state.tradition )
     );
     const modal_body = `
             <form
@@ -90,7 +90,6 @@ class EditProperties extends HTMLElement {
 
   /** @returns {Promise} */
   processForm() {
-    console.log( 'I‘m trying, ok?' );
     const form = document.querySelector('#edit-tradition-properties-form');
     if (form.checkValidity()) {
       const values = Object.values(

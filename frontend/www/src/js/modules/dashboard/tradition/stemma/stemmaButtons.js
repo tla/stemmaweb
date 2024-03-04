@@ -14,8 +14,8 @@ class StemmaButtons extends HTMLElement {
   connectedCallback() {
     this.render();
     document.querySelector( '#delete-tradition-button' ).addEventListener( 'click', this.handleDelete );
-    // document.querySelector( '#run-stemweb-button' ).addEventListener( 'click', this.handleStemweb );
     document.querySelector( '#run-stemweb-button' ).addEventListener( 'click', stemwebFrontend.showDialog );
+    fadeIn( this );
   }
 
   handleDelete() {
@@ -58,13 +58,9 @@ class StemmaButtons extends HTMLElement {
     );
   }
 
-  static hide() {
-    document.getElementById('stemma_buttons').classList.add('invisible');
-  }
-
   render() {
     this.innerHTML = `
-    <div id="stemma_buttons" class="btn-toolbar mb-2 mb-md-0 invisible">
+    <div id="stemma_buttons" class="btn-toolbar mb-2 mb-md-0">
       <div class="btn-group me-2">
         <button id="run-stemweb-button" type="button" class="btn btn-sm btn-outline-secondary">
           Run Stemweb

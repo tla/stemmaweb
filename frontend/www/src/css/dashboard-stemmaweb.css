@@ -22,9 +22,19 @@
   font-size: 1em;
 }
 
-edit-stemma-button {
+edit-stemma-buttons {
   float: right;
+  display: flex;
 }
+
+#add-stemma-button-link, #delete-stemma-button-link {
+  margin-left: 0.5em;
+}
+
+.delete-stemma-danger {
+  color: #dc3545;
+}
+
 
 #stemma-editor-graph-container {
   display: flex;
@@ -146,6 +156,11 @@ table.variant-types-controls .form-check, table.variant-types-controls .form-lab
 
 table.variant-types-controls td {
   padding-right: 2em;
+}
+
+.indicator-svg {
+  margin-right: 2px;
+  margin-left: 2px;
 }
 
 .indicator-svg:hover {
