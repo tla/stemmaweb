@@ -295,10 +295,22 @@ class StemmarestService extends BaseService {
   }
 
   /**
+   * Deletes a stemma using the Stemmarest API.
+   *
+   * @param {Stemma} stemma - The stemma to be deleted
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemma}
+   */
+  deleteStemma( tradId, stemma ) {
+    return this.fetch(`/api/tradition/${tradId}/stemma/${stemma.identifier}`, {
+      method: 'DELETE'
+    });
+  }
+  
+  /**
    * Deletes a section using the Stemmarest API.
    *
    * @param {string} sectionId
-   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section}
    */
   deleteSection( traditionId, sectionId ) {
     return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}`, {

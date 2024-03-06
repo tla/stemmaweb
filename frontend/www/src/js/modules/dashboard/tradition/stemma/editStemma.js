@@ -42,8 +42,7 @@ class EditStemma extends HTMLElement {
       if( evt.propertyName == 'opacity' ) {
         // Also we need to distinguish between opening and closing the editor.
         if( stemmaEditorContainerElement.classList.contains( 'expanded' ) ) {
-          const stemma = STEMMA_STORE.state.selectedStemma || { dot: '' }
-          stemmaDotEditorTextarea.value = stemma.dot;
+          this.setEditorValue();
           // Attach a listener to handle stuff happening outside the textarea of the editor.
           // E.g. asking if we should save when clicking non editor functions.
           document.querySelector( '#stemma-editor-graph-container-modal-backdrop' ).addEventListener( 'click', (evt) => { this.handleLeaveEditor( evt ) } );
@@ -62,6 +61,44 @@ class EditStemma extends HTMLElement {
       this.buttonAction = 'add';
       this.handleLeaveEditor( evt ) 
     });
+    document.querySelector( '#delete-stemma-button-link' ).addEventListener( 'click', (evt) => { 
+      this.handleDeleteStemma( evt ) 
+    });
+  }
+
+  setEditorValue() {
+    const stemmaDotEditorTextarea = document.querySelector( '#stemma-dot-editor' );
+    const stemma = STEMMA_STORE.state.selectedStemma || { dot: '' };
+    if( this.buttonAction == 'edit' ){
+      stemmaDotEditorTextarea.value = stemma.dot;
+    };
+    if( this.buttonAction == 'add' ){
+      const graphArea = d3.select('#graph-area');
+      // We first fade out the existing graph…
+      // TODO? The transition is a perfect copy of TraditionView.renderDefaultTraditionStemma.
+      graphArea.transition().call( speedy_transition ).style( 'opacity', '0.0' ).on( 'end', () => {
+        // …then we create a simple bifurcating tree with the available witnesses as an example.
+        var rootAndWitnesses = TRADITION_STORE.state.selectedTradition.witnesses.sort(); 
+        rootAndWitnesses = rootAndWitnesses.slice( 0, 9 ); // [ 'A', 'B', 'C', … ]
+        // Add an example hypothetical witness.
+        rootAndWitnesses.splice( 1, 0, '"2"' ); // [ 'A', '"2"', 'B', 'C', … ]
+        const witnesses = rootAndWitnesses.slice( 1, 10 ); // [ '"2"', 'B', 'C', … ]
+        // Map the witnesses to a made up example stemma (as a bifurcating tree).
+        // The index of the node in the array divided by 2 (floored) gives the index of the parent.
+        const taxa = witnesses.map( (witness,idx) => `\t${rootAndWitnesses[Math.floor(idx/2)]} -> ${witness};` )
+        const taxaString = ( taxa.join( '\n' ) );
+        const witnessDefinitions = rootAndWitnesses.map( (witness) => `\t${witness} [class=extant];` );
+        // Correct the definition of the hypothetical witness.
+        witnessDefinitions[1] = '\t"2" [class=hypothetical label="*"];';
+        const witnessesString = witnessDefinitions.join( '\n' );
+        const exampleDigraph = `digraph "New Stemma Name" {\n${witnessesString}\n${taxaString}\n}\n`
+        stemmaDotEditorTextarea.value = exampleDigraph;
+        // Finally we need to render the example stemma.
+        const editorStemma = { dot: exampleDigraph }
+        const tradition = STEMMA_STORE.state.tradition;
+        stemmaRenderer.renderStemma( tradition, editorStemma );
+      } );
+    };
   }
 
   toggleStemmaEditor() {
@@ -103,13 +140,13 @@ class EditStemma extends HTMLElement {
                 const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
                 const tradId = TRADITION_STORE.state.selectedTradition.id;
                 const stemma_dot = stemmaDotEditorTextarea.value;
-                var stemma_name = STEMMA_STORE.state.selectedStemma.identifier;
                 // Distinguish edit from add stemma, if add do a POST instead of a PUT
                 if( this.buttonAction == 'add' ) {
-                  stemma_name = ast[0].id;
-                  return( editStemmaService.addStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleSaveStemma( resp ) } ) );
+                  const stemma_name = ast[0].id;
+                  return( editStemmaService.addStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleResponse( resp ) } ) );
                 } else {
-                  return( editStemmaService.saveStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleSaveStemma( resp ) } ) );
+                  const stemma_name = STEMMA_STORE.state.selectedStemma.identifier;
+                  return( editStemmaService.saveStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleResponse( resp ) } ) );
                 }
               } catch( { name, message } ) {
                 StemmawebAlert.show(`Cannot save stemma: ${name} - ${message}`, 'danger');
@@ -122,7 +159,8 @@ class EditStemma extends HTMLElement {
             onAlt: () => { 
               // reset the stemma rendered to the stemma in current state
               const { tradition, selectedStemma } = STEMMA_STORE.state;
-              stemmaRenderer.renderStemma( tradition, selectedStemma );
+              // Render the stemma, or an empty one if there's none. 
+              stemmaRenderer.renderStemma( tradition, selectedStemma || { dot: 'digraph {}' } );
               this.toggleStemmaEditor();
             }
           },
@@ -141,12 +179,50 @@ class EditStemma extends HTMLElement {
     }
   }
 
+  handleDeleteStemma() {
+    const tradId = TRADITION_STORE.state.selectedTradition.id;
+    const stemma = STEMMA_STORE.state.selectedStemma;
+    StemmawebDialog.show(
+      'Delete Stemma',
+      `<p>Are you sure you want to delete <span class="fst-italic">${stemma.identifier}</span>?</p>`,
+      {
+        onOk: () => {
+          editStemmaService.deleteStemma( tradId, stemma ).then((res) => {
+            if (res.success) {
+              StemmawebAlert.show(
+                `<p class="d-inline">Deleted <span class="fst-italic">${stemma.identifier}</span></p>`,
+                'success'
+              );
+              STEMMA_STORE.stemmaDeleted( stemma );
+            } else {
+              StemmawebAlert.show(
+                `Error during deletion: ${res.message}`,
+                'danger'
+              );
+            }
+          });
+        }
+      },
+      {
+        okLabel: 'Yes, delete it',
+        okType: 'danger',
+        closeLabel: 'Cancel',
+        closeType: 'secondary'
+      }
+    );
+  }
+
   /** @param {BaseResponse<T>} resp */
-  handleSaveStemma( resp ) {
+  handleResponse( resp ) {
     if (resp.success) {
-      StemmawebAlert.show( 'Stemma saved.', 'success' );
-      // Todo: what do we need to update and repaint?
-      // TRADITION_STORE.updateTradition(resp.data);
+      if( this.buttonAction == 'add' ){
+        StemmawebAlert.show( 'Stemma added.', 'success' );
+        STEMMA_STORE.stemmaAdded( resp.data );
+      }
+      if( this.buttonAction == 'edit' ){
+        StemmawebAlert.show( 'Stemma saved.', 'success' );
+        STEMMA_STORE.stemmaSaved( resp.data );
+      }
       this.toggleStemmaEditor();
       return Promise.resolve({
         success: true,

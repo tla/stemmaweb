@@ -22,8 +22,12 @@ class TraditionView extends HTMLElement {
     stemmarestService
       .reorientStemmaTree( tradition.id, stemma.identifier, sigil )
       .then( (resp) => {
-        stemma.dot = resp.dot;
-        stemmaRenderer.renderStemma( tradition, stemma );
+        // We first fade out the existing graph…
+        const graphArea = d3.select('#graph-area');
+        graphArea.transition().call( speedy_transition ).style( 'opacity', '0.0' ).on( 'end', () => {
+          stemma.dot = resp.dot;
+          stemmaRenderer.renderStemma( tradition, stemma );
+        } );
       } )
       .catch( (error) => {
         // TODO: some generic error handling?
@@ -40,8 +44,8 @@ class TraditionView extends HTMLElement {
    * @param {Stemma | null} selectedStemma
    */
   static renderDefaultTraditionStemma( tradition, stemmata, selectedStemma ) {
-    const graphArea = d3.select('#graph-area');
     // We first fade out the existing graph…
+    const graphArea = d3.select('#graph-area');
     graphArea.transition().call( speedy_transition ).style( 'opacity', '0.0' ).on( 'end', () => {
       //And then we render the first stemma for the current tradition.
       const graphDiv = stemmaRenderer.graphvizRoot;
