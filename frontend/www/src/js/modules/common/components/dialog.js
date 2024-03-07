@@ -117,7 +117,6 @@ class StemmawebDialog extends HTMLElement {
             // If the result is a successful Promise we close 
             // the dialog, but it remains open when it failed.
             if (typeof handlerResult.then === 'function') {
-              console.log( handlerResult.then );
               handlerResult.then((promise) => {
                 if (promise.success) {
                   dialogInstance.hide();

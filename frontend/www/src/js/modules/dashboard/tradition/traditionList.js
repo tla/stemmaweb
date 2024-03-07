@@ -100,10 +100,6 @@ class TraditionList extends HTMLElement {
         return traditionListItem;
     }
 
-    alphabetizeTraditions( traditions ) {
-        return traditions.sort( (tradition_a, tradition_b) => tradition_a.name.localeCompare( tradition_b.name ) );
-    }
-
     /**
      * Renders a container for the traditions and sections navigation tree.
      * Adds a list item for each tradition using @see SectionPropertiesView.createTraditionListItem.
@@ -111,7 +107,6 @@ class TraditionList extends HTMLElement {
      * @param {Tradition[]} traditions 
      */
     render( traditions ) {
-        const orderedTraditions = this.alphabetizeTraditions( traditions );
         this.innerHTML = `
             <ul id="traditions-list" class="nav flex-column mb-2"></ul>`;
         const traditionListElement = this.querySelector( 'ul' )

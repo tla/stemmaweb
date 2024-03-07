@@ -88,11 +88,17 @@ const TRADITION_STORE = new TraditionStore({
   availableTraditions: []
 });
 
+
+function alphabetizeTraditions( traditions ) {
+  return traditions.sort( (tradition_a, tradition_b) => tradition_a.name.localeCompare( tradition_b.name ) );
+}
+
 function initState() {
   traditionStoreService.listTraditions().then((res) => {
     if (res.success) {
       /** @type {Tradition[]} */
       const availableTraditions = res.data;
+      alphabetizeTraditions( availableTraditions );
       const selectedTradition = availableTraditions[0];
       /** @type {TraditionState} */
       const state = { availableTraditions, selectedTradition };
