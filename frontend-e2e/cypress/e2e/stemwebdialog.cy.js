@@ -45,7 +45,7 @@ beforeEach(() => {
 describe('Stemweb dialog should work properly', () => {
     it('passes', () => {
         // click on button "Run Stemweb" should open Stemweb dialog
-        cy.contains('Run Stemweb').click();
+        cy.contains('Run Stemweb').wait(500).click();
         cy.get('stemmaweb-dialog .modal-content').as('stemwebmodal');
         cy.get('@stemwebmodal').contains('Generate a Stemweb tree').should('be.visible');
 
