@@ -15,6 +15,7 @@ class FormControlFactory {
      * @returns {string}
      */
     renderFormControl(item) {
+        console.log( 'addig to form:', item );
         return item.inputOptions
             ? FormControlFactory.#formControlMap[item.inputOptions.control](item)
             : '';
@@ -34,17 +35,17 @@ class FormControlFactory {
         `;
         return `
             <label 
-                for="${item.label.toLowerCase()}_input"
-                id="edit_property_${item.label.toLowerCase()}_field"
+                for="${FormControlFactory.#toHtmlId( item.label )}_input"
+                id="edit_property_${FormControlFactory.#toHtmlId( item.label )}_field"
                 class="form-label"
             >
                 ${FormControlFactory.#createLabel(item)}
             </label>
             <div class="form-textfield">
                 <input
-                    id="${item.label.toLowerCase()}_input"
+                    id="${FormControlFactory.#toHtmlId( item.label )}_input"
                     type="text"
-                    name="${item.label.toLowerCase()}_input"
+                    name="${FormControlFactory.#toHtmlId( item.label )}_input"
                     value="${item.value}"
                     class="form-control ${item.inputOptions.required ? 'has-validation' : ''}"
                     ${
@@ -67,6 +68,14 @@ class FormControlFactory {
         return item.inputOptions.label ? item.inputOptions.label : item.label;
     }
 
+    /**
+     * @param {string} label
+     * @returns {string}
+     */
+    static #toHtmlId(label) {
+        return label.toLowerCase().replaceAll(' ','-');
+    }
+
     static #createSelectOption(option, selectedValue) {
         const selected = option.value == selectedValue ? ' selected' : '';
         return `
@@ -85,15 +94,15 @@ class FormControlFactory {
     static #createDropdownControl(item) {
         return `
             <label
-                for="${item.label.toLowerCase()}_input"
-                id="edit_property_${item.label.toLowerCase().replaceAll(' ','-')}_field"
+                for="${FormControlFactory.#toHtmlId( item.label )}_input"
+                id="edit_property_${FormControlFactory.#toHtmlId( item.label )}_field"
                 class="form-label"
             >
             ${FormControlFactory.#createLabel(item)}
             </label>
             <select
-                id="${item.label.toLowerCase().replaceAll(' ','-')}_input"
-                name="${item.label.toLowerCase().replaceAll(' ','-')}_input"
+                id="${FormControlFactory.#toHtmlId( item.label )}_input"
+                name="${FormControlFactory.#toHtmlId( item.label )}_input"
                 class="form-select"
             >
             ${ item.inputOptions.selectOptions.map( function (option) {
@@ -114,10 +123,10 @@ class FormControlFactory {
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" ${
                   item.inputOptions.checked ? 'checked ' : ''
-                }value="${item.label.toLowerCase()}" id="${item.label.toLowerCase()}_input" name="${item.label.toLowerCase()}_input">
+                }value="${item.label.toLowerCase()}" id="${FormControlFactory.#toHtmlId( item.label )}_input" name="${FormControlFactory.#toHtmlId( item.label )}_input">
                 <label
-                    for="${item.label.toLowerCase()}_input"
-                    id="edit_property_${item.label.toLowerCase()}_field"
+                    for="${FormControlFactory.#toHtmlId( item.label )}_input"
+                    id="edit_property_${FormControlFactory.#toHtmlId( item.label )}_field"
                     class="form-label"
                 >
                 ${FormControlFactory.#createLabel(item)}
