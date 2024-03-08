@@ -31,6 +31,13 @@ Cypress tests that could be added:
         Job: 1
         Status: Done
 
+3)
+Tests for feature: implemented stemma editor
+https://github.com/tla/stemmaweb/pull/188#issue-2133307487
+• Test that svg appears.
+• Upon edit, svg and box should be there.
+• Upon a change in the left box (a valid dot, link btw x and y), verify that svg is just different.
+
 */
 
 import test_traditions from '../fixtures/test_traditions.json';
