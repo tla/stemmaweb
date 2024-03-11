@@ -205,3 +205,43 @@ describe('Runs a StemWeb algorithm and fetches results (backend)', () => {
         });
     });
 });
+
+describe('stemma editor tools and svg work properly', () => {
+    /* Tests for feature: implemented stemma editor
+    https://github.com/tla/stemmaweb/pull/188#issue-2133307487
+    • Test that svg appears.
+    • Upon edit, svg and box should be there.
+    • Upon a change in the left box (a valid dot, link btw x and y), verify that svg is just different.
+     */
+    it.only('under construction', () => {
+        const tradition = test_traditions.find(trad => trad.title.startsWith('Florilegium'));
+        cy.log('tradition.title: ' + tradition.title);
+        // click on the tradition title within the tradition list
+        cy.get('#traditions-list').contains(tradition.title).click();
+        // Florilegium has 1 stemma svg at start
+        // the same number of selector icons should be visible as there are stemmata
+        cy.get('#stemma-selector').find('span svg.indicator-svg').should('have.length', tradition.stemmata.length);
+        // test that the stemma svg appears
+        cy.get('#graph').find('svg').should('be.visible').and('have.length', 1);
+        // no box should be there, at first;
+        cy.get('#stemma-editor-container').should('not.be.visible');
+
+        // stemma edit buttons should be visible
+        cy.get('edit-stemma-buttons').within( ()=> {
+            cy.get('a#edit-stemma-button-link').should('be.visible');
+            cy.get('a#add-stemma-button-link').should('be.visible');
+            cy.get('a#delete-stemma-button-link').should('be.visible');
+        });
+        // Upon edit, svg and box should be there.
+        cy.get('a#edit-stemma-button-link').wait(500).click();
+        cy.get('#stemma-editor-container').as('editorbox');
+        cy.get('@editorbox').should('be.visible');
+        cy.get('#graph').find('svg').as('stemmasvg');
+        cy.get('@stemmasvg').should('be.visible').and('have.length', 1);
+
+        // Upon a change in the left box (a valid dot, link btw x and y), verify that svg is just different.
+        // count edges should be plus one
+        //
+
+    });
+});
