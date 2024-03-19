@@ -41,10 +41,6 @@ edit-stemma-buttons {
 }
 
 #stemma-editor-container {
-  border: 1px solid #6c757d;
-  margin-top: 3pt;
-  padding: 3pt;
-  padding-right: 0pt;
   opacity: 0;
   width: 0%;
   transition: width 0.2s ease-in-out, opacity 0.1s ease-in-out;
@@ -56,12 +52,26 @@ edit-stemma-buttons {
   transition: width 0.4s ease-in-out, opacity 0.4s ease-in-out;
 }
 
+#stemma-dot-editor-container {
+  border: 1px solid #bfc4c8;
+  margin-top: 3pt;
+  padding: 3pt;
+  padding-right: 0pt;
+  height: 95%;
+}
+
+stemma-editor-buttons {
+  display: flex;
+  justify-content: right;
+}
+
 #stemma-dot-editor:focus-visible {
   height: 100%;
   width: 100%;
   border: none;
   resize: none;
 }
+
 #stemma-dot-editor {
   height: 100%;
   width: 100%;
@@ -202,6 +212,10 @@ ul#traditions-list {
 
 ul#traditions-list a {
   padding: unset;
+}
+
+ul#traditions-list .folder-icon.selected svg {
+  fill: #cfdcee;
 }
 
 section-list ul {

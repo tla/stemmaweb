@@ -15,7 +15,6 @@ class FormControlFactory {
      * @returns {string}
      */
     renderFormControl(item) {
-        console.log( 'addig to form:', item );
         return item.inputOptions
             ? FormControlFactory.#formControlMap[item.inputOptions.control](item)
             : '';

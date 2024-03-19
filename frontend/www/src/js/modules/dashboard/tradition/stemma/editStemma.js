@@ -14,10 +14,9 @@ class EditStemma extends HTMLElement {
     this.buttonAction = null;
   }
 
-  connectedCallback() {
+  connectedCallback() {  
     const stemmaEditorContainerElement = document.querySelector( '#stemma-editor-container' );
     const stemmaDotEditorTextarea = document.querySelector( '#stemma-dot-editor' );
-
     // Attach a listener to know when we might need to re-render the stemma.
     stemmaDotEditorTextarea.addEventListener( 'keyup', (evt) => {
       const editorDot = stemmaDotEditorTextarea.value
@@ -86,10 +85,14 @@ class EditStemma extends HTMLElement {
         // Map the witnesses to a made up example stemma (as a bifurcating tree).
         // The index of the node in the array divided by 2 (floored) gives the index of the parent.
         const taxa = witnesses.map( (witness,idx) => `\t${rootAndWitnesses[Math.floor(idx/2)]} -> ${witness};` )
+        // Add a hypothetical archetype on top for good measure.
+        taxa.splice( 0, 0, `\t"\u03b1" -> ${rootAndWitnesses[0]};` )
         const taxaString = ( taxa.join( '\n' ) );
         const witnessDefinitions = rootAndWitnesses.map( (witness) => `\t${witness} [class=extant];` );
         // Correct the definition of the hypothetical witness.
         witnessDefinitions[1] = '\t"2" [class=hypothetical label="*"];';
+        // Add the archetype definition.
+        witnessDefinitions.splice( 0, 0, '\t"\u03b1" [class=hypothetical label="\u03b1"];' );
         const witnessesString = witnessDefinitions.join( '\n' );
         const exampleDigraph = `digraph "New Stemma Name" {\n${witnessesString}\n${taxaString}\n}\n`
         stemmaDotEditorTextarea.value = exampleDigraph;

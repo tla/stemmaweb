@@ -51,7 +51,9 @@ class StemmaRenderer {
    */
   renderStemma( tradition, stemma ) {
     this.graphvizRoot.renderDot( this.ellipse_border_to_none( stemma.dot ) );
-    this.graphvizRoot.resetZoom()
+    if( this.graphvizRoot.zoomSelection() != null ){
+      this.graphvizRoot.resetZoom();
+    };
     d3.select( 'g#graph0' )
       .selectAll( '.node' )
       .on( 'click', function (e, d) {

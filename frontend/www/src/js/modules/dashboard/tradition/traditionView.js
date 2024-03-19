@@ -59,7 +59,7 @@ class TraditionView extends HTMLElement {
         // .transition( function(){ return mellow_transition( d3.transition() ) } )
         .on('renderEnd', function () {
           graphArea.transition().call( mellow_transition ).style('opacity', '1.0' );
-        })
+        });
         // Render the stemma, if any. 
         if (stemmata.length > 0) {
           stemmaRenderer.renderStemma( tradition, selectedStemma || stemmata[0] );
@@ -109,12 +109,15 @@ class TraditionView extends HTMLElement {
       <div id="stemma-editor-graph-container">
 
         <div id="stemma-editor-container">
-          <textarea id="stemma-dot-editor">
-          </textarea>
+          <stemma-editor-buttons></stemma-editor-buttons>
+          <div id="stemma-dot-editor-container">
+            <textarea id="stemma-dot-editor">
+            </textarea>
+          </div>
         </div>
 
         <div id="graph_container">
-        <edit-stemma-buttons></edit-stemma-buttons>
+          <edit-stemma-buttons></edit-stemma-buttons>
   
           <div class="my-4 w-100" id="graph-area">
           </div>
