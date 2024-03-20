@@ -94,3 +94,22 @@ function compareAlphabetic( a, b ) {
   // names must be equal
   return 0;
 }
+
+
+/**
+ * Returns a function that will execute exactly one time only.
+ *
+ * @param {function} fn - The function to be executed.
+ * @param {any} context - The context of the function.
+ * @returns {boolean} - An integer indicating whether a comes before (-1), is equal to (0), or should follow (1) b. 
+ */
+function once(fn, context) { 
+  var result;
+  return function() { 
+      if (fn) {
+          result = fn.apply(context || this, arguments);
+          fn = null;
+      }
+      return result;
+  };
+}

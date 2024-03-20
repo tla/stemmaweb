@@ -109,7 +109,6 @@ class TraditionView extends HTMLElement {
       <div id="stemma-editor-graph-container">
 
         <div id="stemma-editor-container">
-          <stemma-editor-buttons></stemma-editor-buttons>
           <div id="stemma-dot-editor-container">
             <textarea id="stemma-dot-editor">
             </textarea>

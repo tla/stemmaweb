@@ -42,9 +42,10 @@ class EditStemma extends HTMLElement {
         // Also we need to distinguish between opening and closing the editor.
         if( stemmaEditorContainerElement.classList.contains( 'expanded' ) ) {
           this.setEditorValue();
+          this.renderEditorButtons();
           // Attach a listener to handle stuff happening outside the textarea of the editor.
           // E.g. asking if we should save when clicking non editor functions.
-          document.querySelector( '#stemma-editor-graph-container-modal-backdrop' ).addEventListener( 'click', (evt) => { this.handleLeaveEditor( evt ) } );
+          document.querySelector( '#stemma-editor-graph-container-modal-backdrop' ).addEventListener( 'click', () => { this.handleLeaveEditor() } );
         } else {
           stemmaDotEditorTextarea.value = '';
           document.querySelector( '#stemma-editor-graph-container-modal-backdrop' ).remove();
@@ -52,17 +53,6 @@ class EditStemma extends HTMLElement {
       };
     })
     this.render();
-    document.querySelector( '#edit-stemma-button-link' ).addEventListener( 'click', (evt) => {
-      this.buttonAction = 'edit';
-      this.handleLeaveEditor( evt ) 
-    });
-    document.querySelector( '#add-stemma-button-link' ).addEventListener( 'click', (evt) => { 
-      this.buttonAction = 'add';
-      this.handleLeaveEditor( evt ) 
-    });
-    document.querySelector( '#delete-stemma-button-link' ).addEventListener( 'click', (evt) => { 
-      this.handleDeleteStemma( evt ) 
-    });
   }
 
   setEditorValue() {
@@ -123,62 +113,55 @@ class EditStemma extends HTMLElement {
     }
     const graphContainerElement = document.querySelector( '#graph_container' );
     graphContainerElement.classList.toggle( 'shrunken' );
+    this.render();
   }
 
-  handleLeaveEditor( evt ) {
-    const stemmaDotEditorTextarea = document.querySelector( '#stemma-dot-editor' );
-    const stemmaEditorContainerElement = document.querySelector( '#stemma-editor-container' );
-    if( evt.target != stemmaDotEditorTextarea ){
-      if( stemmaEditorContainerElement.classList.contains( 'expanded' ) ){
-        StemmawebDialog.show(
-          'Close stemma editor?',
-          '<p>This action will close the stemma editor. However, you have unsaved changes. Should these changes be saved?</p>',
-          {
-            onOk: () => { 
-              // Save stemma
-              try {
-                const editor_dot = stemmaDotEditorTextarea.value;
-                var ast = dotParser.parse( editor_dot );
-                // If no error we can try to save the stemma.
-                const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
-                const tradId = TRADITION_STORE.state.selectedTradition.id;
-                const stemma_dot = stemmaDotEditorTextarea.value;
-                // Distinguish edit from add stemma, if add do a POST instead of a PUT
-                if( this.buttonAction == 'add' ) {
-                  const stemma_name = ast[0].id;
-                  return( editStemmaService.addStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleResponse( resp ) } ) );
-                } else {
-                  const stemma_name = STEMMA_STORE.state.selectedStemma.identifier;
-                  return( editStemmaService.saveStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleResponse( resp ) } ) );
-                }
-              } catch( { name, message } ) {
-                StemmawebAlert.show(`Cannot save stemma: ${name} - ${message}`, 'danger');
-                return Promise.resolve({
-                  success: false,
-                  message: message
-                });
-              }
-            },
-            onAlt: () => { 
-              // reset the stemma rendered to the stemma in current state
-              const { tradition, selectedStemma } = STEMMA_STORE.state;
-              // Render the stemma, or an empty one if there's none. 
-              stemmaRenderer.renderStemma( tradition, selectedStemma || { dot: 'digraph {}' } );
-              this.toggleStemmaEditor();
-            }
-          },
-          {
-            okLabel: 'Save and close',
-            okType: 'success',
-            altLabel: 'Ignore and close',
-            altType: 'warning',
-            closeLabel: 'Cancel',
-            closeType: 'secondary'
-          }
-        );
-      } else {
-        this.toggleStemmaEditor();
+  handleLeaveEditor() {
+    StemmawebDialog.show(
+      'Close stemma editor?',
+      '<p>This action will close the stemma editor. However, you have unsaved changes. Should these changes be saved?</p>',
+      {
+        onOk: () => { 
+          return this.handleSaveStemma();
+        },
+        onAlt: () => { 
+          this.cancelEdits();
+        }
+      },
+      {
+        okLabel: 'Save and close',
+        okType: 'success',
+        altLabel: 'Ignore and close',
+        altType: 'warning',
+        closeLabel: 'Cancel',
+        closeType: 'secondary'
       }
+    );
+  }
+
+  handleSaveStemma() {
+    try {
+      const stemmaDotEditorTextarea = document.querySelector( '#stemma-dot-editor' );
+      const editor_dot = stemmaDotEditorTextarea.value;
+      var ast = dotParser.parse( editor_dot );
+      // If no error we can try to save the stemma.
+      const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
+      const tradId = TRADITION_STORE.state.selectedTradition.id;
+      const stemma_dot = stemmaDotEditorTextarea.value;
+      // Distinguish edit from add stemma, if add do a POST instead of a PUT
+      if( this.buttonAction == 'add' ) {
+        const stemma_name = ast[0].id;
+        return( editStemmaService.addStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleResponse( resp ) } ) );
+      } else {
+        const stemma_name = STEMMA_STORE.state.selectedStemma.identifier;
+        return( editStemmaService.saveStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleResponse( resp ) } ) );
+      }
+    } catch( { name, message } ) {
+      StemmawebAlert.show(`Cannot save stemma: ${name} - ${message}`, 'danger');
+      return Promise.resolve({
+        success: false,
+        message: message
+      });
     }
   }
 
@@ -215,6 +198,14 @@ class EditStemma extends HTMLElement {
     );
   }
 
+  cancelEdits() {
+    // reset the stemma rendered to the stemma in current state
+    const { tradition, selectedStemma } = STEMMA_STORE.state;
+    // Render the stemma, or an empty one if there's none. 
+    stemmaRenderer.renderStemma( tradition, selectedStemma || { dot: 'digraph {}' } );
+    this.toggleStemmaEditor();    
+  }
+
   /** @param {BaseResponse<T>} resp */
   handleResponse( resp ) {
     if (resp.success) {
@@ -246,36 +237,92 @@ class EditStemma extends HTMLElement {
     }
   }
   
+  addEditStemmaButtonListeners(){
+    // Adds listeners to the stemma edit, add, and delete buttons.
+    // They need to be reset whenever the editor has been opened 
+    // and the inner.html of `render` is deleted and supplanted 
+    // by that of `renderEditorButtons`.  
+    document.querySelector( '#edit-stemma-button-link' ).addEventListener( 'click', () => {
+      this.buttonAction = 'edit';
+      this.toggleStemmaEditor(); 
+    });
+    document.querySelector( '#add-stemma-button-link' ).addEventListener( 'click', () => { 
+      this.buttonAction = 'add';
+      this.toggleStemmaEditor(); 
+    });
+    document.querySelector( '#delete-stemma-button-link' ).addEventListener( 'click', () => { 
+      this.handleDeleteStemma() 
+    });
+  }
+
   render() {
     this.innerHTML = `
-            <a
-              id="edit-stemma-button-link"
-              class="link-secondary"
-              href="#"
-              aria-label="Edit this stemma">
-                <div>
-                  ${feather.icons['edit'].toSvg()}
-                </div>
-            </a>
-            <a
-              id="add-stemma-button-link"
-              class="link-secondary"
-              href="#"
-              aria-label="Add a stemma to this tradition">
-                <div>
-                  ${feather.icons['plus-circle'].toSvg()}
-                </div>
-            </a>
-            <a
-              id="delete-stemma-button-link"
-              class="link-secondary"
-              href="#"
-              aria-label="delete this stemma">
-                <div class="delete-stemma-danger">
-                  ${feather.icons['trash'].toSvg()}
-                </div>
-            </a>
-        `;
+      <a
+        id="edit-stemma-button-link"
+        class="link-secondary"
+        href="#"
+        aria-label="Edit this stemma">
+          <div>
+            ${feather.icons['edit'].toSvg()}
+          </div>
+      </a>
+      <a
+        id="add-stemma-button-link"
+        class="link-secondary"
+        href="#"
+        aria-label="Add a stemma to this tradition">
+          <div>
+            ${feather.icons['plus-circle'].toSvg()}
+          </div>
+      </a>
+      <a
+        id="delete-stemma-button-link"
+        class="link-secondary"
+        href="#"
+        aria-label="delete this stemma">
+          <div class="delete-stemma-danger">
+            ${feather.icons['trash'].toSvg()}
+          </div>
+      </a>
+    `;
+    this.addEditStemmaButtonListeners();
+  }
+
+  addEditorButtonListeners() {
+    // Adds listeners to the stemma save edits and cancel buttons.
+    // They need to be reset whenever the editor is closed and the
+    // inner.html of `renderEditorButtons` is deleted and supplanted 
+    // by that if `render`.  
+    document.querySelector( '#save-stemma-button-link' ).addEventListener( 'click', (evt) => {
+      this.handleSaveStemma();
+    });
+    document.querySelector( '#cancel-edit-stemma-button-link' ).addEventListener( 'click', (evt) => {
+      this.cancelEdits();
+    });
+  }
+
+  renderEditorButtons() {
+    this.innerHTML = `
+      <a
+      id="save-stemma-button-link"
+      class="link-secondary"
+      href="#"
+      aria-label="Save this stemma">
+        <div>
+          ${feather.icons['save'].toSvg()}
+        </div>
+      </a>
+      <a
+        id="cancel-edit-stemma-button-link"
+        class="link-secondary"
+        href="#"
+        aria-label="Add a stemma to this tradition">
+          <div>
+            ${feather.icons['x'].toSvg()}
+          </div>
+      </a>
+    `;
+    this.addEditorButtonListeners();
   }
 }
 
