@@ -113,3 +113,28 @@ function once(fn, context) {
       return result;
   };
 }
+
+
+function leftPadTwoZeroes( n ) {
+  return ('00'+n).slice(-2);
+}
+
+/**
+ * Returns a string formatted timestamp.
+ * 
+ * @returns {string} - A string represented the timestamp of 'now'.
+ */
+function timestamp() {
+  const date = new Date( Date.now() );
+  const datevalues = [
+    date.getFullYear(),
+    leftPadTwoZeroes( date.getMonth()+1 ),
+    leftPadTwoZeroes( date.getDate() )
+  ];
+  const timeValues = [
+    leftPadTwoZeroes( date.getHours() ),
+    leftPadTwoZeroes( date.getMinutes() ),
+    leftPadTwoZeroes( date.getSeconds() )
+  ];
+  return `${datevalues.join('')}_${timeValues.join('')}`;
+}

@@ -246,3 +246,20 @@ delete-section-button .btn-outline-danger {
   color: var(--bs-btn-color);
   padding-right: 0.5em;
 }
+
+#message-console-text-panel {
+  height: 10em;
+  overflow-y: scroll;
+  background-color: white;
+  font-size: 80%;
+  padding: 0.1rem 0.25rem;
+  border: 1px solid #c5c6c8;
+}
+
+#message-console-text-panel .console-message {
+  color: #198754;
+}
+
+#message-console-text-panel .console-message.danger {
+  color: #d5465a;
+}
