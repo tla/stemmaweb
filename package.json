@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "dotparser": "^1.1.1",
     "sortablejs": "^1.15.0"
   },
   "devDependencies": {

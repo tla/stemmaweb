@@ -40,7 +40,7 @@ class TraditionTitle extends HTMLElement {
     }
 
     render() {
-        this.innerHTML = `<h4 id="tradition_name" class="pt-3">${this.#title}</h4>`
+        this.innerHTML = `<h4 id="tradition-name" class="pt-3">${this.#title}</h4>`
     }
 
 }

@@ -172,7 +172,6 @@ class AddTraditionModal extends HTMLElement {
               const values = Object.values(
                 AddTraditionModal.#extractFormValuesTradition()
               );
-              console.log( values );
               addTraditionService
                 .addTradition(...values)
                 .then(AddTraditionModal.#handleResponseTradition);

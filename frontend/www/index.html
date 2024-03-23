@@ -150,6 +150,7 @@
           <property-table-view id="property-table-view"></property-table-view>
           <section-properties-view></section-properties-view>
           <stemweb-job-status></stemweb-job-status>
+          <message-console></message-console>
         </div>
       </div>
     </div>
@@ -193,6 +194,15 @@
       src="./src/js/vendor/Sortable.min.js"
       type="application/javascript"
     ></script>
+    <script
+      src="./src/js/vendor/dotparser.min.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/vendor/taboverride.min.js"
+      type="application/javascript"
+    ></script>
+    
 
     <!-- Local JS imports -->
 
@@ -222,6 +232,10 @@
       src="src/js/modules/common/service/stemwebService.js"
       type="application/javascript"
     ></script>
+    <script
+      src="src/js/modules/dashboard/tradition/stemma/stemmaRenderer.js"
+      type="application/javascript"
+    ></script>
     <script src="./src/js/config.js" type="application/javascript"></script>
 
     <!-- State -->
@@ -245,6 +259,11 @@
       src="./src/js/modules/dashboard/tradition/state.js"
       type="application/javascript"
     ></script>
+    <script
+      src="./src/js/modules/common/download.js"
+     type="application/javascript"
+    ></script>
+
 
     <!-- Components -->
     <script
@@ -276,7 +295,7 @@
       type="application/javascript"
     ></script>
     <script
-      src="src/js/modules/dashboard/tradition/stemmaButtons.js"
+      src="src/js/modules/dashboard/tradition/stemma/stemmaButtons.js"
       type="application/javascript"
     ></script>
     <script
@@ -329,6 +348,14 @@
     ></script>
     <script
       src="./src/js/modules/dashboard/tradition/stemwebJobStatus.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/stemma/editStemma.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/messageConsole.js"
       type="application/javascript"
     ></script>
   </body>

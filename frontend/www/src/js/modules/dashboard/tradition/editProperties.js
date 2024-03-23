@@ -49,7 +49,7 @@ class EditProperties extends HTMLElement {
 
   showDialog() {
     const metaItems = PropertyTableView.sortedMetaItems(
-      EditProperties.metadataFromTradition( STEMMA_STORE.state.parentTradition )
+      EditProperties.metadataFromTradition( STEMMA_STORE.state.tradition )
     );
     const modal_body = `
             <form

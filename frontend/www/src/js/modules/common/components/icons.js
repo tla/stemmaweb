@@ -1,4 +1,4 @@
-const svg_slide_indicator = `<svg
+const svg_slide_indicator_old = `<svg
   class="indicator-svg"
   data-active="false"
   xmlns="http://www.w3.org/2000/svg"
@@ -14,7 +14,7 @@ const svg_slide_indicator = `<svg
   <circle cx="12" cy="12" r="10"></circle>
 </svg>`;
 
-const svg_slide_indicator_active = `<svg
+const svg_slide_indicator_active_old = `<svg
   class="indicator-svg"
   data-active="true"
   xmlns="http://www.w3.org/2000/svg"
@@ -30,7 +30,31 @@ const svg_slide_indicator_active = `<svg
   <circle cx="12" cy="12" r="10"></circle>
 </svg>`;
 
-const job_running_indicator = `<svg
+const svg_slide_indicator = `<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  width="15" height="15" viewBox="0 0 24 24" 
+  fill="none" 
+  stroke="currentColor" 
+  stroke-width="2" 
+  stroke-linecap="round" 
+  stroke-linejoin="round" 
+  class="indicator-svg">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+  </svg>`;
+
+  const svg_slide_indicator_active = `<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  width="15" height="15" viewBox="0 0 24 24" 
+  fill="#cfdcee"
+    stroke="currentColor" 
+  stroke-width="2" 
+  stroke-linecap="round" 
+  stroke-linejoin="round" 
+  class="indicator-svg">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+  </svg>`;
+
+  const job_running_indicator = `<svg
   style="vertical-align: baseline;"
   class="indicator-svg"
   data-active="true"

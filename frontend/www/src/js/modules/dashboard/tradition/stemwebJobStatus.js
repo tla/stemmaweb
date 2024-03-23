@@ -4,8 +4,8 @@ class StemwebJobStatus extends HTMLElement {
     constructor() {
         super();
         // Whenever a new tradition / related stemma is selected, update the table
-        STEMMA_STORE.subscribe(({ parentTradition, selectedStemma }) => {
-            this.renderJobStatus( parentTradition.stemweb_jobid );
+        STEMMA_STORE.subscribe(({ tradition, selectedStemma }) => {
+            this.renderJobStatus( tradition.stemweb_jobid );
         });
       }
       

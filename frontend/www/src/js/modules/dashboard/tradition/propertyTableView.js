@@ -22,9 +22,9 @@ class PropertyTableView extends HTMLElement {
   constructor() {
     super();
     // Whenever a new tradition / related stemma is selected, update the table
-    STEMMA_STORE.subscribe(({ parentTradition, selectedStemma }) => {
-      this.render(parentTradition, selectedStemma);
-    });
+    STEMMA_STORE.subscribe( ( { tradition, selectedStemma } ) => {
+      this.render( tradition, selectedStemma );
+    } );
   }
 
   /** @type {TraditionMetaLabels} */

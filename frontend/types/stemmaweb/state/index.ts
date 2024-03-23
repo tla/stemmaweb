@@ -19,7 +19,7 @@ export type TraditionState = {
 
 /** Model to represent the in-app state of a Stemma selection. */
 export type StemmaState = {
-  parentTradition: Tradition | null;
+  tradition: Tradition | null;
   availableStemmata: Stemma[];
   selectedStemma: Stemma | null;
 };

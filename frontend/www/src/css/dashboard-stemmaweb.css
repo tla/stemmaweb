@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Sono&display=swap');
+
 .btn-primary {
   --bs-btn-bg: #6f9ee3;
   --bs-btn-border-color: #6282b0;
@@ -20,11 +22,151 @@
   font-size: 1em;
 }
 
-#graph_area {
+edit-stemma-buttons {
+  display: flex;
+  width: 100%;
+  justify-content: right;
+}
+
+
+edit-stemma-buttons a.greyed-out div {
+  color: #ccc;
+}
+
+.delete-stemma-danger {
+  color: #dc3545;
+}
+
+#add-stemma-button-link, #delete-stemma-button-link {
+  margin-left: 0.5em;
+}
+
+#stemma-editor-graph-container {
+  display: flex;
+}
+
+#stemma-editor-container {
+  opacity: 0;
+  width: 0%;
+  transition: width 0.2s ease-in-out, opacity 0.1s ease-in-out;
+}
+
+#stemma-editor-container.expanded {
+  width: 50%;
+  opacity: 1;
+  transition: width 0.4s ease-in-out, opacity 0.4s ease-in-out;
+}
+
+#stemma-dot-editor-container {
+  border: 1px solid #bfc4c8;
+  margin-top: 3pt;
+  padding: 3pt;
+  padding-right: 0pt;
+  height: 95%;
+}
+
+#stemma-editor-buttons-container {
+  width: 100%;
+  display: flex;
+  justify-content: right;
+}
+
+#stemma-editor-help-button-container {
+ padding-left: 0.2em;
+}
+
+#stemma-editor-save-cancel-buttons-container {
+  width: 100%;
+  display: flex;
+  justify-content: right;
+}
+
+#stemma-dot-editor:focus-visible {
+  height: 100%;
+  width: 100%;
+  border: none;
+  resize: none;
+}
+
+#stemma-dot-editor {
+  height: 100%;
+  width: 100%;
+  border: none;
+  resize: none;
+  outline: none;
+  font-family: 'Sono', monospace;
+  font-size: 90%;
+}
+
+#stemma-editor-help-text {
+  position: absolute;
+  top: 1.5em;
+  left: 50%;
+  margin-left: 2pt;
+  width: 45%;
+  height: 0em;
+  opacity: 0.9;
+  border: 1px solid #fff;
+  background: #f8f9fa;
+  transition: height 0.4s ease-out, border 1.4s ease-out;
+  overflow: auto;
+}
+
+#stemma-editor-help-text.show {
+  height: 30em;
+  opacity: 0.9;
+  border: 1px solid #bfc4c8;
+  background: #f8f9fa;
+  transition: height 0.4s ease-out, border 0.4s ease-out;
+}
+
+#dot-help {
+  padding: 1em;
+}
+
+#dot-help h4 {
+  margin-bottom: 0.6em;
+  font-size: 125%;
+}
+
+#dot-help p {
+  font-size: 95%;
+  margin-bottom: 0.5rem;
+}
+
+#dot-help .code {
+  font-family: 'Sono', monospace;
+  font-size: 90%;
+  color: #56799b;
+  margin-bottom: 0.5rem;
+  padding-left: 1.8em;
+}
+
+#graph_container {
+  width: 100%;
+  transition: width 0.2s ease-in-out;
+}
+
+#graph_container.shrunken {
+  width: 50%;
+  transition: width 0.4s ease-in-out;
+}
+
+#graph-area {
   background-color: white;
   width: 100%;
   height: 40vw;
   padding: 1em;
+}
+
+#graph_container #graph-area #graph svg {
+  width: 100%;
+  transition: width 0.2s ease-in-out;
+}
+
+#graph_container.shrunken #graph-area #graph svg {
+  width: 100%;
+  transition: width 0.4s ease-in-out;
 }
 
 @media (min-width: 200px) {
@@ -87,6 +229,11 @@ table.variant-types-controls td {
   padding-right: 2em;
 }
 
+.indicator-svg {
+  margin-right: 2px;
+  margin-left: 2px;
+}
+
 .indicator-svg:hover {
   cursor: pointer;
 }
@@ -128,6 +275,10 @@ ul#traditions-list a {
   padding: unset;
 }
 
+ul#traditions-list .folder-icon.selected svg {
+  fill: #cfdcee;
+}
+
 section-list ul {
   margin-top: 0.5em;
 }
@@ -155,4 +306,21 @@ social-login-options .btn {
 delete-section-button .btn-outline-danger {
   color: var(--bs-btn-color);
   padding-right: 0.5em;
+}
+
+#message-console-text-panel {
+  height: 10em;
+  overflow-y: scroll;
+  background-color: #fcfcfc;
+  font-size: 80%;
+  padding: 0.1rem 0.25rem;
+  border: 1px solid #c5c6c8;
+}
+
+#message-console-text-panel .console-message {
+  color: #198754;
+}
+
+#message-console-text-panel .console-message.danger {
+  color: #d5465a;
 }

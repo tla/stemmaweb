@@ -180,7 +180,6 @@ class StemwebFrontend {
       (checkbox_element) => [ checkbox_element.name, checkbox_element.checked ] 
     );
     const parameters = algorithmArgs.concat( variants );
-    console.log( parameters );
     return stemwebService
       .runAlgorithm( userId, algorithmId, tradId, null, parameters )
       .then( stemwebFrontend.handleRunAlgorithmResponse );
@@ -189,7 +188,6 @@ class StemwebFrontend {
   handleRunAlgorithmResponse( resp ) {
     if (resp.success) {
       StemmawebAlert.show('Job added.', 'success');
-      console.log( 'handleRunAlgorithmResponse =>', resp.data );
       // // @todo: Should the next line be wrapped in a try..catch?
       // TRADITION_STORE.updateTradition(resp.data);
       return Promise.resolve({

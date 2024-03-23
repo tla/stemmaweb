@@ -123,3 +123,19 @@ body {
   padding: 0.5em;
   margin-bottom: 1em;
 }
+
+#stemma-editor-graph-container {
+  position: relative;
+  z-index: 801;
+}
+
+#stemma-editor-graph-container-modal-backdrop {
+  display: block;
+  z-index: 800;
+  background-color: rgba(255, 255, 255, 0.2);
+  position:absolute;
+  top: 0px;
+  left: 0px;
+  width: 100vw;
+  height: 100vh;
+}

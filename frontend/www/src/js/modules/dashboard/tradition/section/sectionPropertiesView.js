@@ -24,7 +24,7 @@ class SectionPropertiesView extends HTMLElement {
     constructor() {
         super();
         // If I was deleted, I go away.
-        this.addEventListener( 'sectionDeleted', () => { console.log( 'hi', this ); this.innerHTML = '' } );
+        this.addEventListener( 'sectionDeleted', () => { this.innerHTML = '' } );
         // Whenever a tradition is selected that is not me, I go away.
         TRADITION_STORE.subscribe( ( prevState, state ) => {
             // Check on id because other metadata may have changed.
