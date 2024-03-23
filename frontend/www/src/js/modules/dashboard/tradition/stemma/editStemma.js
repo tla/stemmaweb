@@ -12,6 +12,11 @@ class EditStemma extends HTMLElement {
   constructor() {
     super();
     this.buttonAction = null;
+    // We may encounter the situation where there is no stemma (anymore).
+    // In which case we gery out the edit and delete stemma buttons.
+    STEMMA_STORE.subscribe( ( state ) => {
+      this.greyOut();
+    } );
   }
 
   connectedCallback() {  
@@ -66,25 +71,7 @@ class EditStemma extends HTMLElement {
       // We first fade out the existing graph…
       // TODO? The transition is a perfect copy of TraditionView.renderDefaultTraditionStemma.
       graphArea.transition().call( speedy_transition ).style( 'opacity', '0.0' ).on( 'end', () => {
-        // …then we create a simple bifurcating tree with the available witnesses as an example.
-        var rootAndWitnesses = TRADITION_STORE.state.selectedTradition.witnesses.sort(); 
-        rootAndWitnesses = rootAndWitnesses.slice( 0, 9 ); // [ 'A', 'B', 'C', … ]
-        // Add an example hypothetical witness.
-        rootAndWitnesses.splice( 1, 0, '"2"' ); // [ 'A', '"2"', 'B', 'C', … ]
-        const witnesses = rootAndWitnesses.slice( 1, 10 ); // [ '"2"', 'B', 'C', … ]
-        // Map the witnesses to a made up example stemma (as a bifurcating tree).
-        // The index of the node in the array divided by 2 (floored) gives the index of the parent.
-        const taxa = witnesses.map( (witness,idx) => `\t${rootAndWitnesses[Math.floor(idx/2)]} -> ${witness};` )
-        // Add a hypothetical archetype on top for good measure.
-        taxa.splice( 0, 0, `\t"\u03b1" -> ${rootAndWitnesses[0]};` )
-        const taxaString = ( taxa.join( '\n' ) );
-        const witnessDefinitions = rootAndWitnesses.map( (witness) => `\t${witness} [class=extant];` );
-        // Correct the definition of the hypothetical witness.
-        witnessDefinitions[1] = '\t"2" [class=hypothetical label="*"];';
-        // Add the archetype definition.
-        witnessDefinitions.splice( 0, 0, '\t"\u03b1" [class=hypothetical label="\u03b1"];' );
-        const witnessesString = witnessDefinitions.join( '\n' );
-        const exampleDigraph = `digraph "New Stemma Name" {\n${witnessesString}\n${taxaString}\n}\n`
+        const exampleDigraph = this.createExampleStemma();
         stemmaDotEditorTextarea.value = exampleDigraph;
         // Finally we need to render the example stemma.
         const editorStemma = { dot: exampleDigraph }
@@ -92,6 +79,30 @@ class EditStemma extends HTMLElement {
         stemmaRenderer.renderStemma( tradition, editorStemma );
       } );
     };
+  }
+
+  createExampleStemma() {
+    // Let's create a simple bifurcating tree with the available witnesses as an example.
+    const tab = '    ';
+    var rootAndWitnesses = TRADITION_STORE.state.selectedTradition.witnesses.sort(); 
+    rootAndWitnesses = rootAndWitnesses.slice( 0, 9 ); // [ 'A', 'B', 'C', … ]
+    // Add an example hypothetical witness.
+    rootAndWitnesses.splice( 1, 0, '"2"' ); // [ 'A', '"2"', 'B', 'C', … ]
+    const witnesses = rootAndWitnesses.slice( 1, 10 ); // [ '"2"', 'B', 'C', … ]
+    // Map the witnesses to a made up example stemma (as a bifurcating tree).
+    // The index of the node in the array divided by 2 (floored) gives the index of the parent.
+    const taxa = witnesses.map( (witness,idx) => `${tab}${rootAndWitnesses[Math.floor(idx/2)]} -> ${witness};` )
+    // Add a hypothetical archetype on top for good measure.
+    taxa.splice( 0, 0, `${tab}"\u03b1" -> ${rootAndWitnesses[0]};` )
+    const taxaString = ( taxa.join( '\n' ) );
+    const witnessDefinitions = rootAndWitnesses.map( (witness) => `${tab}${witness} [class=extant];` );
+    // Correct the definition of the hypothetical witness.
+    witnessDefinitions[1] = `${tab}"2" [class=hypothetical label="*"];`;
+    // Add the archetype definition.
+    witnessDefinitions.splice( 0, 0, `${tab}"\u03b1" [class=hypothetical label="\u03b1"];` );
+    const witnessesString = witnessDefinitions.join( '\n' );
+    const exampleDigraph = `digraph "New Stemma Name" {\n${witnessesString}\n${taxaString}\n}\n`;
+    return exampleDigraph;
   }
 
   toggleStemmaEditor() {
@@ -237,22 +248,40 @@ class EditStemma extends HTMLElement {
     }
   }
   
-  addEditStemmaButtonListeners(){
+  addEditStemmaButtonListeners() {
     // Adds listeners to the stemma edit, add, and delete buttons.
     // They need to be reset whenever the editor has been opened 
     // and the inner.html of `render` is deleted and supplanted 
     // by that of `renderEditorButtons`.  
-    document.querySelector( '#edit-stemma-button-link' ).addEventListener( 'click', () => {
-      this.buttonAction = 'edit';
-      this.toggleStemmaEditor(); 
-    });
+    document.querySelector( '#edit-stemma-button-link' ).addEventListener( 'click', (evt) => {
+      if( !evt.currentTarget.classList.contains( 'greyed-out' ) ){
+        this.buttonAction = 'edit';
+        this.toggleStemmaEditor();   
+      };
+    } );
     document.querySelector( '#add-stemma-button-link' ).addEventListener( 'click', () => { 
       this.buttonAction = 'add';
       this.toggleStemmaEditor(); 
     });
-    document.querySelector( '#delete-stemma-button-link' ).addEventListener( 'click', () => { 
-      this.handleDeleteStemma() 
-    });
+    document.querySelector( '#delete-stemma-button-link' ).addEventListener( 'click', (evt) => { 
+      if( !evt.currentTarget.classList.contains( 'greyed-out' ) ){
+        this.handleDeleteStemma();
+      };
+    } );  
+  }
+
+  greyOut() {
+    var classAction = '';
+    ( STEMMA_STORE.state.availableStemmata.length > 0 ) ? classAction = 'remove' : classAction = 'add';
+    const editAndDeleteStemmaButtonLinkElement = [
+      document.querySelector( '#edit-stemma-button-link' ),
+      document.querySelector( '#delete-stemma-button-link' )
+    ]
+    editAndDeleteStemmaButtonLinkElement.forEach( (elem) => {
+        if( elem ) {
+        elem.classList[classAction]( 'greyed-out' );
+        }
+    } );
   }
 
   render() {
@@ -285,6 +314,7 @@ class EditStemma extends HTMLElement {
           </div>
       </a>
     `;
+    this.greyOut();
     this.addEditStemmaButtonListeners();
   }
 
@@ -293,6 +323,10 @@ class EditStemma extends HTMLElement {
     // They need to be reset whenever the editor is closed and the
     // inner.html of `renderEditorButtons` is deleted and supplanted 
     // by that if `render`.  
+    document.querySelector( '#stemma-editor-help-button-link' ).addEventListener( 'click', (evt) => {
+      const stemmaEditorHelpText = document.querySelector( '#stemma-editor-help-text' );
+      stemmaEditorHelpText.classList.toggle( 'show' );
+    });
     document.querySelector( '#save-stemma-button-link' ).addEventListener( 'click', (evt) => {
       this.handleSaveStemma();
     });
@@ -301,26 +335,111 @@ class EditStemma extends HTMLElement {
     });
   }
 
+  getAddNote() {
+    var note = '';
+    if( this.buttonAction=='add' ){
+      note = `
+        <p>
+        The depicted graph description is not a computed stemma,
+        but merely a random example based on some of the witness sigla
+        available. It serves to show what constructs you can use, and 
+        as a basis to work from.
+        </p>
+      `     
+    }
+    return note;
+  }
+
+  getDotHelpText() {
+    return `
+    <div id="dot-help">
+      <h4>Editing a stemma</h4>
+      ${this.getAddNote()}
+      <p>
+        All stemma definitions begin with the line
+      </p>
+      <div class="code">
+        digraph "Stemma Name" {
+      </div>
+      <p>
+        and end with the line
+      </p>
+      <div class="code">
+        }
+      </div>
+      <p>
+        Please do not change these lines except to edit the stemma name.
+      </p>
+      <p>
+        First list each witness in your stemma, whether extant or lost 
+        / reconstructed / hypothetical, and assign them a class of either 
+        “extant” or “hypothetical”. For example:
+      </p>
+      <div class="code">
+        α [ class=hypothetical ]
+        C [ class=extant ]
+      </div>        
+      <p>
+        Next, list the direct links between witnesses, one per line. 
+        For example, if witness C descends directly from witness α, 
+        note it as follows:
+      </p>
+      <div class="code">
+        α -> C
+      </div>
+      <p>
+        A witness may be the exemplar for any number of other witnesses, 
+        whether extant or not; likewise, a witness may inherit from any 
+        number of other witnesses. Use as many
+      </p>
+      <div class="code">
+        "A -> B" 
+      </div>
+      <p>
+      pairings as necessary to describe all genealogical relations.
+      </p>
+    </div>
+    `;
+  }
+
   renderEditorButtons() {
     this.innerHTML = `
-      <a
-      id="save-stemma-button-link"
-      class="link-secondary"
-      href="#"
-      aria-label="Save this stemma">
-        <div>
-          ${feather.icons['save'].toSvg()}
-        </div>
-      </a>
-      <a
-        id="cancel-edit-stemma-button-link"
+    <div id="stemma-editor-buttons-container">
+      <div id="stemma-editor-help-text">
+      ${this.getDotHelpText()}
+      </div>
+      <div id="stemma-editor-help-button-container">
+        <a
+        id="stemma-editor-help-button-link"
         class="link-secondary"
         href="#"
-        aria-label="Add a stemma to this tradition">
+        aria-label="Help">
           <div>
-            ${feather.icons['x'].toSvg()}
+            ${feather.icons['help-circle'].toSvg()}
           </div>
-      </a>
+        </a>
+      </div>
+      <div id="stemma-editor-save-cancel-buttons-container">
+        <a
+        id="save-stemma-button-link"
+        class="link-secondary"
+        href="#"
+        aria-label="Save this stemma">
+          <div>
+            ${feather.icons['save'].toSvg()}
+          </div>
+        </a>
+        <a
+          id="cancel-edit-stemma-button-link"
+          class="link-secondary"
+          href="#"
+          aria-label="Add a stemma to this tradition">
+            <div>
+              ${feather.icons['x'].toSvg()}
+            </div>
+        </a>
+      </div>
+    </div>
     `;
     this.addEditorButtonListeners();
   }
