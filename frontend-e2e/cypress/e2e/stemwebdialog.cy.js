@@ -220,7 +220,9 @@ describe('stemma editor tools and svg work properly', () => {
         cy.get('#traditions-list').contains(tradition.title).click();
         // Florilegium has 1 stemma svg at start
         // the same number of selector icons should be visible as there are stemmata
-        cy.get('#stemma-selector').find('span svg.indicator-svg').should('have.length', tradition.stemmata.length);
+
+        cy.get('stemweb-job-status').contains('Job status'); // cy was waitng for this (as it seems...)
+        cy.get('#stemma-editor-graph-container').wait(1000).find('#stemma-selector').wait(1000).find('svg.indicator-svg').should('have.length', tradition.stemmata.length); // find('svg.indicator-svg') is so flaky !!!
         // test that the stemma svg appears
         cy.get('#graph').find('svg').should('be.visible').and('have.length', 1);
         // no box should be there, at first;
@@ -241,7 +243,95 @@ describe('stemma editor tools and svg work properly', () => {
 
         // Upon a change in the left box (a valid dot, link btw x and y), verify that svg is just different.
         // count edges should be plus one
-        //
+
+        // get the editor box and its content
+        cy.log('>>> what\'s on, doc?')
+        cy.wait(1000); // to wait before is crucial, as it seems
+        cy.get('@editorbox').find('textarea#stemma-dot-editor').invoke('val').then(v => cy.log('old val: ' + v));
+        // remember the content
+        cy.get('@editorbox').find('textarea#stemma-dot-editor').invoke('val').then(v => {
+            cy.log('old val: ' + v);
+            // remember the number of its edges "->"
+            let countarrows = (v.match(/->/g) || []).length;
+            cy.log('count -> arrows in editor: ' + countarrows); // 20
+
+            // get the graph's svg and remember the number of its nodes and edges
+            cy.get('div#graph > svg').as('graph-svg');
+            cy.get('@graph-svg').find('g.edge').should('have.length', countarrows);
+
+            // change the edit box's content
+
+            /* // to the last leaf, add a NEWNODE
+            // last leaf:       -> S; }
+
+            // const rx = /(\s*->\s*)("?\w+"?)(;\s*})/
+            // const match = v.match(rx);
+            // cy.log('match[1]: ' + match[1] + ', match[2]: ' + match[2] + ', match[3]: ' + match[3]);
+            // const lastleaf = match[2] + ' -> ' + ' "NEWNODE" ; "NEWNODE" [class=extant] ;' ;
+            // const newdotcontent = v.replace('}', lastleaf + '\n}');
+
+            // change the whole content: still the svg is not updated
+            const newdotcontent = `digraph "stemma of Tomas" {
+"α" [class=hypothetical];
+G [class=extant];
+"δ" [class=hypothetical];
+K [class=extant];
+C [class=extant];
+S [class=extant];
+"γ" [class=hypothetical];
+"3" [class=hypothetical label="*"];
+P [class=extant];
+A [class=extant];
+H [class=extant];
+"4" [class=hypothetical label="*"];
+B [class=extant];
+F [class=extant];
+Q [class=extant];
+D [class=extant];
+"7" [class=hypothetical label="*"];
+E [class=extant];
+"5" [class=hypothetical label="*"];
+"2" [class=hypothetical label="*"];
+T [class=extant];
+NEWNODE [class=extant];
+"α" -> "δ";
+"γ" -> "3";
+"γ" -> "4";
+"5" -> K;
+"5" -> Q;
+"4" -> D;
+"7" -> E;
+"5" -> "7";
+"7" -> G;
+"α" -> T;
+"α" -> A;
+"3" -> F;
+"2" -> B;
+"4" -> "5";
+"3" -> H;
+"δ" -> "γ";
+"2" -> C;
+"δ" -> "2";
+B -> P;
+B -> S;
+S -> NEWNODE;
+}` 
+
+cy.wait(1000);
+cy.get('textarea#stemma-dot-editor').invoke('val', newdotcontent);
+cy.get('textarea#stemma-dot-editor').type('{moveToEnd} ');
+*/
+
+            const appendatend = 'TESTNODE [class=extant];\nS -> TESTNODE;\n';
+            // type() it and svg is updated
+            cy.get('textarea#stemma-dot-editor').type('{moveToEnd}{leftArrow}' + appendatend);
+            cy.wait(1000);
+
+            // get the graph's svg again and check the number of its nodes and edges again.
+            // verify that these numbers have changed (in the way they should)
+
+        });
+
 
     });
 });
