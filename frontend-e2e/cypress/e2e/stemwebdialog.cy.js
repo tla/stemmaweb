@@ -218,10 +218,10 @@ describe('stemma editor tools and svg work properly', () => {
         cy.log('tradition.title: ' + tradition.title);
         // click on the tradition title within the tradition list
         cy.get('#traditions-list').contains(tradition.title).click();
+        cy.wait(10000);
         // Florilegium has 1 stemma svg at start
         // the same number of selector icons should be visible as there are stemmata
-
-        cy.get('#stemma-editor-graph-container').find('#stemma-selector').wait(1000).find('svg.indicator-svg').should('have.length', tradition.stemmata.length); // find('svg.indicator-svg') is so flaky !!!
+        cy.get('#stemma-editor-graph-container').find('#stemma-selector').find('svg.indicator-svg').should('have.length', tradition.stemmata.length);
         // test that the stemma svg appears
         cy.get('#graph').find('svg').should('be.visible').and('have.length', 1);
         // no box should be there, at first;
