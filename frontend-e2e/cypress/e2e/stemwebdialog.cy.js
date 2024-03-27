@@ -221,7 +221,7 @@ describe('stemma editor tools and svg work properly', () => {
         // Florilegium has 1 stemma svg at start
         // the same number of selector icons should be visible as there are stemmata
 
-        cy.get('#stemma-editor-graph-container').wait(1000).find('#stemma-selector').wait(1000).find('svg.indicator-svg').should('have.length', tradition.stemmata.length); // find('svg.indicator-svg') is so flaky !!!
+        cy.get('#stemma-editor-graph-container').find('#stemma-selector').wait(1000).find('svg.indicator-svg').should('have.length', tradition.stemmata.length); // find('svg.indicator-svg') is so flaky !!!
         // test that the stemma svg appears
         cy.get('#graph').find('svg').should('be.visible').and('have.length', 1);
         // no box should be there, at first;
@@ -325,12 +325,9 @@ cy.get('textarea#stemma-dot-editor').type('{moveToEnd} ');
             cy.get('textarea#stemma-dot-editor').type('{moveToEnd}{leftArrow}' + appendatend);
             cy.wait(1000);
 
-            // >>> UNTIL HERE: passed locally, failed on github
-            // get the graph's svg again and check the number of its nodes and edges again.
-            // verify that these numbers have changed (in the way they should)
-
+            // get the graph's svg again and assert the number of its edges to be one more than before
+            cy.get('div#graph > svg').find('g.edge').should('have.length', countarrows+1); // 21
         });
-
 
     });
 });
