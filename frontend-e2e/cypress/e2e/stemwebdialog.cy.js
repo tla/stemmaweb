@@ -46,7 +46,7 @@ const len_stemweb_algorithms = stemweb_algorithms.length;
 
 beforeEach(() => {
     // cy.intercept('GET', `**/requests/**`).as('any_req');
-    cy.intercept('GET', `**/requests/**/algorithms/**`).as('algorithms_req');
+    // cy.intercept('GET', `**/requests/**/algorithms/**`).as('algorithms_req');
     cy.intercept('GET', `**/requests/**/stemmata`).as('stemmata_req');
     cy.intercept('GET', `**/requests/**/sections`).as('sections_req');
     cy.intercept('GET', `**/requests/**/jobstatus/**`).as('jobstatus_req');
@@ -54,11 +54,11 @@ beforeEach(() => {
 
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
 
-    cy.wait('@algorithms_req').then(interception => {
+    /* cy.wait('@algorithms_req').then(interception => {
         cy.log('interception.request.url: ' + interception.request.url);
         cy.log('interception.response.body: ' + interception.response.body);
         cy.log('interception.response.statusCode: ' + interception.response.statusCode);
-    });
+    }); */
 
     cy.viewport(1600, 900);
 });
