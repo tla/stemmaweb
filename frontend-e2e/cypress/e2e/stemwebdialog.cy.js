@@ -45,7 +45,21 @@ import stemweb_algorithms from '../fixtures/stemweb_algorithms.json'
 const len_stemweb_algorithms = stemweb_algorithms.length;
 
 beforeEach(() => {
+    // cy.intercept('GET', `**/requests/**`).as('any_req');
+    cy.intercept('GET', `**/requests/**/algorithms/**`).as('algorithms_req');
+    cy.intercept('GET', `**/requests/**/stemmata`).as('stemmata_req');
+    cy.intercept('GET', `**/requests/**/sections`).as('sections_req');
+    cy.intercept('GET', `**/requests/**/jobstatus/**`).as('jobstatus_req');
+    cy.intercept('GET', `**/wasm/**`).as('wasm_call');
+
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
+
+    cy.wait('@algorithms_req').then(interception => {
+        cy.log('interception.request.url: ' + interception.request.url);
+        cy.log('interception.response.body: ' + interception.response.body);
+        cy.log('interception.response.statusCode: ' + interception.response.statusCode);
+    });
+
     cy.viewport(1600, 900);
 });
 
@@ -213,12 +227,39 @@ describe('stemma editor tools and svg work properly', () => {
     • Upon edit, svg and box should be there.
     • Upon a change in the left box (a valid dot, link btw x and y), verify that svg is just different.
      */
-    it.only('under construction', () => {
+    it.only('under construction', { defaultCommandTimeout: 10000 }, () => {
         const tradition = test_traditions.find(trad => trad.title.startsWith('Florilegium'));
         cy.log('tradition.title: ' + tradition.title);
         // click on the tradition title within the tradition list
         cy.get('#traditions-list').contains(tradition.title).click();
-        cy.wait(10000);
+
+        cy.wait('@stemmata_req').then(interception => {
+            cy.log('interception.request.url: ' + interception.request.url);
+            cy.log('interception.response.body: ' + interception.response.body);
+            cy.log('interception.response.statusCode: ' + interception.response.statusCode);
+        });
+        cy.wait('@sections_req').then(interception => {
+            cy.log('interception.request.url: ' + interception.request.url);
+            cy.log('interception.response.body: ' + interception.response.body);
+            cy.log('interception.response.statusCode: ' + interception.response.statusCode);
+        });
+        cy.wait('@jobstatus_req').then(interception => {
+            cy.log('interception.request.url: ' + interception.request.url);
+            cy.log('interception.response.body: ' + interception.response.body);
+            cy.log('interception.response.statusCode: ' + interception.response.statusCode);
+        });
+        /* cy.wait('@any_req').then(interception => {
+            cy.log('interception.request.url: ' + interception.request.url);
+            cy.log('interception.response.body: ' + interception.response.body);
+            cy.log('interception.response.statusCode: ' + interception.response.statusCode);
+            // expect(interception.response.statusCode).to.eq(200);
+        }); */
+        cy.wait('@wasm_call').then(interception => {
+            cy.log('interception.request.url: ' + interception.request.url);
+            cy.log('interception.response.body: ' + interception.response.body);
+            cy.log('interception.response.statusCode: ' + interception.response.statusCode);
+        });
+
         // Florilegium has 1 stemma svg at start
         // the same number of selector icons should be visible as there are stemmata
         cy.get('#stemma-editor-graph-container').find('#stemma-selector').find('svg.indicator-svg').should('have.length', tradition.stemmata.length);
