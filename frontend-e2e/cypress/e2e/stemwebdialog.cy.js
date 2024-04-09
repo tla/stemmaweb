@@ -213,7 +213,7 @@ describe('stemma editor tools and svg work properly', () => {
     • Upon edit, svg and box should be there.
     • Upon a change in the left box (a valid dot, link btw x and y), verify that svg is just different.
      */
-    it.only('under construction', { defaultCommandTimeout: 60000, requestTimeout: 60000, responseTimeout: 60000 }, () => {
+    it('passes', { defaultCommandTimeout: 60000, requestTimeout: 60000, responseTimeout: 60000 }, () => {
         const tradition = test_traditions.find(trad => trad.title.startsWith('Florilegium'));
         cy.log('tradition.title: ' + tradition.title);
         // click on the tradition title within the tradition list
