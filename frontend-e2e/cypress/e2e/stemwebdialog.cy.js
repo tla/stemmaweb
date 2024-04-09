@@ -45,21 +45,7 @@ import stemweb_algorithms from '../fixtures/stemweb_algorithms.json'
 const len_stemweb_algorithms = stemweb_algorithms.length;
 
 beforeEach(() => {
-    // cy.intercept('GET', `**/requests/**`).as('any_req');
-    // cy.intercept('GET', `**/requests/**/algorithms/**`).as('algorithms_req');
-    cy.intercept('GET', `**/requests/**/stemmata`).as('stemmata_req');
-    cy.intercept('GET', `**/requests/**/sections`).as('sections_req');
-    cy.intercept('GET', `**/requests/**/jobstatus/**`).as('jobstatus_req');
-    cy.intercept('GET', `**/wasm/**`).as('wasm_use');
-
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
-
-    /* cy.wait('@algorithms_req').then(interception => {
-        cy.log('interception.request.url: ' + interception.request.url);
-        cy.log('interception.response.body: ' + interception.response.body);
-        cy.log('interception.response.statusCode: ' + interception.response.statusCode);
-    }); */
-
     cy.viewport(1600, 900);
 });
 
@@ -233,53 +219,6 @@ describe('stemma editor tools and svg work properly', () => {
         // click on the tradition title within the tradition list
         cy.get('#traditions-list').contains(tradition.title).click();
 
-        cy.wait(['@stemmata_req', '@sections_req', '@jobstatus_req', '@wasm_use']).then(
-            (interceptions) => {
-              cy.log('interceptions[0].request.url: ' + interceptions[0].request.url);
-              cy.log('interceptions[0].response.body: ' + interceptions[0].response.body);
-              cy.log('interceptions[0].response.statusCode: ' + interceptions[0].response.statusCode);
-
-              cy.log('interceptions[1].request.url: ' + interceptions[1].request.url);
-              cy.log('interceptions[1].response.body: ' + interceptions[1].response.body);
-              cy.log('interceptions[1].response.statusCode: ' + interceptions[1].response.statusCode);
-
-              cy.log('interceptions[2].request.url: ' + interceptions[2].request.url);
-              cy.log('interceptions[2].response.body: ' + interceptions[2].response.body);
-              cy.log('interceptions[2].response.statusCode: ' + interceptions[2].response.statusCode);
-
-              cy.log('interceptions[3].request.url: ' + interceptions[3].request.url);
-              cy.log('interceptions[3].response.body: ' + interceptions[3].response.body);
-              cy.log('interceptions[3].response.statusCode: ' + interceptions[3].response.statusCode);
-
-            }
-        );
-        /* cy.wait('@stemmata_req').then(interception => {
-            cy.log('interception.request.url: ' + interception.request.url);
-            cy.log('interception.response.body: ' + interception.response.body);
-            cy.log('interception.response.statusCode: ' + interception.response.statusCode);
-        });
-        cy.wait('@sections_req').then(interception => {
-            cy.log('interception.request.url: ' + interception.request.url);
-            cy.log('interception.response.body: ' + interception.response.body);
-            cy.log('interception.response.statusCode: ' + interception.response.statusCode);
-        });
-        cy.wait('@jobstatus_req').then(interception => {
-            cy.log('interception.request.url: ' + interception.request.url);
-            cy.log('interception.response.body: ' + interception.response.body);
-            cy.log('interception.response.statusCode: ' + interception.response.statusCode);
-        });
-        cy.wait('@wasm_use').then(interception => {
-            cy.log('interception.request.url: ' + interception.request.url);
-            cy.log('interception.response.body: ' + interception.response.body);
-            cy.log('interception.response.statusCode: ' + interception.response.statusCode);
-        }); */
-        /* cy.wait('@any_req').then(interception => {
-            cy.log('interception.request.url: ' + interception.request.url);
-            cy.log('interception.response.body: ' + interception.response.body);
-            cy.log('interception.response.statusCode: ' + interception.response.statusCode);
-            // expect(interception.response.statusCode).to.eq(200);
-        }); */
-
         // Florilegium has 1 stemma svg at start
         // the same number of selector icons should be visible as there are stemmata
         cy.get('#stemma-editor-graph-container').find('#stemma-selector').find('svg.indicator-svg').should('have.length', tradition.stemmata.length);
@@ -382,7 +321,7 @@ cy.get('textarea#stemma-dot-editor').type('{moveToEnd} ');
 */
 
             const appendatend = 'TESTNODE [class=extant];\nS -> TESTNODE;\n';
-            // type() it and svg is updated
+            // by .type() editorbox and svg are updated––but not by .invoke('val', newdotcontent)
             cy.get('textarea#stemma-dot-editor').type('{moveToEnd}{leftArrow}' + appendatend);
             cy.wait(1000);
 
