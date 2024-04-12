@@ -235,7 +235,7 @@ describe('stemma editor tools and svg work properly', () => {
         });
         // Upon edit, svg and box should be there.
         cy.get('a#edit-stemma-button-link').wait(500).click();
-        cy.get('#stemma-editor-container').as('editorbox');
+        cy.get('#stemma-editor-container').wait(1000).as('editorbox');
         cy.get('@editorbox').should('be.visible');
         cy.get('#graph').find('svg').as('stemmasvg');
         cy.get('@stemmasvg').should('be.visible').and('have.length', 1);
@@ -244,8 +244,6 @@ describe('stemma editor tools and svg work properly', () => {
         // count edges should be plus one
 
         // get the editor box and its content
-        cy.wait(1000); // to wait before is crucial, as it seems
-        cy.get('@editorbox').find('textarea#stemma-dot-editor').invoke('val').then(v => cy.log('old val: ' + v));
         // remember the content
         cy.get('@editorbox').find('textarea#stemma-dot-editor').invoke('val').then(v => {
             cy.log('old val: ' + v);
@@ -258,72 +256,9 @@ describe('stemma editor tools and svg work properly', () => {
             cy.get('@graph-svg').find('g.edge').should('have.length', countarrows);
 
             // change the edit box's content
-
-            /* // to the last leaf, add a NEWNODE
-            // last leaf:       -> S; }
-
-            // const rx = /(\s*->\s*)("?\w+"?)(;\s*})/
-            // const match = v.match(rx);
-            // cy.log('match[1]: ' + match[1] + ', match[2]: ' + match[2] + ', match[3]: ' + match[3]);
-            // const lastleaf = match[2] + ' -> ' + ' "NEWNODE" ; "NEWNODE" [class=extant] ;' ;
-            // const newdotcontent = v.replace('}', lastleaf + '\n}');
-
-            // change the whole content: still the svg is not updated
-            const newdotcontent = `digraph "stemma of Tomas" {
-"α" [class=hypothetical];
-G [class=extant];
-"δ" [class=hypothetical];
-K [class=extant];
-C [class=extant];
-S [class=extant];
-"γ" [class=hypothetical];
-"3" [class=hypothetical label="*"];
-P [class=extant];
-A [class=extant];
-H [class=extant];
-"4" [class=hypothetical label="*"];
-B [class=extant];
-F [class=extant];
-Q [class=extant];
-D [class=extant];
-"7" [class=hypothetical label="*"];
-E [class=extant];
-"5" [class=hypothetical label="*"];
-"2" [class=hypothetical label="*"];
-T [class=extant];
-NEWNODE [class=extant];
-"α" -> "δ";
-"γ" -> "3";
-"γ" -> "4";
-"5" -> K;
-"5" -> Q;
-"4" -> D;
-"7" -> E;
-"5" -> "7";
-"7" -> G;
-"α" -> T;
-"α" -> A;
-"3" -> F;
-"2" -> B;
-"4" -> "5";
-"3" -> H;
-"δ" -> "γ";
-"2" -> C;
-"δ" -> "2";
-B -> P;
-B -> S;
-S -> NEWNODE;
-}` 
-
-cy.wait(1000);
-cy.get('textarea#stemma-dot-editor').invoke('val', newdotcontent);
-cy.get('textarea#stemma-dot-editor').type('{moveToEnd} ');
-*/
-
             const appendatend = 'TESTNODE [class=extant];\nS -> TESTNODE;\n';
             // by .type() editorbox and svg are updated––but not by .invoke('val', newdotcontent)
-            cy.get('textarea#stemma-dot-editor').type('{moveToEnd}{leftArrow}' + appendatend);
-            cy.wait(1000);
+            cy.get('textarea#stemma-dot-editor').type('{moveToEnd}{leftArrow}' + appendatend).wait(1000);
 
             // get the graph's svg again and assert the number of its edges to be one more than before
             cy.get('div#graph > svg').find('g.edge').should('have.length', countarrows+1); // 21
