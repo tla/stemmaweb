@@ -23,28 +23,29 @@
 }
 
 edit-stemma-buttons {
-  float: right;
   display: flex;
+  width: 100%;
+  justify-content: right;
 }
 
-#add-stemma-button-link, #delete-stemma-button-link {
-  margin-left: 0.5em;
+
+edit-stemma-buttons a.greyed-out div {
+  color: #ccc;
 }
 
 .delete-stemma-danger {
   color: #dc3545;
 }
 
+#add-stemma-button-link, #delete-stemma-button-link {
+  margin-left: 0.5em;
+}
 
 #stemma-editor-graph-container {
   display: flex;
 }
 
 #stemma-editor-container {
-  border: 1px solid #6c757d;
-  margin-top: 3pt;
-  padding: 3pt;
-  padding-right: 0pt;
   opacity: 0;
   width: 0%;
   transition: width 0.2s ease-in-out, opacity 0.1s ease-in-out;
@@ -56,12 +57,37 @@ edit-stemma-buttons {
   transition: width 0.4s ease-in-out, opacity 0.4s ease-in-out;
 }
 
+#stemma-dot-editor-container {
+  border: 1px solid #bfc4c8;
+  margin-top: 3pt;
+  padding: 3pt;
+  padding-right: 0pt;
+  height: 95%;
+}
+
+#stemma-editor-buttons-container {
+  width: 100%;
+  display: flex;
+  justify-content: right;
+}
+
+#stemma-editor-help-button-container {
+ padding-left: 0.2em;
+}
+
+#stemma-editor-save-cancel-buttons-container {
+  width: 100%;
+  display: flex;
+  justify-content: right;
+}
+
 #stemma-dot-editor:focus-visible {
   height: 100%;
   width: 100%;
   border: none;
   resize: none;
 }
+
 #stemma-dot-editor {
   height: 100%;
   width: 100%;
@@ -69,6 +95,51 @@ edit-stemma-buttons {
   resize: none;
   outline: none;
   font-family: 'Sono', monospace;
+  font-size: 90%;
+}
+
+#stemma-editor-help-text {
+  position: absolute;
+  top: 1.5em;
+  left: 50%;
+  margin-left: 2pt;
+  width: 45%;
+  height: 0em;
+  opacity: 0.9;
+  border: 1px solid #fff;
+  background: #f8f9fa;
+  transition: height 0.4s ease-out, border 1.4s ease-out;
+  overflow: auto;
+}
+
+#stemma-editor-help-text.show {
+  height: 30em;
+  opacity: 0.9;
+  border: 1px solid #bfc4c8;
+  background: #f8f9fa;
+  transition: height 0.4s ease-out, border 0.4s ease-out;
+}
+
+#dot-help {
+  padding: 1em;
+}
+
+#dot-help h4 {
+  margin-bottom: 0.6em;
+  font-size: 125%;
+}
+
+#dot-help p {
+  font-size: 95%;
+  margin-bottom: 0.5rem;
+}
+
+#dot-help .code {
+  font-family: 'Sono', monospace;
+  font-size: 90%;
+  color: #56799b;
+  margin-bottom: 0.5rem;
+  padding-left: 1.8em;
 }
 
 #graph_container {
@@ -204,6 +275,10 @@ ul#traditions-list a {
   padding: unset;
 }
 
+ul#traditions-list .folder-icon.selected svg {
+  fill: #cfdcee;
+}
+
 section-list ul {
   margin-top: 0.5em;
 }
@@ -231,4 +306,21 @@ social-login-options .btn {
 delete-section-button .btn-outline-danger {
   color: var(--bs-btn-color);
   padding-right: 0.5em;
+}
+
+#message-console-text-panel {
+  height: 10em;
+  overflow-y: scroll;
+  background-color: #fcfcfc;
+  font-size: 80%;
+  padding: 0.1rem 0.25rem;
+  border: 1px solid #c5c6c8;
+}
+
+#message-console-text-panel .console-message {
+  color: #198754;
+}
+
+#message-console-text-panel .console-message.danger {
+  color: #d5465a;
 }

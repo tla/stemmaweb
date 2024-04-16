@@ -55,6 +55,8 @@ class TraditionList extends HTMLElement {
      */
     selectTradition( evt, tradition ) {
         evt.preventDefault();
+        document.querySelector( '#traditions-list div.folder-icon.selected' ).classList.toggle( 'selected' );
+        document.querySelector( `#traditions-list div.folder-icon[trad-id="${tradition.id}"]` ).classList.toggle( 'selected' );
         TRADITION_STORE.setSelectedTradition( tradition );
         SECTION_STORE.setSelectedSection( null );
     }
@@ -66,6 +68,8 @@ class TraditionList extends HTMLElement {
      * @param {Tradition} tradition 
      */
     toggleSectionList( tradition ){
+        document.querySelector( '#traditions-list div.folder-icon.selected' ).classList.toggle( 'selected' );
+        document.querySelector( `#traditions-list div.folder-icon[trad-id="${tradition.id}"]` ).classList.toggle( 'selected' );
         TRADITION_STORE.setSelectedTradition( tradition );
         SECTION_STORE.setSelectedSection( null );
         const sectionListElement = this.querySelector( `section-list[trad-id="${tradition.id}"]` );
@@ -83,9 +87,10 @@ class TraditionList extends HTMLElement {
     createTraditionListItem( tradition ) {
         const traditionListItem = document.createElement( 'li' );
         traditionListItem.setAttribute( 'class', 'nav-item' );
+        const selected = TRADITION_STORE.state.selectedTradition.id == tradition.id ? ' selected' : '';
         traditionListItem.innerHTML = `
             <div class="tradition-list-item d-flex">
-                <div class="folder-icon">${folderIcon}</div>
+                <div class="folder-icon${selected}" trad-id="${tradition.id}" class="">${folderIcon}</div>
                 <div>
                     <a href="api/tradition/${tradition.id}" trad-id="${tradition.id}" class="nav-link">
                         <span class="tradition-nav-name">${tradition.name}</span>
