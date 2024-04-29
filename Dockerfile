@@ -1,5 +1,5 @@
 # Create the static frontend bundle
-FROM ubuntu:latest AS frontend
+FROM ubuntu:jammy AS frontend
 WORKDIR /usr/src/frontend
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y \
