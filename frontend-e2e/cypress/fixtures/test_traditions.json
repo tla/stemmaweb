@@ -1,19 +1,4 @@
 [
-    {   "title" : "Arabic snippet",
-        "filetype" : "csv",
-        "owner" : "benutzer@example.org",
-        "language" : "Arabic",
-        "access" : "Private",
-        "sectionscount" : 1,
-        "sections" : [
-            {   "name" : "DEFAULT",
-                "language" : "Arabic"
-            }
-        ],
-        "direction" : "Right to Left",
-        "witnesses" : ["A", "B"],
-        "stemmata" : []
-    },
     {   "title" : "Florilegium \"Coislinianum B\"",
         "filetype" : "csv",
         "owner" : "user@example.org",
@@ -120,5 +105,20 @@
             "First attempt",
             "RHM 1641561271_0"
         ]
+    },
+    {   "title" : "Arabic snippet",
+        "filetype" : "csv",
+        "owner" : "benutzer@example.org",
+        "language" : "Arabic",
+        "access" : "Private",
+        "sectionscount" : 1,
+        "sections" : [
+            {   "name" : "DEFAULT",
+                "language" : "Arabic"
+            }
+        ],
+        "direction" : "Right to Left",
+        "witnesses" : ["A", "B"],
+        "stemmata" : []
     }
 ]
