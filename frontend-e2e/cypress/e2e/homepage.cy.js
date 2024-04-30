@@ -40,7 +40,6 @@ describe('Assert that only one tradition is highlighted in the sidebar menu: \
             // cy.log('idx+1) test_tradition title: ' + String(Number(i)+1) + ') ' +tradition.title);
             // cy.log('same idx+1) tradition title: ' + cy.get('ul#traditions-list > li').eq(i));
             cy.get('ul#traditions-list > li').eq(i).contains(tradition.title).should('be.visible');
-            cy.get('ul#traditions-list > li').eq(i).contains(tradition.title).should('be.visible');
 
             // on load only the first tradition is selected and highlighted
             if (i == 0){
