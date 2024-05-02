@@ -34,26 +34,51 @@ describe('all traditions are listed', () => {
 describe('Assert that only one tradition is highlighted in the sidebar menu: \
     the current one, clicked on, or \
     the first one upon loading the page.', () => {
-    it('under construction', () => {
+    it('passes', () => {
+        let n = 0 // check the first tradition at start
         test_traditions.forEach((tradition, i) => {
             // traditions are displayed in alphabetical order (test_traditions sorted above)
-            // cy.log('idx+1) test_tradition title: ' + String(Number(i)+1) + ') ' +tradition.title);
-            // cy.log('same idx+1) tradition title: ' + cy.get('ul#traditions-list > li').eq(i));
+            cy.log('idx+1) test_tradition title: ' + String(Number(i)+1) + ') ' +tradition.title);
+            cy.get('ul#traditions-list > li').eq(i).find('a')
+            .invoke('text')
+            .then((text) => {
+                expect(text.trim()).to.equal(tradition.title.trim())
+                cy.log('same idx+1) tradition title: ' + text.trim())
+            });
             cy.get('ul#traditions-list > li').eq(i).contains(tradition.title).should('be.visible');
 
             // on load only the first tradition is selected and highlighted
-            if (i == 0){
-                cy.get('ul#traditions-list > li > div > div').eq(i).should('have.class', 'selected');
-                cy.get('ul#traditions-list > li > div > div > svg').eq(i).should('have.css', 'fill', selected_fill_color)
+            if (i == n){
+                cy.get('ul#traditions-list > li').eq(i).find('div').should('have.class', 'selected');
+                cy.get('ul#traditions-list > li').eq(i).find('svg').should('have.css', 'fill', selected_fill_color)
             }
             else {
-                cy.get('ul#traditions-list > li > div > div').eq(i).should('not.have.class', 'selected');
-                cy.get('ul#traditions-list > li > div > div > svg').eq(i).should('not.have.css', 'fill', selected_fill_color);
+                cy.get('ul#traditions-list > li').eq(i).find('div').should('not.have.class', 'selected');
+                cy.get('ul#traditions-list > li').eq(i).find('svg').should('not.have.css', 'fill', selected_fill_color);
             }
         });
 
         // Click on another tradition higlights its title and the others are not selected or highlighted
-        // To do
+        n = 3; // check nth tradition
+        cy.log('Click on ' + String(Number(n)+1) + '. tradition and assert selection');
+        cy.get('ul#traditions-list > li').eq(n).click();
+        cy.get('ul#traditions-list > li').eq(n).find('a') // <li> contains also section info text, <a> just the title
+        .invoke('text')
+        .then((text) => {
+            cy.log('Clicked on ' + String(Number(n)+1) + '. tradition title: ' + text.trim())
+        });
+        // Assert all traditions are correctly un-/selected and un-/filled
+        test_traditions.forEach((tradition, i) => {
+            // Only the clicked tradition is selected and highlighted
+            if (i == n){
+                cy.get('ul#traditions-list > li').eq(i).find('div').should('have.class', 'selected');
+                cy.get('ul#traditions-list > li').eq(i).find('svg').should('have.css', 'fill', selected_fill_color)
+            }
+            else {
+                cy.get('ul#traditions-list > li').eq(i).find('div').should('not.have.class', 'selected');
+                cy.get('ul#traditions-list > li').eq(i).find('svg').should('not.have.css', 'fill', selected_fill_color);
+            }
+        });
     });
 
 });
