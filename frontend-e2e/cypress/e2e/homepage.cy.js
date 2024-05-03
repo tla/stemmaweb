@@ -82,3 +82,15 @@ describe('Assert that only one tradition is highlighted in the sidebar menu: \
     });
 
 });
+
+describe('message console logs errors and successes appending them to the top', () => {
+    it('under construction', () => {
+        // assert message console and its content stays stays there also upon clicking on another tradition.
+        // assert that the message console lists unexpected errors.
+        // when a stemma is saved it should have a message with the text "Stemma saved".
+        // when editing a stemma and e.g. removing [class=extant] after one of the nodes,
+        //      it should not be possible to save it, and
+        //      there should appear a message saying "Error: BAD REQUEST; Witness [witness name here] not marked as either hypothetical or extant"
+
+    });
+});
