@@ -84,7 +84,8 @@ describe('Assert that only one tradition is highlighted in the sidebar menu: \
 });
 
 describe('message console logs errors and successes', () => {
-    it('under construction', () => {
+    if (Cypress.env('CY_MODE') === 'headed') {
+    it('passes', () => { // Login needed to add a stemma. Skip in headless mode for now.
         const stemma_added_marker = 'Stemma added';
         const stemma_deleted_marker = 'Deleted';
         // initially the message panel should exist without text content
@@ -112,4 +113,5 @@ describe('message console logs errors and successes', () => {
         cy.get('@messageconsole').should('be.visible').contains(stemma_deleted_marker);
         cy.get('@messageconsole').contains(stemma_added_marker);
     });
+    }
 });
