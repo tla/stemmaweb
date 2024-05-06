@@ -263,6 +263,14 @@ describe('stemma editor tools and svg work properly', () => {
             // get the graph's svg again and assert the number of its edges to be one more than before
             cy.get('div#graph > svg').find('g.edge').should('have.length', countarrows+1); // 21
         });
+    });
 
+    it('under construction', () => {
+        // To do
+        // assert that the message console lists unexpected errors
+        // when editing a stemma and e.g. removing [class=extant] after one of the nodes,
+        //      it should not be possible to save it, and
+        //      there should appear a message in the console panel saying "Error: BAD REQUEST; Witness [witness name here] not marked as either hypothetical or extant"
+        // Login should be necessary to edit a stemma.
     });
 });

@@ -102,12 +102,6 @@ describe('message console logs errors and successes', () => {
         cy.get('#modalDialog').should('not.be.visible');
         cy.get('@messageconsole').contains(stemma_deleted_marker);
 
-        // To do:
-        // assert that the message console lists unexpected errors
-        // when editing a stemma and e.g. removing [class=extant] after one of the nodes,
-        //      it should not be possible to save it, and
-        //      there should appear a message in the console panel saying "Error: BAD REQUEST; Witness [witness name here] not marked as either hypothetical or extant"
-
         // assert the content in the message console stays there also upon clicking on another tradition.
         cy.get('ul#traditions-list > li').eq(-1).wait(500).click(); // ultimate tradition
         cy.get('@messageconsole').should('be.visible').contains(stemma_deleted_marker);
