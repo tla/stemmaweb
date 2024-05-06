@@ -84,13 +84,32 @@ describe('Assert that only one tradition is highlighted in the sidebar menu: \
 });
 
 describe('message console logs errors and successes appending them to the top', () => {
-    it('under construction', () => {
-        // assert message console and its content stays stays there also upon clicking on another tradition.
-        // assert that the message console lists unexpected errors.
-        // when a stemma is saved it should have a message with the text "Stemma saved".
+    it.only('under construction', () => {
+        const stemma_added_marker = 'Stemma added';
+        const stemma_deleted_marker = 'Deleted';
+        // assert that the message console lists unexpected errors
+        // initially the message panel should exist without text content
+        cy.get('#message-console-text-panel').should('have.value', '');
+        // Add a stemma (the default example stemma)
+        cy.get('#add-stemma-button-link').click();
+        cy.get('#save-stemma-button-link').wait(500).click();
+        // when a stemma is saved it should have a message with the text "Stemma added"
+        cy.get('#message-console-text-panel').contains(stemma_added_marker);
+        // delete the added stemma in order to reset the db
+        cy.get('#delete-stemma-button-link').click();
+        cy.get('.modal-content').contains('button', 'Yes, delete it').wait(500).click();
+        cy.get('#modalDialog').should('not.be.visible');
+        cy.get('#message-console-text-panel').contains(stemma_deleted_marker);
+
         // when editing a stemma and e.g. removing [class=extant] after one of the nodes,
         //      it should not be possible to save it, and
         //      there should appear a message saying "Error: BAD REQUEST; Witness [witness name here] not marked as either hypothetical or extant"
+
+        // assert message console and its content stays stays there also upon clicking on another tradition.
+        cy.get('ul#traditions-list > li').eq(-1).wait(500).click(); // ultimate tradition
+        cy.get('#message-console-text-panel').should('be.visible');
+        cy.get('#message-console-text-panel').contains(stemma_deleted_marker);
+        cy.get('#message-console-text-panel').contains(stemma_added_marker);
 
     });
 });
