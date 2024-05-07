@@ -213,7 +213,7 @@ describe('stemma editor tools and svg work properly', () => {
     • Upon edit, svg and box should be there.
     • Upon a change in the left box (a valid dot, link btw x and y), verify that svg is just different.
      */
-    it('passes', { defaultCommandTimeout: 60000, requestTimeout: 60000, responseTimeout: 60000 }, () => {
+    it.only('passes', { defaultCommandTimeout: 60000, requestTimeout: 60000, responseTimeout: 60000 }, () => {
         const tradition = test_traditions.find(trad => trad.title.startsWith('Florilegium'));
         cy.log('tradition.title: ' + tradition.title);
         // click on the tradition title within the tradition list
@@ -227,11 +227,13 @@ describe('stemma editor tools and svg work properly', () => {
         // no box should be there, at first;
         cy.get('#stemma-editor-container').should('not.be.visible');
 
-        // stemma edit buttons should be visible
+        // stemma edit buttons should be visible: edit, add, delete, but not save and cancel
         cy.get('edit-stemma-buttons').within( ()=> {
             cy.get('a#edit-stemma-button-link').should('be.visible');
             cy.get('a#add-stemma-button-link').should('be.visible');
             cy.get('a#delete-stemma-button-link').should('be.visible');
+            cy.get('a#save-stemma-button-link').should('not.exist');
+            cy.get('a#cancel-edit-stemma-button-link').should('not.exist');
         });
         // Upon edit, svg and box should be there.
         cy.get('a#edit-stemma-button-link').wait(500).click();
@@ -239,6 +241,15 @@ describe('stemma editor tools and svg work properly', () => {
         cy.get('@editorbox').should('be.visible');
         cy.get('#graph').find('svg').as('stemmasvg');
         cy.get('@stemmasvg').should('be.visible').and('have.length', 1);
+
+        // save and cancel buttons should be available when editing, but not edit, add, delete
+        cy.get('edit-stemma-buttons').within( ()=> {
+            cy.get('a#edit-stemma-button-link').should('not.exist');
+            cy.get('a#add-stemma-button-link').should('not.exist');
+            cy.get('a#delete-stemma-button-link').should('not.exist');
+            cy.get('a#save-stemma-button-link').should('be.visible');
+            cy.get('a#cancel-edit-stemma-button-link').should('be.visible');
+        });
 
         // Upon a change in the left box (a valid dot, link btw x and y), verify that svg is just different.
         // count edges should be plus one
@@ -262,6 +273,9 @@ describe('stemma editor tools and svg work properly', () => {
 
             // get the graph's svg again and assert the number of its edges to be one more than before
             cy.get('div#graph > svg').find('g.edge').should('have.length', countarrows+1); // 21
+
+            // save it -- needs login
+            // reset v at the end // cy.log('old val: ' + v);
         });
     });
 
