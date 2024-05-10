@@ -261,13 +261,17 @@ describe('stemma editor tools and svg work properly', () => {
         // remember the content
         cy.get('@editorbox').find('textarea#stemma-dot-editor').invoke('val').then(v => {
             cy.log('old val: ' + v);
-            // remember the number of its edges "->"
-            let countarrows = (v.match(/->/g) || []).length;
-            cy.log('count -> arrows in editor: ' + countarrows); // 20
+            // remember the number of its edges '--' or '->'
+            // let countedges = (v.match(/->/g) || []).length; // Florilegium
+            const reltypesym = '->'; // Florilegium is directed
+            const re = new RegExp(reltypesym, 'g');
+            const myArray = v.match(re);
+            let countedges = (myArray || []).length;
+            cy.log('count "' + reltypesym + '" edges in editor: ' + countedges);
 
             // get the graph's svg and remember the number of its nodes and edges
             cy.get('div#graph > svg').as('graph-svg');
-            cy.get('@graph-svg').find('g.edge').should('have.length', countarrows);
+            cy.get('@graph-svg').find('g.edge').should('have.length', countedges);
 
             // change the edit box's content
             const appendatend = 'TESTNODE [class=extant];\nS -> TESTNODE;\n';
@@ -275,7 +279,7 @@ describe('stemma editor tools and svg work properly', () => {
             cy.get('textarea#stemma-dot-editor').type('{moveToEnd}{leftArrow}' + appendatend).wait(1000);
 
             // get the graph's svg again and assert the number of its edges to be one more than before
-            cy.get('div#graph > svg').find('g.edge').should('have.length', countarrows+1); // 21
+            cy.get('div#graph > svg').find('g.edge').should('have.length', countedges+1); // 21
 
             // save it -- needs login
             // reset v at the end // cy.log('old val: ' + v);
