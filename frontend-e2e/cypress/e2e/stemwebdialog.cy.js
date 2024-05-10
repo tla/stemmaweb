@@ -293,6 +293,76 @@ describe('stemma editor tools and svg work properly', () => {
         //      there should appear a message in the console panel saying "Error: BAD REQUEST; Witness [witness name here] not marked as either hypothetical or extant"
 
         // access stemma dot for editing
+        const tradition = test_traditions.find(trad => trad.title.startsWith('Notre besoin'));
+        cy.log('tradition.title: ' + tradition.title);
+        // click on the tradition title within the tradition list
+        cy.get('#traditions-list').contains(tradition.title).click();
+        
+        // Notre besoin has 2 stemma svgs at start
+        // the same number of selector icons should be visible as there are stemmata
+        cy.get('#stemma-editor-graph-container').find('#stemma-selector').find('svg.indicator-svg').should('have.length', tradition.stemmata.length);
+        // test that the stemma svg appears
+        cy.get('#graph').find('svg').should('be.visible').and('have.length', 1);
+        // no box should be there, at first;
+        cy.get('#stemma-editor-container').should('not.be.visible');
+        
+        // stemma edit buttons should be visible: edit, add, delete, but not save and cancel
+        cy.get('edit-stemma-buttons').within( ()=> {
+            cy.get('a#edit-stemma-button-link').should('be.visible');
+            cy.get('a#add-stemma-button-link').should('be.visible');
+            cy.get('a#delete-stemma-button-link').should('be.visible');
+            cy.get('a#save-stemma-button-link').should('not.exist');
+            cy.get('a#cancel-edit-stemma-button-link').should('not.exist');
+        });
+        // Upon edit, svg and box should be there.
+        cy.get('a#edit-stemma-button-link').wait(500).click();
+        cy.get('#stemma-editor-container').wait(1000).as('editorbox');
+        cy.get('@editorbox').should('be.visible');
+        cy.get('#graph').find('svg').as('stemmasvg');
+        cy.get('@stemmasvg').should('be.visible').and('have.length', 1);
+        
+        // save and cancel buttons should be available when editing, but not edit, add, delete
+        cy.get('edit-stemma-buttons').within( ()=> {
+            cy.get('a#edit-stemma-button-link').should('not.exist');
+            cy.get('a#add-stemma-button-link').should('not.exist');
+            cy.get('a#delete-stemma-button-link').should('not.exist');
+            cy.get('a#save-stemma-button-link').should('be.visible');
+            cy.get('a#cancel-edit-stemma-button-link').should('be.visible');
+        });
+        
+        // Upon a change in the left box (a valid dot, link btw x and y), verify that svg is just different.
+        // count edges should be plus one
+        
+        // get the editor box and its content
+        // remember the content
+        cy.get('@editorbox').find('textarea#stemma-dot-editor').invoke('val').then(v => {
+            cy.log('old val: ' + v);
+            // remember the number of its edges '--' or '->'
+            // let countedges = (v.match(/->/g) || []).length; // Florilegium
+            const reltypesym = '--'; // Notre besoin is undirected
+            const re = new RegExp(reltypesym, 'g');
+            const myArray = v.match(re);
+            let countedges = (myArray || []).length;
+            cy.log('count "' + reltypesym + '" edges in editor: ' + countedges);
+
+            // get the graph's svg and remember the number of its nodes and edges
+            cy.get('div#graph > svg').as('graph-svg');
+            cy.get('@graph-svg').find('g.edge').should('have.length', countedges);
+
+            // change the edit box's content
+            // const appendatend = 'TESTNODE [class=extant];\nS -> TESTNODE;\n';
+            const appendatend = 'TESTNODE [class=extant];\nS ' + reltypesym + 'TESTNODE;\n';
+            // by .type() editorbox and svg are updated––but not by .invoke('val', newdotcontent)
+            cy.get('textarea#stemma-dot-editor').type('{moveToEnd}{leftArrow}' + appendatend).wait(1000);
+
+            // get the graph's svg again and assert the number of its edges to be one more than before
+            cy.get('div#graph > svg').find('g.edge').should('have.length', countedges+1);
+
+            // save it -- needs login // cy.get('a#save-stemma-button-link').wait(500).click();
+            // To do: reset v at the end if stemma should be saved // cy.log('old val: ' + v);
+        });
+
+
         // get current dot graph and rememver it for reset later
         // replace current content with a faulty dot graph
         // attempt to save the stemma
