@@ -286,7 +286,7 @@ describe('stemma editor tools and svg work properly', () => {
         });
     });
 
-    it.only('under construction', () => { // needs login
+    it('under construction', () => { // needs login
         if (Cypress.env('CY_MODE') === 'headed') { // only logged in if headed. dont run this test headless because it needs to be logged in // TODO: also for headless mode
         // TODO: when fitted also for healess mode, merge with previous test (partly duplicate)
         cy.loginViaUi(admin); // TODO: also for headless mode
@@ -339,6 +339,7 @@ describe('stemma editor tools and svg work properly', () => {
         
         // get the editor box and its content
         // remember the content
+        // get current dot graph and rememver it for reset later
         cy.get('@editorbox').find('textarea#stemma-dot-editor').invoke('val').then(v => {
             cy.log('old val: ' + v);
             // remember the number of its edges '--' or '->'
@@ -353,29 +354,24 @@ describe('stemma editor tools and svg work properly', () => {
             cy.get('div#graph > svg').as('graph-svg');
             cy.get('@graph-svg').find('g.edge').should('have.length', countedges);
 
-            // change the edit box's content
-            // const appendatend = 'TESTNODE [class=extant];\nS -> TESTNODE;\n';
-            const appendatend = 'TESTNODE [class=extant];\nS ' + reltypesym + 'TESTNODE;\n';
-            // by .type() editorbox and svg are updated––but not by .invoke('val', newdotcontent)
-            cy.get('textarea#stemma-dot-editor').type('{moveToEnd}{leftArrow}' + appendatend).wait(1000);
+            // replace current content with a faulty dot graph
+            const faultydot = v.replace('F [class=extant];', 'F;');
+            cy.get('textarea#stemma-dot-editor').type('{selectAll}{backspace}' + faultydot).wait(1000);
+            // attempt to save the faulty stemma
+            cy.get('a#save-stemma-button-link').wait(500).click(); // needs login
+            // assert that an error message pops up
+            cy.get('stemmaweb-alert').contains('BAD REQUEST');
 
-            // get the graph's svg again and assert the number of its edges to be one more than before
-            cy.get('div#graph > svg').find('g.edge').should('have.length', countedges+1);
+            // To do: assert the more specific error message
+            // assert that the error is logged in the message console
+            // reset the dot graph to the correct content
+            // save it
+            // assert that there is a success message in the message console
+            // assert that again only edit add an delete stemma buttons are displayed
 
-            // save it -- needs login // cy.get('a#save-stemma-button-link').wait(500).click();
             // To do: reset v at the end if stemma should be saved // cy.log('old val: ' + v);
+            // Test also the CANCEL button
         });
-
-
-        // get current dot graph and rememver it for reset later
-        // replace current content with a faulty dot graph
-        // attempt to save the stemma
-        // assert that an error message pops up
-        // assert that the error is logged in the message console
-        // reset the dot graph to the correct content
-        // save it
-        // assert that there is a success message in the message console
-        // assert that again only edit add an delete stemma buttons are displayed
 
         cy.logoutViaUi(admin); // TODO: also for headless mode
         }
