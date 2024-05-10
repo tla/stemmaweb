@@ -42,7 +42,9 @@ https://github.com/tla/stemmaweb/pull/188#issue-2133307487
 
 import test_traditions from '../fixtures/test_traditions.json';
 import stemweb_algorithms from '../fixtures/stemweb_algorithms.json'
+import users from '../fixtures/users.json';
 const len_stemweb_algorithms = stemweb_algorithms.length;
+const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
@@ -131,6 +133,7 @@ describe('Stemweb dialog should work properly', () => {
                     }
                 });
         }
+        cy.reload();
     });
 });
 
@@ -213,7 +216,7 @@ describe('stemma editor tools and svg work properly', () => {
     • Upon edit, svg and box should be there.
     • Upon a change in the left box (a valid dot, link btw x and y), verify that svg is just different.
      */
-    it.only('passes', { defaultCommandTimeout: 60000, requestTimeout: 60000, responseTimeout: 60000 }, () => {
+    it('passes', { defaultCommandTimeout: 60000, requestTimeout: 60000, responseTimeout: 60000 }, () => {
         const tradition = test_traditions.find(trad => trad.title.startsWith('Florilegium'));
         cy.log('tradition.title: ' + tradition.title);
         // click on the tradition title within the tradition list
@@ -279,12 +282,28 @@ describe('stemma editor tools and svg work properly', () => {
         });
     });
 
-    it('under construction', () => {
-        // To do
-        // assert that the message console lists unexpected errors
+    it.only('under construction', () => { // needs login
+        if (Cypress.env('CY_MODE') === 'headed') { // only logged in if headed. dont run this test headless because it needs to be logged in // TODO: also for headless mode
+        // TODO: when fitted also for healess mode, merge with previous test (partly duplicate)
+        cy.loginViaUi(admin); // TODO: also for headless mode
+
+        // To do: assert that the message console lists unexpected errors
         // when editing a stemma and e.g. removing [class=extant] after one of the nodes,
         //      it should not be possible to save it, and
         //      there should appear a message in the console panel saying "Error: BAD REQUEST; Witness [witness name here] not marked as either hypothetical or extant"
-        // Login should be necessary to edit a stemma.
+
+        // access stemma dot for editing
+        // get current dot graph and rememver it for reset later
+        // replace current content with a faulty dot graph
+        // attempt to save the stemma
+        // assert that an error message pops up
+        // assert that the error is logged in the message console
+        // reset the dot graph to the correct content
+        // save it
+        // assert that there is a success message in the message console
+        // assert that again only edit add an delete stemma buttons are displayed
+
+        cy.logoutViaUi(admin); // TODO: also for headless mode
+        }
     });
 });
