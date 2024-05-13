@@ -286,7 +286,7 @@ describe('stemma editor tools and svg work properly', () => {
         });
     });
 
-    it('under construction', () => { // needs login
+    it.only ('under construction', () => { // needs login
         if (Cypress.env('CY_MODE') === 'headed') { // only logged in if headed. dont run this test headless because it needs to be logged in // TODO: also for headless mode
         // TODO: when fitted also for healess mode, merge with previous test (partly duplicate)
         cy.loginViaUi(admin); // TODO: also for headless mode
@@ -309,7 +309,7 @@ describe('stemma editor tools and svg work properly', () => {
         cy.get('#graph').find('svg').should('be.visible').and('have.length', 1);
         // no box should be there, at first;
         cy.get('#stemma-editor-container').should('not.be.visible');
-        
+
         // stemma edit buttons should be visible: edit, add, delete, but not save and cancel
         cy.get('edit-stemma-buttons').within( ()=> {
             cy.get('a#edit-stemma-button-link').should('be.visible');
@@ -333,13 +333,13 @@ describe('stemma editor tools and svg work properly', () => {
             cy.get('a#save-stemma-button-link').should('be.visible');
             cy.get('a#cancel-edit-stemma-button-link').should('be.visible');
         });
-        
+
         // Upon a change in the left box (a valid dot, link btw x and y), verify that svg is just different.
         // count edges should be plus one
-        
+
         // get the editor box and its content
         // remember the content
-        // get current dot graph and rememver it for reset later
+        // get current dot graph and remember it for reset later
         cy.get('@editorbox').find('textarea#stemma-dot-editor').invoke('val').then(v => {
             cy.log('old val: ' + v);
             // remember the number of its edges '--' or '->'
@@ -355,21 +355,37 @@ describe('stemma editor tools and svg work properly', () => {
             cy.get('@graph-svg').find('g.edge').should('have.length', countedges);
 
             // replace current content with a faulty dot graph
-            const faultydot = v.replace('F [class=extant];', 'F;');
+            const witness = 'F';
+            const faultydot = v.replace('F [class=extant];', witness+';');
             cy.get('textarea#stemma-dot-editor').type('{selectAll}{backspace}' + faultydot).wait(1000);
             // attempt to save the faulty stemma
             cy.get('a#save-stemma-button-link').wait(500).click(); // needs login
-            // assert that an error message pops up
-            cy.get('stemmaweb-alert').contains('BAD REQUEST');
-
-            // To do: assert the more specific error message
+            // assert that the error message pops up
+            // "Error: BAD REQUEST; Witness [witness name here] not marked as either hypothetical or extant"
+            const msg_err = 'Error: BAD REQUEST; Witness ' + witness + ' not marked as either hypothetical or extant'
+            cy.get('stemmaweb-alert').contains(msg_err);
             // assert that the error is logged in the message console
-            // reset the dot graph to the correct content
-            // save it
-            // assert that there is a success message in the message console
-            // assert that again only edit add an delete stemma buttons are displayed
+            cy.get('#message-console-text-panel').contains(msg_err);
 
-            // To do: reset v at the end if stemma should be saved // cy.log('old val: ' + v);
+            // reset the dot graph to the correct content
+            cy.get('textarea#stemma-dot-editor').type('{selectAll}{backspace}' + v).wait(1000);
+            // save it
+            cy.get('a#save-stemma-button-link').wait(500).click(); // needs login
+            const msg_ok = 'Stemma saved'
+            // assert that there is a success message as an alert
+            cy.get('stemmaweb-alert').contains(msg_ok);
+            // assert that the success is logged in the message console
+            cy.get('#message-console-text-panel').contains(msg_ok);
+            // again, stemma edit buttons should be visible: edit, add, delete, but not save and cancel
+            cy.get('edit-stemma-buttons').within( ()=> {
+                cy.get('a#edit-stemma-button-link').should('be.visible');
+                cy.get('a#add-stemma-button-link').should('be.visible');
+                cy.get('a#delete-stemma-button-link').should('be.visible');
+                cy.get('a#save-stemma-button-link').should('not.exist');
+                cy.get('a#cancel-edit-stemma-button-link').should('not.exist');
+            });
+
+            // Also upon click on another tradition the err and ok messages should stay in the message console
             // Test also the CANCEL button
         });
 
