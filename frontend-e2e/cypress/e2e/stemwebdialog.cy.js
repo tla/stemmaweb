@@ -287,7 +287,7 @@ describe('stemma editor tools and svg work properly', () => {
     });
 
     it.only ('under construction', () => { // needs login
-        if (Cypress.env('CY_MODE') === 'headed') { // only logged in if headed. dont run this test headless because it needs to be logged in // TODO: also for headless mode
+        if (Cypress.env('CY_MODE') === 'headed') { // only log in if headed. dont run this test headless because it needs to be logged in // TODO: also for headless mode
         // TODO: when fitted also for healess mode, merge with previous test (partly duplicate)
         cy.loginViaUi(admin); // TODO: also for headless mode
 
@@ -297,7 +297,7 @@ describe('stemma editor tools and svg work properly', () => {
         //      there should appear a message in the console panel saying "Error: BAD REQUEST; Witness [witness name here] not marked as either hypothetical or extant"
 
         // access stemma dot for editing
-        const tradition = test_traditions.find(trad => trad.title.startsWith('Notre besoin'));
+        let tradition = test_traditions.find(trad => trad.title.startsWith('Notre besoin'));
         cy.log('tradition.title: ' + tradition.title);
         // click on the tradition title within the tradition list
         cy.get('#traditions-list').contains(tradition.title).click();
@@ -385,7 +385,14 @@ describe('stemma editor tools and svg work properly', () => {
                 cy.get('a#cancel-edit-stemma-button-link').should('not.exist');
             });
 
-            // Also upon click on another tradition the err and ok messages should stay in the message console
+            // assert upon click on another tradition the err and ok messages stay in the message console
+            tradition = test_traditions.find(trad => trad.title.startsWith('Verbum'));
+            cy.log('tradition.title: ' + tradition.title);
+            // click on the tradition title within the tradition list
+            cy.get('#traditions-list').contains(tradition.title).click();
+            cy.get('#message-console-text-panel').contains(msg_err);
+            cy.get('#message-console-text-panel').contains(msg_ok);
+
             // Test also the CANCEL button
         });
 
