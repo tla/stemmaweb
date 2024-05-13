@@ -18,7 +18,7 @@ afterEach(() => {
 
 // on the homepage, the admin should see all traditions listed
 // traditions with stemma should have buttons: edit add delete; those without: add
-describe('all traditions are listed', () => {
+describe('all traditions are listed and provide stemma add or edit buttons', () => {
     it('passes', () => {
         // the number of displayed traditions should be equal to the total number of test_traditions
         const count = test_traditions.length; // 7
