@@ -17,7 +17,7 @@ afterEach(() => {
 });
 
 // on the homepage, the admin should see all traditions listed
-// to do: traditions should be sorted alphabetically
+// traditions with stemma should have buttons: edit add delete; those without: add
 describe('all traditions are listed', () => {
     it('passes', () => {
         // the number of displayed traditions should be equal to the total number of test_traditions
@@ -26,14 +26,35 @@ describe('all traditions are listed', () => {
         test_traditions.forEach((tradition) => {
             cy.log("title: " + tradition.title);
             // the test_tradition titles should all be found on the homepage
-            cy.get('ul#traditions-list').contains(tradition.title).should('be.visible');
+            // together with their stemmas
+            cy.get('ul#traditions-list').contains(tradition.title).should('be.visible').click();
+            if (tradition.stemmata.length){
+                cy.log('Number of stemmata: ' + tradition.stemmata.length);
+                // traditions with a stemma should have buttons highlighted: edit add delete
+                cy.get('edit-stemma-buttons').within( ()=> {
+                    cy.get('a#edit-stemma-button-link').should('be.visible').and('not.have.class', 'greyed-out');
+                    cy.get('a#add-stemma-button-link').should('be.visible').and('not.have.class', 'greyed-out');
+                    cy.get('a#delete-stemma-button-link').should('be.visible').and('not.have.class', 'greyed-out');
+                });
+            }
+            else {
+                // traditions with no stemma should have buttons highlighted: add
+                cy.get('edit-stemma-buttons').within( ()=> {
+                    cy.get('a#edit-stemma-button-link').should('be.visible').and('have.class', 'greyed-out');
+                    cy.get('a#add-stemma-button-link').should('be.visible').and('not.have.class', 'greyed-out');
+                    cy.get('a#delete-stemma-button-link').should('be.visible').and('have.class', 'greyed-out');
+                });
+            }
         });
     });
 });
 
+// Assert that the stemma “edit” button is only enabled when there is a stemma (also the “delete” button/cross), and that it disappears on click, being being replaced, together with the “new” and “delete” button, by a “save” and a “cancel” button.
+
 describe('Assert that only one tradition is highlighted in the sidebar menu: \
     the current one, clicked on, or \
     the first one upon loading the page.', () => {
+    // implements #164
     it('passes', () => {
         let n = 0 // check the first tradition at start
         test_traditions.forEach((tradition, i) => {

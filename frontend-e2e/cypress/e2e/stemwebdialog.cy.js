@@ -286,6 +286,7 @@ describe('stemma editor tools and svg work properly', () => {
         });
     });
 
+    // message console works properly
     it('passes', () => { // needs login
         if (Cypress.env('CY_MODE') === 'headed') { // only log in if headed. dont run this test headless because it needs to be logged in // TODO: also for headless mode
         // TODO: when fitted also for healess mode, merge with previous test (partly duplicate)
