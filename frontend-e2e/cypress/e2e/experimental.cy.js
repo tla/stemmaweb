@@ -12,6 +12,7 @@ beforeEach(() => {
 
 // some fetch(POST) for headless mode
 describe('run some fetch(POST) requests', () => {
+  // change in d3b-test branch
   it.skip('login and logout', { defaultCommandTimeout: 10000, requestTimeout: 10000, responseTimeout: 10000 }, () => {
     // Login is in <ROOT>/middleware/stemmaweb_middleware/controller/auth/routes.py
     /* @blueprint.route("/login", methods=["POST"])
