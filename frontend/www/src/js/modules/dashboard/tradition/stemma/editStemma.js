@@ -107,9 +107,7 @@ class EditStemma extends HTMLElement {
 
   toggleStemmaEditor() {
     const stemmaEditorContainerElement = document.querySelector( '#stemma-editor-container' );
-    const stemmaSelectorContainerElement = document.querySelector( '#stemma-selector-container')
     stemmaEditorContainerElement.classList.toggle( 'expanded' );
-    stemmaSelectorContainerElement.classList.toggle( 'show' )
     if( stemmaEditorContainerElement.classList.contains( 'expanded' ) ){
       // Here we append an almost invisible backdrop to the document. Its z-index is large and
       // only the z-index of the editor and graph panel is larger. However, both have a lower
@@ -122,7 +120,7 @@ class EditStemma extends HTMLElement {
       // <div id="stemma-editor-graph-container-modal-backdrop"></div>
       // const stemmaEditorModalBackdrop = document.querySelector( '#stemma-editor-graph-container-modal-backdrop' );
     }
-    const graphContainerElement = document.querySelector( '#graph_container' );
+    const graphContainerElement = document.querySelector( '#graph-container' );
     graphContainerElement.classList.toggle( 'shrunken' );
     this.render();
   }
@@ -211,10 +209,11 @@ class EditStemma extends HTMLElement {
 
   cancelEdits() {
     // reset the stemma rendered to the stemma in current state
-    const { tradition, selectedStemma } = STEMMA_STORE.state;
+    const { tradition, availableStemmata, selectedStemma } = STEMMA_STORE.state;
     // Render the stemma, or an empty one if there's none. 
     stemmaRenderer.renderStemma( tradition, selectedStemma || { dot: 'digraph {}' } );
     this.toggleStemmaEditor();    
+    TraditionView.renderStemmaSelectors( availableStemmata );
   }
 
   /** @param {BaseResponse<T>} resp */
@@ -286,33 +285,39 @@ class EditStemma extends HTMLElement {
 
   render() {
     this.innerHTML = `
-      <a
-        id="edit-stemma-button-link"
-        class="link-secondary"
-        href="#"
-        aria-label="Edit this stemma">
-          <div>
-            ${feather.icons['edit'].toSvg()}
-          </div>
-      </a>
-      <a
-        id="add-stemma-button-link"
-        class="link-secondary"
-        href="#"
-        aria-label="Add a stemma to this tradition">
-          <div>
-            ${feather.icons['plus-circle'].toSvg()}
-          </div>
-      </a>
-      <a
-        id="delete-stemma-button-link"
-        class="link-secondary"
-        href="#"
-        aria-label="delete this stemma">
-          <div class="delete-stemma-danger">
-            ${feather.icons['trash'].toSvg()}
-          </div>
-      </a>
+      <div id="stemma-selector-buttons" class="collapse show">
+        <div id="stemma-selectors">
+        </div>
+      </div>
+      <div id="edit-stemma-buttons-right">      
+        <a
+          id="edit-stemma-button-link"
+          class="link-secondary"
+          href="#"
+          aria-label="Edit this stemma">
+            <div>
+              ${feather.icons['edit'].toSvg()}
+            </div>
+        </a>
+        <a
+          id="add-stemma-button-link"
+          class="link-secondary"
+          href="#"
+          aria-label="Add a stemma to this tradition">
+            <div>
+              ${feather.icons['plus-circle'].toSvg()}
+            </div>
+        </a>
+        <a
+          id="delete-stemma-button-link"
+          class="link-secondary"
+          href="#"
+          aria-label="delete this stemma">
+            <div class="delete-stemma-danger">
+              ${feather.icons['trash'].toSvg()}
+            </div>
+        </a>
+      </div>
     `;
     this.greyOut();
     this.addEditStemmaButtonListeners();

@@ -65,7 +65,25 @@ class StemmaRenderer {
       } );
     Download.set_downloads( stemma.dot );
   }
-  
+ 
+  resizeSVG() {
+    const margin = 14;
+    const bbrect = document.querySelector( '#graph-area' ).getBoundingClientRect();
+    const width = bbrect['width'];
+    const height = bbrect['height'];
+    const graphArea = d3.select('#graph-area');
+    const svg = graphArea.select("#graph").selectWithoutDataPropagation("svg");
+    svg
+        .transition()
+        .duration(700)
+        .attr("width", width - 2*margin)
+        .attr("height", height - 2*margin);
+    // var d = svg.datum();
+    // d.attributes['width'] = width - margin;
+    // d.attributes['height'] = height - margin;
+  }
+
 }
 
 const stemmaRenderer = new StemmaRenderer();
+d3.select( window ).on( 'resize', stemmaRenderer.resizeSVG );

@@ -22,9 +22,25 @@
   font-size: 1em;
 }
 
-edit-stemma-buttons {
-  display: flex;
+#stemma-buttons-container {
   width: 100%;
+}
+
+edit-stemma-buttons {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+}
+
+#stemma-selector-buttons {
+  width: 50%;
+  display: flex;
+  justify-content: left;
+}
+
+#edit-stemma-buttons-right {
+  width: 50%;
+  display: flex;
   justify-content: right;
 }
 
@@ -42,6 +58,7 @@ edit-stemma-buttons a.greyed-out div {
 }
 
 #stemma-editor-graph-container {
+  height: 80vh;
   display: flex;
 }
 
@@ -142,12 +159,13 @@ edit-stemma-buttons a.greyed-out div {
   padding-left: 1.8em;
 }
 
-#graph_container {
+#graph-container {
+  z-index: 810;
   width: 100%;
   transition: width 0.2s ease-in-out;
 }
 
-#graph_container.shrunken {
+#graph-container.shrunken {
   width: 50%;
   transition: width 0.4s ease-in-out;
 }
@@ -155,18 +173,28 @@ edit-stemma-buttons a.greyed-out div {
 #graph-area {
   background-color: white;
   width: 100%;
-  height: 40vw;
+  /* height: 40vw; */
+  height: 90%;
   padding: 1em;
 }
 
-#graph_container #graph-area #graph svg {
+#graph-container #graph-area #graph svg {
   width: 100%;
   transition: width 0.2s ease-in-out;
 }
 
-#graph_container.shrunken #graph-area #graph svg {
+#graph-container.shrunken #graph-area #graph svg {
   width: 100%;
   transition: width 0.4s ease-in-out;
+}
+
+#stemma-selectors {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.stemma-selector.selected svg {
+  fill: rgb(210,210,210);
 }
 
 @media (min-width: 200px) {
@@ -180,7 +208,7 @@ edit-stemma-buttons a.greyed-out div {
   }
 }
 
-.sidebar_properties {
+.sidebar-properties {
   background: none;
   position: fixed;
   top: 0;
