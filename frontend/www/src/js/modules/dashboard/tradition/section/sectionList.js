@@ -126,6 +126,7 @@ class SectionList extends HTMLElement {
                 (tradition) => { return tradition.id == traditionId } 
             )
         );
+        TraditionList.highlightFolderSelectedTradition( traditionId );
         SECTION_STORE.setSelectedSection( section );
     }
     

@@ -66,21 +66,33 @@ class StemmaRenderer {
     Download.set_downloads( stemma.dot );
   }
  
+  /**
+   * Resizes the current graph/stemma when the browser window gets 
+   * resized. Also set the new corresponding with on the GraphViz 
+   * renderer so that subsequent stemmas are depicted at the right
+   * size.
+   */
   resizeSVG() {
     const margin = 14;
+    const stemmaButtonsRowHeight = document.querySelector( '#stemma-buttons' ).getBoundingClientRect()['height'];
     const bbrect = document.querySelector( '#graph-area' ).getBoundingClientRect();
-    const width = bbrect['width'];
-    const height = bbrect['height'];
+    const width = bbrect['width'] - ( 2 * margin );
+    const factor = bbrect['height'] / window.innerHeight;
+    const height = bbrect['height'] - stemmaButtonsRowHeight;
     const graphArea = d3.select('#graph-area');
     const svg = graphArea.select("#graph").selectWithoutDataPropagation("svg");
     svg
         .transition()
         .duration(700)
-        .attr("width", width - 2*margin)
-        .attr("height", height - 2*margin);
-    // var d = svg.datum();
-    // d.attributes['width'] = width - margin;
-    // d.attributes['height'] = height - margin;
+        .attr("width", width )
+        .attr("height", height );
+    // This is a bit weird, but we need to reset the size of the original
+    // graphviz renderer that was set when the line
+    // `const stemmaRenderer = new StemmaRenderer();`
+    // was executed, and not on `this`. There's probably 
+    // cleaner ways to do this.
+    stemmaRenderer.graphvizRoot.width( width );
+    stemmaRenderer.graphvizRoot.height( height );
   }
 
 }
