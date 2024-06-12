@@ -119,7 +119,7 @@ describe('A guest should not be offered to "Edit Collation" of any tradition', (
 // un-skip when issue solved, re-tag 'issue' to 'passes':
 describe('A guest should not be offered to edit Properties', () => {
     it.skip('issue #170, #157', () => {
-        cy.get('#sidebar_properties').find('h6').find('svg').should('not.be.visible');
+        cy.get('#sidebar-properties').find('h6').find('svg').should('not.be.visible');
     });
 });
 
@@ -152,7 +152,7 @@ describe('A guest should be offered to download a public "Tradition"', () => {
             cy.log('title: ' + tradition.title);
             // click through all traditions
             cy.get('#traditions-list').contains(tradition.title).click();
-            cy. get('#stemma_buttons').contains(label).should('be.visible').and('be.enabled');
+            cy. get('#stemma-buttons').contains(label).should('be.visible').and('be.enabled');
             // TODO test functionality
         });
     });
@@ -194,9 +194,9 @@ describe('A guest should be offered to "Examine Stemma" of a public tradition on
                     // TODO?: assert the stemma's correct Witnesses
 
                     // 'Examine Stemma'
-                    cy.get('#stemma_buttons').contains(label_examine).should('be.visible').and('be.enabled');
+                    cy.get('#stemma-buttons').contains(label_examine).should('be.visible').and('be.enabled');
                     // 'Download Stemma' in all available formats.
-                    cy.get('#stemma_buttons').find('#stemma_image_downloadbtn').contains(label_download_stemma).as('download_stemma_button').should('be.visible').and('be.enabled');
+                    cy.get('#stemma-buttons').find('#stemma_image_downloadbtn').contains(label_download_stemma).as('download_stemma_button').should('be.visible').and('be.enabled');
                     cy.get('@download_stemma_button').click();
                     // cy.get('@download_stemma_button').parent().find('a').should('have.length', 3); // TODO: which formats are availabel?
                     // TODO: test functionality
@@ -210,14 +210,14 @@ describe('A guest should be offered to "Examine Stemma" of a public tradition on
                 cy.get('#tradition_info').contains('Stemma').should('not.exist');
 
                 // no 'Examine Stemma' offered
-                // cy.get('#stemma_buttons').contains(label_examine); // TODO remove line, write issue
-                cy.get('#stemma_buttons').contains('TODO: ' + label_examine).should('not.exist'); // TODO eventually: remove and use next line instead
-                // cy.get('#stemma_buttons').contains(label_examine).should('not.be.enabled'); // or .should('not.exist')
+                // cy.get('#stemma-buttons').contains(label_examine); // TODO remove line, write issue
+                cy.get('#stemma-buttons').contains('TODO: ' + label_examine).should('not.exist'); // TODO eventually: remove and use next line instead
+                // cy.get('#stemma-buttons').contains(label_examine).should('not.be.enabled'); // or .should('not.exist')
 
                 // no 'Download Stemma' offered
-                // cy.get('#stemma_buttons').find('#stemma_image_downloadbtn').contains(label_download_stemma); // TODO remove line, write issue
-                cy.get('#stemma_buttons').find('#stemma_image_downloadbtn').contains('TODO: ' + label_download_stemma).should('not.exist'); // TODO eventually: remove and use next line instead
-                // cy.get('#stemma_buttons').find('#stemma_image_downloadbtn').contains(label_download_stemma).should('not.be.enabled'); // or .should('not.exist')
+                // cy.get('#stemma-buttons').find('#stemma_image_downloadbtn').contains(label_download_stemma); // TODO remove line, write issue
+                cy.get('#stemma-buttons').find('#stemma_image_downloadbtn').contains('TODO: ' + label_download_stemma).should('not.exist'); // TODO eventually: remove and use next line instead
+                // cy.get('#stemma-buttons').find('#stemma_image_downloadbtn').contains(label_download_stemma).should('not.be.enabled'); // or .should('not.exist')
             }
         });
     });
