@@ -55,12 +55,16 @@ class TraditionList extends HTMLElement {
      */
     selectTradition( evt, tradition ) {
         evt.preventDefault();
-        document.querySelector( '#traditions-list div.folder-icon.selected' ).classList.toggle( 'selected' );
-        document.querySelector( `#traditions-list div.folder-icon[trad-id="${tradition.id}"]` ).classList.toggle( 'selected' );
+        TraditionList.highlightFolderSelectedTradition( tradition.id );
         TRADITION_STORE.setSelectedTradition( tradition );
         SECTION_STORE.setSelectedSection( null );
     }
-        
+    
+    static highlightFolderSelectedTradition( tradition_id ){
+        document.querySelector( '#traditions-list div.folder-icon.selected' ).classList.toggle( 'selected' );
+        document.querySelector( `#traditions-list div.folder-icon[trad-id="${tradition_id}"]` ).classList.toggle( 'selected' );
+    }
+
     /**
      * Toggles the visibility of the sections list for each
      * tradition in the list or traditions.

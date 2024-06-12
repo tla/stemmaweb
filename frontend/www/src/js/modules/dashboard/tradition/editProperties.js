@@ -41,7 +41,7 @@ class EditProperties extends HTMLElement {
    * @todo: Add responsiveness on resize.
    */
   #createDialogStyle() {
-    const width = $('sidebar_properties').getBoundingClientRect().width;
+    const width = $('sidebar-properties').getBoundingClientRect().width;
     return (
       `margin-right: 0px; width: ${width}px; margin-top: 50px;`
     );

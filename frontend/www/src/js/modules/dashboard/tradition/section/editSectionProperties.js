@@ -23,7 +23,7 @@ class EditSectionProperties extends HTMLElement {
      * @todo: Add responsiveness on resize.
      */
     #createDialogStyle() {
-        const width = $('sidebar_properties').getBoundingClientRect().width;
+        const width = $('sidebar-properties').getBoundingClientRect().width;
         const top = $('property-table-view').getBoundingClientRect().bottom;
         return (
             `margin-right: 0px; width: ${width}px; margin-top: ${top}px;`

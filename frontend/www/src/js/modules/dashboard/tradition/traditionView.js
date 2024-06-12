@@ -72,7 +72,7 @@ class TraditionView extends HTMLElement {
   static renderStemmaSelectors( stemmata ) {
     // Here we put in the slide indicators that will allow the user to
     // switch to different stemmata.
-    const stemmaSelector = d3.select('#stemma-selector');
+    const stemmaSelector = d3.select('#stemma-selectors');
     stemmaSelector.selectAll('*').remove();
     stemmaSelector
       .selectAll( 'span' )
@@ -83,10 +83,10 @@ class TraditionView extends HTMLElement {
         const selectedIndex = STEMMA_STORE.selectedIndex;
         const isSelected =
           (selectedIndex === -1 && i === 0) || selectedIndex === i;
-        const svg = isSelected
-          ? svg_slide_indicator_active
-          : svg_slide_indicator;
-        return `<div data-index="${i}">${svg}</div>`;
+        const selectedAttr = isSelected
+          ? " selected"
+          : "";
+        return `<div class="stemma-selector link-secondary${selectedAttr}" data-index="${i}">${feather.icons['file'].toSvg()}</div>`;
       })
       .on( 'click', function (e, d) {
         // Update the state with the selected stemma
@@ -96,15 +96,12 @@ class TraditionView extends HTMLElement {
 
   render() {
     this.innerHTML = `
-      <div
-        class="d-flex justify-content-between flex-wrap align-items-center pt-2 pb-1 border-bottom"
-      >
+      <div class="d-flex justify-content-between flex-wrap align-items-center pt-2 pb-1 border-bottom">
         <tradition-title></tradition-title>
-        <div class="d-flex justify-content-end ms-5 pt-3 mb-2 lex-nowrap" id="stemma_buttons_container">
+        <div class="d-flex justify-content-end ms-5 pt-3 mb-2 lex-nowrap" id="stemma-buttons-container">
           <stemma-buttons></stemma-buttons>
         </div>
       </div>
-
 
       <div id="stemma-editor-graph-container">
 
@@ -115,25 +112,17 @@ class TraditionView extends HTMLElement {
           </div>
         </div>
 
-        <div id="graph_container">
+        <div id="graph-container">
+
           <edit-stemma-buttons></edit-stemma-buttons>
   
-          <div class="my-4 w-100" id="graph-area">
+          <div class="" id="graph-area">
           </div>
 
-          <div id="stemma-selector-container" class="collapse show">
-          <div
-            class="my-4 w-100 d-flex justify-content-center"
-            id="stemma-selector"
-          >
-            <!-- svg_slide_indicators go here -->
-          </div>
-          </div>
-        </div>
-      
       </div>
-      `;
-  }
+    `;
+  };
+
 }
 
 customElements.define( 'tradition-view', TraditionView );
