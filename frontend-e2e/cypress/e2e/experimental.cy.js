@@ -11,40 +11,21 @@ beforeEach(() => {
 });
 
 // some fetch(POST) for headless mode
-describe('run some fetch(POST) requests', () => {
-  // change in d3b-test branch
-  it.skip('login and logout', { defaultCommandTimeout: 10000, requestTimeout: 10000, responseTimeout: 10000 }, () => {
-    // Login is in <ROOT>/middleware/stemmaweb_middleware/controller/auth/routes.py
-    /* @blueprint.route("/login", methods=["POST"])
-    def login():
-        body_or_error = try_parse_model(models.LoginUserDTO, request)
-        if isinstance(body_or_error, Response):
-            return body_or_error
-
-        body: models.LoginUserDTO = body_or_error
-        user_or_none = service.user_credentials_valid(body)
-        if user_or_none is None:
-            return abort(status=401, message="Invalid credentials or no such user")
-
-        # Verify captcha
-        if not recaptcha_verifier.verify(body.recaptcha_token):
-            return abort(status=429, message="reCAPTCHA verification failed")
-
-        # Login user for this flask session
-        user: StemmawebUser = user_or_none
-        auth_user = AuthUser(user)
-        flask_login.login_user(auth_user)
-
-        return success(status=200, body=user)
-
-     */
+describe('login and logout with authentication modal, captcha v3 and fetch(POST)', () => {
+  it('passes in headless mode local and on github. passes in local headed mode', { defaultCommandTimeout: 10000, requestTimeout: 10000, responseTimeout: 10000 }, () => {
 
     cy.log('LOGIN:')
     cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
     cy.contains('header a', 'Sign in').click();
     cy.get('#loginEmail').wait(500).type(admin.username, { delay: 50 });
     cy.get('#loginPassword').wait(500).type(admin.password, { delay: 50 });
+    // cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
     cy.get('button').contains('Sign in').wait(500).click();
+    // cy
+    // .wait('@loginrequest')
+    // .then(intercept => {
+    //   cy.log('intercept: ' + JSON.stringify(intercept))
+    // });
     cy.get('#authModal').should('not.be.visible');
     cy.contains('Logged in as ' + admin.username);
     cy.contains('header a', 'Sign out');
@@ -57,18 +38,11 @@ describe('run some fetch(POST) requests', () => {
     cy.contains('header a', 'Sign in');
     cy.get('header').should('not.contain', 'Sign out');
   })
+});
 
-  it.skip('addStemma (and deleteStemma)', {}, () => { // would currently fail in github actions
-    // addStemma is defined in <ROOT>/frontend/www/src/js/modules/common/service/stemmarestService.js
-    // and applied in <ROOT>/frontend/www/src/js/modules/dashboard/tradition/stemma/editStemma.js
-    /* return this.fetch(`/api/tradition/${tradId}/stemma/`, {
-      method: 'POST',
-      body: JSON.stringify( formData ),
-      headers: new Headers({ 'Content-Type': 'application/json' })
-    });
-     */
-
-    // need for login skipped in <ROOT>/frontend/www/src/js/modules/common/service/stemmarestService.js
+// some fetch(POST) for headless mode
+describe('addStemma and deleteStemma with login, passes in headless mode despite fetch(POST)', () => {
+  it('passes in headless mode local and on github. passes in local headed mode. with original guest config', {}, () => {
     cy.loginViaUi(admin);
     const tradition = test_traditions.find(trad => trad.title.startsWith('John verse'));
     cy.log('tradition.title: ' + tradition.title);
@@ -87,7 +61,6 @@ describe('run some fetch(POST) requests', () => {
     cy.contains('Yes, delete it').wait(500).click();
 
     cy.logoutViaUi(admin);
-
   });
 });
 
