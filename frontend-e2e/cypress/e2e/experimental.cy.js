@@ -19,13 +19,7 @@ describe('login and logout with authentication modal, captcha v3 and fetch(POST)
     cy.contains('header a', 'Sign in').click();
     cy.get('#loginEmail').wait(500).type(admin.username, { delay: 50 });
     cy.get('#loginPassword').wait(500).type(admin.password, { delay: 50 });
-    // cy.intercept('POST', `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/login`).as('loginrequest');
     cy.get('button').contains('Sign in').wait(500).click();
-    // cy
-    // .wait('@loginrequest')
-    // .then(intercept => {
-    //   cy.log('intercept: ' + JSON.stringify(intercept))
-    // });
     cy.get('#authModal').should('not.be.visible');
     cy.contains('Logged in as ' + admin.username);
     cy.contains('header a', 'Sign out');
