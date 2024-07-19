@@ -70,7 +70,7 @@ class SectionList extends HTMLElement {
     connectedCallback() {
         this.render();
         this.populate();
-        Sortable.create( 
+        libraries.lib_Sortable.Sortable.create( 
             this.querySelector( 'ul' ), 
             { 
                 onStart: (evt) => { this.toggleHighlightDragged( evt, evt.oldIndex ) },

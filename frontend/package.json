@@ -4,18 +4,21 @@
   "license": "MIT",
   "scripts": {
     "postinstall": "patch-package",
-    "build": "scripts/copyVendor",
+    "build": "esbuild scripts/requirements.js --bundle --minify --global-name=libraries --outfile=www/src/js/libraries.js && mv www/src/js/libraries.css www/src/css/libraries.css",
     "serve": "scripts/serve",
     "serve:background": "scripts/serve &> /dev/null",
     "format": "prettier --write './**/*.{js,ts,css,md,json,html}' --config ./.prettierrc.json --ignore-path ./.prettierignore"
   },
   "dependencies": {
-    "@hpcc-js/wasm": "^1.18.0",
+    "@hpcc-js/wasm": "^2.18.0",
     "bootstrap": "^5.2.2",
     "d3": "^7.6.1",
     "d3-graphviz": "^5.0.2",
+    "dotparser": "^1.1.1",
     "feather-icons": "^4.29.0",
-    "save-svg-as-png": "^1.4.17"
+    "save-svg-as-png": "^1.4.17",
+    "sortablejs": "^1.15.2",
+    "taboverride": "^4.0.3"
   },
   "devDependencies": {
     "@types/bootstrap": "^5.2.5",

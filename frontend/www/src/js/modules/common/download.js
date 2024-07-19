@@ -15,7 +15,7 @@ class Download {
     });
     d3.select('#download_png').on('click', function (evt) {
       evt.preventDefault();
-      saveSvgAsPng(
+      libraries.lib_SaveSvgAsPng.saveSvgAsPng(
         d3.select('#graph-area div').select('svg').node(),
         'stemma.png'
       );

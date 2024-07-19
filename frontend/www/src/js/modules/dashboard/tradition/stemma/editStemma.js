@@ -26,7 +26,7 @@ class EditStemma extends HTMLElement {
     stemmaDotEditorTextarea.addEventListener( 'keyup', (evt) => {
       const editorDot = stemmaDotEditorTextarea.value
       try {
-        var ast = dotParser.parse( editorDot );
+        var ast = libraries.lib_DotParser.parse( editorDot );
         // If no error we start to re-render
         // unless last re-render is active or only very shortly finished (TODO: How?)
         const editorStemma = { dot: editorDot }
@@ -152,7 +152,7 @@ class EditStemma extends HTMLElement {
     try {
       const stemmaDotEditorTextarea = document.querySelector( '#stemma-dot-editor' );
       const editor_dot = stemmaDotEditorTextarea.value;
-      var ast = dotParser.parse( editor_dot );
+      var ast = libraries.lib_DotParser.parse( editor_dot );
       // If no error we can try to save the stemma.
       const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
       const tradId = TRADITION_STORE.state.selectedTradition.id;
