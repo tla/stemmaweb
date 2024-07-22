@@ -13,15 +13,15 @@
  */
 
 /** @type {import('d3')} */
-const d3 = window.d3;
+const d3 = libraries.lib_d3;
 
 /** @type {import('feather-icons')} */
-const feather = window.feather;
+const feather = libraries.lib_Feather; 
 const textIcon = feather.icons['file-text'].toSvg();
 const folderIcon = feather.icons['folder'].toSvg();
 
 /** @type {import('bootstrap')} */
-const bootstrap = window.bootstrap;
+const bootstrap = libraries.lib_bootstrap;
 
 
 function initStemmaweb() {

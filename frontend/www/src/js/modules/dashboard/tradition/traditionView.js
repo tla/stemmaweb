@@ -7,8 +7,8 @@ class TraditionView extends HTMLElement {
   connectedCallback() {
     this.render();
     const stemmaDotEditor = document.querySelector( '#stemma-dot-editor' );
-    tabOverride.set( stemmaDotEditor );
-    tabOverride.tabSize(4);
+    libraries.lib_TabOverride.set( stemmaDotEditor );
+    libraries.lib_TabOverride.tabSize(4);
   }
 
   /**
