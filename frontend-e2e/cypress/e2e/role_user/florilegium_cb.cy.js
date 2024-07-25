@@ -5,7 +5,7 @@
         - the 'Witnesses B,K,F,G,S,C,D,Q,A,H,T,P,E' should be displayed. */
 
 describe("'Florilegium Coislinianum B' has the right owner and witnesses", function () {
-  it('passes', function () {
+  it('passes', function () { // TODO: should not be visible for a guest.
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
 
     cy.wait(500);

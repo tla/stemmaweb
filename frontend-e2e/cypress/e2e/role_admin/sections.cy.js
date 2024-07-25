@@ -28,7 +28,7 @@ reordering of sections. Functionalities to be tested:
 
 */
 
-import test_traditions from '../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions.json';
 
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
