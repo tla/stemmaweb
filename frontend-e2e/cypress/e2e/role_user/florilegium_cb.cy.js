@@ -4,9 +4,24 @@
         - the 'Owner user@example.org' should be displayed,
         - the 'Witnesses B,K,F,G,S,C,D,Q,A,H,T,P,E' should be displayed. */
 
-describe("'Florilegium Coislinianum B' has the right owner and witnesses", function () {
-  it('passes', function () { // TODO: should not be visible for a guest.
+import test_traditions from '../../fixtures/test_traditions.json';
+import users from '../../fixtures/users.json';
+const user1 = users.filter(({username}) => username === 'user@example.org')[0];
+
+beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
+    cy.viewport(1600, 900);
+    test_traditions.sort( (tradition_a, tradition_b) => tradition_a.title.localeCompare( tradition_b.title ) );
+    cy.loginViaUi(user1);
+});
+
+afterEach(() => {
+    cy.logoutViaUi();
+});
+
+// TODO: should not be visible for a guest.
+describe("'Florilegium Coislinianum B' has the right owner and witnesses", function () {
+  it('passes', function () {
 
     cy.wait(500);
     /* cy.get('#tradition-name').should(($tn) => { 
