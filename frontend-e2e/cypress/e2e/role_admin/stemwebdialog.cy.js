@@ -291,7 +291,7 @@ describe('stemma editing error feedback in message console works properly', () =
     it('passes', () => { // needs login
         if (Cypress.env('CY_MODE') === 'headed') { // only log in if headed. dont run this test headless because it needs to be logged in // TODO: also for headless mode
         // TODO: when fitted also for healess mode, merge with previous test (partly duplicate)
-        cy.loginViaUi(admin); // TODO: also for headless mode
+        cy.loginViaUi(admin);
 
         // To do: assert that the message console lists unexpected errors
         // when editing a stemma and e.g. removing [class=extant] after one of the nodes,
@@ -398,7 +398,7 @@ describe('stemma editing error feedback in message console works properly', () =
             // Test also the CANCEL button
         });
 
-        cy.logoutViaUi(admin); // TODO: also for headless mode
+        cy.logoutViaUi();
         }
     });
 });
