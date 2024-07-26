@@ -103,6 +103,7 @@ class TraditionView extends HTMLElement {
         </div>
       </div>
 
+
       <div id="stemma-editor-graph-container">
 
         <div id="stemma-editor-container">
@@ -113,13 +114,16 @@ class TraditionView extends HTMLElement {
         </div>
 
         <div id="graph-container">
-
           <edit-stemma-buttons></edit-stemma-buttons>
-  
           <div class="" id="graph-area">
           </div>
+        </div>
 
       </div>
+
+      
+      <relation-mapper><div id="pusher" style="width:100%;">v</pusher></relation-mapper>
+
     `;
   };
 

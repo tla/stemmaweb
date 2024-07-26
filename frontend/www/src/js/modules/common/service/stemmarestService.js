@@ -401,5 +401,16 @@ class StemmarestService extends BaseService {
       return this.fetch(`/api/tradition/${traditionId}/relationtypes`);
     }
   
-  
+  /** 
+   * Fetches the dot for a section.
+   * 
+   * @param {string} traditionId
+   * * @param {string} sectionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/dot/
+   */
+    getSectionDot( traditionId, sectionId ) {
+      return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/dot`);
+    }
+
 }

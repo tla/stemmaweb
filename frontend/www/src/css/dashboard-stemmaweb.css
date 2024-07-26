@@ -351,3 +351,9 @@ delete-section-button .btn-outline-danger {
 #message-console-text-panel .console-message.danger {
   color: #d5465a;
 }
+
+relation-mapper {
+  display: none;
+  opacity: 0;
+  width: 100%;
+}
