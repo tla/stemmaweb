@@ -122,7 +122,7 @@ class TraditionView extends HTMLElement {
       </div>
 
       
-      <relation-mapper><div id="pusher" style="width:100%;">v</pusher></relation-mapper>
+      <relation-mapper></relation-mapper>
 
     `;
   };

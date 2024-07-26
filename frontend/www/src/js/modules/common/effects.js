@@ -23,8 +23,7 @@ function crossFade( elementIn, elementOut=null, options={ 'display': 'flex', 'du
   if( elementOut ) {
     var elemIn = d3.select( elementIn );
     var elemOut = d3.select( elementOut );
-    var duration = options.duration/2;
-    console.log( duration, options.display );
+    var duration = options.duration / 2;
     elemOut
       .transition()
       .duration( duration )

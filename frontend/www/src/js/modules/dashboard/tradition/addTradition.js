@@ -60,6 +60,12 @@ class AddTraditionModal extends HTMLElement {
       'click',
       AddTraditionModal.#show_new_section_partial
     );
+    add_tradition_modal_elem.addEventListener( 'transitionstart', (evt) => { 
+      const classList = evt.target.classList;
+      if ( classList.contains( 'show' ) && classList.contains( 'fade' ) ) {
+        this.#initStyles();
+      }; 
+    } );
     // Make sure, on cancel the form is returned to pristine state
     add_tradition_modal_elem.addEventListener('transitionend', function (evt) {
       if (
@@ -189,8 +195,8 @@ class AddTraditionModal extends HTMLElement {
    * @todo: Add responsiveness on resize. 
    */
   #initStyles() {
-    const dashboard_stemmaweb_css = getStyleSheet('dashboard-stemmaweb');
-    const addTraditionModalMarginLeft = $('sidebarMenu').getBoundingClientRect().width;
+    // const dashboard_stemmaweb_css = getStyleSheet('dashboard-stemmaweb');
+    const addTraditionModalMarginLeft = document.querySelector( '#sidebar-menu' ).getBoundingClientRect().width;
     this.querySelector( 'div div' ).style.marginLeft = `${addTraditionModalMarginLeft}px`;
     this.querySelector( 'div div' ).style.marginTop = '50px'
   }

@@ -13,38 +13,45 @@ class StemmaButtons extends HTMLElement {
 
   connectedCallback() {
     this.render();
+    /** 
+     *  // TODO: Once button "Examine stemma" is added we need to refactor the 
+     *  this.toggle-s out in a single function that checks which view
+     *  needs to be shown and what button needs to be highlighted and
+     *  un-highligthed.
+     */
+     
+    //TODO (PRIO): the toggles shouldn't fire if that view is already active!
+     
+    document.querySelector( '#view-stemmata-button' ).addEventListener( 'click', ( evt ) => {
+      this.toggleViewButton( evt );
+      this.toggleDisplayRelationMapper();
+    } );
     document.querySelector( '#delete-tradition-button' ).addEventListener( 'click', this.handleDelete );
     document.querySelector( '#run-stemweb-button' ).addEventListener( 'click', stemwebFrontend.showDialog );
-    document.querySelector( '#button-edit-collation' ).addEventListener( 'click', this.toggleDisplayRelationMapper );
+    document.querySelector( '#edit-collation-button' ).addEventListener( 'click', ( evt ) => {
+      this.toggleViewButton( evt );
+      this.toggleDisplayRelationMapper();
+    } );
     fadeIn( this );
   }
 
+  toggleViewButton( evt ) {
+    document.querySelectorAll( '#view-selectors button' ).forEach( ( elem ) => {
+      elem == evt.currentTarget ? elem.classList.add( 'selected-view' ) : elem.classList.remove( 'selected-view' );
+    } );
+  }
+
+  
   toggleDisplayRelationMapper() {
     const relationMapperElement = document.querySelector( 'relation-mapper' );
     const stemmaEditorGraphContainerElement = document.querySelector( '#stemma-editor-graph-container' );
-    if ( window.getComputedStyle( document.querySelector( "relation-mapper" ) ).display == "none" ) {
+    if ( window.getComputedStyle( document.querySelector( 'relation-mapper' ) ).display == "none" ) {
       crossFade( relationMapperElement, stemmaEditorGraphContainerElement );
       const section = SECTION_STORE.state.selectedSection;
       if( section ) {
         stemmaButtonsService.getSectionDot( TRADITION_STORE.state.selectedTradition.id, section.id ).then((resp) => {
           if ( resp.success ) {
-            const relationMapperArea = d3.select('#relation-mapper-div');
-            const selection = relationMapperArea.select('#relation-graph');
-            console.log( relationMapperArea.node().getBoundingClientRect().width);
-            console.log( window.getComputedStyle( relationMapperArea.node() ).width ); 
-            console.log( document.querySelector( 'relation-mapper' ).getBoundingClientRect().width );
-            console.log( document.querySelector( '#stemma-editor-graph-container' ).getBoundingClientRect().width );
-            const graph = selection.empty()
-              ? relationMapperArea.append('div').attr('id', 'relation-graph')
-              : selection;
-            graph.style('height', '400px').style('width','100%');
-            const gv = graph
-              .graphviz()
-              .width(document.querySelector( '#stemma-editor-graph-container' ).getBoundingClientRect().width)
-              .height(400);
-              // .fit(true);
-            gv.renderDot( resp.data ) ;
-            console.log( 'done' );
+            relationRenderer.renderRelationsGraph( resp.data ) ;
           } else {
             StemmawebAlert.show(
               `Could not fetch section graph information: ${resp.message}`,
@@ -101,14 +108,17 @@ class StemmaButtons extends HTMLElement {
   render() {
     this.innerHTML = `
     <div id="stemma-buttons" class="btn-toolbar mb-2 mb-md-0">
-      <div class="btn-group me-2">
+      <div id="view-selectors" class="btn-group me-2">
+        <button id="view-stemmata-button" type="button" class="btn btn-sm btn-outline-secondary selected-view">
+          View stemmata
+        </button>
         <button id="run-stemweb-button" type="button" class="btn btn-sm btn-outline-secondary">
           Run Stemweb
         </button>
         <button type="button" class="btn btn-sm btn-outline-secondary">
           Examine Stemma
         </button>
-        <button id="button-edit-collation" type="button" class="btn btn-sm btn-outline-secondary">
+        <button id="edit-collation-button" type="button" class="btn btn-sm btn-outline-secondary">
           Edit Collation
         </button>
       </div>

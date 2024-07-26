@@ -60,8 +60,8 @@ class StemmawebNavigation extends HTMLElement {
         class="navbar-toggler position-absolute d-md-none collapsed"
         type="button"
         data-bs-toggle="collapse"
-        data-bs-target="#sidebarMenu"
-        aria-controls="sidebarMenu"
+        data-bs-target="#sidebar-menu"
+        aria-controls="sidebar-menu"
         aria-expanded="false"
         aria-label="Toggle navigation"
       >

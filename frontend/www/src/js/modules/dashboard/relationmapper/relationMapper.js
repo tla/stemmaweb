@@ -11,8 +11,6 @@
  */
 class RelationMapper extends HTMLElement {
 
-    #my_name = 'The Relation Mapper';
-
     constructor() {
         super();
     }
@@ -22,7 +20,7 @@ class RelationMapper extends HTMLElement {
     }
 
     render() {
-        this.innerHTML = `<div id="relation-mapper-div" style="width:100%;">${this.#my_name}</div>`
+        this.innerHTML = `<div id="relation-mapper-div" style="width:100%;"></div>`
     }
 
 }
