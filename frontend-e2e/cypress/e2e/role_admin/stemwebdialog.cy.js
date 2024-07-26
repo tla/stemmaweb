@@ -49,6 +49,12 @@ const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     cy.viewport(1600, 900);
+    test_traditions.sort( (tradition_a, tradition_b) => tradition_a.title.localeCompare( tradition_b.title ) );
+    cy.loginViaUi(admin);
+});
+
+afterEach(() => {
+    cy.logoutViaUi();
 });
 
 describe('Stemweb dialog should work properly', () => {
@@ -281,24 +287,25 @@ describe('stemma editor tools and svg work properly', () => {
             // get the graph's svg again and assert the number of its edges to be one more than before
             cy.get('div#graph > svg').find('g.edge').should('have.length', countedges+1); // 21
 
-            // save it -- needs login
-            // reset v at the end // cy.log('old val: ' + v);
+            // TODO: save it -- needs login
+            // TODO: reset v at the end // cy.log('old val: ' + v);
         });
     });
 });
 
 describe('stemma editing error feedback in message console works properly', () => {
     it('passes', () => { // needs login
-        if (Cypress.env('CY_MODE') === 'headed') { // only log in if headed. dont run this test headless because it needs to be logged in // TODO: also for headless mode
+        // if (Cypress.env('CY_MODE') === 'headed') { // only log in if headed. dont run this test headless because it needs to be logged in // TODO: also for headless mode
         // TODO: when fitted also for healess mode, merge with previous test (partly duplicate)
-        cy.loginViaUi(admin);
+        // cy.loginViaUi(admin);
 
-        // To do: assert that the message console lists unexpected errors
+        // TODO: assert that the message console lists unexpected errors
         // when editing a stemma and e.g. removing [class=extant] after one of the nodes,
         //      it should not be possible to save it, and
         //      there should appear a message in the console panel saying "Error: BAD REQUEST; Witness [witness name here] not marked as either hypothetical or extant"
 
         // access stemma dot for editing
+        // TODO: test a tradition with a smaller graph / shorter dot file, for speeding up test
         let tradition = test_traditions.find(trad => trad.title.startsWith('Notre besoin'));
         cy.log('tradition.title: ' + tradition.title);
         // click on the tradition title within the tradition list
@@ -395,10 +402,10 @@ describe('stemma editing error feedback in message console works properly', () =
             cy.get('#message-console-text-panel').contains(msg_err);
             cy.get('#message-console-text-panel').contains(msg_ok);
 
-            // Test also the CANCEL button
+            // TODO: Test also the CANCEL button
         });
 
-        cy.logoutViaUi();
-        }
+        // cy.logoutViaUi();
+        // }
     });
 });

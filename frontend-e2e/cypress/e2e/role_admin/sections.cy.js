@@ -29,14 +29,23 @@ reordering of sections. Functionalities to be tested:
 */
 
 import test_traditions from '../../fixtures/test_traditions.json';
+import users from '../../fixtures/users.json';
+const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
+    cy.viewport(1600, 900);
+    test_traditions.sort( (tradition_a, tradition_b) => tradition_a.title.localeCompare( tradition_b.title ) );
+    cy.loginViaUi(admin);
+});
+
+afterEach(() => {
+    cy.logoutViaUi();
 });
 
 // count sections of each (public) tradition is correct
 describe('Each tradition should have the right number of sections listed in the toc', () => {
-    it.skip('under construction', () => { // to do: user rights and db initial state.
+    it.skip('under construction', () => { // to do: db initial state.
         // TODO: number of sections currently varies in course of other test(s)
         // TODO: switch the lines (to filter 'Public' traditions) when user rights are implemented:
         // test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
@@ -46,7 +55,7 @@ describe('Each tradition should have the right number of sections listed in the 
             // assert that the number of sections visible in the toc correponds to that in the list of traditions
 
             // TODO: add issue to scroll tradition-list, otherwise it is 
-            // not possible to access tratition titles and sections at the 
+            // not possible to access tradition titles and sections at the
             // bottom of the list. Preliminary solution here: lengthen viewport.
             cy.viewport(1000, 990);
 
