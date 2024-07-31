@@ -1,10 +1,20 @@
 class RelationRenderer {
 
     #relGvr = null;
-  
+    #height = 0;
+    #width = 0;
+
     constructor() {
     }
     
+    set height( height ) {
+      this.#height = height;
+    }
+
+    set width( width ) {
+      this.#width = width;
+    }
+
     get relationMapperGraphvizRoot() {
       if( this.#relGvr == null ){
         this.#createGraphvizRoot();
@@ -23,14 +33,10 @@ class RelationRenderer {
         const graph = selection.empty()
         ? relationMapperArea.append( 'div' ).attr( 'id', 'relation-graph' )
         : selection;
-      // Because the relation mapper container is `display: none` on initialization
-      // we use the dimensions of the stemma renderer that is already depicted.
-      const stemmaRendererDimensions = document.querySelector( '#graph' ).getBoundingClientRect();
-      graph.style( 'height', `${stemmaRendererDimensions.height}px` );
+      graph.style( 'height', `${this.#height}px` );
       this.#relGvr = graph
         .graphviz()
-        .width( stemmaRendererDimensions.width )
-        .height( stemmaRendererDimensions.height );
+        .logEvents( false );
     }
     
     /**
@@ -40,44 +46,72 @@ class RelationRenderer {
      * @param {Tradition} tradition
      * @param {Stemma} stemma
      */
-    renderRelationsGraph( dot ) {
+    renderRelationsGraph( dot, options={} ) {
+      const defaultOptions =  { 
+        'onEnd': () => {}
+      };
+      const usedOptions = { ...defaultOptions, ...options };
+      this.#height = usedOptions.height || this.#height;
+      this.#width = usedOptions.width || this.#width;
+      this.relationMapperGraphvizRoot
+        .width( this.#width )
+        .height( this.#height )
+        .on( 'end', usedOptions.onEnd );
       this.relationMapperGraphvizRoot.renderDot( dot );
       if( this.relationMapperGraphvizRoot.zoomSelection() != null ){
         this.relationMapperGraphvizRoot.resetZoom();
       };
     }
    
-    // /**
-    //  * Resizes the current graph/stemma when the browser window gets 
-    //  * resized. Also set the new corresponding with on the GraphViz 
-    //  * renderer so that subsequent stemmas are depicted at the right
-    //  * size.
-    //  */
-    // resizeSVG() {
-    //   const margin = 14;
-    //   const stemmaButtonsRowHeight = document.querySelector( '#stemma-buttons' ).getBoundingClientRect()['height'];
-    //   const bbrect = document.querySelector( '#graph-area' ).getBoundingClientRect();
-    //   const width = bbrect['width'] - ( 2 * margin );
-    //   const factor = bbrect['height'] / window.innerHeight;
-    //   const height = bbrect['height'] - stemmaButtonsRowHeight;
-    //   const graphArea = d3.select('#graph-area');
-    //   const svg = graphArea.select("#graph").selectWithoutDataPropagation("svg");
-    //   svg
-    //       .transition()
-    //       .duration(700)
-    //       .attr("width", width )
-    //       .attr("height", height );
-    //   // This is a bit weird, but we need to reset the size of the original
-    //   // graphviz renderer that was set when the line
-    //   // `const stemmaRenderer = new StemmaRenderer();`
-    //   // was executed, and not on `this`. There's probably 
-    //   // cleaner ways to do this.
-    //   stemmaRenderer.graphvizRoot.width( width );
-    //   stemmaRenderer.graphvizRoot.height( height );
-    // }
-  
+    // TODO: resizing on window change size.
+
+    /**
+     // TODO(?): Why do we destroy the graphviz instance for the relation mapper on the node
+     * on the node we created it for? It makes more sense to keep the instance and reuse
+     * it to depict new versions of the same relation graph, or to depict relations
+     * form other sections/traditions, right? Yes, except if we do the rendering of 
+     * subsequent relation graphs takes forever. Below are the logs of an initial and
+     * follow up renderings (numbers are time in ms per event). No idea why the same
+     * graph takes 7 seconds to render a second time, while it only takes 1 initially.
+     *
+     * Initial rendering
+     * 
+     * Event  2 layoutStart            0
+     * Event  3 layoutEnd            869
+     * Event  4 dataExtractEnd        81
+     * Event  5 dataProcessPass1End   19
+     * Event  6 dataProcessPass2End    5
+     * Event  7 dataProcessEnd         1
+     * Event  8 renderStart            0
+     * Event 14 zoom                 119
+     * Event  9 renderEnd              0
+     * Event 13 end                    0
+     * 
+     * 
+     * Second rendering
+     * 
+     * Event  2 layoutStart            1
+     * Event  3 layoutEnd            847
+     * Event  4 dataExtractEnd        73
+     * Event  5 dataProcessPass1End 6259
+     * Event  6 dataProcessPass2End    5
+     * Event  7 dataProcessEnd         0
+     * Event  8 renderStart            0
+     * Event 14 zoom                   1
+     * Event  9 renderEnd             83
+     * Event 13 end                    1
+     * Event 14 zoom                   0 
+     */
+
+    destroy() {
+      if ( this.#relGvr ) {
+        this.#relGvr.destroy();
+        this.#relGvr = null;
+      }
+      d3.select( '#relation-graph' ).remove();
+    }
+
   }
   
   const relationRenderer = new RelationRenderer();
-//   d3.select( window ).on( 'resize', stemmaRenderer.resizeSVG );
   

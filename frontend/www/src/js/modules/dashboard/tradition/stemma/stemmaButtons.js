@@ -19,50 +19,103 @@ class StemmaButtons extends HTMLElement {
      *  needs to be shown and what button needs to be highlighted and
      *  un-highligthed.
      */
-     
-    //TODO (PRIO): the toggles shouldn't fire if that view is already active!
-     
-    document.querySelector( '#view-stemmata-button' ).addEventListener( 'click', ( evt ) => {
-      this.toggleViewButton( evt );
-      this.toggleDisplayRelationMapper();
-    } );
-    document.querySelector( '#delete-tradition-button' ).addEventListener( 'click', this.handleDelete );
+    
+    document.querySelector( '#view-stemmata-button' ).addEventListener( 'click', this.setView );
     document.querySelector( '#run-stemweb-button' ).addEventListener( 'click', stemwebFrontend.showDialog );
-    document.querySelector( '#edit-collation-button' ).addEventListener( 'click', ( evt ) => {
-      this.toggleViewButton( evt );
-      this.toggleDisplayRelationMapper();
-    } );
+    document.querySelector( '#edit-collation-button' ).addEventListener( 'click', this.setView );
+    document.querySelector( '#delete-tradition-button' ).addEventListener( 'click', this.handleDelete );
+
+    SECTION_STORE.subscribe( this.toggleEditCollationButtonActive );
+
     fadeIn( this );
   }
 
-  toggleViewButton( evt ) {
-    document.querySelectorAll( '#view-selectors button' ).forEach( ( elem ) => {
-      elem == evt.currentTarget ? elem.classList.add( 'selected-view' ) : elem.classList.remove( 'selected-view' );
-    } );
-  }
-
-  
-  toggleDisplayRelationMapper() {
-    const relationMapperElement = document.querySelector( 'relation-mapper' );
-    const stemmaEditorGraphContainerElement = document.querySelector( '#stemma-editor-graph-container' );
-    if ( window.getComputedStyle( document.querySelector( 'relation-mapper' ) ).display == "none" ) {
-      crossFade( relationMapperElement, stemmaEditorGraphContainerElement );
-      const section = SECTION_STORE.state.selectedSection;
-      if( section ) {
-        stemmaButtonsService.getSectionDot( TRADITION_STORE.state.selectedTradition.id, section.id ).then((resp) => {
-          if ( resp.success ) {
-            relationRenderer.renderRelationsGraph( resp.data ) ;
-          } else {
-            StemmawebAlert.show(
-              `Could not fetch section graph information: ${resp.message}`,
-              'danger'
-            );
-          }
-        } );
+  /** 
+   * This takes care of the edit collation button to be greyed out
+   * if there is no section selected.
+   */
+  toggleEditCollationButtonActive() {
+    const editCollationButtonElement = document.querySelector( '#edit-collation-button' );
+    if( SECTION_STORE.state.selectedSection ) {
+      if ( editCollationButtonElement.classList.contains( 'disabled' ) ) {
+        editCollationButtonElement.classList.remove( 'disabled' );
       }
     } else {
-      crossFade( stemmaEditorGraphContainerElement, relationMapperElement ); 
+      if ( !editCollationButtonElement.classList.contains( 'disabled' ) ) {
+        editCollationButtonElement.classList.add( 'disabled' );
+      }
     }
+  }
+
+  setView( evt ) {
+    const currentView = document.querySelector( '#view-selectors .selected-view ' );
+    var targetView = null;
+    var fadeOutElement = null;
+    if ( !( evt.currentTarget == currentView ) ) {
+      // Set the right button to highlight.
+      currentView.classList.remove( 'selected-view' );
+      evt.currentTarget.classList.add( 'selected-view' );
+      // Figure out the chosen view (targetView) and do what needs to happen to prepare it.
+      if ( evt.currentTarget == document.querySelector( '#view-stemmata-button' ) ) {
+        targetView = document.querySelector( '#stemma-editor-graph-container' );
+      }
+      if ( evt.currentTarget == document.querySelector( '#edit-collation-button' ) ) {
+        targetView = document.querySelector( 'relation-mapper' );     
+        var section = SECTION_STORE.state.selectedSection;
+        if ( !section ) {
+          section = SECTION_STORE.state.availableSections[0];
+          SECTION_STORE.setSelectedSection( section );
+        }
+        if( section ) {
+          stemmaButtonsService.getSectionDot( TRADITION_STORE.state.selectedTradition.id, section.id ).then( (resp) => {
+            if ( resp.success ) {
+              // Because the relation mapper container is `display: none` on initialization we use the height of other elements.
+              // Timing is relevant: closeStemmaView takes a callback and when that gets executed the stemma graph container
+              // is already `display: none` and `getBoundingClientRect()` return just zero on any dimension.
+              const graphRendererHeight = document.querySelector( '#graph-area' ).getBoundingClientRect().height;
+              SectionSelectors.renderSectionSelectors();
+              StemmaButtons.closeStemmaView( () => {
+                const graphRendererWidth = document.querySelector( '#topbar-menu' ).getBoundingClientRect().width;
+                relationRenderer.renderRelationsGraph( 
+                  resp.data, {
+                    'width': graphRendererWidth,
+                    'height': graphRendererHeight,
+                    'onEnd': () => { 
+                      fadeToDisplayFlex( targetView, { 'duration': 1500 } );
+                      document.querySelector( '#section-title' ).innerHTML = `${SECTION_STORE.state.selectedSection.name}`;
+                    }
+                  }
+                );
+              } );
+            } else {
+              StemmawebAlert.show(
+                `Could not fetch section graph information: ${resp.message}`,
+                'danger'
+              );
+            }
+          } );
+        }     
+      }
+      // Figure out which view we are closing, set that as element to 
+      // fade out, and remove or stash stuff from the view we are closing.
+      if ( currentView == document.querySelector( '#edit-collation-button' ) ) {
+        relationRenderer.destroy(); // Wondering? See the elaborate note in relationRenderer.js.
+        document.querySelector( '#section-title' ).innerHTML = '';
+        fadeOutElement = document.querySelector( 'relation-mapper' );
+        document.querySelector( '#main' ).classList.remove( 'col-9' );
+        document.querySelector( '#main' ).classList.add( 'col-7' );
+        fadeToDisplayNone( '#sidebar-menu', { 'reverse': true, 'delay': 500 } );
+        crossFade( targetView, fadeOutElement ); 
+      }
+    }
+  }
+
+  static closeStemmaView( callBack ) {
+    const fadeOutElement = document.querySelector( '#stemma-editor-graph-container' );
+    fadeToDisplayNone( '#sidebar-menu', { 'delay': 0 } );
+    document.querySelector( '#main' ).classList.remove( 'col-7' );
+    document.querySelector( '#main' ).classList.add( 'col-9' ); // Timed in CSS to 1s with 500ms delay, hence duration of 1500 in next line.
+    fadeToDisplayNone( fadeOutElement, { 'duration': 1500, 'onEnd': callBack } );
   }
 
   handleDelete() {
@@ -115,10 +168,10 @@ class StemmaButtons extends HTMLElement {
         <button id="run-stemweb-button" type="button" class="btn btn-sm btn-outline-secondary">
           Run Stemweb
         </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary">
+        <button type="button" class="btn btn-sm btn-outline-secondary disabled">
           Examine Stemma
         </button>
-        <button id="edit-collation-button" type="button" class="btn btn-sm btn-outline-secondary">
+        <button id="edit-collation-button" type="button" class="btn btn-sm btn-outline-secondary disabled">
           Edit Collation
         </button>
       </div>

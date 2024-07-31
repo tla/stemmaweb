@@ -29,6 +29,16 @@
   padding: 0% 1.5% 0% 1.5%;
 } 
 
+#main.col-7 {
+  transition: width 1s, margin 1s;
+}
+
+#main.col-9 {
+  margin-left: 0;
+  transition: width 1s, margin 1s;
+  transition-delay: 500ms, 500ms;
+}
+
 /*
  * Sidebar
  */
@@ -101,6 +111,10 @@ edit-stemma-buttons {
   width: 100%;
   display: flex;
   align-items: flex-start;
+}
+
+#edit-stemma-buttons-right .greyed-out {
+  pointer-events: none;
 }
 
 #stemma-selector-buttons {
@@ -258,12 +272,12 @@ edit-stemma-buttons a.greyed-out div {
   transition: width 0.4s ease-in-out;
 }
 
-#stemma-selectors {
+#stemma-selectors, #section-selectors {
   display: flex;
   justify-content: flex-start;
 }
 
-.stemma-selector.selected svg {
+.stemma-selector.selected svg, .section-selector.selected svg {
   fill: rgb(210,210,210);
 }
 
@@ -422,4 +436,16 @@ relation-mapper {
 button.selected-view {
   color: #fff;
   background-color: #87aade;
+}
+
+#section-title {
+  font-size: 140%;
+}
+
+#section-loader-spinner {
+  display: none;
+}
+
+#section-loader-spinner.show {
+  display: inline;
 }

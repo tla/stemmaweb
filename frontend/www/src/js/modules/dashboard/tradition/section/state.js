@@ -38,6 +38,16 @@ class SectionStore extends StateStore {
   }
 
   /**
+   * @returns {number} The index of the currently selected section in the list of
+   *   available sections for the selected tradition.
+   */
+  get selectedIndex() {
+    const { availableSections, selectedSection } = this.state;
+    return availableSections.indexOf( selectedSection );
+  }
+
+  
+  /**
    * Informs all SectionLists (well, at least those that registered 
    * a listener for the event) that a section was added.
    * 

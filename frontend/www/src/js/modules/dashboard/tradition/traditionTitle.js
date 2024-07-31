@@ -34,13 +34,27 @@ class TraditionTitle extends HTMLElement {
         });
     }
 
+    static set altTitle( title ) {
+        TraditionTitle.render( title );
+    }
+
     connectedCallback() {
         this.render();
         fadeIn( this );
     }
 
+    setTitle( title ) {
+        this.#title = title;
+        this.render();
+    }
+
     render() {
-        this.innerHTML = `<h4 id="tradition-name" class="pt-3">${this.#title}</h4>`
+        this.innerHTML = `<div style="display: flex;">
+            <h4 id="tradition-name" class="pt-3">
+                ${this.#title}
+            </h4>
+        </div>
+        `;
     }
 
 }
