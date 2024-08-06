@@ -73,7 +73,7 @@ function fadeToDisplayNone( element, options={} ){
         }
     } );
   } else {
-    d3.select( '#sidebar-menu' ).node().style.removeProperty( 'display' )
+    d3.select( element ).node().style.removeProperty( 'display' )
     d3.select( element )
       .transition()
       .delay( usedOptions.delay )

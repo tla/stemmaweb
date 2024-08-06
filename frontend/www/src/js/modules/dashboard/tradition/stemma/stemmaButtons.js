@@ -81,7 +81,24 @@ class StemmaButtons extends HTMLElement {
                     'width': graphRendererWidth,
                     'height': graphRendererHeight,
                     'onEnd': () => { 
-                      fadeToDisplayFlex( targetView, { 'duration': 1500 } );
+                      fadeToDisplayFlex( targetView, { 
+                        'duration': 1500,
+                        'onEnd': () => {
+                          stemmaButtonsService.getSectionRelations( TRADITION_STORE.state.selectedTradition.id, section.id ).then( (resp) => {
+                            if ( resp.success ) {
+                              document.querySelector( 'relation-types' ).renderRelationTypes(
+                                { 'onEnd': () => { fadeToDisplayNone( document.querySelector( 'relation-types div' ), { 'reverse': true } ) } }
+                              );
+                              RelationMapper.addRelations( resp.data );
+                            } else {
+                              StemmawebAlert.show(
+                                `Could not fetch relations information: ${resp.message}`,
+                                'danger'
+                              );                
+                            }
+                          } );
+                        }  
+                      } );
                       document.querySelector( '#section-title' ).innerHTML = `${SECTION_STORE.state.selectedSection.name}`;
                     }
                   }
@@ -104,6 +121,7 @@ class StemmaButtons extends HTMLElement {
         fadeOutElement = document.querySelector( 'relation-mapper' );
         document.querySelector( '#main' ).classList.remove( 'col-9' );
         document.querySelector( '#main' ).classList.add( 'col-7' );
+        document.querySelector( 'relation-types' ).unrender();
         fadeToDisplayNone( '#sidebar-menu', { 'reverse': true, 'delay': 500 } );
         crossFade( targetView, fadeOutElement ); 
       }

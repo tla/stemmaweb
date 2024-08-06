@@ -128,7 +128,7 @@ class SectionPropertiesView extends HTMLElement {
             const sectionMeta = SectionPropertiesView.sortedMetaItems( SectionPropertiesView.metadataFromSection(section) );
             return `            
                 <h6
-                class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
+                class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 text-muted"
                 >
                     <span>Section Properties</span>
                     <div class="property-buttons">
@@ -136,9 +136,9 @@ class SectionPropertiesView extends HTMLElement {
                         <edit-section-properties-button></edit-section-properties-button> 
                     </div>
                 </h6>
-                <div class="table-responsive px-3 py-3">
+                <div class="table-responsive px-3 py-1">
                 <table class="table table-striped table-sm">
-                    <tbody id="section_info">
+                    <tbody id="section-info">
                         ${sectionMeta.map(this.renderMetaItem).join('\n')}
                     </tbody>
                 </table>
@@ -158,7 +158,7 @@ class SectionPropertiesView extends HTMLElement {
     render( selectedSection) {
         if( selectedSection ) {
             this.innerHTML = `
-                <div class="position-sticky pt-3">
+                <div class="position-sticky pt-2">
                     ${ this.createSectionTable( selectedSection ) }
                 </div>
             `;

@@ -8,6 +8,58 @@
   --bs-btn-disabled-border-color: #adb5bf;
 }
 
+.relation-colors {
+  --color-sky: #a6cee3;
+  --color-blue: #1f78b4;
+  --color-mint: #b2df8a;
+  --color-green: #33a02c;
+  --color-pink: #fb9a99;
+  --color-red: #e31a1c;
+  --color-peach: #fdbf6f;
+  --color-orange: #ff7f00;
+  --color-plum: #cab2d6;
+  --color-purple: #6a3d9a;
+  --color-lemon: #ffff99;
+  --color-brown: #b15928;
+}
+
+span.relation-colors.color-sky  svg.feather.feather-square {
+  fill: var(--color-sky);
+}
+span.relation-colors.color-blue  svg.feather.feather-square {
+  fill: var(--color-blue);
+}
+span.relation-colors.color-mint  svg.feather.feather-square {
+  fill: var(--color-mint);
+}
+span.relation-colors.color-green  svg.feather.feather-square {
+  fill: var(--color-green);
+}
+span.relation-colors.color-pink  svg.feather.feather-square {
+  fill: var(--color-pink);
+}
+span.relation-colors.color-red  svg.feather.feather-square {
+  fill: var(--color-red);
+}
+span.relation-colors.color-peach  svg.feather.feather-square {
+  fill: var(--color-peach);
+}
+span.relation-colors.color-orange  svg.feather.feather-square {
+  fill: var(--color-orange);
+}
+span.relation-colors.color-plum  svg.feather.feather-square {
+  fill: var(--color-plum);
+}
+span.relation-colors.color-purple  svg.feather.feather-square {
+  fill: var(--color-purple);
+}
+span.relation-colors.color-lemon  svg.feather.feather-square {
+  fill: var(--color-lemon);
+}
+span.relation-colors.color-brown  svg.feather.feather-square {
+  fill: var(--color-brown);
+}
+
 .brand-dark {
   color: rgba(255, 255, 255, 0.7);
 }
@@ -405,7 +457,7 @@ social-login-options .btn {
   font-size: calc( var(--bs-btn-font-size) * 4);
 }
 
-delete-section-button .btn-outline-danger {
+delete-section-button .btn-outline-danger, delete-relation-type-button .btn-outline-danger  {
   color: var(--bs-btn-color);
   padding-right: 0.5em;
 }
@@ -431,6 +483,19 @@ relation-mapper {
   display: none;
   opacity: 0;
   width: 100%;
+}
+
+/* relation-types div {
+  display: none;
+  opacity: 0;
+} */
+
+.relation-type-name-cell {
+  width: 100%;
+}
+
+.relation-type-buttons-cell {
+  white-space: nowrap;
 }
 
 button.selected-view {

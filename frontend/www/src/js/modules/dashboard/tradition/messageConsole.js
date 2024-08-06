@@ -18,14 +18,14 @@ class MessageConsole extends HTMLElement {
 
   render() {
     this.innerHTML = `
-      <div class="position-sticky pt-3">
+      <div class="position-sticky pt-2">
       <h6
-        class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
+        class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 text-muted"
       >
         <span>Message console</span>
         <!--maybe-goes-here-a-button/-->
       </h6>
-      <div class="px-3 py-3">
+      <div class="px-3 py-1">
         <div id="message-console-text-panel">
         </div>
       </div>
