@@ -11,7 +11,7 @@ DOCKER_COMPOSE_FILE="docker-compose.test.yml"
 ENV_FILE=".env.test"
 
 # Start the services in detached mode
-docker-compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_FILE up -d
+docker compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_FILE up -d
 
 # Check the exit status of the docker container responsible for starting the tests
 exit_status=$(docker wait $TEST_CONTAINER_NAME)
