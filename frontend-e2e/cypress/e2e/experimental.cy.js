@@ -97,3 +97,17 @@ describe('intercept login request', () => {
     });
   }
 });
+
+describe('delete all traditions found in the api', () => {
+  it('UNDER CONSTRUCTION', () => {
+    // cy.log('cy envs', JSON.stringify(Cypress.env()))
+
+    cy.request(Cypress.env('CY_STEMMAREST_ENDPOINT') + '/traditions').then((resp) => {
+      // cy.log('resp.body: ' + JSON.stringify(resp.body))
+      // cy.log('resp.body(1): ' + JSON.stringify(resp.body[1].id))
+      cy.wrap(resp.body).each( (tradition) => {
+        cy.log('trad_id, trad_name: ' + tradition.id + ', ' + tradition.name)
+      })
+    })
+  })
+});
