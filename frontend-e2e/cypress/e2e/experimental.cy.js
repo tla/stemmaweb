@@ -107,6 +107,19 @@ describe('delete all traditions found in the api', () => {
       // cy.log('resp.body(1): ' + JSON.stringify(resp.body[1].id))
       cy.wrap(resp.body).each( (tradition) => {
         cy.log('trad_id, trad_name: ' + tradition.id + ', ' + tradition.name)
+
+      // Delete all traditions: DONE. TO DO: Uncomment when refilling the database is implemented subsequent to deleting.
+      /* cy.log('Next, delete each tradition:')
+      cy.exec('curl -X DELETE ' + Cypress.env('CY_STEMMAREST_ENDPOINT') + '/tradition/' + tradition.id).then(result => {
+        cy.log('curl result .log, .stdout, .stderr:');
+        cy.log(result.code);
+        cy.log(result.stdout);
+        cy.log(result.stderr);
+      });
+      cy.log('All traditions deleted. You can check in the browser during the next 10 seconds.');
+      cy.wait(1000);
+      cy.log('TBD: Next, try to execute init_test_data.sh, in order to re-upload data.') */
+
       })
     })
   })
