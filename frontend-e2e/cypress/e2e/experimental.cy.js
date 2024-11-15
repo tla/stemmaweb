@@ -108,7 +108,7 @@ describe('delete all traditions found in the api', () => {
       cy.wrap(resp.body).each( (tradition) => {
         cy.log('trad_id, trad_name: ' + tradition.id + ', ' + tradition.name)
 
-      // Delete all traditions: DONE. TO DO: Uncomment when refilling the database is implemented subsequent to deleting.
+      // Delete all traditions: DONE. TO DO: Uncomment when refilling the database subsequent to deleting is implemented.
       /* cy.log('Next, delete each tradition:')
       cy.exec('curl -X DELETE ' + Cypress.env('CY_STEMMAREST_ENDPOINT') + '/tradition/' + tradition.id).then(result => {
         cy.log('curl result .log, .stdout, .stderr:');
