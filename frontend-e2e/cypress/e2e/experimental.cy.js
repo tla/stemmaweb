@@ -98,29 +98,52 @@ describe('intercept login request', () => {
   }
 });
 
-describe('delete all traditions found in the api', () => {
-  it('UNDER CONSTRUCTION', () => {
+describe('delete all traditions found in the api, and the users, then re-seed the db', () => {
+  it.only('UNDER CONSTRUCTION: delete users, re-seed the db', () => {
     // cy.log('cy envs', JSON.stringify(Cypress.env()))
+    cy.log('CY_STEMMAREST_ENDPOINT: ' + Cypress.env('CY_STEMMAREST_ENDPOINT'))
 
+    /*
+    // Delete all traditions: DONE. TO DO: Uncomment when refilling the database subsequent to deleting is implemented.
     cy.request(Cypress.env('CY_STEMMAREST_ENDPOINT') + '/traditions').then((resp) => {
       // cy.log('resp.body: ' + JSON.stringify(resp.body))
       // cy.log('resp.body(1): ' + JSON.stringify(resp.body[1].id))
       cy.wrap(resp.body).each( (tradition) => {
-        cy.log('trad_id, trad_name: ' + tradition.id + ', ' + tradition.name)
+        // cy.log('trad_id, trad_name: ' + tradition.id + ', ' + tradition.name)
 
-      // Delete all traditions: DONE. TO DO: Uncomment when refilling the database subsequent to deleting is implemented.
-      /* cy.log('Next, delete each tradition:')
-      cy.exec('curl -X DELETE ' + Cypress.env('CY_STEMMAREST_ENDPOINT') + '/tradition/' + tradition.id).then(result => {
-        cy.log('curl result .log, .stdout, .stderr:');
-        cy.log(result.code);
-        cy.log(result.stdout);
-        cy.log(result.stderr);
-      });
-      cy.log('All traditions deleted. You can check in the browser during the next 10 seconds.');
-      cy.wait(1000);
-      cy.log('TBD: Next, try to execute init_test_data.sh, in order to re-upload data.') */
-
+        cy.log('Next, delete each tradition:')
+        cy.exec('curl -X DELETE ' + Cypress.env('CY_STEMMAREST_ENDPOINT') + '/tradition/' + tradition.id).then(result => {
+          cy.log('curl result .log, .stdout, .stderr:');
+          cy.log(result.code);
+          cy.log(result.stdout);
+          cy.log(result.stderr);
+        });
+        cy.log('All traditions deleted. You can check in the browser during the next 10 seconds.');
+        cy.wait(1000);
+        cy.log('TBD: Next, try to execute init_test_data.sh, in order to re-upload data.')
       })
+    })
+    */
+
+    cy.exec('uname').then(function(result) {
+      cy.log("uname code: " + result.code);
+      cy.log("uname code: " + result.stdout);
+      cy.log("uname code: " + result.stderr);
+    })
+
+    cy.exec('pwd').then(function(result) {
+      cy.log("pwd code: " + result.code);
+      cy.log("pwd stdout: " + result.stdout);
+      cy.log("pwd stderr: " + result.stderr);
+    })
+
+    cy.exec('./cypress/support/my_script.sh'
+    // cy.exec('./cypress/support/init_test_data.sh',
+      // { env: { STEMMAREST_ENDPOINT: Cypress.env('CY_STEMMAREST_ENDPOINT') } }
+    ).then(function(result) {
+      cy.log(result.code);
+      cy.log(result.stdout);
+      cy.log(result.stderr);
     })
   })
 });
