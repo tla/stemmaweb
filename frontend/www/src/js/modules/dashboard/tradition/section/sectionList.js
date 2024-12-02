@@ -109,7 +109,7 @@ class SectionList extends HTMLElement {
                     });
                     this.#sections.forEach( (section) => this.renderSectionName(section) );
                 } else {
-                    StemmawebAlert.show(`Error: ${res.message}`, 'danger');
+                    StemmawebAlert.show(`Error: ${resp.message}`, 'danger');
                 }
             });
     }
