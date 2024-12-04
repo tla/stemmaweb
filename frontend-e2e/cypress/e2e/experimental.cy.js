@@ -120,7 +120,7 @@ describe('delete all traditions and users in the api, re-seed the db', () => {
         })
       })
     })
-    // DON'T cy.reload() > Cannot read properties of undefined (reading 'name')
+    // DON'T cy.reload() ==> Cannot read properties of undefined (reading 'name'). TO DO: check why
     cy.log('All traditions deleted.')
 
     cy.log('Delete all users:')
@@ -139,15 +139,25 @@ describe('delete all traditions and users in the api, re-seed the db', () => {
     cy.log('All users deleted.')
 
     // re-seed the db
-    cy.exec('./../bin/init-data/stemmarest/init_test_data.sh',
-    // cy.exec('./cypress/support/init_test_data.sh',
-      { env: { STEMMAREST_ENDPOINT: Cypress.env('CY_STEMMAREST_ENDPOINT') } }
-    ).then(function(result) {
-      cy.log(result.code)
-      cy.log(result.stdout)
-      cy.log(result.stderr)
-    })
-    cy.reload()
+    if (Cypress.env('CY_MODE') === 'headed') { // skip when in headless mode
+      cy.exec('./../bin/init-data/stemmarest/init_test_data.sh',
+        { env: { STEMMAREST_ENDPOINT: Cypress.env('CY_STEMMAREST_ENDPOINT') } }
+      ).then(function(result) {
+        cy.log(result.code)
+        cy.log(result.stdout)
+        cy.log(result.stderr)
+      })
+    } else {
+      cy.exec('./cypress/stemmarest/init_test_data.sh', // currently from a volume, cf. docker-compose.test.yml
+        { env: { STEMMAREST_ENDPOINT: Cypress.env('CY_STEMMAREST_ENDPOINT') } }
+      ).then(function(result) {
+        cy.log(result.code)
+        cy.log(result.stdout)
+        cy.log(result.stderr)
+      })
+    }
+
+    cy.reload() // TO DO: assert adding a tradition in the gui leads to automatic update of listed traditions
     cy.log('db re-seeded')
 
   })
