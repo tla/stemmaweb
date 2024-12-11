@@ -42,7 +42,7 @@ services:
       - .env.test
     volumes:
       - ./frontend-e2e/:/app
-      - ./bin/init-data/stemmarest/:/app/cypress/stemmarest
+      - ./bin/init-data/stemmarest/:/app/cypress/.initdata4headless
     entrypoint: >
       /bin/bash -c "sleep 120 &&  # Waiting for other services to be ready
                     npm install -g npm@latest &&

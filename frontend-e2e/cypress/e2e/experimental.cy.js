@@ -120,7 +120,7 @@ describe('delete all traditions and users in the api, re-seed the db', () => {
         })
       })
     })
-    // DON'T cy.reload() ==> Cannot read properties of undefined (reading 'name'). TO DO: check why
+    // cy.reload() // DON'T <== Cannot read properties of undefined (reading 'name'). Issue # 169
     cy.log('All traditions deleted.')
 
     cy.log('Delete all users:')
@@ -148,7 +148,7 @@ describe('delete all traditions and users in the api, re-seed the db', () => {
         cy.log(result.stderr)
       })
     } else {
-      cy.exec('./cypress/stemmarest/init_test_data.sh', // currently from a volume, cf. docker-compose.test.yml
+      cy.exec('./cypress/.initdata4headless/init_test_data.sh', // currently from a volume, cf. docker-compose.test.yml
         { env: { STEMMAREST_ENDPOINT: Cypress.env('CY_STEMMAREST_ENDPOINT') } }
       ).then(function(result) {
         cy.log(result.code)
