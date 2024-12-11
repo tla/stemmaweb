@@ -29,7 +29,7 @@ fi
 docker logs $TEST_CONTAINER_NAME
 
 # Stop the services
-docker-compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_FILE $stopcmd
+docker compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_FILE $stopcmd
 
 # Exit with the exit status of the docker container responsible for starting the tests
 exit "$exit_status"
