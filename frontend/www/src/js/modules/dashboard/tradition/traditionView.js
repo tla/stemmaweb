@@ -30,8 +30,10 @@ class TraditionView extends HTMLElement {
         } );
       } )
       .catch( (error) => {
-        // TODO: some generic error handling?
-        console.log(error);
+        StemmawebAlert.show(
+          `Error during rooting of stemma: ${res.message}`,
+          'danger'
+        );
       } );
   }
 
@@ -96,12 +98,14 @@ class TraditionView extends HTMLElement {
 
   render() {
     this.innerHTML = `
-      <div class="d-flex justify-content-between flex-wrap align-items-center pt-2 pb-1 border-bottom">
+      <div id="topbar-menu" class="d-flex justify-content-between flex-wrap align-items-center pt-2 pb-1 border-bottom">
         <tradition-title></tradition-title>
-        <div class="d-flex justify-content-end ms-5 pt-3 mb-2 lex-nowrap" id="stemma-buttons-container">
+        <div id="stemma-buttons-container" class="d-flex justify-content-between ms-0 pt-3 mb-2 lex-nowrap">
+          <div id="section-title"></div>
           <stemma-buttons></stemma-buttons>
         </div>
       </div>
+
 
       <div id="stemma-editor-graph-container">
 
@@ -113,13 +117,16 @@ class TraditionView extends HTMLElement {
         </div>
 
         <div id="graph-container">
-
           <edit-stemma-buttons></edit-stemma-buttons>
-  
           <div class="" id="graph-area">
           </div>
+        </div>
 
       </div>
+
+      
+      <relation-mapper></relation-mapper>
+
     `;
   };
 

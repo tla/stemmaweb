@@ -401,5 +401,52 @@ class StemmarestService extends BaseService {
       return this.fetch(`/api/tradition/${traditionId}/relationtypes`);
     }
   
-  
+  /** 
+   * Fetches the dot for a section.
+   * 
+   * @param {string} traditionId
+   * * @param {string} sectionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/dot/
+   */
+    getSectionDot( traditionId, sectionId ) {
+      return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/dot`);
+    }
+
+  /** 
+   * Fetches the relations for a section.
+   * 
+   * @param {string} traditionId
+   * * @param {string} sectionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/relations/
+   */
+  getSectionRelations( traditionId, sectionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/relations`);
+  }
+
+  /** 
+   * Fetches the relation types for a tradition.
+   * 
+   * @param {string} traditionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/relationtypes/
+   */
+  getRelationTypes( traditionId ) {
+    return this.fetch( `/api/tradition/${traditionId}/relationtypes` );
+  }
+
+  /** 
+   * Deletes a particular relation type for a tradition.
+   * 
+   * @param {string} traditionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/relationtypes/
+   */
+  deleteRelationType( traditionId, relationName ) {
+    return this.fetch( `/api/tradition/${traditionId}/relationtype/${relationName}`, {
+      method: 'DELETE'
+    } );
+  }
+
 }

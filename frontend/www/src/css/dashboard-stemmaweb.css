@@ -8,11 +8,62 @@
   --bs-btn-disabled-border-color: #adb5bf;
 }
 
+.relation-colors {
+  --color-sky: #a6cee3;
+  --color-blue: #1f78b4;
+  --color-mint: #b2df8a;
+  --color-green: #33a02c;
+  --color-pink: #fb9a99;
+  --color-red: #e31a1c;
+  --color-peach: #fdbf6f;
+  --color-orange: #ff7f00;
+  --color-plum: #cab2d6;
+  --color-purple: #6a3d9a;
+  --color-lemon: #ffff99;
+  --color-brown: #b15928;
+}
+
+span.relation-colors.color-sky  svg.feather.feather-square {
+  fill: var(--color-sky);
+}
+span.relation-colors.color-blue  svg.feather.feather-square {
+  fill: var(--color-blue);
+}
+span.relation-colors.color-mint  svg.feather.feather-square {
+  fill: var(--color-mint);
+}
+span.relation-colors.color-green  svg.feather.feather-square {
+  fill: var(--color-green);
+}
+span.relation-colors.color-pink  svg.feather.feather-square {
+  fill: var(--color-pink);
+}
+span.relation-colors.color-red  svg.feather.feather-square {
+  fill: var(--color-red);
+}
+span.relation-colors.color-peach  svg.feather.feather-square {
+  fill: var(--color-peach);
+}
+span.relation-colors.color-orange  svg.feather.feather-square {
+  fill: var(--color-orange);
+}
+span.relation-colors.color-plum  svg.feather.feather-square {
+  fill: var(--color-plum);
+}
+span.relation-colors.color-purple  svg.feather.feather-square {
+  fill: var(--color-purple);
+}
+span.relation-colors.color-lemon  svg.feather.feather-square {
+  fill: var(--color-lemon);
+}
+span.relation-colors.color-brown  svg.feather.feather-square {
+  fill: var(--color-brown);
+}
+
 .brand-dark {
   color: rgba(255, 255, 255, 0.7);
 }
-.bg-light {
-  /* Using `static` prefix to make sure that we use the static folder served by Flask  */
+.footer-branding {
   background-image: url('../../images/logo-light.svg');
   background-position: left bottom;
   background-repeat: no-repeat;
@@ -22,6 +73,88 @@
   font-size: 1em;
 }
 
+/*
+ * Main
+ */
+#main {
+  margin-left: calc((2*100vw/12));
+  padding: 0% 1.5% 0% 1.5%;
+} 
+
+#main.col-7 {
+  transition: width 1s, margin 1s;
+}
+
+#main.col-9 {
+  margin-left: 0;
+  transition: width 1s, margin 1s;
+  transition-delay: 500ms, 500ms;
+}
+
+/*
+ * Sidebar
+ */
+ .sidebar-menu {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100; /* Behind the navbar */
+  padding: 48px 0px 0px 0px; /* Height of navbar */
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-menu-sticky {
+  top: 0;
+  height: calc(100vh - 48px);
+  padding-top: 0.5rem;
+  overflow-x: hidden;
+  overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+}
+
+.sidebar-menu .nav-link {
+  font-weight: 500;
+  color: #333;
+}
+
+.sidebar-menu .nav-link .feather {
+  margin-right: 4px;
+  color: #727272;
+}
+
+.sidebar-menu .nav-link.active {
+  color: #2470dc;
+}
+
+.sidebar-menu .nav-link:hover .feather,
+.sidebar-menu .nav-link.active .feather {
+  color: inherit;
+}
+
+.sidebar-menu-heading {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+/* 
+ * Sidebar properties
+ */
+.sidebar-properties {
+  background: none;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 100; /* Behind the navbar */
+  padding: 48px 0px 0px 0px; /* Height of navbar */
+  box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.1);
+  overflow-y: scroll;
+}
+
+
+/* 
+ * Stemma buttons
+ */
 #stemma-buttons-container {
   width: 100%;
 }
@@ -30,6 +163,10 @@ edit-stemma-buttons {
   width: 100%;
   display: flex;
   align-items: flex-start;
+}
+
+#edit-stemma-buttons-right .greyed-out {
+  pointer-events: none;
 }
 
 #stemma-selector-buttons {
@@ -187,12 +324,12 @@ edit-stemma-buttons a.greyed-out div {
   transition: width 0.4s ease-in-out;
 }
 
-#stemma-selectors {
+#stemma-selectors, #section-selectors {
   display: flex;
   justify-content: flex-start;
 }
 
-.stemma-selector.selected svg {
+.stemma-selector.selected svg, .section-selector.selected svg {
   fill: rgb(210,210,210);
 }
 
@@ -205,17 +342,6 @@ edit-stemma-buttons a.greyed-out div {
   .ms-md-perc {
     margin-left: 16.6% !important;
   }
-}
-
-.sidebar-properties {
-  background: none;
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  z-index: 100; /* Behind the navbar */
-  padding: 48px 0 0; /* Height of navbar */
-  box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.1);
 }
 
 .modal-backdrop {
@@ -324,13 +450,14 @@ section-list ul li.dragging-highlight {
 
 .tradition-property-value-cell, .section-property-value-cell {
   width: 100%;
+  overflow-wrap: anywhere;
 }
 
 social-login-options .btn {
   font-size: calc( var(--bs-btn-font-size) * 4);
 }
 
-delete-section-button .btn-outline-danger {
+delete-section-button .btn-outline-danger, delete-relation-type-button .btn-outline-danger  {
   color: var(--bs-btn-color);
   padding-right: 0.5em;
 }
@@ -350,4 +477,40 @@ delete-section-button .btn-outline-danger {
 
 #message-console-text-panel .console-message.danger {
   color: #d5465a;
+}
+
+relation-mapper {
+  display: none;
+  opacity: 0;
+  width: 100%;
+}
+
+/* relation-types div {
+  display: none;
+  opacity: 0;
+} */
+
+.relation-type-name-cell {
+  width: 100%;
+}
+
+.relation-type-buttons-cell {
+  white-space: nowrap;
+}
+
+button.selected-view {
+  color: #fff;
+  background-color: #87aade;
+}
+
+#section-title {
+  font-size: 140%;
+}
+
+#section-loader-spinner {
+  display: none;
+}
+
+#section-loader-spinner.show {
+  display: inline;
 }

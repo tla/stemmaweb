@@ -80,14 +80,14 @@ class StemwebJobStatus extends HTMLElement {
         if ( resp_data.jobid ) {
             const statusItems = this.metadataFromJobStatus( resp_data );
             this.innerHTML = `
-            <div class="position-sticky pt-3">
+            <div class="position-sticky pt-2">
             <h6
-                class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
+                class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 text-muted"
             >
                 <span>Job status</span>
                 <!--maybe-goes-here-a-button/-->
             </h6>
-            <div class="table-responsive px-3 py-3">
+            <div class="table-responsive px-3 py-1">
                 <table class="table table-striped table-sm">
                 <tbody id="job_status">
                 ${statusItems.map( this.renderJobStatusItem).join('\n') }

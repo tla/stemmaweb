@@ -116,14 +116,10 @@
     <stemmaweb-navigation></stemmaweb-navigation>
     <div class="container-fluid">
       <div class="row">
-        <nav
-          id="sidebarMenu"
-          class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse"
-        >
-          <div class="position-sticky pt-3">
+        <div id="sidebar-menu" class="col-2 sidebar-menu bg-light footer-branding collapse show">
+          <div class="position-sticky pt-2">
             <h6
-              class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
-            >
+              class="sidebar-menu-heading d-flex justify-content-between align-items-center px-3 mt-2 mb-1 text-muted">
               <span>Text directory</span>
               <a
                 class="link-secondary"
@@ -137,16 +133,14 @@
             </h6>
             <tradition-list></tradition-list>
           </div>
-        </nav>
+        </div>
 
-        <main class="col-md-9 col-lg-7 ms-md-perc px-md-4">
+        <div id="main" class="col-7">
           <tradition-view></tradition-view>
-        </main>
+        </div>
 
-        <div
-          id="sidebar-properties"
-          class="col-md-3 d-md-block col-lg-3 bg-light sidebar-properties"
-        >
+        <div id="sidebar-properties" class="col-3 sidebar-properties bg-light">
+          <relation-types></relation-types>
           <property-table-view id="property-table-view"></property-table-view>
           <section-properties-view></section-properties-view>
           <stemweb-job-status></stemweb-job-status>
@@ -205,8 +199,13 @@
       src="src/js/modules/dashboard/tradition/stemma/stemmaRenderer.js"
       type="application/javascript"
     ></script>
+    <script
+      src="src/js/modules/dashboard/relationmapper/relationRenderer.js"
+      type="application/javascript"
+    ></script>
     <script src="./src/js/config.js" type="application/javascript"></script>
 
+    
     <!-- State -->
     <script
       src="./src/js/modules/common/state/store.js"
@@ -321,6 +320,26 @@
     ></script>
     <script
       src="./src/js/modules/dashboard/tradition/messageConsole.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/relationMapper.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/sectionSelectors.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/relationTypes.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/deleteRelationType.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/editRelationType.js"
       type="application/javascript"
     ></script>
 
