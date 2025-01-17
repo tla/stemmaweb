@@ -45,6 +45,6 @@ services:
       - ./bin/init-data/stemmarest/:/app/cypress/.initdata4headless
     entrypoint: >
       /bin/bash -c "sleep 120 &&  # Waiting for other services to be ready
-                    npm install -g npm@latest &&
+                    npm install -g npm@10.9.2 &&
                     npm install &&
                     npm run ${CY_NPM_COMMAND}"
