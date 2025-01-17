@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     apt-get install -y nodejs
 
 # Update npm (got installed in the previous layer with `nodejs`)
-RUN npm install -g npm@latest
+RUN npm install -g npm@10.9.2
 # Copy in our frontend directory. We will need to mount the env.js file externally.
 COPY frontend .
 
