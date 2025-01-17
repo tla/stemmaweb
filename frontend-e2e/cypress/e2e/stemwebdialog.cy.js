@@ -224,7 +224,7 @@ describe('stemma editor tools and svg work properly', () => {
 
         // Florilegium has 1 stemma svg at start
         // the same number of selector icons should be visible as there are stemmata
-        cy.get('#stemma-editor-graph-container').find('#stemma-selector').find('svg.indicator-svg').should('have.length', tradition.stemmata.length);
+        cy.get('#stemma-editor-graph-container').find('#stemma-selectors').find('svg.feather-file').should('have.length', tradition.stemmata.length);
         // test that the stemma svg appears
         cy.get('#graph').find('svg').should('be.visible').and('have.length', 1);
         // no box should be there, at first;
@@ -306,7 +306,7 @@ describe('stemma editing error feedback in message console works properly', () =
         
         // Notre besoin has 2 stemma svgs at start
         // the same number of selector icons should be visible as there are stemmata
-        cy.get('#stemma-editor-graph-container').find('#stemma-selector').find('svg.indicator-svg').should('have.length', tradition.stemmata.length);
+        cy.get('#stemma-editor-graph-container').find('#stemma-selectors').find('svg.feather-file').should('have.length', tradition.stemmata.length);
         // test that the stemma svg appears
         cy.get('#graph').find('svg').should('be.visible').and('have.length', 1);
         // no box should be there, at first;

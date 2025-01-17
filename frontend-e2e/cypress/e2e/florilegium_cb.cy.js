@@ -30,8 +30,8 @@ describe("'Florilegium Coislinianum B' has the right owner and witnesses", funct
       .contains(expectedName)
       .click();
     cy.get('#tradition-name').contains(expectedName);
-    cy.get('#sidebar_properties').contains('user@example.org');
+    cy.get('#sidebar-properties').contains('user@example.org');
     // Sort the witness list for better reliability
-    cy.get('#sidebar_properties').contains('A, B, C, D, E, F, G, H, K, P, Q, S, T');
+    cy.get('#sidebar-properties').contains('A, B, C, D, E, F, G, H, K, P, Q, S, T');
   });
 });

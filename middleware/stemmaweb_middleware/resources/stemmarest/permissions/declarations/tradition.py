@@ -35,7 +35,8 @@ def config(
             if_true={Permission.READ},
         ),
     )
-    tradition_config_guest = [read_only]
+
+    tradition_config_guest = [read_only] # orig
     tradition_config_user = [read_write]
     tradition_config_admin = [read_write]
     tradition_config = {

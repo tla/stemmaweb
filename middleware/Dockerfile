@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 # Install Poetry
 RUN python -m pip install --upgrade pip &&  \
-    pip install poetry
+    pip install poetry==1.8.5
 COPY pyproject.toml poetry.lock ./
 RUN poetry export --without-hashes --format requirements.txt > requirements.txt
 
