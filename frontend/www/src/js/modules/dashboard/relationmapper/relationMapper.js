@@ -23,6 +23,28 @@ class RelationMapper extends HTMLElement {
      * Adds relation edges to the variant graph.
      * 
      * @param {} data 
+     *
+     * Data objects of the existing graph (nodes) are of the form:
+     *   Object { tag: "g", attributes: {…}, children: (7) […], parent: {…}, key: "1357", id: "svg-0.DEFAULT.1357" }
+     * 
+     * Data objects coming in are of the form:
+     *   Object { id: "1357", section: "1347", rank: 5, text: "الحياة", witnesses: (2) […] }
+     * 
+     * So we can bind data on the key in the exiting node data and the id of the reading data coming in.
+     * 
+     */ 
+    static addReadings( data ) {
+        d3.select( '#relation-graph svg g' ).selectAll( 'g.node' )
+            .data( data, function(d) { 
+                return d.key ? d.key : d.id;
+            } )
+            .on( 'click',  (evt, d) => { document.querySelector( 'section-properties-view' ).showReadingProperties( d.id ) } );
+    }
+
+    /**
+     * Adds relation edges to the variant graph.
+     * 
+     * @param {} data 
      */
     static addRelations( data ) {
         d3.select( '#relation-graph svg g' ).selectAll( 'g.relation' )
@@ -41,6 +63,7 @@ class RelationMapper extends HTMLElement {
         idlist.sort();
         return 'relation-' + idlist[0] + '-' + idlist[1];
     }
+
     static draw_relation( sel ) {
         let classList = 'relation';
         let rels = sel.insert( 'g', 'g.node')

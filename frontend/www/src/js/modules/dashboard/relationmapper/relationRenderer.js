@@ -3,6 +3,7 @@ class RelationRenderer {
     #relGvr = null;
     #height = 0;
     #width = 0;
+    #panXRatio = 0;
 
     constructor() {
     }
@@ -13,6 +14,10 @@ class RelationRenderer {
 
     set width( width ) {
       this.#width = width;
+    }
+
+    set panXRatio( panXRatio ) {
+      this.#panXRatio = panXRatio;
     }
 
     get relationMapperGraphvizRoot() {
@@ -56,13 +61,85 @@ class RelationRenderer {
       this.relationMapperGraphvizRoot
         .width( this.#width )
         .height( this.#height )
-        .on( 'end', usedOptions.onEnd );
+        .on( 'end', async () => {
+            await this.resetZoom();
+            this.pan();
+            this.relationMapperGraphvizRoot.zoomBehavior().on( 'end', ( zoomEvent, d ) => {
+              const extentRatio = relationRenderer.calculateViewBoxExtentRatio();
+              const panXRatio = relationRenderer.calculatePanXRatio( zoomEvent, d );
+              document.querySelector( 'node-density-chart' ).showPanPosition( panXRatio, extentRatio );
+            } );
+            usedOptions.onEnd();
+          }
+        );
       this.relationMapperGraphvizRoot.renderDot( dot );
+      }
+      
+    resetZoom() {
       if( this.relationMapperGraphvizRoot.zoomSelection() != null ){
         this.relationMapperGraphvizRoot.resetZoom();
       };
     }
-   
+
+    pan() {
+      if( this.#panXRatio != 0  ) {
+        const gExtent = d3.select( '#relation-graph svg g polygon' ).node().getBBox().width;
+        const xTranslate = this.#panXRatio * gExtent;
+        const zoomBehavior = this.relationMapperGraphvizRoot.zoomBehavior();
+        const graphSvg = d3.select( '#relation-graph svg' )
+        zoomBehavior.translateTo( graphSvg, xTranslate, 0 );
+        this.#panXRatio = 0;
+      }
+    }
+
+    calculatePanXRatio( zoomEvent, d ) {
+      const polygonElement = d3.select( '#relation-graph svg g polygon' );
+      if( polygonElement.node() ) {
+        const xTranslate = zoomEvent.transform.x;
+        const gExtent = polygonElement.node().getBBox().width;
+        const panXRatio = -( xTranslate / gExtent );
+        return panXRatio;
+      }
+    }
+
+    calculateViewBoxExtentRatio() {
+      // The pixel width of the svg and the width if the viewBox defined in it
+      // determine the scale factor we need to apply if we want to transform
+      // screen distances in pixels to distances in the coordinate system of the 
+      // svg/viewBox.
+      const svgElement = document.querySelector( '#relation-graph svg' );
+      // svgWidth is the width in actual pixels of the HTML svg container.
+      const svgWidth = svgElement.getAttribute( 'width' );
+      // The svgViewBox size is the virtual dimension of the part of the svg canvas
+      // we can see inside of the HTML container. 
+      const svgViewBox = svgElement.viewBox.baseVal;
+      console.log( svgWidth, svgViewBox.width );
+      // length in pixels * screenToViewBoxFactor gives you how much length the 
+      // pixels represent in the coordinate system of the svg canvas.
+      const screenToViewBoxFactor = svgViewBox.width/svgWidth;
+      console.log( 'screenToViewBoxFactor', screenToViewBoxFactor );
+      // How much we can see from the graph depends on the width of the 
+      // div that contains the variant graph. The width of that
+      // we want to express as a ratio of the width of the graph itself.
+      // Note that this is not (yet, in this current code) the same as
+      // svgWidth, as that doesn't resize.
+      const relationGraphElementWidth = document.querySelector( '#relation-graph' ).getBoundingClientRect().width;
+      const extent = relationGraphElementWidth * screenToViewBoxFactor;
+      console.log( 'part seen', extent );
+
+      const polygonElement = d3.select( '#relation-graph svg g polygon' );
+      var panExtentRatio = 0;
+      if( polygonElement.node() ) {
+        const gExtent = polygonElement.node().getBBox().width;
+        panExtentRatio = extent / gExtent;
+        console.log( 'panExtentRatio', panExtentRatio );
+      }
+      return panExtentRatio;
+
+      // Lastly we need to factor in a zoom factor (how much did the user
+      // zoom in or out). But we'll do this later.
+    }
+
     // TODO: resizing on window change size.
 
     /**

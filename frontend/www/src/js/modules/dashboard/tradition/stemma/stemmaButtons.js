@@ -100,6 +100,23 @@ class StemmaButtons extends HTMLElement {
                         }  
                       } );
                       document.querySelector( '#section-title' ).innerHTML = `${SECTION_STORE.state.selectedSection.name}`;
+                      // Add in the reading information
+                      stemmaButtonsService.getSectionReadings( TRADITION_STORE.state.selectedTradition.id, section.id ).then( (resp) => {
+                        if ( resp.success ) {
+                          RelationMapper.addReadings( resp.data );
+                        } else {
+                          StemmawebAlert.show(
+                            `Could not fetch reading information: ${resp.message}`,
+                            'danger'
+                          );                
+                        }
+                      } );
+                      document.querySelector( 'node-density-chart' ).renderChart(
+                        { 'onEnd': () => { fadeToDisplayNone( document.querySelector( 'node-density-chart div' ), { 'reverse': true } ) } }
+                      );         
+                      document.querySelector( 'property-table-view' ).hide();      
+                      document.querySelector( '#section-properties-view-title' ).classList.toggle( 'hide' );
+                      document.querySelector( '#section-reading-properties-tabs' ).classList.toggle( 'hide' );                    
                     }
                   }
                 );
@@ -122,6 +139,10 @@ class StemmaButtons extends HTMLElement {
         document.querySelector( '#main' ).classList.remove( 'col-9' );
         document.querySelector( '#main' ).classList.add( 'col-7' );
         document.querySelector( 'relation-types' ).unrender();
+        document.querySelector( 'node-density-chart' ).unrender();
+        document.querySelector( 'property-table-view' ).show();
+        document.querySelector( '#section-properties-view-title' ).classList.toggle( 'hide' );
+        document.querySelector( '#section-reading-properties-tabs' ).classList.toggle( 'hide' );                    
         fadeToDisplayNone( '#sidebar-menu', { 'reverse': true, 'delay': 500 } );
         crossFade( targetView, fadeOutElement ); 
       }

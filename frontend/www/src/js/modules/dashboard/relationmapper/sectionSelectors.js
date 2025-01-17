@@ -35,7 +35,20 @@ class SectionSelectors extends HTMLElement {
             graphArea.transition().call( speedy_transition ).style( 'opacity', '0.0' ).on( 'end', () => {
               relationRenderer.renderRelationsGraph( 
                 resp.data, {
-                  'onEnd': () => { graphArea.transition().call( mellow_transition ).style('opacity', '1.0' ); }
+                  'onEnd': () => { 
+                    graphArea.transition().call( mellow_transition ).style('opacity', '1.0' );
+                    // Add in the reading information
+                    sectionSelectorsService.getSectionReadings( TRADITION_STORE.state.selectedTradition.id, SECTION_STORE.state.selectedSection.id ).then( (resp) => {
+                      if ( resp.success ) {
+                        RelationMapper.addReadings( resp.data );
+                      } else {
+                        StemmawebAlert.show(
+                          `Could not fetch reading information: ${resp.message}`,
+                          'danger'
+                        );                
+                      }
+                    } );
+                   }
                 }
               );
             } );

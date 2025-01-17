@@ -449,4 +449,39 @@ class StemmarestService extends BaseService {
     } );
   }
 
+  /** 
+   * Fetches the readings for a section.
+   * 
+   * @param {string} traditionId
+   * * @param {string} sectionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/readings/
+   */
+  getSectionReadings( traditionId, sectionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/readings`);
+  }
+
+  /** 
+   * Fetches the readings for the whole tradition.
+   * 
+   * @param {string} traditionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/readings/
+   */
+  getAllReadings( traditionId, sectionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/readings`);
+  }
+
+  /** 
+   * Fetches a specific reading.
+   * 
+   * @param {string} traditionId
+   * @param {string} sectionId
+   * @param {string} readingId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: tradition/[tradId]/section/[sectionId]/reading/[readingId]/
+   */
+  getReading( traditionId, sectionId, readingId ) {
+    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/reading/${readingId}`);
+  }
 }
