@@ -105,7 +105,7 @@ describe('Assert that only one tradition is highlighted in the sidebar menu: \
 });
 
 describe('message console logs errors and successes', () => {
-    if (Cypress.env('CY_MODE') === 'headed') {
+    if (Cypress.browser.isHeaded) {
     it('passes', () => { // Login needed to add a stemma. Skip in headless mode for now.
         const stemma_added_marker = 'Stemma added';
         const stemma_deleted_marker = 'Deleted';

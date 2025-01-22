@@ -22,10 +22,7 @@ const CY_STEMMAREST_ENDPOINT =
   'http://localhost:8080/stemmarest';
 /*   'http://127.0.0.1:8080/stemmarest'; */
 
-// const CY_MODE = process.env.CY_STEMMAWEB_FRONTEND_URL ? 'headless' : 'headed';
-
 module.exports = {
-  // CY_MODE,
   CY_STEMMAWEB_FRONTEND_URL,
   CY_STEMMAWEB_MIDDLEWARE_URL,
   CY_STEMMAREST_ENDPOINT
