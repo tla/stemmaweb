@@ -26,7 +26,8 @@
 
 // Login via user interface
 Cypress.Commands.add('loginViaUi', (userObj) => {
-    cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
+    // cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
+    cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
     cy.contains('header a', 'Sign in').click();
     cy.get('#loginEmail').wait(500).type(userObj.username, { delay: 50 });
     cy.get('#loginPassword').wait(500).type(userObj.password, { delay: 50 });
@@ -40,7 +41,8 @@ Cypress.Commands.add('loginViaUi', (userObj) => {
 
 // Logout via user interface
 Cypress.Commands.add('logoutViaUi', () => {
-    cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
+    // cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
+    cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
     cy.contains('header a', 'Sign out').click();
     cy.contains('header a', 'Sign in');
     cy.get('header').should('not.contain', 'Sign out');

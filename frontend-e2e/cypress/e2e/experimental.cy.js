@@ -8,14 +8,18 @@ beforeEach(() => {
   cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
   cy.viewport(1600, 900);
   test_traditions.sort( (tradition_a, tradition_b) => tradition_a.title.localeCompare( tradition_b.title ) );
+  cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
+  cy.log("Cypress.browser: " + JSON.stringify(Cypress.browser));
 });
 
 // some fetch(POST) for headless mode
 describe('login and logout with authentication modal, captcha v3 and fetch(POST)', () => {
   it('passes in headless mode local and on github. passes in local headed mode', { defaultCommandTimeout: 10000, requestTimeout: 10000, responseTimeout: 10000 }, () => {
+    cy.log("Cypress.browser: " + JSON.stringify(Cypress.browser));
 
     cy.log('LOGIN:')
-    cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
+    // cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
+    cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
     cy.contains('header a', 'Sign in').click();
     cy.get('#loginEmail').wait(500).type(admin.username, { delay: 50 });
     cy.get('#loginPassword').wait(500).type(admin.password, { delay: 50 });
@@ -27,7 +31,8 @@ describe('login and logout with authentication modal, captcha v3 and fetch(POST)
     cy.log('Signed in as ' + admin.username + '!');
 
     cy.log('LOGOUT:')
-    cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
+    // cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
+    cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
     cy.contains('header a', 'Sign out').click();
     cy.contains('header a', 'Sign in');
     cy.get('header').should('not.contain', 'Sign out');
@@ -60,7 +65,7 @@ describe('addStemma and deleteStemma with login, passes in headless mode despite
 
 // does intercept work at all on github actions?
 describe('intercept traditions', () => {
-  it.skip('fails on github, passes locally', () => {
+  it.skip('fails on github, passes in local headed mode only', () => {
     cy.intercept(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/api/traditions`).as('apiCheck');
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     cy.log('CY_STEMMAWEB_FRONTEND_URL: ' + `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
@@ -71,9 +76,11 @@ describe('intercept traditions', () => {
 });
 
 describe('intercept login request', () => {
-  if (Cypress.env('CY_MODE') === 'headed') { // skip when in headless mode
-    it.skip('passes in headed mode but fails in headless mode: run only in headed mode', { defaultCommandTimeout: 10000 }, () => {
-      cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
+  // if (Cypress.env('CY_MODE') === 'headed') { // skip when in headless mode
+  if (Cypress.browser.isHeaded) { // skip when in headless mode
+    it('passes in headed mode but fails in headless mode: run only in headed mode', { defaultCommandTimeout: 10000 }, () => {
+      // cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
+      cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
 
       cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
       cy.viewport(1600, 900);
@@ -96,10 +103,15 @@ describe('intercept login request', () => {
       cy.get('header').contains('a', 'Sign out'); // for now, don't click without interception
     });
   }
+  else {
+    it('don\'t run test in headless mode', () => {
+      cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
+    })
+  }
 });
 
 describe('delete all traditions and users in the api, re-seed the db', () => {
-  it.only('UNDER CONSTRUCTION', () => {
+  it('UNDER CONSTRUCTION', () => {
     // cy.log('cy envs', JSON.stringify(Cypress.env()))
     cy.log('CY_STEMMAREST_ENDPOINT: ' + Cypress.env('CY_STEMMAREST_ENDPOINT'))
 
@@ -139,7 +151,9 @@ describe('delete all traditions and users in the api, re-seed the db', () => {
     cy.log('All users deleted.')
 
     // re-seed the db
-    if (Cypress.env('CY_MODE') === 'headed') { // skip when in headless mode
+    // if (Cypress.env('CY_MODE') === 'headed') { // skip when in headless mode
+    if (Cypress.browser.isHeaded) { // skip when in headless mode
+      cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
       cy.exec('./../bin/init-data/stemmarest/init_test_data.sh',
         { env: { STEMMAREST_ENDPOINT: Cypress.env('CY_STEMMAREST_ENDPOINT') } }
       ).then(function(result) {
@@ -148,6 +162,7 @@ describe('delete all traditions and users in the api, re-seed the db', () => {
         cy.log(result.stderr)
       })
     } else {
+      cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
       cy.exec('./cypress/.initdata4headless/init_test_data.sh', // currently from a volume, cf. docker-compose.test.yml
         { env: { STEMMAREST_ENDPOINT: Cypress.env('CY_STEMMAREST_ENDPOINT') } }
       ).then(function(result) {
