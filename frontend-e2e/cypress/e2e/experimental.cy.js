@@ -18,7 +18,6 @@ describe('login and logout with authentication modal, captcha v3 and fetch(POST)
     cy.log("Cypress.browser: " + JSON.stringify(Cypress.browser));
 
     cy.log('LOGIN:')
-    // cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
     cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
     cy.contains('header a', 'Sign in').click();
     cy.get('#loginEmail').wait(500).type(admin.username, { delay: 50 });
@@ -31,7 +30,6 @@ describe('login and logout with authentication modal, captcha v3 and fetch(POST)
     cy.log('Signed in as ' + admin.username + '!');
 
     cy.log('LOGOUT:')
-    // cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
     cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
     cy.contains('header a', 'Sign out').click();
     cy.contains('header a', 'Sign in');
@@ -76,10 +74,8 @@ describe('intercept traditions', () => {
 });
 
 describe('intercept login request', () => {
-  // if (Cypress.env('CY_MODE') === 'headed') { // skip when in headless mode
   if (Cypress.browser.isHeaded) { // skip when in headless mode
     it('passes in headed mode but fails in headless mode: run only in headed mode', { defaultCommandTimeout: 10000 }, () => {
-      // cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
       cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
 
       cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
@@ -151,7 +147,6 @@ describe('delete all traditions and users in the api, re-seed the db', () => {
     cy.log('All users deleted.')
 
     // re-seed the db
-    // if (Cypress.env('CY_MODE') === 'headed') { // skip when in headless mode
     if (Cypress.browser.isHeaded) { // skip when in headless mode
       cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
       cy.exec('./../bin/init-data/stemmarest/init_test_data.sh',
