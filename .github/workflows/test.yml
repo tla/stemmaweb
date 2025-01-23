@@ -85,7 +85,7 @@ jobs:
 
       - name: Upload test run videos
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cypress_videos
           path: frontend-e2e/cypress/videos
