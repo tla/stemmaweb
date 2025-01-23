@@ -96,7 +96,7 @@ describe('intercept login request', () => {
 
       cy.get('header').contains('a', 'Logged in as user@example.org');
       cy.get('header').should('not.contain', 'Sign in');
-      cy.get('header').contains('a', 'Sign out'); // for now, don't click without interception
+      cy.get('header').contains('a', 'Sign out').wait(500).click();
     });
   }
   else {
@@ -107,7 +107,7 @@ describe('intercept login request', () => {
 });
 
 describe('delete all traditions and users in the api, re-seed the db', () => {
-  it('UNDER CONSTRUCTION', () => {
+  it('passes', () => {
     // cy.log('cy envs', JSON.stringify(Cypress.env()))
     cy.log('CY_STEMMAREST_ENDPOINT: ' + Cypress.env('CY_STEMMAREST_ENDPOINT'))
 
@@ -121,7 +121,7 @@ describe('delete all traditions and users in the api, re-seed the db', () => {
         // cy.log('trad_id, trad_name: ' + tradition.id + ', ' + tradition.name)
         cy.exec('curl -X DELETE ' + Cypress.env('CY_STEMMAREST_ENDPOINT') + '/tradition/' + tradition.id)
         .then(result => {
-          cy.log('curl result .log, .stdout, .stderr:')
+          cy.log('curl result .code, .stdout, .stderr:')
           cy.log(result.code)
           cy.log(result.stdout)
           cy.log(result.stderr)
@@ -137,7 +137,7 @@ describe('delete all traditions and users in the api, re-seed the db', () => {
         cy.log('user_id, user_email, user_role: ' + user.id + ', ' + user.email + ', ' + user.role)
         cy.exec('curl -X DELETE ' + Cypress.env('CY_STEMMAREST_ENDPOINT') + '/user/' + user.id)
         .then(result => {
-          cy.log('curl result .log, .stdout, .stderr:')
+          cy.log('curl result .code, .stdout, .stderr:')
           cy.log(result.code)
           cy.log(result.stdout)
           cy.log(result.stderr)
@@ -157,8 +157,8 @@ describe('delete all traditions and users in the api, re-seed the db', () => {
         cy.log(result.stderr)
       })
     } else {
-      cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
-      cy.exec('./cypress/.initdata4headless/init_test_data.sh', // currently from a volume, cf. docker-compose.test.yml
+      cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded); // browser.isHeadless? true
+      cy.exec('./cypress/.initdata4headless/init_test_data.sh', // from a volume, cf. docker-compose.test.yml
         { env: { STEMMAREST_ENDPOINT: Cypress.env('CY_STEMMAREST_ENDPOINT') } }
       ).then(function(result) {
         cy.log(result.code)
