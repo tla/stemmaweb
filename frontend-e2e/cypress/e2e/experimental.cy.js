@@ -107,7 +107,7 @@ describe('intercept login request', () => {
 });
 
 describe('reseed db (traditions and users) by added cy command', () => {
-  it.only('passes', () => {
+  it('passes', () => {
     cy.reseedDB();
   })
 });
