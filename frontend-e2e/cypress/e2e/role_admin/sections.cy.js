@@ -33,6 +33,7 @@ import users from '../../fixtures/users.json';
 const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 
 beforeEach(() => {
+    cy.reseedDB();
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     cy.viewport(1600, 900);
     test_traditions.sort( (tradition_a, tradition_b) => tradition_a.title.localeCompare( tradition_b.title ) );
@@ -68,17 +69,13 @@ describe('Each tradition should have the right number of sections listed in the 
 });
 
 describe('Section handling works correcly in the tradition list and the section properties area', () => {
-    it('passes in local headed mode', () => { // under construction: relative path to sections file in headless mode
-        // reseed db
-        cy.reseedDB();
-
+    it('passes', () => {
         // input string for the test section to be added
         const new_section_name = 'NEW SECTION BY CY';
 
 
-        // relative path starting from frontend-e2e folder in local headed mode
-        const new_section_rel_path = './../bin/init-data/stemmarest/data/florilegium_z.csv';
-        // TODO: check if there is a standard cy way to refer to relative paths
+        // relative path to the section file which is going to be added for teesting
+        const new_section_rel_path = (Cypress.browser.isHeaded) ? './../bin/init-data/stemmarest/data/florilegium_z.csv' : './cypress/.initdata4headless/data/florilegium_z.csv';
 
         // test with one tradition which has a few sections
         // add and delete a section so that the final sections and their orders equal the initial ones
@@ -169,6 +166,7 @@ describe('Section handling works correcly in the tradition list and the section 
                 expect($ele.text().trim()).not.contains(new_section_name);
             });
  */
+            cy.wait(1000); // obviously necessary here before logout
         });
     });
 });
