@@ -68,42 +68,28 @@ describe('Each tradition should have the right number of sections listed in the 
 });
 
 describe('Section handling works correcly in the tradition list and the section properties area', () => {
-    it.skip('under construction', () => { // to do: set db to initial state
+    it('passes in local headed mode', () => { // under construction: relative path to sections file in headless mode
+        // reseed db
+        cy.reseedDB();
 
-        // needed input
+        // input string for the test section to be added
         const new_section_name = 'NEW SECTION BY CY';
-        // relative path starting from frontend-e2e folder
-        // TODO: check if there is a standard cy way to refer to rel paths
+
+
+        // relative path starting from frontend-e2e folder in local headed mode
         const new_section_rel_path = './../bin/init-data/stemmarest/data/florilegium_z.csv';
+        // TODO: check if there is a standard cy way to refer to relative paths
 
         // test with one tradition which has a few sections
         // add and delete a section so that the final sections and their orders equal the initial ones
         // edit and move sections also with no side effects
         // assert that info in tradition list always equals to that in the sections panel
         test_traditions.filter(({title}) => title === 'Florilegium "Coislinianum B"').forEach((tradition) => {
-            cy.log('tradition.title : ' + tradition.title); // Florilegium "Coislinianum B"
-
-            // login
-            cy.intercept('POST', 'http://localhost:8888/stemmaweb/requests/login').as('loginrequest');
-
-            // fill in form...
-            cy.contains('Sign in').click();
-            //cy.get('#loginEmail').type('user@example.org', { delay: 50 });
-            cy.get('#loginEmail').as('login_email');
-            cy.wait(500);
-            cy.get('@login_email').type('user@example.org', { delay: 50 });
-
-            cy.get('#loginPassword').type('UserPass', { delay: 50 });
-            cy.contains('button', 'Sign in').click();
-
-            cy.wait('@loginrequest').then(interception => {
-                console.log(interception.request.url);
-                cy.contains('Logged in as user@example.org');
-            });
+            cy.log('tradition.title: ' + tradition.title); // Florilegium "Coislinianum B"
 
             // click on the tradition and unfold the sections
             cy.get('ul#traditions-list').contains('.nav-item', tradition.title).as('navitem');
-            cy.get('@navitem').find('.folder-icon').click();
+            cy.get('@navitem').find('.folder-icon').wait(500).click();
             cy.get('@navitem').find('section-list').find('ul').children().as('sections');
 
 /* TO DO: set db to initial content after adding sections, otherwise number will not match.
@@ -131,10 +117,10 @@ describe('Section handling works correcly in the tradition list and the section 
             select data format: comma-separated values (spreadsheet collation),
             choose tradition to which the section should be added at the end: Florilegium "Coislinianum B"
             click on: Save changes. */
-            cy.contains('#sidebarMenu', 'Text directory').find('svg.feather-plus-circle').click();
+            cy.contains('#sidebar-menu', 'Text directory').find('svg.feather-plus-circle').click();
             cy.get('.modal-content').find('#button_new_section').click();
             cy.get('#add_tradition_modal').as('add_tradition_or_section').should('be.visible');
-            cy.get('@add_tradition_or_section').find('input#new_name').click().type(new_section_name, { delay: 50 });
+            cy.get('@add_tradition_or_section').find('input#new_name').click().wait(500).type(new_section_name, { delay: 50 });
             cy.get('@add_tradition_or_section').find('input#uploadfile').selectFile(new_section_rel_path);
             cy.get('@add_tradition_or_section').find('select#new_filetype').select('Comma-separated values (spreadsheet collation)').should('have.value', 'csv');
             cy.get('@add_tradition_or_section').find('select#upload_for_tradition').select('Florilegium "Coislinianum B"');
@@ -154,7 +140,7 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.get('@sections').find('.section-name').contains(new_section_name).click();
             
             // in the property panel assert that the relevant section name is displayed,
-            cy.get('#section_info').contains('tr', 'Name').as('section_name_row');
+            cy.get('#section-info').contains('tr', 'Name').as('section_name_row');
             cy.get('@section_name_row').contains(new_section_name);
 
             // click on the trash bin icon next to it,
@@ -183,10 +169,6 @@ describe('Section handling works correcly in the tradition list and the section 
                 expect($ele.text().trim()).not.contains(new_section_name);
             });
  */
-
-            // logout
-            cy.contains('Sign out').click();
-            cy.contains('Sign in').should('be.visible');
         });
     });
 });
