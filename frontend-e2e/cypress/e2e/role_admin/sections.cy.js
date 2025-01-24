@@ -73,8 +73,7 @@ describe('Section handling works correcly in the tradition list and the section 
         // input string for the test section to be added
         const new_section_name = 'NEW SECTION BY CY';
 
-
-        // relative path to the section file which is going to be added for teesting
+        // relative path to the section file which is going to be added for testing
         const new_section_rel_path = (Cypress.browser.isHeaded) ? './../bin/init-data/stemmarest/data/florilegium_z.csv' : './cypress/.initdata4headless/data/florilegium_z.csv';
 
         // test with one tradition which has a few sections
