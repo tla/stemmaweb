@@ -48,10 +48,10 @@ Cypress.Commands.add('logoutViaUi', () => {
 
 // delete all traditions and users and re-upload them to the api
 Cypress.Commands.add('reseedDB', () => {
+    cy.log('reseed the db:: delete all traditions and users, then refill with init_test_data')
     cy.log('CY_STEMMAREST_ENDPOINT: ' + Cypress.env('CY_STEMMAREST_ENDPOINT'))
 
     // Delete all traditions and users found in the api
-
     cy.log('Delete all traditions:')
     cy.request(Cypress.env('CY_STEMMAREST_ENDPOINT') + '/traditions').then((resp) => {
     // cy.log('resp.body: ' + JSON.stringify(resp.body))

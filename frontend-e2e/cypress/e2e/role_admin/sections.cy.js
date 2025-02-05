@@ -33,7 +33,6 @@ import users from '../../fixtures/users.json';
 const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 
 beforeEach(() => {
-    cy.reseedDB();
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     cy.viewport(1600, 900);
     test_traditions.sort( (tradition_a, tradition_b) => tradition_a.title.localeCompare( tradition_b.title ) );
