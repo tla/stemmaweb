@@ -19,6 +19,14 @@ describe('login and logout with authentication modal, captcha v3 and fetch(POST)
 
     cy.log('LOGIN:')
     cy.log("Cypress.browser.isHeaded? " + Cypress.browser.isHeaded);
+    if (Cypress.browser.isHeadless){
+      // Sign-in with google recaptcha v3 in headless mode --> "TypeError: Cannot read properties of null (reading 'message')"
+      Cypress.on('uncaught:exception', (err) => {
+          if (err.message.includes('Cannot read properties of null')) {
+              return false
+          }
+      })
+    }
     cy.contains('header a', 'Sign in').click();
     cy.get('#loginEmail').wait(500).type(admin.username, { delay: 50 });
     cy.get('#loginPassword').wait(500).type(admin.password, { delay: 50 });
@@ -39,7 +47,8 @@ describe('login and logout with authentication modal, captcha v3 and fetch(POST)
 
 // some fetch(POST) for headless mode
 describe('addStemma and deleteStemma with login, passes in headless mode despite fetch(POST)', () => {
-  it('passes in headless mode local and on github. passes in local headed mode. with original guest config', {}, () => {
+  // it('passes in headless mode local and on github. passes in local headed mode. with original guest config', { retries: 5 }, () => {
+  it('passes in headless mode local and on github. passes in local headed mode. with original guest config', () => {
     cy.loginViaUi(admin);
     const tradition = test_traditions.find(trad => trad.title.startsWith('John verse'));
     cy.log('tradition.title: ' + tradition.title);
