@@ -28,7 +28,7 @@
 Cypress.Commands.add('loginViaUi', (userObj) => {
     if (Cypress.browser.isHeadless){
         // Sign-in with google recaptcha v3 in headless mode --> "TypeError: Cannot read properties of null (reading 'message')"
-        Cypress.on('uncaught:exception', (err) => {
+        cy.once('uncaught:exception', (err) => {
             if (err.message.includes('Cannot read properties of null')) {
                 return false
             }
