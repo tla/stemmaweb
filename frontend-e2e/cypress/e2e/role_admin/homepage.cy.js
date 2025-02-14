@@ -58,7 +58,9 @@ describe('Assert that only one tradition is highlighted in the sidebar menu: \
     it('passes', () => {
         let n = 0 // check the first tradition at start
         test_traditions.forEach((tradition, i) => {
-            // traditions are displayed in alphabetical order (test_traditions sorted above)
+            // assert that traditions are displayed in alphabetical order
+            // sort test_traditions explicitly
+            test_traditions.sort( (tradition_a, tradition_b) => tradition_a.title.localeCompare( tradition_b.title ) );
             cy.log('idx+1) test_tradition title: ' + String(Number(i)+1) + ') ' +tradition.title);
             cy.get('ul#traditions-list > li').eq(i).find('a')
             .invoke('text')
