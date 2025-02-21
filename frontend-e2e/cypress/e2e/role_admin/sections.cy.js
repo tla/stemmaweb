@@ -43,22 +43,16 @@ afterEach(() => {
     cy.logoutViaUi();
 });
 
-// count sections of each (public) tradition is correct
+// count sections of each tradition is correct
 describe('Each tradition should have the right number of sections listed in the toc', () => {
-    it.skip('under construction', () => { // to do: db initial state.
-        // TODO: number of sections currently varies in course of other test(s)
-        // TODO: switch the lines (to filter 'Public' traditions) when user rights are implemented:
-        // test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
+    it('passes', () => {
+        // admin should see all traditions and sections // do not .filter(({access}) => access === 'Public').forEach(...
         test_traditions.forEach((tradition) => {
             // choose the tradition in the toc that has the right title
             // click on the .folder-icon in front of it
             // assert that the number of sections visible in the toc correponds to that in the list of traditions
-
-            // TODO: add issue to scroll tradition-list, otherwise it is 
-            // not possible to access tradition titles and sections at the
-            // bottom of the list. Preliminary solution here: lengthen viewport.
-            cy.viewport(1000, 990);
-
+            // TODO: add issue to scroll tradition-list. Preliminary solution here: lengthen viewport.
+            cy.viewport(1600, 990);
             cy.log("title: " + tradition.title);
             cy.get('ul#traditions-list').contains('.nav-item', tradition.title).as('navitem');
             cy.get('@navitem').find('.folder-icon').click();
