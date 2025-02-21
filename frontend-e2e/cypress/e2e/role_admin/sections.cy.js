@@ -62,17 +62,16 @@ describe('Each tradition should have the right number of sections listed in the 
 });
 
 describe('Section handling works correcly in the tradition list and the section properties area', () => {
-    it('passes', () => {
+    it.only('under construction', () => { // TODO: // edit and move sections also with no side effects // assert that info in tradition list always equals to that in the sections panel
+
         // input string for the test section to be added
         const new_section_name = 'NEW SECTION BY CY';
 
         // relative path to the section file which is going to be added for testing
         const new_section_rel_path = (Cypress.browser.isHeaded) ? './../bin/init-data/stemmarest/data/florilegium_z.csv' : './cypress/.initdata4headless/data/florilegium_z.csv';
 
-        // test with one tradition which has a few sections
-        // add and delete a section so that the final sections and their orders equal the initial ones
-        // edit and move sections also with no side effects
-        // assert that info in tradition list always equals to that in the sections panel
+        // test with one tradition which has a few sections: Florilegium
+        // TODO: add and delete sections of any existing or newly added tradition.
         test_traditions.filter(({title}) => title === 'Florilegium "Coislinianum B"').forEach((tradition) => {
             cy.log('tradition.title: ' + tradition.title); // Florilegium "Coislinianum B"
 
@@ -80,15 +79,7 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.get('ul#traditions-list').contains('.nav-item', tradition.title).as('navitem');
             cy.get('@navitem').find('.folder-icon').wait(500).click();
             cy.get('@navitem').find('section-list').find('ul').children().as('sections');
-
-/* TO DO: set db to initial content after adding sections, otherwise number will not match.
-            // ensure count sections on website equals count sections of testtradition in test_traditions list (3)
-            // cy.log('@sections.length: ' + '@sections'.length); // 9 ???
-            cy.get('@sections').then((sections) => {
-                // cy.log('sections.length: ' + sections.length); // 3
-                // cy.log('tradition.sections.length: ' + tradition.sections.length); // 3
-                expect(sections.length).to.eq(tradition.sections.length);
-            });
+            // TODO usability: add issue "clicking on the tradition name should also unfold the sections"
 
             // The 3 sections should be: w, x, y
             // ensure the order of the sections equals to that in the traditions_list
@@ -97,7 +88,7 @@ describe('Section handling works correcly in the tradition list and the section 
                 // cy.log('tradition.sections[index].name: ' + tradition.sections[index].name);
                 expect(tradition.sections[index].name).to.eq($ele.text().trim());
             });
- */
+
             // Add section
             /* Click on the plus-feather next to "Text Directory",
             click on "Add a section to an existing tradition" within the modal that appears,
@@ -113,7 +104,6 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.get('@add_tradition_or_section').find('input#uploadfile').selectFile(new_section_rel_path);
             cy.get('@add_tradition_or_section').find('select#new_filetype').select('Comma-separated values (spreadsheet collation)').should('have.value', 'csv');
             cy.get('@add_tradition_or_section').find('select#upload_for_tradition').select('Florilegium "Coislinianum B"');
-
             cy.contains('button', 'Save changes').click();
 
             // Delete section
@@ -138,26 +128,26 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.wait(500);
             cy.reload(true); // the delete modal does close usually but not in cypress
 
-            // assert that the new_section_name is no longer displayed in the tradition list,
-            // assert the correct number of sections: Restore original section list.
-
             // click on the tradition and unfold the sections
             cy.get('ul#traditions-list').contains('.nav-item', tradition.title).as('navitem');
             cy.get('@navitem').find('.folder-icon').click();
             cy.get('@navitem').find('section-list').find('ul').children().as('sections');
 
-/* TO DO: set db to initial content after adding sections, otherwise number will not match.
-            // ensure count sections on website equals count sections of testtradition in test_traditions list (3)
+            // after add and delete section, the final sections and their orders equal the initial ones
+            // assert that the new_section_name is no longer displayed in the tradition list,
             cy.get('@sections').then((sections) => {
                 expect(sections.length).to.eq(tradition.sections.length);
             });
-            // ensure the order of the sections equals to that in the traditions_list
             cy.get('@sections').each(($ele, index) => {
                 expect($ele.text().trim()).to.eq(tradition.sections[index].name);
-                // new_section_name is never found
                 expect($ele.text().trim()).not.contains(new_section_name);
             });
- */
+
+            // TODO:
+            // edit and move sections also with no side effects
+            // assert that info in tradition list always equals to that in the sections panel
+
+            // cy.reseedDB(); is run beforeEach test in e2e.js in case this test fails.
             cy.wait(1000); // obviously necessary here before logout
         });
     });
