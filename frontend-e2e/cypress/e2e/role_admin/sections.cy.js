@@ -160,9 +160,20 @@ describe('Edit and move sections also with no side effects, assert that info in 
                 expect(tradition.sections[index].name).to.eq($ele.text().trim());
             });
 
-            // >>> TODO:
             // edit and move sections also with no side effects
             // assert that info in tradition list always equals to that in the sections panel
+
+            // TODO: edit section name in sec panel, should be sync with nav
+            const section_name_orig = "section 'w'"
+            const section_name_new = "section 'w > edited'"
+            // click on section_name_orig in nav
+            // assert same section name is in the sec panel
+            // click on edit icon in sec panel
+            // type in section_name_new
+            // click Save
+            // assert section name in sec panel, and in nav, equal to section_name_new
+
+            // TODO: move sections also with no side effects
 
             // cy.reseedDB(); is run beforeEach test in e2e.js in case this test fails.
             cy.wait(1000); // obviously necessary here before logout
