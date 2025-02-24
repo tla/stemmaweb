@@ -61,8 +61,8 @@ describe('Each tradition should have the right number of sections listed in the 
     });
 });
 
-describe('Section handling works correcly in the tradition list and the section properties area', () => {
-    it.only('under construction', () => { // TODO: // edit and move sections also with no side effects // assert that info in tradition list always equals to that in the sections panel
+describe('Adding a section via text directory feather-plus-circle, and deleting it via section properties bin works', () => {
+    it('passes', () => {
 
         // input string for the test section to be added
         const new_section_name = 'NEW SECTION BY CY';
@@ -80,14 +80,6 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.get('@navitem').find('.folder-icon').wait(500).click();
             cy.get('@navitem').find('section-list').find('ul').children().as('sections');
             // TODO usability: add issue "clicking on the tradition name should also unfold the sections"
-
-            // The 3 sections should be: w, x, y
-            // ensure the order of the sections equals to that in the traditions_list
-            cy.get('@sections').each(($ele, index) => {
-                // cy.log('Name of section ' + index + ": " + $ele.text());
-                // cy.log('tradition.sections[index].name: ' + tradition.sections[index].name);
-                expect(tradition.sections[index].name).to.eq($ele.text().trim());
-            });
 
             // Add section
             /* Click on the plus-feather next to "Text Directory",
@@ -126,7 +118,7 @@ describe('Section handling works correcly in the tradition list and the section 
             cy.get('delete-section-button').click();
             cy.get('button').contains('Yes, delete it').click();
             cy.wait(500);
-            cy.reload(true); // the delete modal does close usually but not in cypress
+            cy.reload(true); // the delete modal does close in manual interaction but not in cypress
 
             // click on the tradition and unfold the sections
             cy.get('ul#traditions-list').contains('.nav-item', tradition.title).as('navitem');
@@ -143,7 +135,32 @@ describe('Section handling works correcly in the tradition list and the section 
                 expect($ele.text().trim()).not.contains(new_section_name);
             });
 
-            // TODO:
+            cy.wait(1000); // obviously necessary here before logout
+        });
+    });
+});
+
+describe('Edit and move sections also with no side effects, assert that info in tradition list always equals to that in the sections panel', () => {
+    it('under construction', () => {
+
+        // test with one tradition which has a few sections: Florilegium
+        test_traditions.filter(({title}) => title === 'Florilegium "Coislinianum B"').forEach((tradition) => {
+            cy.log('tradition.title: ' + tradition.title); // Florilegium "Coislinianum B"
+
+            // click on the tradition and unfold the sections
+            cy.get('ul#traditions-list').contains('.nav-item', tradition.title).as('navitem');
+            cy.get('@navitem').find('.folder-icon').wait(500).click();
+            cy.get('@navitem').find('section-list').find('ul').children().as('sections');
+
+            // The 3 sections should be: w, x, y
+            // ensure the order of the sections equals to that in the traditions_list
+            cy.get('@sections').each(($ele, index) => {
+                // cy.log('Name of section ' + index + ": " + $ele.text());
+                // cy.log('tradition.sections[index].name: ' + tradition.sections[index].name);
+                expect(tradition.sections[index].name).to.eq($ele.text().trim());
+            });
+
+            // >>> TODO:
             // edit and move sections also with no side effects
             // assert that info in tradition list always equals to that in the sections panel
 
