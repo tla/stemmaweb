@@ -141,7 +141,7 @@ describe('Adding a section via text directory feather-plus-circle, and deleting 
 });
 
 describe('Edit and move sections also with no side effects, assert that info in tradition list always equals to that in the sections panel', () => {
-    it('under construction', () => {
+    it.only('under construction', () => {
 
         // test with one tradition which has a few sections: Florilegium
         test_traditions.filter(({title}) => title === 'Florilegium "Coislinianum B"').forEach((tradition) => {
@@ -163,7 +163,7 @@ describe('Edit and move sections also with no side effects, assert that info in 
             // edit and move sections also with no side effects
             // assert that info in tradition list always equals to that in the sections panel
 
-            // TODO: edit section name in sec panel, should be sync with nav
+            // edit section name in sec panel
             // TODO: for further or all sections? Here just for one example. Or, take name from the toc entry
             const section_name_orig = "section 'w'"
             const section_name_new = "section 'w > edited'"
@@ -184,7 +184,7 @@ describe('Edit and move sections also with no side effects, assert that info in 
             cy.get('@sectionmodal').find('button').contains('Save').as('button_save')
             cy.get('@button_save').wait(500).click()
 
-            // assert section name in sec panel, and in nav, equal to section_name_new
+            // TODO: assert section name in sec panel, and in nav, equal to section_name_new
 
             // TODO: move sections also with no side effects
 
