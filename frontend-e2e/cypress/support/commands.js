@@ -25,7 +25,7 @@
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
 // Login via user interface
-Cypress.Commands.add('loginViaUi', (userObj) => {
+Cypress.Commands.add('loginViaUi', { defaultCommandTimeout: 10000, requestTimeout: 10000, responseTimeout: 10000 }, (userObj) => {
     if (Cypress.browser.isHeadless){
         // Sign-in with google recaptcha v3 in headless mode --> "TypeError: Cannot read properties of null (reading 'message')"
         cy.once('uncaught:exception', (err) => {
@@ -40,7 +40,7 @@ Cypress.Commands.add('loginViaUi', (userObj) => {
     cy.get('#loginPassword').wait(500).type(userObj.password, { delay: 50 });
     cy.wait(500);
     cy.get('button').contains('Sign in').wait(500).click();
-    cy.get('#authModal').should('not.be.visible');
+    cy.get('#authModal').wait(500).should('not.be.visible');
     cy.contains('Logged in as ' + userObj.username);
     cy.contains('header a', 'Sign out');
     cy.get('header').should('not.contain', 'Sign in');
