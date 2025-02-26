@@ -152,7 +152,7 @@ describe('Edit and move sections also with no side effects, assert that info in 
             cy.get('@navitem').find('.folder-icon').wait(500).click();
             cy.get('@navitem').find('section-list').find('ul').children().as('sections');
 
-            // The 3 sections should be: w, x, y
+            // The original sequence of the 3 sections should be: w, x, y
             // ensure the order of the sections equals to that in the traditions_list
             cy.get('@sections').each(($ele, index) => {
                 // cy.log('Name of section ' + index + ": " + $ele.text());
@@ -164,19 +164,32 @@ describe('Edit and move sections also with no side effects, assert that info in 
             // assert that info in tradition list always equals to that in the sections panel
 
             // TODO: edit section name in sec panel, should be sync with nav
+            // TODO: for further or all sections? Here just for one example. Or, take name from the toc entry
             const section_name_orig = "section 'w'"
             const section_name_new = "section 'w > edited'"
-            // click on section_name_orig in nav
-            // assert same section name is in the sec panel
-            // click on edit icon in sec panel
-            // type in section_name_new
-            // click Save
+
+            // click on section_name_orig in the toc to show the section details in the panel
+            cy.get('section-list').contains(section_name_orig).closest('li').click()
+            // assert same section name is in the section panel
+            cy.get('#section-info').contains(section_name_orig) // in the section properties panel
+
+            // click on edit icon in sections panel to open the dialog for editing
+            cy.get('edit-section-properties-button').click()
+            // assert modal is visible
+            cy.get('stemmaweb-dialog .modal-content').as('sectionmodal');
+            cy.get('@sectionmodal').contains('Edit section properties').should('be.visible')
+            // type section_name_new into the name input field
+            cy.get('@sectionmodal').find('#name_input').type('{selectAll}{backspace}').wait(500).type(section_name_new, { delay: 50 }).wait(500)
+            // press 'Save'
+            cy.get('@sectionmodal').find('button').contains('Save').as('button_save')
+            cy.get('@button_save').wait(500).click()
+
             // assert section name in sec panel, and in nav, equal to section_name_new
 
             // TODO: move sections also with no side effects
 
             // cy.reseedDB(); is run beforeEach test in e2e.js in case this test fails.
-            cy.wait(1000); // obviously necessary here before logout
+            // cy.wait(1000); // was necessary here before logout, not any more?
         });
     });
 });
