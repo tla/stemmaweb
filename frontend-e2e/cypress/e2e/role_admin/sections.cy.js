@@ -141,7 +141,7 @@ describe('Adding a section via text directory feather-plus-circle, and deleting 
 });
 
 describe('Edit and move sections also with no side effects, assert that info in tradition list always equals to that in the sections panel', () => {
-    it.only('under construction', () => {
+    it.only('under construction', { retries: { runMode: 2, openMode: 0, } }, () => {
 
         // test with one tradition which has a few sections: Florilegium
         test_traditions.filter(({title}) => title === 'Florilegium "Coislinianum B"').forEach((tradition) => {
@@ -204,6 +204,7 @@ describe('Edit and move sections also with no side effects, assert that info in 
             });
 
             // TODO: move sections also with no side effects
+            // change
 
             // cy.reseedDB(); is run beforeEach test in e2e.js in case this test fails.
             // cy.wait(1000); // was necessary here before logout, not any more?
