@@ -179,13 +179,13 @@ describe('Edit and move sections also with no side effects, assert that info in 
             cy.get('stemmaweb-dialog .modal-content').as('sectionmodal');
             cy.get('@sectionmodal').contains('Edit section properties').should('be.visible')
             // type section_name_new into the name input field
-            cy.get('@sectionmodal').find('#name_input').type('{selectAll}{backspace}').wait(500).type(section_name_new, { delay: 50 }).wait(500)
+            cy.get('@sectionmodal').find('#name_input').type('{selectAll}').wait(500).type('{backspace}').wait(500).type(section_name_new, { delay: 50 }).wait(500)
             // press 'Save'
             cy.get('@sectionmodal').find('button').contains('Save').as('button_save')
             cy.get('@button_save').wait(500).click()
 
             // assert section_name_orig is not in the nav any more
-            cy.get('section-list').contains(section_name_orig).should('not.exist')
+            cy.get('section-list').contains(section_name_orig).should('not.exist') // failed on github because the new content was appended instead of replacing the orig --> added wait() after selecting orig name
             // assert section name in sec panel, and in nav, equal to section_name_new
             cy.get('section-list').contains(section_name_new) // in the toc nav
             cy.get('#section-info').contains(section_name_new) // in the section properties panel
