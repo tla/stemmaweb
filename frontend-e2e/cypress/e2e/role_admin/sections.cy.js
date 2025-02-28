@@ -165,8 +165,8 @@ describe('Edit and move sections also with no side effects, assert that info in 
 
             // edit section name in sec panel
             // TODO: for further or all sections? Here just for one example. Or, take name from the toc entry
-            const section_name_orig = "section 'w'"
-            const section_name_new = "section 'w > edited'"
+            const section_name_orig = "section 'x'"
+            const section_name_new = "section 'x > edited'"
 
             // click on section_name_orig in the toc to show the section details in the panel
             cy.get('section-list').contains(section_name_orig).closest('li').click()
@@ -184,7 +184,24 @@ describe('Edit and move sections also with no side effects, assert that info in 
             cy.get('@sectionmodal').find('button').contains('Save').as('button_save')
             cy.get('@button_save').wait(500).click()
 
-            // TODO: assert section name in sec panel, and in nav, equal to section_name_new
+            // assert section_name_orig is not in the nav any more
+            cy.get('section-list').contains(section_name_orig).should('not.exist')
+            // assert section name in sec panel, and in nav, equal to section_name_new
+            cy.get('section-list').contains(section_name_new) // in the toc nav
+            cy.get('#section-info').contains(section_name_new) // in the section properties panel
+            // Check the other sections have still their correct names in the nav
+            cy.get('@sections').each(($ele, index) => {
+                if($ele.text().trim() == section_name_new){
+                    expect(tradition.sections[index].name).not.to.eq($ele.text().trim());
+                } else {
+                    expect(tradition.sections[index].name).to.eq($ele.text().trim());
+                }
+            });
+            // assert clicking on any section in the toc nav displays the same section's name in the sec panel
+            cy.get('@sections').each(($ele) => {
+                cy.get($ele).click()
+                cy.get('#section-info').contains($ele.text().trim())
+            });
 
             // TODO: move sections also with no side effects
 
