@@ -1,7 +1,7 @@
 FROM ubuntu:jammy
 
 # Make sure that we don't get any interactive prompts
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Python and aux packages
 RUN apt-get update && apt-get install -y \
@@ -34,8 +34,7 @@ RUN apt-get update && apt-get install -y \
     make \
     jq \
     vim && \
-    pip install killport && \
-    pip install ipython
+    pip install killport ipython debugpy
 
 # Install Poetry
 RUN python -m pip install --upgrade pip &&  \
