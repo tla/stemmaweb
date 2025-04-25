@@ -174,3 +174,5 @@ cython_debug/
 !.env*.example
 env.zip
 env_passphrase
+
+relationmapper_theory/

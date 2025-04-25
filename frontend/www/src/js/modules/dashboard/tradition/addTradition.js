@@ -34,6 +34,7 @@ class AddTraditionModal extends HTMLElement {
     $('tradition_literal').innerText = 'section';
     $('add_tradition_partial').classList.remove('hide');
     $('new_section_partial').classList.remove('hide');
+    $('upload_for_tradition').innerHTML = AddTraditionModal.#availableTraditionsAsSelectOptions();
   }
 
   static #hide() {
@@ -90,25 +91,57 @@ class AddTraditionModal extends HTMLElement {
    * }}
    */
   static #extractFormValuesTradition() {
-    const name = $('new_name').value;
-    const file = $('uploadfile').files[0];
-    const fileType = $('new_filetype').value;
-    const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
-    const language = $('new_lang').value || null;
-    const direction = $('direction').value;
-    const isPublic = $('new_public').checked;
-    return { name, file, fileType, userId, language, direction, isPublic };
+    return {
+      name: $('new_name').value,
+      file: $('uploadfile').files[0],
+      fileType: $('new_filetype').value,
+      userId: AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null,
+      language: $('new_lang').value || null,
+      direction: $('direction').value,
+      isPublic: $('new_public').checked
+    }
+  }
+
+  /**
+   * @returns {{
+  *   name: string;
+  *   file: File;
+  *   fileType: import('@types/stemmarest').TraditionFileType;
+  *   userId: string;
+  *   parentId: string;
+  * }}
+  */
+  static #extractFormValuesSection() {
+    return { 
+      name: $('new_name').value,
+      file: $('uploadfile').files[0],
+      fileType: $('new_filetype').value,
+      userId: AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null,
+      parentId: $('upload_for_tradition').value
+    }
   }
 
   /** @param {BaseResponse<{ tradId: string }>} res */
   static #handleResponseTradition(res) {
     if (res.success) {
-      StemmawebAlert.show('Tradition Created', 'success');
+      StemmawebAlert.show('Tradition created', 'success');
       AddTraditionModal.#hide();
-
-      // Append the newly added tradition to the list of traditions
+      // Inform state about the newly added tradition.
       const { tradId } = res.data;
       TRADITION_STORE.appendTradition(tradId);
+    } else {
+      StemmawebAlert.show(`Error: ${res.message}`, 'danger');
+    }
+  }
+
+  /** @param {BaseResponse<{ sectionId: string }>} res */
+  static #handleResponseSection(res, parentId) {
+    if (res.success) {
+      StemmawebAlert.show('Section created', 'success');
+      AddTraditionModal.#hide();
+      // Inform state about the addition of this section.
+      const { sectionId } = res.data;
+      SECTION_STORE.sectionAppended( sectionId, parentId );
     } else {
       StemmawebAlert.show(`Error: ${res.message}`, 'danger');
     }
@@ -128,12 +161,21 @@ class AddTraditionModal extends HTMLElement {
           evt.preventDefault();
           evt.stopPropagation();
           if (form.checkValidity()) {
-            const values = Object.values(
-              AddTraditionModal.#extractFormValuesTradition()
-            );
-            addTraditionService
-              .addTradition(...values)
-              .then(AddTraditionModal.#handleResponseTradition);
+            const isSection = !document.querySelector( '#new_section_partial' ).classList.contains( 'hide' );
+            if( isSection ) {
+              const formValuesDictionary = AddTraditionModal.#extractFormValuesSection()
+              const values = Object.values( formValuesDictionary );
+              addTraditionService
+                .addSection(...values)
+                .then( (resp) => { AddTraditionModal.#handleResponseSection( resp, formValuesDictionary.parentId ) } );
+            } else {
+              const values = Object.values(
+                AddTraditionModal.#extractFormValuesTradition()
+              );
+              addTraditionService
+                .addTradition(...values)
+                .then(AddTraditionModal.#handleResponseTradition);
+            }
           }
           form.classList.add('was-validated');
         },
@@ -142,18 +184,15 @@ class AddTraditionModal extends HTMLElement {
     });
   }
 
+  /** 
+   * This ensures the add_tradition_modal is placed nicely flush right of the menubar.
+   * @todo: Add responsiveness on resize. 
+   */
   #initStyles() {
-    // This ensures the add_tradition_modal is placed nicely flush right of the menubar.
-    // TODO: Add responsiveness on resize.
     const dashboard_stemmaweb_css = getStyleSheet('dashboard-stemmaweb');
-    let add_tradition_modal_marginleft = window
-      .getComputedStyle($('sidebarMenu'))
-      .getPropertyValue('width');
-    dashboard_stemmaweb_css.insertRule(
-      '#add_tradition_modal.modal.fade div.modal-dialog { margin-left: ' +
-        add_tradition_modal_marginleft +
-        '; margin-top: 50px; transform: none; }'
-    );
+    const addTraditionModalMarginLeft = $('sidebarMenu').getBoundingClientRect().width;
+    this.querySelector( 'div div' ).style.marginLeft = `${addTraditionModalMarginLeft}px`;
+    this.querySelector( 'div div' ).style.marginTop = '50px'
   }
 
   /**
@@ -175,6 +214,15 @@ class AddTraditionModal extends HTMLElement {
     { value: 'stemmaweb', name: 'Legacy Stemmaweb GraphML' }
   ];
 
+  static #traditionAsSelectOption( tradition ) {
+    return `<option value="${tradition.id}">${tradition.name}</option>`
+  }
+
+  static #availableTraditionsAsSelectOptions() {
+    const selectOptions = TRADITION_STORE.state.availableTraditions.map( this.#traditionAsSelectOption ).join('\n');
+    return selectOptions;
+  }
+//#add_tradition_modal.modal.fade div.modal-dialog 
   render() {
     this.innerHTML = `
       <div
@@ -229,32 +277,34 @@ class AddTraditionModal extends HTMLElement {
                       >text / tradition</span
                     ></label
                   >
-                  <input
-                    id="new_name"
-                    type="text"
-                    name="name"
-                    class="form-control has-validation"
-                    size="40"
-                    required=""
-                  />
-                  <div class="invalid-feedback">
-                    We need at least a name to reference to this
-                    <span id="tradition_literal">tradition</span>…
+                  <div class="form-textfield">
+                    <input
+                      id="new_name"
+                      type="text"
+                      name="name"
+                      class="form-control has-validation"
+                      size="40"
+                      required=""
+                    />
+                    <div class="invalid-feedback">
+                      We need at least a name to reference to this
+                      <span id="tradition_literal">tradition</span>…
+                    </div>
                   </div>
-                  <br />
-                  <label for="uploadfile" class="form-label"
-                    >Collation file to upload</label
-                  >
-                  <input
-                    class="form-control"
-                    type="file"
-                    id="uploadfile"
-                    required=""
-                  />
-                  <div class="invalid-feedback">
-                    We need a collation file to upload…
+                  <div class="form-upload">
+                    <label for="uploadfile" class="form-label"
+                      >Collation file to upload</label
+                    >
+                    <input
+                      class="form-control"
+                      type="file"
+                      id="uploadfile"
+                      required=""
+                    />
+                    <div class="invalid-feedback">
+                      We need a collation file to upload…
+                    </div>
                   </div>
-                  <br />
                   <label for="new_filetype" class="form-label">Data format</label>
                   <select name="filetype" class="form-select" id="new_filetype">
                     ${AddTraditionModal.#fileTypes
@@ -264,21 +314,21 @@ class AddTraditionModal extends HTMLElement {
                       )
                       .join('\n')}
                   </select>
-                  <br />
 
                   <!-- Shows when 'Create a new tradition' button is clicked -->
                   <div id="new_tradition_partial" class="hide">
                     <label for="new_lang" class="form-label"
                       >Primary language of the text</label
                     >
-                    <input
-                      id="new_lang"
-                      type="text"
-                      name="language"
-                      class="form-control"
-                      size="20"
-                    />
-                    <br />
+                    <div class="form-textfield">
+                      <input
+                        id="new_lang"
+                        type="text"
+                        name="language"
+                        class="form-control"
+                        size="20"
+                      />
+                    </div>
                     <label for="direction" class="form-label"
                       >Text direction</label
                     >
@@ -287,7 +337,6 @@ class AddTraditionModal extends HTMLElement {
                       <option value="RL">Right to Left</option>
                       <option value="BI">Bi-directional</option>
                     </select>
-                    <br />
                     <div class="form-check">
                       <input
                         class="form-check-input"
@@ -311,11 +360,10 @@ class AddTraditionModal extends HTMLElement {
                       name="for_tradition"
                       class="form-select"
                       id="upload_for_tradition"
-                    ></select>
+                    >${AddTraditionModal.#availableTraditionsAsSelectOptions()}</select>
                   </div>
 
                   <!-- Shows in either case -->
-                  <br />
                   <div id="add_tradition_modal_savecancel" class="py-3">
                     <button
                       type="button"

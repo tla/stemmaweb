@@ -110,6 +110,7 @@ class StemmarestService extends BaseService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
    */
   deleteTradition(tradId) {
+    // Todo: check userId?
     return this.fetch(`/api/tradition/${tradId}`, {
       method: 'DELETE'
     });
@@ -143,7 +144,7 @@ class StemmarestService extends BaseService {
       formData.append('language', language);
     }
     formData.append('direction', direction);
-    formData.append('public', isPublic ? 'yes' : 'no');
+    formData.append('public', isPublic );
     return this.fetch('/api/tradition', {
       method: 'POST',
       'Content-Type': 'multipart/form-data',
@@ -176,6 +177,7 @@ class StemmarestService extends BaseService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemma/[name]/reorient/[nodeId]}
    */
   reorientStemmaTree(tradId, name, nodeId) {
+    // Todo: check useId?
     // Note: see issue #92, API/middleware needs updating for non ASCII sigils
     const endpoint = this.endpoint(
       `/api/tradition/${tradId}/stemma/${name}/reorient/${nodeId}`
@@ -185,4 +187,219 @@ class StemmarestService extends BaseService {
       response.json()
     );
   }
+
+  /**
+   * Updates metadata for a tradition.
+   *
+   * @param {string | null} userId
+   * @param {string} tradId - The ID of the tradition being queried
+   * @param {string} name - The (new) name of the tradition.
+   * @param {string | null} language
+   * @param {string} direction
+   * @param {boolean} isPublic
+   * @returns {Promise<BaseResponse<T>>}
+   */
+  updateTraditionMetadata( userId, tradId, name, language, direction, isPublic) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to edit a tradition.'
+      });
+    }
+    const formData = {
+      direction: direction,
+      is_public: isPublic,
+      id: tradId,
+      language: language,
+      name: name,
+      owner: userId
+    };
+    return this.fetch(`/api/tradition/${tradId}`, {
+      method: 'PUT',
+      body: JSON.stringify(formData),
+      headers: new Headers({ 'Content-Type': 'application/json' })
+    });
+  }
+
+  /**
+   * Fetches a list of sections for a particular tradition.
+   *
+   * @param {string} traditionId
+   * @returns {Promise<BaseResponse<Section[]>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/sections}
+   */
+  listSections( traditionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/sections`);
+  }
+
+  /** 
+   * Save a stemma.
+   * 
+   * @param {string | null} userId.
+   * @param {string} tradId - The ID of the tradition being queried.
+   * @param {string} stemma_name - The name of the stemma.
+   * @param {string} stemma_dot - The stemma in dot language representation.
+   * @returns {Promise<BaseResponse<T>>}
+   * 
+   * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/name/ }
+   */
+  saveStemma( userId, tradId, stemma_name, stemma_dot ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to edit a tradition.'
+      });
+    }
+    const formData = {
+      identifier: stemma_name,
+      dot: stemma_dot
+      // jobid: null,
+      // newick: null
+    };
+    return this.fetch(`/api/tradition/${tradId}/stemma/${stemma_name}`, {
+      method: 'PUT',
+      body: JSON.stringify( formData) ,
+      headers: new Headers({ 'Content-Type': 'application/json' })
+    });
+  }
+  
+  /** 
+   * Add a stemma.
+   * 
+   * @param {string | null} userId.
+   * @param {string} tradId - The ID of the tradition being queried.
+   * @param {string} stemma_name - The name of the stemma.
+   * @param {string} stemma_dot - The stemma in dot language representation.
+   * @returns {Promise<BaseResponse<T>>}
+   * 
+   * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/ }
+   */
+  addStemma( userId, tradId, stemma_name, stemma_dot ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to edit a tradition.'
+      });
+    }
+    const formData = {
+      identifier: stemma_name,
+      dot: stemma_dot
+      // jobid: null,
+      // newick: null
+    };
+    return this.fetch(`/api/tradition/${tradId}/stemma/`, {
+      method: 'POST',
+      body: JSON.stringify( formData ),
+      headers: new Headers({ 'Content-Type': 'application/json' })
+    });
+  }
+
+  /**
+   * Deletes a stemma using the Stemmarest API.
+   *
+   * @param {Stemma} stemma - The stemma to be deleted
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemma}
+   */
+  deleteStemma( tradId, stemma ) {
+    return this.fetch(`/api/tradition/${tradId}/stemma/${stemma.identifier}`, {
+      method: 'DELETE'
+    });
+  }
+  
+  /**
+   * Deletes a section using the Stemmarest API.
+   *
+   * @param {string} sectionId
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section}
+   */
+  deleteSection( traditionId, sectionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}`, {
+      method: 'DELETE'
+    });
+  }
+  
+  /**
+   * Adds a new Section to a Tradition using the Stemmarest API.
+   *
+   * @param {string} name - The name of the tradition to be added.
+   * @param {File} file - The file containing the tradition to be added.
+   * @param {TraditionFileType} fileType
+   * @param {string | null} userId
+   * @returns {Promise<BaseResponse<{ tradId: string }>>}
+   */
+  addSection( name, file, fileType, userId, parentId ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to add a section.'
+      });
+    }
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('file', file);
+    formData.append('filetype', fileType);
+    formData.append('userId', userId);
+    formData.append('parentId', parentId);
+    return this.fetch( `/api/tradition/${parentId}/section`, {
+      method: 'POST',
+      'Content-Type': 'multipart/form-data',
+      body: formData
+    });
+  }
+  
+  /**
+   * 
+   * @param {string} tradId - Id of the tradition that the section belongs to
+   * @param (string) sectionId
+   * @param {string} priorSectionId 
+   * 
+   * @returns * @returns {Promise<BaseResponse<T>>}
+   */
+  moveSection( tradId, sectionId, priorSectionId ) {
+    return this.fetch(`/api/tradition/${tradId}/section/${sectionId}/orderAfter/${priorSectionId}`, {
+      method: 'PUT'
+    });
+  }
+
+  /**
+   * Updates metadata for a section.
+   *
+   * @param {string | null} userId
+   * @param {string} tradId - The ID of the tradition to which the section belongs.
+   * @param {string} sectionId - The ID of the section.
+   * @param {string} name - The (new) name of the section.
+   * @param {string | null} language
+   * @returns {Promise<BaseResponse<T>>}
+   */
+  updateSectionMetadata( userId, tradId, sectionId, name, language ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to edit a section.'
+      });
+    }
+    const formData = {
+      id: sectionId,
+      language: language,
+      name: name,
+    };
+    return this.fetch(`/api/tradition/${tradId}/section/${sectionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(formData),
+      headers: new Headers({ 'Content-Type': 'application/json' })
+    });
+  }
+
+  /**
+   * Fetches a list of relation types for a particular tradition.
+   *
+   * @param {string} traditionId
+   * @returns {Promise<BaseResponse<Section[]>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/relationtypes}
+   */
+    listRelationTypes( traditionId ) {
+      return this.fetch(`/api/tradition/${traditionId}/relationtypes`);
+    }
+  
+  
 }

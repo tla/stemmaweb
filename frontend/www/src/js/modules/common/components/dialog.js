@@ -30,6 +30,8 @@ class StemmawebDialog extends HTMLElement {
     closeType: 'secondary',
     okLabel: 'OK',
     okType: 'primary',
+    altLabel: null,
+    altType: 'warning',
     elemStyle: ''
   };
 
@@ -43,6 +45,9 @@ class StemmawebDialog extends HTMLElement {
     this.okLabel = StemmawebDialog.#defaultOptions.okLabel;
     this.okType = StemmawebDialog.#defaultOptions.okType;
     this.onOk = () => {};
+    this.altLabel = null;
+    this.altType = StemmawebDialog.#defaultOptions.altType;
+    this.onAlt = () => {};
     this.elemStyle = StemmawebDialog.#defaultOptions.elemStyle;
   }
 
@@ -54,14 +59,14 @@ class StemmawebDialog extends HTMLElement {
    * @param title {string} The title of the dialog.
    * @param body {string | HTMLElement} The body of the dialog.
    * @param actions {Partial<{onOk: function(): void, onClose: function():
-   *   void}>} Dialog action callbacks. is closed.
+   *   void, onAlt: function()}>} Dialog action callbacks. is closed.
    * @param options {Partial<StemmawebDialogOptions>} The options for the
    *   dialog.
    */
   static show(
     title,
     body,
-    actions = { onOk: () => {}, onClose: () => {} },
+    actions = { onOk: () => {}, onClose: () => {}, onAlt: () => {} },
     options = {}
   ) {
     // remove any existing dialogs
@@ -79,6 +84,8 @@ class StemmawebDialog extends HTMLElement {
     element.closeType = usedOptions.closeType;
     element.okLabel = usedOptions.okLabel;
     element.okType = usedOptions.okType;
+    element.altLabel = usedOptions.altLabel;
+    element.altType = usedOptions.altType;
     element.elemStyle = usedOptions.elemStyle;
 
     // add the element to the DOM
@@ -90,14 +97,42 @@ class StemmawebDialog extends HTMLElement {
 
     // Attach callbacks to the dialog's buttons
     const actionButtons = dialog.querySelectorAll('.modal-footer button');
-    actionButtons[0].addEventListener('click', actions.onClose || (() => {}));
-    actionButtons[1].addEventListener('click', () => {
-      (actions.onOk || (() => {}))();
-      dialogInstance.hide();
+    actionButtons.forEach( ( actionButton ) => {
+      if( actionButton.innerHTML==usedOptions.closeLabel ){
+        actionButton.addEventListener( 'click', actions.onClose || (() => {}));
+      } else if( actionButton.innerHTML==usedOptions.altLabel ){
+        actionButton.addEventListener( 'click', () => {
+          ( actions.onAlt || ( () => {} ) )();
+          dialogInstance.hide();
+        });
+      } else if( actionButton.innerHTML==usedOptions.okLabel ){
+        actionButton.addEventListener( 'click', () => {
+          const handlerResult = (actions.onOk || (() => {}))();
+          // Differentiate between handlers that are just handlers, and
+          // handlers that are type Promise.
+          if ( !handlerResult ) {
+            // If there is no result from a handler we assume 200 OK and close the dialog.
+            dialogInstance.hide();
+          } else {
+            // If the result is a successful Promise we close 
+            // the dialog, but it remains open when it failed.
+            if (typeof handlerResult.then === 'function') {
+              handlerResult.then((promise) => {
+                if (promise.success) {
+                  dialogInstance.hide();
+                }
+              });
+            }
+          }
+        });  
+      }
     });
 
-    // show the dialog
+    // show the dialog  
     dialogInstance.show();
+  }
+
+  static setButtonAction( actionButton ) {
   }
 
   attributeChangedCallback(property, oldValue, newValue) {
@@ -108,6 +143,15 @@ class StemmawebDialog extends HTMLElement {
   connectedCallback() {
     this.render();
   }
+
+  renderAltButton() {
+    var altButtonHTML = '';
+    if( this.altLabel != null ){
+      altButtonHTML = `<button type="button" class="btn btn-${this.altType}">${this.altLabel}</button>`
+    }
+    return altButtonHTML;
+  }
+
   // #modalDialog.modal.fade div.modal-dialog
   render() {
     this.innerHTML = `
@@ -123,7 +167,7 @@ class StemmawebDialog extends HTMLElement {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-${this.closeType}" data-bs-dismiss="modal">${this.closeLabel}</button>
-            <button type="button" class="btn btn-${this.okType}">${this.okLabel}</button>
+            ${this.renderAltButton()}<button type="button" class="btn btn-${this.okType}">${this.okLabel}</button>
           </div>
         </div>
       </div>

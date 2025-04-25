@@ -13,9 +13,12 @@ class StemmaButtons extends HTMLElement {
 
   connectedCallback() {
     this.render();
+    document.querySelector( '#delete-tradition-button' ).addEventListener( 'click', this.handleDelete );
+    document.querySelector( '#run-stemweb-button' ).addEventListener( 'click', stemwebFrontend.showDialog );
+    fadeIn( this );
   }
 
-  static handleDelete() {
+  handleDelete() {
     const { selectedTradition: tradition, availableTraditions } =
       TRADITION_STORE.state;
     StemmawebDialog.show(
@@ -55,14 +58,13 @@ class StemmaButtons extends HTMLElement {
     );
   }
 
-  static hide() {
-    document.getElementById('stemma_buttons').classList.add('invisible');
-  }
-
   render() {
     this.innerHTML = `
-    <div id="stemma_buttons" class="btn-toolbar mb-2 mb-md-0 invisible">
+    <div id="stemma-buttons" class="btn-toolbar mb-2 mb-md-0">
       <div class="btn-group me-2">
+        <button id="run-stemweb-button" type="button" class="btn btn-sm btn-outline-secondary">
+          Run Stemweb
+        </button>
         <button type="button" class="btn btn-sm btn-outline-secondary">
           Examine Stemma
         </button>
@@ -96,9 +98,7 @@ class StemmaButtons extends HTMLElement {
         </div>
       </div>
       <div class="btn-group ms-2">
-        <button type="button"
-                class="btn btn-sm btn-outline-danger"
-                onclick="StemmaButtons.handleDelete()">
+        <button id="delete-tradition-button" type="button" class="btn btn-sm btn-outline-danger">
           <span data-feather="trash"></span>
           Delete
         </button>

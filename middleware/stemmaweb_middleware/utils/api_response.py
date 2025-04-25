@@ -21,7 +21,7 @@ def abort(
     :return: A Flask Response.
     """
     log.error(f'Aborting with status "{status}", body "{body}" and message "{message}"')
-    processed_body: dict[str, Any] = {}
+    processed_body: dict[str, Any] = (isinstance(body, dict) and body) or {}
     body_is_pydantic_model = body is not None and not isinstance(body, dict)
     if body_is_pydantic_model:
         model: pydantic.BaseModel = body  # type: ignore

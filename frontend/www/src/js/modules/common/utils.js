@@ -73,3 +73,68 @@ function $(query, all = false) {
 function objectsEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
+
+
+/**
+ * Compares two strings alphbetically .
+ *
+ * @param {any} a - The first string to be compared.
+ * @param {any} b - The second string to be compared.
+ * @returns {boolean} - An integer indicating whether a comes before (-1), is equal to (0), or should follow (1) b. 
+ */
+function compareAlphabetic( a, b ) {
+  const nameA = a.name.toUpperCase(); // ignore upper and lowercase
+  const nameB = b.name.toUpperCase(); // ignore upper and lowercase
+  if (nameA < nameB) {
+    return -1;
+  }
+  if (nameA > nameB) {
+    return 1;
+  }
+  // names must be equal
+  return 0;
+}
+
+
+/**
+ * Returns a function that will execute exactly one time only.
+ *
+ * @param {function} fn - The function to be executed.
+ * @param {any} context - The context of the function.
+ * @returns {boolean} - An integer indicating whether a comes before (-1), is equal to (0), or should follow (1) b. 
+ */
+function once(fn, context) { 
+  var result;
+  return function() { 
+      if (fn) {
+          result = fn.apply(context || this, arguments);
+          fn = null;
+      }
+      return result;
+  };
+}
+
+
+function leftPadTwoZeroes( n ) {
+  return ('00'+n).slice(-2);
+}
+
+/**
+ * Returns a string formatted timestamp.
+ * 
+ * @returns {string} - A string represented the timestamp of 'now'.
+ */
+function timestamp() {
+  const date = new Date( Date.now() );
+  const datevalues = [
+    date.getFullYear(),
+    leftPadTwoZeroes( date.getMonth()+1 ),
+    leftPadTwoZeroes( date.getDate() )
+  ];
+  const timeValues = [
+    leftPadTwoZeroes( date.getHours() ),
+    leftPadTwoZeroes( date.getMinutes() ),
+    leftPadTwoZeroes( date.getSeconds() )
+  ];
+  return `${datevalues.join('')}_${timeValues.join('')}`;
+}

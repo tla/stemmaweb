@@ -19,19 +19,26 @@ def config(
     service: StemmarestPermissionService, args: PermissionArguments
 ) -> dict[UserRole, list[PermissionConfig]]:
     """Role-based configuration for the `/tradition/*` Stemmarest endpoint."""
-    base_config = [
-        PermissionConfig(
-            endpoint_access=EndpointAccess(
-                name="Allow all",
-                description="Allowing full access for now",
-                predicate=perm_predicates_base.always_true,
-                if_true={Permission.READ, Permission.WRITE},
-            ),
-        )
-    ]
-    tradition_config_guest = [*base_config]
-    tradition_config_user = [*base_config]
-    tradition_config_admin = [*base_config]
+    read_write = PermissionConfig(
+        endpoint_access=EndpointAccess(
+            name="Allow read-write",
+            description="Allowing read-write access",
+            predicate=perm_predicates_base.always_true,
+            if_true={Permission.READ, Permission.WRITE},
+        ),
+    )
+    read_only = PermissionConfig(
+        endpoint_access=EndpointAccess(
+            name="Allow read-only",
+            description="Allowing read-only access",
+            predicate=perm_predicates_base.always_true,
+            if_true={Permission.READ},
+        ),
+    )
+
+    tradition_config_guest = [read_only] # orig
+    tradition_config_user = [read_write]
+    tradition_config_admin = [read_write]
     tradition_config = {
         UserRole.GUEST: tradition_config_guest,
         UserRole.USER: tradition_config_user,

@@ -7,7 +7,7 @@ services:
   stemmarest-initializer:
     build: bin
     env_file:
-      - .env.dev
+      - .env.test
     depends_on:
       - stemmarest
     volumes:
@@ -15,71 +15,35 @@ services:
     entrypoint: >
       /bin/bash -c "./wait-for-it.sh --host=${STEMMAREST_HOST} --port=${STEMMAREST_PORT} -- /init-data/init_test_data.sh"
 
-  stemweb_mysql:
-    platform: linux/amd64
-    container_name: stemweb_mysql
-    image: mysql:5.7
-    restart: always
-    env_file:
-      - stemweb/.env.dev
-
-  stemweb_redis:
-    container_name: stemweb_redis
-    image: redis:alpine
-    restart: always
-    sysctls:
-      # change this Linux Kernel Parameter (default is 128) within container because of this WARNING
-      # "The TCP backlog setting of 511 cannot be enforced
-      # because /proc/sys/net/core/somaxconn is set to the lower value of 128."
-      net.core.somaxconn: 512     # maximal number of connections
-    volumes:
-      - ./stemweb/redis/redis.conf:/usr/local/etc/redis/redis.conf # version 6 from  https://redis.io/topics/config
-    command:
-      redis-server /usr/local/etc/redis/redis.conf
-
   stemweb:
-    platform: linux/amd64
     container_name: stemweb
-    image: dhuniwien/stemweb_py37:latest
-    restart: always
-    env_file:
-      - stemweb/.env.dev
-    depends_on:
-      - stemweb_mysql
-      - stemweb_redis
+    build: stemweb_mock
+    ports:
+      - "8000:8000"
 
   stemmaweb:
     container_name: stemmaweb
-    build:
-      context: .
-      dockerfile: Dockerfile-dev
-    volumes:
-      - .:/usr/src
+    build: .
+    depends_on:
+      - stemmarest
+      - stemweb
     env_file:
-      - .env.dev
-    entrypoint: >
-      /bin/bash -c "make install-middleware && 
-                    make install-frontend &&
-                    make run &&
-                    tail -F just-forcing-the-container-to-keep-running"
+      - .env.test
+    volumes:
+      - ./frontend/config/env.js.prod:/usr/src/app/stemmaweb_middleware/stemmaweb/src/js/env.js
 
   stemmaweb-e2e:
     container_name: stemmaweb-e2e
     build: frontend-e2e
-    env_file:
-      - .env.dev
     depends_on:
       - stemmaweb
       - stemmarest-initializer
+    env_file:
+      - .env.test
     volumes:
       - ./frontend-e2e/:/app
     entrypoint: >
       /bin/bash -c "sleep 120 &&  # Waiting for other services to be ready
-                    npm install -g npm@latest &&
+                    npm install -g npm@10.9.2 &&
                     npm install &&
                     npm run ${CY_NPM_COMMAND}"
-
-  reverse-proxy:
-    build: ./reverse-proxy
-    depends_on:
-      - stemmaweb

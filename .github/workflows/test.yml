@@ -2,7 +2,6 @@ name: Automatic Testing
 
 on:
   workflow_dispatch:
-  pull_request:
 
 jobs:
   set_vars:
@@ -82,4 +81,11 @@ jobs:
         run: make decrypt-env
 
       - name: Run the end-to-end tests
-        run: make tests
+        run: pwd && ls && make tests
+
+      - name: Upload test run videos
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cypress_videos
+          path: frontend-e2e/cypress/videos

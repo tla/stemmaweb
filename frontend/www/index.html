@@ -135,7 +135,7 @@
                 <span data-feather="plus-circle"></span>
               </a>
             </h6>
-            <ul id="traditions_list" class="nav flex-column mb-2"></ul>
+            <tradition-list></tradition-list>
           </div>
         </nav>
 
@@ -144,13 +144,17 @@
         </main>
 
         <div
-          id="sidebar_properties"
-          class="col-md-3 d-md-block col-lg-3 bg-light sidebar_properties"
+          id="sidebar-properties"
+          class="col-md-3 d-md-block col-lg-3 bg-light sidebar-properties"
         >
-          <property-table-view></property-table-view>
+          <property-table-view id="property-table-view"></property-table-view>
+          <section-properties-view></section-properties-view>
+          <stemweb-job-status></stemweb-job-status>
+          <message-console></message-console>
         </div>
       </div>
     </div>
+
     <!-- Partials Start -->
     <add-tradition-modal></add-tradition-modal>
     <auth-modal></auth-modal>
@@ -179,13 +183,22 @@
       type="application/javascript"
     ></script>
     <script
-      src="./src/js/vendor/d3-graphviz.min.js"
-      type="application/javascript"
-    ></script>
-    <script
       src="./src/js/vendor/saveSvgAsPng.js"
       type="application/javascript"
     ></script>
+    <script
+      src="./src/js/vendor/Sortable.min.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/vendor/dotparser.min.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/vendor/taboverride.min.js"
+      type="application/javascript"
+    ></script>
+    
 
     <!-- Local JS imports -->
 
@@ -193,6 +206,10 @@
     <script src="./src/js/env.js" type="application/javascript"></script>
     <script
       src="./src/js/modules/common/utils.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/common/effects.js"
       type="application/javascript"
     ></script>
     <script
@@ -211,6 +228,10 @@
       src="src/js/modules/common/service/stemwebService.js"
       type="application/javascript"
     ></script>
+    <script
+      src="src/js/modules/dashboard/tradition/stemma/stemmaRenderer.js"
+      type="application/javascript"
+    ></script>
     <script src="./src/js/config.js" type="application/javascript"></script>
 
     <!-- State -->
@@ -227,9 +248,18 @@
       type="application/javascript"
     ></script>
     <script
+      src="./src/js/modules/dashboard/tradition/section/state.js"
+      type="application/javascript"
+    ></script>
+    <script
       src="./src/js/modules/dashboard/tradition/state.js"
       type="application/javascript"
     ></script>
+    <script
+      src="./src/js/modules/common/download.js"
+     type="application/javascript"
+    ></script>
+
 
     <!-- Components -->
     <script
@@ -245,6 +275,10 @@
       type="application/javascript"
     ></script>
     <script
+      src="./src/js/modules/common/components/formControls.js"
+      type="application/javascript"
+    ></script>
+    <script
       src="src/js/modules/dashboard/stemmaweb.js"
       type="application/javascript"
     ></script>
@@ -253,7 +287,11 @@
       type="application/javascript"
     ></script>
     <script
-      src="src/js/modules/dashboard/tradition/stemmaButtons.js"
+      src="./src/js/modules/dashboard/tradition/stemwebFrontend.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="src/js/modules/dashboard/tradition/stemma/stemmaButtons.js"
       type="application/javascript"
     ></script>
     <script
@@ -278,6 +316,42 @@
     ></script>
     <script
       src="./src/js/modules/auth/authForm.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/traditionList.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/traditionTitle.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/section/sectionList.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/section/sectionPropertiesView.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/section/editSectionProperties.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/section/deleteSection.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/stemwebJobStatus.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/stemma/editStemma.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/messageConsole.js"
       type="application/javascript"
     ></script>
   </body>

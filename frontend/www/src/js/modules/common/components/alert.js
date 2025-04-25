@@ -20,11 +20,14 @@ class StemmawebAlert extends HTMLElement {
     alert.body = body;
     alert.type = type;
     document.body.appendChild(alert);
+    MessageConsole.addMessage( body, type );
     if (autoHideMs !== null) {
+      // Emulate a click on the close button to get the nice fade-out animation
+      // and keep the UX consistent.
       setTimeout(() => {
-        // Emulate a click on the close button to get the nice fade-out animation
-        // and keep the UX consistent.
-        alert.querySelector('button').click();
+        // Check if the button is there. It might have been clicked already by the user.
+        const closeButton = alert.querySelector('button');
+        if( closeButton ) { closeButton.click() };
       }, autoHideMs);
     }
   }

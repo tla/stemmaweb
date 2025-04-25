@@ -15,6 +15,11 @@ from .models import (
 
 
 class BasePermissionHandler(ABC, Generic[EndpointType]):
+    """
+    This class implements the permission checking logic in a generic way,
+    using the supplied ``PermissionProvider`` to retrieve the configuration.
+    """
+
     def __init__(self, provider: PermissionProvider[EndpointType], name: str):
         self.provider = provider
         self.name = name

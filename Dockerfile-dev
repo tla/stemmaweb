@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:jammy
 
 # Make sure that we don't get any interactive prompts
 ENV DEBIAN_FRONTEND noninteractive
@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y \
     apt-get install -y nodejs
 
 # Update npm (got installed in the previous layer with `nodejs`)
-RUN npm install -g npm@latest
+RUN npm install -g npm@10.9.2
 
 # Install utilities
 RUN apt-get update && apt-get install -y \
@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install Poetry
 RUN python -m pip install --upgrade pip &&  \
-    pip install poetry
+    pip install poetry==1.8.2
 
 # Install Poetry dependencies
 COPY middleware/poetry.lock middleware/pyproject.toml ./
