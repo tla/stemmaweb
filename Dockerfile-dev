@@ -1,21 +1,19 @@
-FROM ubuntu:jammy
+FROM ubuntu:noble
 
 # Make sure that we don't get any interactive prompts
 ENV DEBIAN_FRONTEND noninteractive
 
 # Install Python and aux packages
 RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3-pip \
+    python3.12 \
+    pipx \
     python3-setuptools \
     python3-wheel \
-    python3-distutils \
     build-essential \
     locales
 
 # Alias `python3` to `python` and `pip3` to `pip`
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
-    update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 
 
 # Install Node.js
 RUN apt-get update && apt-get install -y \
@@ -34,12 +32,12 @@ RUN apt-get update && apt-get install -y \
     make \
     jq \
     vim && \
-    pip install killport && \
-    pip install ipython
+    pipx ensurepath --global && \
+    pipx install killport && \
+    pipx install ipython
 
 # Install Poetry
-RUN python -m pip install --upgrade pip &&  \
-    pip install poetry==1.8.2
+RUN pipx install poetry
 
 # Install Poetry dependencies
 COPY middleware/poetry.lock middleware/pyproject.toml ./
