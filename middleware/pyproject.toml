@@ -37,6 +37,7 @@ mypy = "^1.15.0"
 pytest = "^8.3.5"
 pytype = "^2024.10.11"
 types-requests = "^2.32.0.20250328"
+debugpy = "^1.8.14"
 
 [build-system]
 requires = ["poetry-core (>=2.0.0)"]

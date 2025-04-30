@@ -6,14 +6,15 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install Python and aux packages
 RUN apt-get update && apt-get install -y \
     python3.12 \
-    pipx \
+    python3-pip \
     python3-setuptools \
     python3-wheel \
     build-essential \
     locales
 
 # Alias `python3` to `python` and `pip3` to `pip`
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 && \
+    update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
 
 # Install Node.js
 RUN apt-get update && apt-get install -y \
@@ -27,21 +28,20 @@ RUN apt-get update && apt-get install -y \
 # Update npm (got installed in the previous layer with `nodejs`)
 RUN npm install -g npm@10.9.2
 
-# Install utilities
+# Install utilities. Since it's a container we cheerfully install everything globally
 RUN apt-get update && apt-get install -y \
     make \
     jq \
     vim && \
-    pipx ensurepath --global && \
-    pipx install killport && \
-    pipx install ipython
+    pip config set global.break-system-packages true && \
+    pip install killport ipython
 
 # Install Poetry
-RUN pipx install poetry
+RUN pip install poetry
 
 # Install Poetry dependencies
 COPY middleware/poetry.lock middleware/pyproject.toml ./
 RUN poetry config virtualenvs.create false && \
-    poetry install
+    poetry install --no-root
 
 WORKDIR /usr/src
