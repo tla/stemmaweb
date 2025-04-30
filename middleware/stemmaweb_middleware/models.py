@@ -24,11 +24,12 @@ class AuthUser(flask_login.UserMixin):
 
     def __init__(self, data: StemmawebUser):
         """
-        Creates a new `AuthUser`.
+        Creates a new `AuthUser`. This is the user object returned to the client.
 
         :param data: The `StemmawebUser` to wrap.
         """
         super().__init__()
+        data.passphrase = "********" # Never pass the passphrase back to the client
         self.data = data
         self.id = data.id
 
