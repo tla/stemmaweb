@@ -39,7 +39,7 @@ class DeleteRelationType extends HTMLElement {
               // SECTION_STORE.sectionDeleted( section.id, tradition.id );
             } else {
               StemmawebAlert.show(
-                `Error during deletion: ${res.message}`,
+                `Error during deletion: ${res.data.error}`,
                 'danger'
               );
             }

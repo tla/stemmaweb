@@ -60,7 +60,7 @@ function fadeToDisplayFlex( element, options ){
 function fadeToDisplayNone( element, options={} ){
   const defaultOptions = { 'duration': 500, 'delay': 0, 'reverse': false, 'onEnd': null };
   const usedOptions = { ...defaultOptions, ...options };
-  if( !options.reverse ) {
+  if( !usedOptions.reverse ) {
     d3.select( element )
       .transition()
       .delay( usedOptions.delay )
@@ -73,7 +73,7 @@ function fadeToDisplayNone( element, options={} ){
         }
     } );
   } else {
-    d3.select( element ).node().style.removeProperty( 'display' )
+    d3.select( element ).node().style.removeProperty( 'display' );
     d3.select( element )
       .transition()
       .delay( usedOptions.delay )

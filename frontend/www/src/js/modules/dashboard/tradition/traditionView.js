@@ -31,7 +31,7 @@ class TraditionView extends HTMLElement {
       } )
       .catch( (error) => {
         StemmawebAlert.show(
-          `Error during rooting of stemma: ${resp.message}`,
+          `Error during rooting of stemma: ${res.message}`,
           'danger'
         );
       } );

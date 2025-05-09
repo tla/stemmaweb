@@ -211,6 +211,14 @@ class PropertyTableView extends HTMLElement {
       `;
   }
 
+  hide() {
+    fadeToDisplayNone( document.querySelector( 'property-table-view div' ) );
+  }
+
+  show() {
+    fadeToDisplayNone( document.querySelector( 'property-table-view div' ), { 'reverse': true } );
+  }
+
   /**
    * @param {Tradition | null} tradition
    * @param {Stemma | null} stemma

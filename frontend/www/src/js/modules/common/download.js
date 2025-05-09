@@ -3,11 +3,11 @@ class Download {
   static set_downloads(dot) {
     d3.select('#download_dot').on('click', function (evt) {
       evt.preventDefault();
-     download('stemma.dot', dot, 'text/plain');
+      Download.download('stemma.dot', dot, 'text/plain');
     }); 
     d3.select('#download_svg').on('click', function (evt) {
       evt.preventDefault();
-      download(
+      Download.download(
         'stemma.svg',
         d3.select('#graph-area div').html(),
         'image/svg+xml'

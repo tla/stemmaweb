@@ -23,40 +23,53 @@
   --color-brown: #b15928;
 }
 
-span.relation-colors.color-sky  svg.feather.feather-square {
+
+span.relation-colors.color-sky  svg.feather.feather-square, 
+span.relation-colors.color-sky  svg.feather.feather-check-square {
   fill: var(--color-sky);
 }
-span.relation-colors.color-blue  svg.feather.feather-square {
+span.relation-colors.color-blue  svg.feather.feather-square, 
+span.relation-colors.color-blue  svg.feather.feather-check-square {
   fill: var(--color-blue);
 }
-span.relation-colors.color-mint  svg.feather.feather-square {
+span.relation-colors.color-mint  svg.feather.feather-square, 
+span.relation-colors.color-mint  svg.feather.feather-check-square {
   fill: var(--color-mint);
 }
-span.relation-colors.color-green  svg.feather.feather-square {
+span.relation-colors.color-green  svg.feather.feather-square, 
+span.relation-colors.color-green  svg.feather.feather-check-square {
   fill: var(--color-green);
 }
-span.relation-colors.color-pink  svg.feather.feather-square {
+span.relation-colors.color-pink  svg.feather.feather-square, 
+span.relation-colors.color-pink  svg.feather.feather-check-square {
   fill: var(--color-pink);
 }
-span.relation-colors.color-red  svg.feather.feather-square {
+span.relation-colors.color-red  svg.feather.feather-square, 
+span.relation-colors.color-red  svg.feather.feather-check-square {
   fill: var(--color-red);
 }
-span.relation-colors.color-peach  svg.feather.feather-square {
+span.relation-colors.color-peach  svg.feather.feather-square, 
+span.relation-colors.color-peach  svg.feather.feather-check-square {
   fill: var(--color-peach);
 }
-span.relation-colors.color-orange  svg.feather.feather-square {
+span.relation-colors.color-orange  svg.feather.feather-square, 
+span.relation-colors.color-orange  svg.feather.feather-check-square {
   fill: var(--color-orange);
 }
-span.relation-colors.color-plum  svg.feather.feather-square {
+span.relation-colors.color-plum  svg.feather.feather-square, 
+span.relation-colors.color-plum  svg.feather.feather-check-square {
   fill: var(--color-plum);
 }
-span.relation-colors.color-purple  svg.feather.feather-square {
+span.relation-colors.color-purple  svg.feather.feather-square, 
+span.relation-colors.color-purple  svg.feather.feather-check-square {
   fill: var(--color-purple);
 }
-span.relation-colors.color-lemon  svg.feather.feather-square {
+span.relation-colors.color-lemon  svg.feather.feather-square, 
+span.relation-colors.color-lemon  svg.feather.feather-check-square {
   fill: var(--color-lemon);
 }
-span.relation-colors.color-brown  svg.feather.feather-square {
+span.relation-colors.color-brown  svg.feather.feather-square, 
+span.relation-colors.color-brown  svg.feather.feather-check-square {
   fill: var(--color-brown);
 }
 
@@ -374,6 +387,19 @@ edit-stemma-buttons a.greyed-out div {
   margin-bottom: 1.5em;
 }
 
+.color-picker {
+  margin-top: 1.5em;
+}
+
+.color-picker .feather {
+  width: 20px;
+  height: 20px;
+}
+
+#edit-relation-type-form .form-check {
+  margin-bottom: 0.125rem;
+}
+
 table.variant-types-controls .form-check, table.variant-types-controls .form-label {
   margin-bottom: 0em;
 }
@@ -453,6 +479,13 @@ section-list ul li.dragging-highlight {
   overflow-wrap: anywhere;
 }
 
+#section-properties-view-title.hide,
+#section-reading-properties-tabs.hide,
+#section-info-table-container.hide,
+#reading-info-table-container.hide {
+  display: none;
+}
+
 social-login-options .btn {
   font-size: calc( var(--bs-btn-font-size) * 4);
 }
@@ -498,6 +531,36 @@ relation-mapper {
   white-space: nowrap;
 }
 
+#node-density-chart-svg-container {
+  /* padding: 0.75rem 0.25rem 0.75rem 0.25rem; */
+  padding: 1px;
+  margin-bottom: 1rem;
+  border: 1px solid #c5c6c8;
+  background-color: #fcfcfc;
+}
+
+.node-density-chart-section-bg-light {
+  fill: #afc6e9; /* #d7e3f4; */
+}
+
+.node-density-chart-section-bg-dark {
+  fill: #96b5e3; /* #afc6e9 */
+}
+
+#node-density-chart-svg-container .chart-line {
+  fill: none;
+  stroke-width: 1.25px;
+  stroke: #2e5984;
+}
+
+#pan-position-indicator {
+  stroke: #6c757d;
+  stroke-width: 1.25;
+  stroke-dasharray: 2,2;
+  fill: #fffc;
+  cursor: pointer;
+}
+
 button.selected-view {
   color: #fff;
   background-color: #87aade;
@@ -513,4 +576,92 @@ button.selected-view {
 
 #section-loader-spinner.show {
   display: inline;
+}
+
+
+/* Styling for tabs, 
+ * kudos: https://stackoverflow.com/questions/19363759/how-to-make-rounded-tabs-with-css
+ */
+
+ul.stemmaweb-tabs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+ul.stemmaweb-tabs {
+  padding-left: 0px;
+  background-color: #f8f9fa;
+  z-index: 5;
+}
+
+ul.stemmaweb-tabs li {
+  background: inherit;
+  padding: 7px 11px 5px 10px;
+  margin: 0px -6px 0 10px;
+  position: relative;
+  float: left;
+  text-align: center;
+  z-index: 1;
+}
+
+ul.stemmaweb-tabs li::before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0px; left: -3px;
+  width: 70%;
+  height: 100%;
+  border-style: solid;
+  border-color: #6c757d;
+  border-width: 1px 0 1px 1px;
+  border-radius: 8px 0 0 0;
+  transform: skewX(-20deg);
+  background-color: inherit;
+  z-index: -1;
+}
+
+ul.stemmaweb-tabs li::after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0; right: 0;
+  width: 70%;
+  height: 100%;
+  border-style: solid;
+  border-color: #6c757d;
+  border-width: 1px 1px 1px 0;
+  border-radius: 0 8px 0 0;
+  transform: skewX(20deg);
+  background-color: inherit;
+  z-index: -1;
+}
+
+ul.stemmaweb-tabs li.active {
+  z-index: 10;
+}
+
+ul.stemmaweb-tabs li.active::before,
+ul.stemmaweb-tabs li.active::after {
+  border-bottom: 0px;
+}
+
+ul.stemmaweb-tabs li:not([class='active']) {
+  color: #c1c4c8;
+}
+
+ul.stemmaweb-tabs li:not([class='active']):hover {
+  color: #fff;
+}
+
+ul.stemmaweb-tabs li:not([class='active'])::before,
+ul.stemmaweb-tabs li:not([class='active'])::after {
+  border-color: #c1c4c8;
+  border-bottom-color: #6c757d;
+}
+
+ul.stemmaweb-tabs li:not([class='active']):hover::before,
+ul.stemmaweb-tabs li:not([class='active']):hover::after {
+  background-color: #6c757d;
+  border-color: #6c757d;
 }

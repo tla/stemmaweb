@@ -35,7 +35,39 @@ class SectionSelectors extends HTMLElement {
             graphArea.transition().call( speedy_transition ).style( 'opacity', '0.0' ).on( 'end', () => {
               relationRenderer.renderRelationsGraph( 
                 resp.data, {
-                  'onEnd': () => { graphArea.transition().call( mellow_transition ).style('opacity', '1.0' ); }
+                  'onEnd': () => { 
+                    graphArea.transition().call( mellow_transition ).style('opacity', '1.0' );
+                    // Add in the reading information
+                    sectionSelectorsService.getSectionReadings( TRADITION_STORE.state.selectedTradition.id, SECTION_STORE.state.selectedSection.id ).then( (resp) => {
+                      if ( resp.success ) {
+                        RelationMapper.addReadings( resp.data );
+                      } else {
+                        StemmawebAlert.show(
+                          `Could not fetch reading information: ${resp.message}`,
+                          'danger'
+                        );                
+                      }
+                    });
+                    //Add in relations information
+                    sectionSelectorsService.getSectionRelations( TRADITION_STORE.state.selectedTradition.id, state.selectedSection.id ).then( (resp) => {
+                      if ( resp.success ) {
+                        // This was copied from `stemmaButtons.js`. The commented lines display the legend for
+                        // existing relations. However, I assume that relation types are defined on tradition
+                        // level, not on section level! So we do not need this copy from `stemmaButtons.js`.
+                        // TODO: Check if it is correct that relations exist on tradition level.
+                        // document.querySelector( 'relation-types' ).renderRelationTypes(
+                        //   { 'onEnd': () => { fadeToDisplayNone( document.querySelector( 'relation-types div' ), { 'reverse': true } ) } }
+                        // );
+                        RelationMapper.addRelations( resp.data );
+                      } else {
+                        StemmawebAlert.show(
+                          `Could not fetch relations information: ${resp.message}`,
+                          'danger'
+                        );                
+                      }
+                    } );
+
+                  }
                 }
               );
             } );

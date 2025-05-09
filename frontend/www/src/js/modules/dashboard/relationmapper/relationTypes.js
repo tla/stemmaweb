@@ -37,7 +37,7 @@ class RelationTypes extends HTMLElement {
       `;
     const divElement = trElement.querySelector( 'div' );
     divElement.appendChild( new DeleteRelationType( relationType ) );
-    divElement.appendChild( document.createElement( 'edit-relation-type-button' ) );
+    divElement.appendChild( new EditRelationType( relationType, color ) );
     return trElement;
   }
 
@@ -99,10 +99,10 @@ class RelationTypes extends HTMLElement {
   }
 
   unrender() {
-    fadeToDisplayNone( document.querySelector( 'relation-types div', { 'onEnd': this.render } ) );
+    fadeToDisplayNone( document.querySelector( 'relation-types div' ) );
   }
 
-  render() {}
+  // render() {}
 
 }
 

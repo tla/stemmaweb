@@ -117,8 +117,9 @@ class TraditionList extends HTMLElement {
      */
     render( traditions ) {
         this.innerHTML = `
-            <ul id="traditions-list" class="nav flex-column mb-2"></ul>`;
-        const traditionListElement = this.querySelector( 'ul' )
+            <ul id="traditions-list" class="nav flex-column mb-2"></ul>
+        `
+        const traditionListElement = this.querySelector( 'ul' );
         traditions.forEach( (tradition) => traditionListElement.appendChild( this.createTraditionListItem( tradition ) ) );
     }
 
