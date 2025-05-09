@@ -39,7 +39,7 @@ Cypress.Commands.add('loginViaUi', (userObj) => {
 });
 
 // Logout via user interface
-Cypress.Commands.add('logoutViaUi', (userObj) => {
+Cypress.Commands.add('logoutViaUi', () => {
     cy.log("Cypress.env('CY_MODE'): " + Cypress.env('CY_MODE'));
     cy.contains('header a', 'Sign out').click();
     cy.contains('header a', 'Sign in');

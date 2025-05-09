@@ -40,9 +40,9 @@ https://github.com/tla/stemmaweb/pull/188#issue-2133307487
 
 */
 
-import test_traditions from '../fixtures/test_traditions.json';
-import stemweb_algorithms from '../fixtures/stemweb_algorithms.json'
-import users from '../fixtures/users.json';
+import test_traditions from '../../fixtures/test_traditions.json';
+import stemweb_algorithms from '../../fixtures/stemweb_algorithms.json'
+import users from '../../fixtures/users.json';
 const len_stemweb_algorithms = stemweb_algorithms.length;
 const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 
@@ -291,7 +291,7 @@ describe('stemma editing error feedback in message console works properly', () =
     it('passes', () => { // needs login
         if (Cypress.env('CY_MODE') === 'headed') { // only log in if headed. dont run this test headless because it needs to be logged in // TODO: also for headless mode
         // TODO: when fitted also for healess mode, merge with previous test (partly duplicate)
-        cy.loginViaUi(admin); // TODO: also for headless mode
+        cy.loginViaUi(admin);
 
         // To do: assert that the message console lists unexpected errors
         // when editing a stemma and e.g. removing [class=extant] after one of the nodes,
@@ -398,7 +398,7 @@ describe('stemma editing error feedback in message console works properly', () =
             // Test also the CANCEL button
         });
 
-        cy.logoutViaUi(admin); // TODO: also for headless mode
+        cy.logoutViaUi();
         }
     });
 });

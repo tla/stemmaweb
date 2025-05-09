@@ -1,7 +1,7 @@
 /* Assert everything is visible for an admin on the homepage upon login */
 
-import test_traditions from '../fixtures/test_traditions.json';
-import users from '../fixtures/users.json';
+import test_traditions from '../../fixtures/test_traditions.json';
+import users from '../../fixtures/users.json';
 const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 const selected_fill_color = 'rgb(207, 220, 238)';
 
@@ -9,11 +9,11 @@ beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     cy.viewport(1600, 900);
     test_traditions.sort( (tradition_a, tradition_b) => tradition_a.title.localeCompare( tradition_b.title ) );
-    cy.loginViaUi(admin); // TODO: also for headless mode
+    cy.loginViaUi(admin);
 });
 
 afterEach(() => {
-    cy.logoutViaUi(admin); // TODO: also for headless mode
+    cy.logoutViaUi();
 });
 
 // on the homepage, the admin should see all traditions listed

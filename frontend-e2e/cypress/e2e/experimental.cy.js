@@ -54,7 +54,7 @@ describe('addStemma and deleteStemma with login, passes in headless mode despite
     cy.get('#delete-stemma-button-link').wait(500).click(); // DELETE method
     cy.contains('Yes, delete it').wait(500).click();
 
-    cy.logoutViaUi(admin);
+    cy.logoutViaUi();
   });
 });
 
