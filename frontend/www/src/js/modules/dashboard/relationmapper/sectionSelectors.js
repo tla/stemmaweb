@@ -47,8 +47,27 @@ class SectionSelectors extends HTMLElement {
                           'danger'
                         );                
                       }
+                    });
+                    //Add in relations information
+                    sectionSelectorsService.getSectionRelations( TRADITION_STORE.state.selectedTradition.id, state.selectedSection.id ).then( (resp) => {
+                      if ( resp.success ) {
+                        // This was copied from `stemmaButtons.js`. The commented lines display the legend for
+                        // existing relations. However, I assume that relation types are defined on tradition
+                        // level, not on section level! So we do not need this copy from `stemmaButtons.js`.
+                        // TODO: Check if it is correct that relations exist on tradition level.
+                        // document.querySelector( 'relation-types' ).renderRelationTypes(
+                        //   { 'onEnd': () => { fadeToDisplayNone( document.querySelector( 'relation-types div' ), { 'reverse': true } ) } }
+                        // );
+                        RelationMapper.addRelations( resp.data );
+                      } else {
+                        StemmawebAlert.show(
+                          `Could not fetch relations information: ${resp.message}`,
+                          'danger'
+                        );                
+                      }
                     } );
-                   }
+
+                  }
                 }
               );
             } );

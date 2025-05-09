@@ -76,6 +76,9 @@ class StemmaButtons extends HTMLElement {
               SectionSelectors.renderSectionSelectors();
               StemmaButtons.closeStemmaView( () => {
                 const graphRendererWidth = document.querySelector( '#topbar-menu' ).getBoundingClientRect().width;
+                // TODO: There is a enormous overlap between this code and
+                // code doing practically the same thing in `sectionSelectors.js`
+                // Both should probably call some extracted.
                 relationRenderer.renderRelationsGraph( 
                   resp.data, {
                     'width': graphRendererWidth,
@@ -84,6 +87,7 @@ class StemmaButtons extends HTMLElement {
                       fadeToDisplayFlex( targetView, { 
                         'duration': 1500,
                         'onEnd': () => {
+                          //Add in relations information
                           stemmaButtonsService.getSectionRelations( TRADITION_STORE.state.selectedTradition.id, section.id ).then( (resp) => {
                             if ( resp.success ) {
                               document.querySelector( 'relation-types' ).renderRelationTypes(
@@ -112,7 +116,16 @@ class StemmaButtons extends HTMLElement {
                         }
                       } );
                       document.querySelector( 'node-density-chart' ).renderChart(
-                        { 'onEnd': () => { fadeToDisplayNone( document.querySelector( 'node-density-chart div' ), { 'reverse': true } ) } }
+                        { 'onEnd': () => { 
+                            fadeToDisplayNone( document.querySelector( 'node-density-chart div' ), { 
+                              'reverse': true,
+                              'onEnd': () => { 
+                                relationRenderer.resetZoom();
+                                console.log( 'Do it! Do it! I Dare you!' ) 
+                              } 
+                            } ) 
+                          } 
+                        }
                       );         
                       document.querySelector( 'property-table-view' ).hide();      
                       document.querySelector( '#section-properties-view-title' ).classList.toggle( 'hide' );

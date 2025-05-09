@@ -139,6 +139,7 @@ class NodeDensityChart extends HTMLElement {
       // Add X vs. Y chart line
       svg.append( 'path' )
       .datum( data )
+      .attr( 'id', 'minimap-chart-line' )
       .attr( 'class', 'chart-line' )
       .attr( 'd', d3.line()
         .x( function(d) { return x( d.aggregatedRank ) } )
@@ -176,8 +177,13 @@ class NodeDensityChart extends HTMLElement {
         const xRatio = xClick/xClickRange;
         relationRenderer.panXRatio = xRatio;
         if ( d.section != SECTION_STORE.state.selectedSection.id ) {
+          console.log( 'ndcdebug: clicked a different section' );
           const selectedSection = SECTION_STORE.state.availableSections.filter( (section) => section.id == d.section )[0];
+          // This causes TWO rerenders!
           SECTION_STORE.setSelectedSection( selectedSection );
+        } else {
+          console.log( 'ndcdebug: clicked in the same section' );
+          relationRenderer.pan();
         }
       } );
     if( usedOptions.onEnd ) {
@@ -190,31 +196,75 @@ class NodeDensityChart extends HTMLElement {
   }
 
   showPanPosition( panXRatio, extentRatio ) {
-    const existingIndicator = document.querySelector( '#pan-position-indicator' );
-    const existingExtentIndicator = document.querySelector( '#pan-extent-indicator' );
-    if( existingIndicator ) {
-      existingIndicator.remove();
-      existingExtentIndicator.remove();
-    }
+    console.log( 'ndcdebug: showPanPosition called' );
+
+    // Calculate dimensions we will need in any case
     const sectionId = SECTION_STORE.state.selectedSection.id;
     const rectElement = document.querySelector( `#section-rect-${sectionId}` );
-    const minimapGElement = d3.select( rectElement.parentElement );
-    const width = rectElement.getAttribute( 'width' );
-    const height = rectElement.getAttribute( 'height' );
-    const minX = rectElement.getAttribute( 'x' );
-    var pathX = parseFloat( minX ) + ( panXRatio * width );
-    var pathExtentX = pathX + ( extentRatio * width );
-    console.log( pathX );
-    if( pathX < minX ){ pathX = minX }
-    const thePath = `M${pathX},0L${pathX},${height}`;
-    minimapGElement.append( 'path' )
-      .attr( 'id', 'pan-position-indicator' )
-      .attr( 'd', thePath );
-    const theExtentPath = `M${pathExtentX},0L${pathExtentX},${height}`;
-    minimapGElement.append( 'path' )
-      .attr( 'id', 'pan-extent-indicator' )
-      .attr( 'd', theExtentPath );
-  
+    const minX = parseFloat( rectElement.getAttribute( 'x' ) );
+    const width = parseFloat( rectElement.getAttribute( 'width' ) );
+    const maxX = minX + width;
+    var rectX = minX + ( panXRatio * width );
+    var rectExtentX = extentRatio * width;
+    // Left side constraints
+    if( rectX < minX ){ 
+      rectExtentX = rectExtentX - ( minX - rectX );
+      if( rectExtentX < 2 ){ rectExtentX = 2 };
+      rectX = minX; 
+    };
+    // Right side constraints
+    if( rectX > maxX - 2 ){ rectX = maxX - 2 }
+    if( rectX + rectExtentX > minX + width ){
+      rectExtentX = maxX - rectX;
+    };
+
+    console.log( rectElement.getAttribute( 'x' ), panXRatio );
+    console.log( 'ndcdebug: rectX:', rectX, 'rectExtentX', rectExtentX, 'minX:', minX, 'width:', width );
+
+    var indicator = d3.select( '#pan-position-indicator' );
+
+    // If there is no indicator yet, put it in
+    if( indicator.empty() ) {
+      console.log( 'ndcdebug: putting in the pan indicator' );
+      const height = parseFloat( rectElement.getAttribute( 'height' ) );
+      const minimapGElement = d3.select( rectElement.parentElement );
+      indicator = minimapGElement.insert( 'rect', '#minimap-chart-line' )
+        .attr( 'id', 'pan-position-indicator' )
+        .attr( 'x', rectX )
+        .attr( 'width', rectExtentX )
+        .attr( 'height', height )
+    } else {  // Hoever, if there is an indicator, just change x and width appropriately.
+      indicator
+        .attr( 'x', rectX )
+        .attr( 'width', rectExtentX )
+    }
+
+    // Always add (overwrite) dragging behavior
+    // Actually this would only be needed on section change
+    // and on graph zoom.
+    // Is this what we want to get away from here?
+    indicator.call( d3.drag().on( 'drag', (event) => {
+      const currentMinX = Number( indicator.attr( 'x' ) );
+      const currentMaxX = currentMinX + Number( indicator.attr( 'width' ) );
+      console.log( 'ndcdebug: minX', minX, 'maxX:', maxX, 'currentMinX:', currentMinX, 'currentMaxX', currentMaxX );
+      // If the drag event x is inside of the area that we want to consider draggable
+      // i.e. if the mouse cursor is within the x span of the indicator…
+      if( ( event.x > minX ) && ( event.x < maxX ) ){
+        // Then we will move the indicator, if it does not mean moving it outside the
+        // area where it can be dragged.
+        if( ( currentMinX + event.dx > minX ) && ( ( currentMaxX + event.dx ) < maxX ) ){
+          const newX = Number( indicator.attr( 'x' ) ) + event.dx;
+          indicator.attr( 'x', newX );
+          const xRatio = ( newX - minX )/( maxX - minX );
+          console.log( 'ndcdebug: xRatio by drag:', newX, maxX, minX, xRatio );
+          console.log( 'ndcdebug: minX', minX );
+          relationRenderer.panXRatio = xRatio;
+          relationRenderer.panCause = 'drag';
+          relationRenderer.pan();
+        }
+      }
+    } ) );
+    
   }
 
 }

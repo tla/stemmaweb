@@ -6,7 +6,7 @@
  */
 
 /**
- * Class representing the all components and functions of the
+ * Class representing the components and functions of the
  * relation mapper. 
  */
 class RelationMapper extends HTMLElement {

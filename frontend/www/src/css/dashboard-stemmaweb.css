@@ -539,11 +539,11 @@ relation-mapper {
 }
 
 .node-density-chart-section-bg-light {
-  fill: #d7e3f4;
+  fill: #afc6e9; /* #d7e3f4; */
 }
 
 .node-density-chart-section-bg-dark {
-  fill: #afc6e9;
+  fill: #96b5e3; /* #afc6e9 */
 }
 
 #node-density-chart-svg-container .chart-line {
@@ -552,10 +552,12 @@ relation-mapper {
   stroke: #2e5984;
 }
 
-#pan-position-indicator, #pan-extent-indicator {
+#pan-position-indicator {
   stroke: #6c757d;
   stroke-width: 1.25;
   stroke-dasharray: 2,2;
+  fill: #fffc;
+  cursor: pointer;
 }
 
 button.selected-view {

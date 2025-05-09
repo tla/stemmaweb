@@ -4,6 +4,7 @@ class RelationRenderer {
     #height = 0;
     #width = 0;
     #panXRatio = 0;
+    #panCause = '';
 
     constructor() {
     }
@@ -18,6 +19,14 @@ class RelationRenderer {
 
     set panXRatio( panXRatio ) {
       this.#panXRatio = panXRatio;
+    }
+
+    set panCause( panCause ) {
+      this.#panCause = panCause;
+    }
+
+    get panCause() {
+      return this.#panCause;
     }
 
     get relationMapperGraphvizRoot() {
@@ -62,47 +71,94 @@ class RelationRenderer {
         .width( this.#width )
         .height( this.#height )
         .on( 'end', async () => {
-            await this.resetZoom();
+            // await this.resetZoom();
             this.pan();
             this.relationMapperGraphvizRoot.zoomBehavior().on( 'end', ( zoomEvent, d ) => {
-              const extentRatio = relationRenderer.calculateViewBoxExtentRatio();
+              console.log( 'zoomEvent', zoomEvent );
+              const extentRatio = relationRenderer.calculateViewBoxExtentRatio( zoomEvent, d );
               const panXRatio = relationRenderer.calculatePanXRatio( zoomEvent, d );
-              document.querySelector( 'node-density-chart' ).showPanPosition( panXRatio, extentRatio );
+              console.log( 'this.#panCause', this.#panCause );
+              console.log( 'relationRenderer.panCause', relationRenderer.panCause );
+              // TODO: This works, it's butt ugly.
+              // TODO: now clicking in a different section doesn't work anymore.
+              if( relationRenderer.panCause != 'drag' ){ 
+                document.querySelector( 'node-density-chart' ).showPanPosition( panXRatio, extentRatio );
+              }
+              relationRenderer.panCause == ''
             } );
+            this.setPanLimits();
             usedOptions.onEnd();
           }
         );
       this.relationMapperGraphvizRoot.renderDot( dot );
-      }
-      
+    }
+    
+    /**
+     * This function is a work around because the onEnd and onRenderEnd of 
+     * d3-graphvis.js do not fire as expected. When they fire the lay out and 
+     * rendering may have finished but apparently the svg has not been added
+     * to the DOM and no properties of it can be retrieved. But getting to
+     * its attributes is necessary to set, for instance, the pan limits and 
+     * to calculate the minimap position indicator position and size. 
+     * Therefore, `stemmaButtons.js` calls this function explicitly once the 
+     * graph has been faded in and is surely part of the DOM. It then simply
+     * triggers a `resetZoom`, which creates a `zoomBehavior` that is needed 
+     * to compute various other stuff.
+     */
     resetZoom() {
+      console.log( 'reset if needed' );
       if( this.relationMapperGraphvizRoot.zoomSelection() != null ){
+        console.log( 'really resetting' );
         this.relationMapperGraphvizRoot.resetZoom();
+        this.setPanLimits();
       };
     }
 
+    setPanLimits() {
+      const polygonElement = d3.select( '#relation-graph svg g polygon' );
+      if( polygonElement.node() ) {
+        const gBbox = d3.select( '#relation-graph svg g polygon' ).node().getBBox();
+        console.log( "doing this" );
+        const width = gBbox.width;
+        const height = gBbox.height;
+        const margin = 100;
+        console.log( 'NOT currently setting pan limits.', width, height, margin );
+        // Absolutely not sure the following is what we want, but it seems to work for now.
+        // this.relationMapperGraphvizRoot.zoomBehavior().translateExtent([[ LEFT, BOTTOM ], [ RIGHT, TOP ]]);    
+        // TODO: PROBLEM: this results in a rerender (double render) and then as a result in a wrong positioning
+        // of the pan indicator.
+        // this.relationMapperGraphvizRoot.zoomBehavior().translateExtent([[-margin, -450], [width, height]]);    
+      }
+    }
+
     pan() {
+      console.log( 'pre-pan' );
       if( this.#panXRatio != 0  ) {
+        console.log( 'panning' );
         const gExtent = d3.select( '#relation-graph svg g polygon' ).node().getBBox().width;
         const xTranslate = this.#panXRatio * gExtent;
-        const zoomBehavior = this.relationMapperGraphvizRoot.zoomBehavior();
-        const graphSvg = d3.select( '#relation-graph svg' )
-        zoomBehavior.translateTo( graphSvg, xTranslate, 0 );
         this.#panXRatio = 0;
+        const graphSvg = d3.select( '#relation-graph svg' )
+        const zoomBehavior = this.relationMapperGraphvizRoot.zoomBehavior();
+        zoomBehavior.translateTo( graphSvg, xTranslate, 0 );
       }
     }
 
     calculatePanXRatio( zoomEvent, d ) {
       const polygonElement = d3.select( '#relation-graph svg g polygon' );
+      var panXRatio = 0;
       if( polygonElement.node() ) {
+        const scale = zoomEvent.transform.k;
         const xTranslate = zoomEvent.transform.x;
-        const gExtent = polygonElement.node().getBBox().width;
-        const panXRatio = -( xTranslate / gExtent );
-        return panXRatio;
+        const gExtent = polygonElement.node().getBBox().width * scale;
+        panXRatio = -( xTranslate / gExtent );
       }
+      return panXRatio;
     }
 
-    calculateViewBoxExtentRatio() {
+    calculateViewBoxExtentRatio( zoomEvent, d ) {
+      // We'll need scaling at some point.
+      const scale = zoomEvent.transform.k;
       // The pixel width of the svg and the width if the viewBox defined in it
       // determine the scale factor we need to apply if we want to transform
       // screen distances in pixels to distances in the coordinate system of the 
@@ -123,7 +179,7 @@ class RelationRenderer {
       // we want to express as a ratio of the width of the graph itself.
       // Note that this is not (yet, in this current code) the same as
       // svgWidth, as that doesn't resize.
-      const relationGraphElementWidth = document.querySelector( '#relation-graph' ).getBoundingClientRect().width;
+      const relationGraphElementWidth = document.querySelector( '#relation-graph' ).getBoundingClientRect().width * (1/scale);
       const extent = relationGraphElementWidth * screenToViewBoxFactor;
       console.log( 'part seen', extent );
 
@@ -132,6 +188,7 @@ class RelationRenderer {
       if( polygonElement.node() ) {
         const gExtent = polygonElement.node().getBBox().width;
         panExtentRatio = extent / gExtent;
+        console.log( 'k', scale );
         console.log( 'panExtentRatio', panExtentRatio );
       }
       return panExtentRatio;
