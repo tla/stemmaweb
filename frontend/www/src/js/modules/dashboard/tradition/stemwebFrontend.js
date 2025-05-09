@@ -108,7 +108,7 @@ class StemwebFrontend {
           var controlsHTML = stemwebFrontend.mapToHTMLTable( controls );
           document.querySelector( '#algorithm-variants-panel' ).innerHTML = controlsHTML; 
         } else {
-          StemmawebAlert.show(`Error: ${res.message}`, 'danger');
+          StemmawebAlert.show(`Error: ${resp.message}`, 'danger');
         }
     });
   }

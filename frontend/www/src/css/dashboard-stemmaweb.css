@@ -23,6 +23,7 @@
   --color-brown: #b15928;
 }
 
+
 span.relation-colors.color-sky  svg.feather.feather-square, 
 span.relation-colors.color-sky  svg.feather.feather-check-square {
   fill: var(--color-sky);

@@ -176,3 +176,6 @@ env.zip
 env_passphrase
 
 relationmapper_theory/
+
+# volume bind folder for the init script in headless mode
+.initdata4headless
