@@ -121,7 +121,7 @@ class StemmaButtons extends HTMLElement {
                               'reverse': true,
                               'onEnd': () => { 
                                 relationRenderer.resetZoom();
-                                console.log( 'Do it! Do it! I Dare you!' ) 
+                                debugLog( this, 'relationRenderer.resetZoom() was called.' ) 
                               } 
                             } ) 
                           } 

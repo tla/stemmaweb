@@ -74,17 +74,16 @@ class RelationRenderer {
             // await this.resetZoom();
             this.pan();
             this.relationMapperGraphvizRoot.zoomBehavior().on( 'end', ( zoomEvent, d ) => {
-              console.log( 'zoomEvent', zoomEvent );
+              debugLog( this, 'zoomEvent:', zoomEvent );
               const extentRatio = relationRenderer.calculateViewBoxExtentRatio( zoomEvent, d );
               const panXRatio = relationRenderer.calculatePanXRatio( zoomEvent, d );
-              console.log( 'this.#panCause', this.#panCause );
-              console.log( 'relationRenderer.panCause', relationRenderer.panCause );
+              debugLog( this, `this.#panCause: ${this.#panCause}.` );
+              debugLog( this, `relationRenderer.panCause: ${relationRenderer.panCause}.` );
               // TODO: This works, it's butt ugly.
-              // TODO: now clicking in a different section doesn't work anymore.
               if( relationRenderer.panCause != 'drag' ){ 
                 document.querySelector( 'node-density-chart' ).showPanPosition( panXRatio, extentRatio );
               }
-              relationRenderer.panCause == ''
+              relationRenderer.panCause = ''
             } );
             this.setPanLimits();
             usedOptions.onEnd();
@@ -106,9 +105,9 @@ class RelationRenderer {
      * to compute various other stuff.
      */
     resetZoom() {
-      console.log( 'reset if needed' );
+      debugLog( this, 'We should reset zoom if needed.' );
       if( this.relationMapperGraphvizRoot.zoomSelection() != null ){
-        console.log( 'really resetting' );
+        debugLog( this, 'Actually resetting zoom.' );
         this.relationMapperGraphvizRoot.resetZoom();
         this.setPanLimits();
       };
@@ -118,11 +117,11 @@ class RelationRenderer {
       const polygonElement = d3.select( '#relation-graph svg g polygon' );
       if( polygonElement.node() ) {
         const gBbox = d3.select( '#relation-graph svg g polygon' ).node().getBBox();
-        console.log( "doing this" );
+        debugLog( this, 'Trying to compute bounding box pan limits on relation graph.' );
         const width = gBbox.width;
         const height = gBbox.height;
         const margin = 100;
-        console.log( 'NOT currently setting pan limits.', width, height, margin );
+        debugLog( this, `NOT currently setting pan limits, width: ${width}, height: ${height}, margin: ${margin}.` );
         // Absolutely not sure the following is what we want, but it seems to work for now.
         // this.relationMapperGraphvizRoot.zoomBehavior().translateExtent([[ LEFT, BOTTOM ], [ RIGHT, TOP ]]);    
         // TODO: PROBLEM: this results in a rerender (double render) and then as a result in a wrong positioning
@@ -132,9 +131,9 @@ class RelationRenderer {
     }
 
     pan() {
-      console.log( 'pre-pan' );
+      debugLog( this, 'Function pan called, this message is pre-pan.' );
       if( this.#panXRatio != 0  ) {
-        console.log( 'panning' );
+        debugLog( this, 'Function pan called, starting pan.' );
         const gExtent = d3.select( '#relation-graph svg g polygon' ).node().getBBox().width;
         const xTranslate = this.#panXRatio * gExtent;
         this.#panXRatio = 0;
@@ -169,11 +168,11 @@ class RelationRenderer {
       // The svgViewBox size is the virtual dimension of the part of the svg canvas
       // we can see inside of the HTML container. 
       const svgViewBox = svgElement.viewBox.baseVal;
-      console.log( svgWidth, svgViewBox.width );
+      debugLog( this, `svgWidth: ${svgWidth}, svgViewBox.width: ${svgViewBox.width}.` );
       // length in pixels * screenToViewBoxFactor gives you how much length the 
       // pixels represent in the coordinate system of the svg canvas.
       const screenToViewBoxFactor = svgViewBox.width/svgWidth;
-      console.log( 'screenToViewBoxFactor', screenToViewBoxFactor );
+      debugLog( this, `screenToViewBoxFactor: ${screenToViewBoxFactor}.` );
       // How much we can see from the graph depends on the width of the 
       // div that contains the variant graph. The width of that
       // we want to express as a ratio of the width of the graph itself.
@@ -181,15 +180,15 @@ class RelationRenderer {
       // svgWidth, as that doesn't resize.
       const relationGraphElementWidth = document.querySelector( '#relation-graph' ).getBoundingClientRect().width * (1/scale);
       const extent = relationGraphElementWidth * screenToViewBoxFactor;
-      console.log( 'part seen', extent );
+      debugLog( this, `Part seen (extent): ${extent}.` );
 
       const polygonElement = d3.select( '#relation-graph svg g polygon' );
       var panExtentRatio = 0;
       if( polygonElement.node() ) {
         const gExtent = polygonElement.node().getBBox().width;
         panExtentRatio = extent / gExtent;
-        console.log( 'k', scale );
-        console.log( 'panExtentRatio', panExtentRatio );
+        debugLog( this, `k (scale): ${scale}.` );
+        debugLog( this, `panExtentRatio: ${panExtentRatio}.` );
       }
       return panExtentRatio;
 
