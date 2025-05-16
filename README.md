@@ -97,7 +97,13 @@ frontend and middleware:
 make run
 ```
 
-After running this, both the frontend and the middleware will be started in your terminal session in a non-blocking way.
+To run the frontend and middleware with Python remote debugging enabled, run the following instead:
+
+```shell
+make debug
+```
+
+After running this, both the frontend and the middleware will be started in your terminal session in a non-blocking way (in debug mode, the middleware will await a connection from a debugger).
 All the logs will be visible in the terminal session automatically as events occur.
 
 You can stop individual services by running `make stop-frontend` or `make stop-middleware` in the `stemmaweb` container.

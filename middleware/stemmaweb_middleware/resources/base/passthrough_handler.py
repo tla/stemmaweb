@@ -37,7 +37,7 @@ def handle_passthrough_request(
     ) = permission_handler.check(args=args)
 
     # If the user is not allowed to access the requested endpoint, we abort the request
-    if request.method not in allowed_http_methods or len(violations) > 0:
+    if request.method not in allowed_http_methods:
         return abort(
             status=403,
             message="The caller has insufficient permissions "
