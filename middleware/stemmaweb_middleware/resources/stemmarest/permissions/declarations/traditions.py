@@ -27,7 +27,7 @@ def config(
                 predicate=perm_predicates_base.always_true,
                 if_true={Permission.READ},
             ),
-            response_transformer=perm_filters.public_resources_only,
+            response_transformer=perm_filters.public_resources_only_factory,
         )
     ]
     traditions_config_user = [
@@ -38,7 +38,7 @@ def config(
                 predicate=perm_predicates_base.always_true,
                 if_true={Permission.READ},
             ),
-            response_transformer=perm_filters.owned_resources_only_factory(args),
+            response_transformer=perm_filters.owned_resources_only_factory,
         )
     ]
     traditions_config_admin = [*traditions_config_user]
