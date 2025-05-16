@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+from requests.models import Response
 from typing import (
     Any,
     Callable,
