@@ -1,5 +1,3 @@
-import json
-from requests.exceptions import JSONDecodeError
 from requests.models import Response
 from typing import Any
 from stemmaweb_middleware.permissions.models import PermissionArguments, ResponseTransformer
