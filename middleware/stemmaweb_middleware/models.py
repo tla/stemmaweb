@@ -3,7 +3,7 @@ import pydantic
 
 # Declarative model validation
 EmailStr = pydantic.EmailStr
-UserRoleStr = pydantic.constr(regex=r"^(admin|user)$")
+UserRoleStr = pydantic.constr(pattern=r"^(admin|user)$")
 
 
 class StemmawebUser(pydantic.BaseModel):
