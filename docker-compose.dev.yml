@@ -43,6 +43,8 @@ services:
       /bin/bash -c "make install-middleware && 
                     make install-frontend &&
                     tail -F just-forcing-the-container-to-keep-running"
+    ports:
+      - "5678:5678"
 
   reverse-proxy:
     build: ./reverse-proxy

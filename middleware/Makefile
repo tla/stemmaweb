@@ -6,7 +6,7 @@ serve:
 
 serve-background:
 	@echo "==> 📡 Serve in Background"
-	@(poetry run gunicorn --reload --bind=0.0.0.0:3000  'stemmaweb_middleware:create_app()') &> /dev/null
+	@(poetry run python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m gunicorn --reload --bind=0.0.0.0:3000  --workers=1 --timeout 600 'stemmaweb_middleware:create_app()') &> /dev/null
 
 # Prints the middleware routes
 .PHONY: routes
