@@ -35,7 +35,7 @@ class RecaptchaResponse(pydantic.BaseModel):
     hostname: str | None
     score: float | None
     action: str | None
-    error_codes: list[RecaptchaErrorCode] | None
+    error_codes: list[RecaptchaErrorCode] | None = None
 
 
 class RecaptchaVerifier:

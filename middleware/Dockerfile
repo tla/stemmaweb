@@ -1,5 +1,5 @@
 # Builder for Poetry, its sole task is to generate `requirements.txt`
-FROM python:3.10.8-slim-buster AS builder
+FROM python:3.13.3-slim-bookworm AS builder
 WORKDIR /usr/src/app
 
 # Install Poetry
@@ -9,7 +9,7 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry export --without-hashes --format requirements.txt > requirements.txt
 
 # Python 3.10 image to run the application
-FROM python:3.10.8-slim-buster AS runner
+FROM python:3.13.3-slim-bookworm AS runner
 WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/app/requirements.txt .

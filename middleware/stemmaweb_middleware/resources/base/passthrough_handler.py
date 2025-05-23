@@ -37,7 +37,7 @@ def handle_passthrough_request(
     ) = permission_handler.check(args=args)
 
     # If the user is not allowed to access the requested endpoint, we abort the request
-    if request.method not in allowed_http_methods or len(violations) > 0:
+    if request.method not in allowed_http_methods:
         return abort(
             status=403,
             message="The caller has insufficient permissions "
@@ -49,6 +49,7 @@ def handle_passthrough_request(
 
     # Otherwise, we allow the request to pass through
     try:
+        # This is a requests.Response
         response = client.request(
             path=api_endpoint,
             method=args["method"],
@@ -58,20 +59,36 @@ def handle_passthrough_request(
             # https://stackoverflow.com/questions/47188244/what-is-the-difference-between-the-data-and-json-named-arguments-with-reques#47188297  # noqa: E501
             **{"json" if request.is_json else "data": args["data"]},
         )
+        # Decode the response content
+        content_is_json = False
+        try:
+            content = response.json()
+            content_is_json = True
+        except json.JSONDecodeError:
+            content = response.text
+            content_is_json = False
+        
+        # Transform it if we need to
         if response_transformer is not None:
-            logger.debug("Applying response transformer")
-            response = response_transformer(response)
+            logger.debug("passthrough_handler: Applying response transformer")
+            content = response_transformer(content)
+        # Re-encode it
+        if content_is_json:
+            content = json.dumps(content, ensure_ascii=False)
+        else:
+            content = content.encode('utf-8')
 
         # Patching response headers
         # Needed, since Stemweb returns a Content-Type of "text/html" in some cases
         # even though the response is JSON.
         # Checking and handling this client-side would be tedious, so we do it here.
         mimetype = response.headers.get("Content-Type", None)
-        if __response_content_is_json(response.content):
+        if content_is_json:
             mimetype = "application/json"
 
+        # This is a Flask response
         return Response(
-            response=response.content,
+            response=content,
             status=response.status_code,
             mimetype=mimetype,
         )
