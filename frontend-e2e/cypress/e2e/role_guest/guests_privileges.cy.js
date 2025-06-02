@@ -45,6 +45,16 @@ benutzer@example.org (pw BenutzerKW) has three traditions
 admin@example.org (pw AdminPass) has one tradition
 
     Verbum uncorrected, private
+
+Tests for Feat/157 user auth (PR #235), related to 'guest':
+- Guest sees only public traditions
+- Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
+related to other roles:
+- User sees only public and their own traditions
+- Admin sees all traditions
+- User may change metadata on their own tradition
+- User may not change metadata on traditions they don't own (ideally the edit button wouldn't be there...)
+- Admin may change metadata on any tradition
  */
 
 import test_traditions from '../../fixtures/test_traditions.json';
@@ -53,14 +63,28 @@ beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
 });
 
-// A guest should not be able to ...
+// Guests' rights are restricted to ...
 
-// un-skip when issue solved, re-tag 'issue' to 'passes':
-describe('A guest should not see any private tradition listed in the toc', () => {
-    it.skip('issue #170, #157, #155', () => {
+// ToDo: close github issues  #170, #157, #155 when tests are passing for all roles.
+// Test for Feat/157 user auth (PR #235), related to 'guest':
+describe('Guest sees only public traditions (listed in the toc)', () => {
+    it('passes', () => {
+        // the number of displayed traditions is equal to the number of public traditions
+        const count = test_traditions.filter(({access}) => access === 'Public').length;
+        cy.log("count: " + count);
+        cy.get('ul#traditions-list').children().should('have.length', count);
+
         test_traditions.forEach((tradition) => {
-            if (tradition.access == "Private") {
+            if (tradition.access == "Public") {
+                // It should be the public traditions' titles which are displayed
+                cy.log("title: " + tradition.title);
+                cy.get('#traditions-list').contains(tradition.title).should('be.visible');
+            }
+            else if (tradition.access == "Private") {
                 cy.get('#traditions-list').contains(tradition.title).should('not.exist');
+            }
+            else {
+                throw new Error("The tradition is neither 'Private' nore 'Public'!")
             }
         });
     });
@@ -125,24 +149,6 @@ describe('A guest should not be offered to edit Properties', () => {
 
 
 // A guest should be able to ...
-
-// un-skip when issue solved, re-tag 'issue' to 'passes':
-describe('A guest should see all public traditions listed in the toc, and only those', () => {
-    it.skip('issue #170, #157', () => {
-        // the number of displayed traditions should be equal to the number of public traditions
-        // const count = test_traditions.length; // all traditions
-        const count = test_traditions.filter(({access}) => access === 'Public').length;
-        cy.log("count: " + count);
-        cy.get('ul#traditions-list').children().should('have.length', count);
-
-        // It should be the public traditions' titles which are displayed
-        // test_traditions.forEach((tradition) => { // all traditions
-        test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
-            cy.log("title: " + tradition.title);
-            cy.get('ul#traditions-list').contains(tradition.title).should('be.visible');
-        });
-    });
-});
 
 describe('A guest should be offered to download a public "Tradition"', () => {
     it('passes', () => {
