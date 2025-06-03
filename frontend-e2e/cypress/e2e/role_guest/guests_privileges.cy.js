@@ -47,7 +47,7 @@ admin@example.org (pw AdminPass) has one tradition
     Verbum uncorrected, private
 
 Tests for Feat/157 user auth (PR #235), related to 'guest':
-- Guest sees only public traditions
+- DONE: Guest sees only public traditions
 - Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
 related to other roles:
 - User sees only public and their own traditions
@@ -140,10 +140,28 @@ describe('A guest should not be offered to "Edit Collation" of any tradition', (
     });
 });
 
-// un-skip when issue solved, re-tag 'issue' to 'passes':
-describe('A guest should not be offered to edit Properties', () => {
-    it.skip('issue #170, #157', () => {
-        cy.get('#sidebar-properties').find('h6').find('svg').should('not.be.visible');
+// Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
+// ToDo: close github issues  #170 and #157 when tests are passing for all roles.
+describe('Guest may not change any metadata', () => {
+    /* At the moment: edit-properties-button is visible,
+    in human interface, it is clickable and 
+    when trying to save changes, it is prevented, giving the message: "Error: You need to be logged in to edit a tradition".
+    But in cypress, even in headed mode, clicking on the button or its descendents leads to
+    "(uncaught exception)TypeError: Cannot read properties of null (reading 'id')"
+    if catching the exception, the click does not result in opening the edit panel, so the behaviour cannot be tested.
+    The edit button should not be visible anyways, so this test is skipped until the edit button is disabled.
+    Then it only needs to be tested that the edit buttun is invisible or disabled. */
+    it.skip('under construction', () => {
+        // cy.get('property-table-view').find('edit-properties-button').find('svg').should('not.be.visible')
+
+        // As long as the edit button is visible and not disabled, guest should still not be able to change the tradition's properties.
+        cy.get('property-table-view').find('h6').find('svg').should('be.visible').as('btn') //.click()
+        // cy.once('uncaught:exception', (err) => {
+        //     if (err.message.includes('Cannot read properties of null')) {
+        //         return false
+        //     }
+        // })
+        cy.get('@btn').click()
     });
 });
 
