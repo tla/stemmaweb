@@ -96,10 +96,8 @@ function sortPrivatePublicThenAlphabetical( tradition_a, tradition_b ) {
   tradition_a.is_public == true ? a=1 : a=0;
   tradition_b.is_public == true ? b=1 : b=0;
   if( a < b ) {
-    console.log( '-1' );
     return -1;
   } else if( a > b ) { 
-    console.log( '1' );
     return 1;
   }
   // If there is no sorting resolution at this point
