@@ -92,20 +92,34 @@ class TraditionList extends HTMLElement {
         const traditionListItem = document.createElement( 'li' );
         traditionListItem.setAttribute( 'class', 'nav-item' );
         const selected = TRADITION_STORE.state.selectedTradition.id == tradition.id ? ' selected' : '';
+        var accessIcon = '\n';
+        if( !tradition.is_public ){
+            traditionListItem.classList.add( 'private' );
+            accessIcon = `\n<div class="access-icon">${privateAccessIcon}</div>`;
+        } else {
+            traditionListItem.classList.add( 'public' );
+        }
         traditionListItem.innerHTML = `
             <div class="tradition-list-item d-flex">
-                <div class="folder-icon${selected}" trad-id="${tradition.id}" class="">${folderIcon}</div>
+                <div class="folder-icon${selected}" trad-id="${tradition.id}">${folderIcon}</div>
                 <div>
                     <a href="api/tradition/${tradition.id}" trad-id="${tradition.id}" class="nav-link">
                         <span class="tradition-nav-name">${tradition.name}</span>
                     </a>
-                </div>
+                </div>${accessIcon}                
             </div>
             <div>
                 <section-list trad-id="${tradition.id}" class="collapse"></section-list>
             </div>`
         traditionListItem.querySelector( 'div div a' ).addEventListener( 'click', (evt) => { this.selectTradition( evt, tradition ) } );
         traditionListItem.querySelector( 'div div.folder-icon' ).addEventListener( 'click', () => { this.toggleSectionList( tradition ) } );
+        return traditionListItem;
+    }
+
+    createListSeparator() {
+        const traditionListItem = document.createElement( 'li' );
+        traditionListItem.setAttribute( 'class', 'nav-item' );
+        traditionListItem.innerHTML = '<div class="list-separator d-flex"></div>';
         return traditionListItem;
     }
 
@@ -120,7 +134,26 @@ class TraditionList extends HTMLElement {
             <ul id="traditions-list" class="nav flex-column mb-2"></ul>
         `
         const traditionListElement = this.querySelector( 'ul' );
-        traditions.forEach( (tradition) => traditionListElement.appendChild( this.createTraditionListItem( tradition ) ) );
+
+        // Add private traditions to the list first.
+        traditions.forEach( (tradition) => {
+            if( !tradition.is_public ){
+                traditionListElement.appendChild( this.createTraditionListItem( tradition ) )
+            };
+        } )
+
+        // If there are any private traditions, add a list separator.
+        if( traditionListElement.querySelector( 'li' ) ) {
+            traditionListElement.appendChild( this.createListSeparator() );
+        }
+        
+        // Lastly, add the public traditions.
+        traditions.forEach( (tradition) => {
+            if( tradition.is_public ){
+                traditionListElement.appendChild( this.createTraditionListItem( tradition ) )
+            };
+        } )
+        
     }
 
 }

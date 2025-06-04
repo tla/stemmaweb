@@ -446,6 +446,15 @@ li.nav-item {
   padding-right: 0.5em;
 }
 
+.access-icon {
+  padding-left: 0.5em;
+}
+
+.access-icon .feather {
+  width: 14px;
+  height: 14px;
+}
+
 ul#traditions-list {
   margin-top: 1.2em;
 }
@@ -456,6 +465,10 @@ ul#traditions-list a {
 
 ul#traditions-list .folder-icon.selected svg {
   fill: #cfdcee;
+}
+
+ul#traditions-list .list-separator {
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 section-list ul {

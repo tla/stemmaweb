@@ -19,6 +19,8 @@ const d3 = libraries.lib_d3;
 const feather = libraries.lib_Feather; 
 const textIcon = feather.icons['file-text'].toSvg();
 const folderIcon = feather.icons['folder'].toSvg();
+const publicAccessIcon = feather.icons['unlock'].toSvg();
+const privateAccessIcon = feather.icons['lock'].toSvg();
 
 /** @type {import('bootstrap')} */
 const bootstrap = libraries.lib_bootstrap;
