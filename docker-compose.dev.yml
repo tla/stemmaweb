@@ -1,0 +1,68 @@
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: mariadb
+    environment:
+      ## Set the MySQL main user to be stemmaweb; 
+      ## user stemweb and its DB will be set up
+      ## in the relevant initdb script.
+      - MARIADB_USER=stemweb
+      - MARIADB_PASSWORD=StemWeb-DevPassWord
+      - MARIADB_DATABASE=stemwebdb_v1
+      - MARIADB_RANDOM_ROOT_PASSWORD=yes
+    networks:
+      - backend
+    
+  redis:
+    image: redis:alpine
+    container_name: redis
+    sysctls:
+      net.core.somaxconn: 512     # maximal number of connections
+    command:
+        redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./dev/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - backend
+
+  stemweb-py37:
+    image: dhuniwien/stemweb_py37:latest
+    container_name: stemweb
+    environment:
+      - STEMWEB_DBHOST=mariadb
+      - STEMWEB_DBPASS=StemWeb-DevPassWord
+      - STEMWEB_DBENGINE=mysql
+    volumes:
+      - ./dev/stemweb/local_settings.py:/home/stemweb/Stemweb/local_settings.py
+    depends_on:
+      - mariadb
+      - redis
+    networks:
+      - backend
+
+  stemmarest:
+    image: "dhuniwien/stemmarest:latest"
+    container_name: stemmarest
+    ports:
+      - 127.0.0.1:8080:8080
+    networks:
+      - backend
+
+  stemmaweb:
+    container_name: stemmaweb
+    build: 
+      context: .
+    command: bash -c "sleep 10; script/n4jtestdb.pl && script/stemmaweb_server.pl"
+    depends_on:
+      - stemmarest
+    volumes:
+      - ./stemmaweb-docker.conf:/var/www/stemmaweb/stemmaweb.conf
+    ports:
+      - 127.0.0.1:3000:3000
+    networks:
+      - backend
+
+
+networks:
+  backend:
+    driver: bridge

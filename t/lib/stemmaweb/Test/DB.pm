@@ -117,6 +117,7 @@ sub new_db {
 	$res = $ua->post( "$n4jurl/tradition/$t1id/stemma", 'Content-Type' => 'application/json',
 	  Content => to_json({ dot => filejstr("$datadir/besoin_stemweb.dot") }));
 	die errorout("Besoin stemma could not be added", $res) unless $res->code == 201;
+	say("$t1id: Notre Besoin");
 
 	# 1a. TODO something owned by the OpenID user
 
@@ -136,6 +137,7 @@ sub new_db {
 	$res = $ua->post( "$n4jurl/tradition/$t2id/stemma", 'Content-Type' => 'application/json',
 	  Content => to_json({ dot => filejstr("$datadir/florilegium.dot") }));
 	die errorout("Florilegium stemma could not be added", $res) unless $res->code == 201;
+	say("$t2id: Florilegium");
 
 	# 3. John verse
 	my $t3data = [
@@ -149,8 +151,9 @@ sub new_db {
 	];
 	$res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t3data);
 	die errorout("John verse tradition could not be created", $res) unless $res->code == 201;
-	push(@{$created->{public}}, djson( $res )->{tradId});
-
+	my $t3id = djson( $res )->{tradId};
+	push(@{$created->{public}}, $t3id);
+	say("$t3id: John verse");
 
 	# 4. Sapientia / collation correction
 	my $t4data = [
@@ -163,7 +166,9 @@ sub new_db {
 	];
 	$res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t4data);
 	die errorout("Sapientia tradition could not be created", $res) unless $res->code == 201;
-	push(@{$created->{public}}, djson( $res )->{tradId});
+	my $t4id = djson( $res )->{tradId};
+	push(@{$created->{public}}, $t4id);
+	say("$t4id: Sapientia");
 
 	# 5. Arabic snippet
 	my $t5data = [
@@ -176,7 +181,9 @@ sub new_db {
 	];
 	$res = $ua->post( "$n4jurl/tradition", 'Content-Type' => 'form-data', Content => $t5data);
 	die errorout("RTL test tradition could not be created", $res) unless $res->code == 201;
+	my $t5id = djson( $res )->{tradId};
 	push(@{$created->{private}}, djson( $res )->{tradId});
+	say("$t5id: Arabic snippet");
 
 	# 6. A multi-section tradition
 	my $t6data = [
@@ -198,6 +205,7 @@ sub new_db {
 	];
 	$res = $ua->post( "$n4jurl/tradition/$t6id/section", 'Content-Type' => 'form-data', Content => $t6data);
 	die errorout("Second half of multi-section tradition could not be created", $res) unless $res->code == 201;
+	say("$t6id: Legend segments");
 	say("Test data setup complete.");
 	return $created;
 }

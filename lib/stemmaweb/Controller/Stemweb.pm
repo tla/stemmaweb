@@ -11,7 +11,7 @@ use Safe::Isa;
 use Scalar::Util qw/ looks_like_number /;
 use stemmaweb::Controller::Util
   qw/ load_tradition stemma_info json_error json_bool section_metadata /;
-use stemmaweb::Model::StemmaUtil qw/ character_input phylip_pars /;
+use stemmaweb::Model::StemmaUtil qw/ character_input phylip_pars parse_neighbournet /;
 use TryCatch;
 use URI;
 
@@ -21,6 +21,11 @@ has stemweb_url => (
     is      => 'ro',
     isa     => 'Str',
     default => 'http://slinkola.users.cs.helsinki.fi',
+);
+
+has return_host => (
+    is      => 'ro',
+    isa     => 'Str',
 );
 
 has pars_path => (
@@ -189,23 +194,44 @@ sub _process_stemweb_result {
         return _json_error($c, 400,
             "No tradition found with ID " . $answer->{textid});
     }
+    $c->log->debug("first");
     if ($answer->{status} == 0) {
         my @stemmata;
-        # Get the resulting Newick trees, separate them and give them names
-        my $newickspecs = {};
+        my @requests;
         my $title = sprintf("%s %d", $answer->{algorithm}, str2time($answer->{start_time}));
-        my $ct = 0;
-        foreach my $tree (split(/\s*;\s*/, $answer->{result})) {
-            $newickspecs->{$title . "_$ct"} = "$tree;";
-        }
+        $c->log->debug("second");
         if (exists($textinfo->{stemweb_jobid})
             && $textinfo->{stemweb_jobid} eq $answer->{jobid}) {
-            foreach my $s (keys %$newickspecs) {
+            # This text has the right job ID and is apparently still waiting for an answer. Proceed.
+
+            if ($answer->{algorithm} eq 'Neighbour Net') {
+                # Neighbour Net returns a graph spec, not a Newick tree. Parse it into a dotfile for upload.
+                # n.b. as far as I know only one graph gets returned... 
+                my $stemweb_result = JSON::decode_json($answer->{result});
+                my $dotspec = parse_neighbournet($stemweb_result, $title);
+                $c->log->debug("Parsed into dotfile: $dotspec");
                 my $req = {
-                    identifier => $s,
-                    newick => $newickspecs->{$s},
+                    identifier => $title,
+                    dot => $dotspec,
                     from_jobid => $answer->{jobid}
                 };
+                push(@requests, $req);
+            } else {
+                # This is a RHM or Neighbour Joining result, in Newick format.
+                # Get the resulting Newick trees, separate them and give them names
+                my $ct = 0;
+                foreach my $tree (split(/\s*;\s*/, $answer->{result})) {
+                    my $req = {
+                        identifier => $title . "_$ct",
+                        newick => "$tree;",
+                        from_jobid => $answer->{jobid}
+                    };
+                    $ct++;
+                    push(@requests, $req);
+                }
+            }
+            # Post each of the new-stemma requests in turn.
+            foreach my $req (@requests) {
                 try {
                     my $returned = $m->ajax(
                         'post', "/tradition/$textid/stemma",
@@ -247,8 +273,9 @@ sub _process_stemweb_result {
             $c->stash->{'result'} = { status => 'notfound' };
         }
     } elsif ($answer->{status} == 1 || $answer->{status} == -1) {
-
+        $c->log->debug("third");
         # 1 means running, -1 means waiting to run. Either way, 'not ready'.
+        $c->log->debug("Still waiting on the stemma(ta)... ");
         $c->stash->{'result'} = { 'status' => 'running' };
     } else {
 
@@ -332,6 +359,9 @@ sub request :Local :Args(0) {
 
         # Form the request for Stemweb.
         my $return_uri = URI->new($c->uri_for('/stemweb/result'));
+        if ($self->return_host) {
+            $return_uri->host($self->return_host);
+        }
         my $stemweb_request = {
             return_path => $return_uri->path,
             return_host => $return_uri->host_port,

@@ -14,7 +14,7 @@ use Graph::Reader::Dot;
 use IPC::Run qw/ run binary /;
 use stemmaweb::Error;
 @EXPORT_OK = qw/ read_graph display_graph editable_graph
-	character_input phylip_pars parse_newick /;
+	character_input phylip_pars parse_neighbournet parse_newick /;
 
 =head1 NAME
 
@@ -288,6 +288,36 @@ sub phylip_pars {
         push( @error, "Neither outtree nor output file was produced!" );
     }
     throw( join( '', @error ) );
+}
+
+=head2 parse_neighbournet( $graphspec, $graphname )
+
+Parses the given JSON result from a NeighbourNet run into a StemmaRest dot format.
+
+=cut
+
+sub parse_neighbournet {
+	my ($graphspec, $graphname) = @_;
+	my $graphtype = 'graph';
+	my $connector = '--';
+	if ($graphspec->{directed}) {
+		$graphtype = 'digraph';
+		$connector = '->';
+	} 
+	my $dotstr = "$graphtype \"$graphname\" {";
+	foreach my $n (@{$graphspec->{'nodes'}}) {
+		# Assume that alphabetic node labels are extant, and numeric ones are hypothetical
+		my $nodeid = $n->{'id'};
+		my $nodetype = $nodeid =~ /^\d+$/ ? 'hypothetical' : 'extant';
+		$dotstr .= "\t\"$nodeid\" [class=$nodetype];\n";
+	}
+	foreach my $e (@{$graphspec->{'links'}}) {
+		my $src = $e->{'source'};
+		my $tgt = $e->{'target'};
+		$dotstr .= "\t\"$src\" $connector \"$tgt\";\n";
+	}
+	$dotstr .= "}\n";
+	return $dotstr;
 }
 
 =head2 parse_newick( $newick_string )
