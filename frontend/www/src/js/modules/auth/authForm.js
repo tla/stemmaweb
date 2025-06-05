@@ -105,6 +105,7 @@ class LoginForm extends HTMLElement {
       const user = response.data;
       delete user.passphrase;
       AUTH_STORE.setUser(user);
+      initState();
       AuthModal.close();
     } else {
       // The server responded, but does not allow a login

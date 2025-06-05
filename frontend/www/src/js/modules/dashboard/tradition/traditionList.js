@@ -146,7 +146,7 @@ class TraditionList extends HTMLElement {
         if( traditionListElement.querySelector( 'li' ) ) {
             traditionListElement.appendChild( this.createListSeparator() );
         }
-        
+
         // Lastly, add the public traditions.
         traditions.forEach( (tradition) => {
             if( tradition.is_public ){

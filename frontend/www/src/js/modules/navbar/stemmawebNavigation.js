@@ -26,7 +26,8 @@ class StemmawebNavigation extends HTMLElement {
   static logoutUser() {
     stemmawebNavigationService
       .logoutUser()
-      .then(() => AUTH_STORE.setUser(null))
+      .then( () => AUTH_STORE.setUser( null ) )
+      .then( initState )
       .catch(console.error);
   }
 
