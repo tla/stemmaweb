@@ -11,7 +11,9 @@ const editPropertiesService = stemmarestService;
 class EditProperties extends HTMLElement {
   constructor() {
     super();
-    this.addEventListener('click', this.showDialog);
+    this.addEventListener( 'click', () => {
+      this.showDialog();
+    } );
   }
 
   /**
@@ -48,27 +50,29 @@ class EditProperties extends HTMLElement {
   }
 
   showDialog() {
-    const metaItems = PropertyTableView.sortedMetaItems(
-      EditProperties.metadataFromTradition( STEMMA_STORE.state.tradition )
-    );
-    const modal_body = `
-            <form
-            id="edit-tradition-properties-form"
-            class="needs-validation"
-            novalidate=""
-            >
-            ${ metaItems.map( formControlFactory.renderFormControl ).join( '\n' ) }
-            </form>
-        `;
-    StemmawebDialog.show(
-      'Edit properties',
-      modal_body,
-      { onOk: this.processForm },
-      {
-        okLabel: 'Save',
-        elemStyle: this.#createDialogStyle()
-      }
-    );
+    if( userIsOwner() ) {
+      const metaItems = PropertyTableView.sortedMetaItems(
+        EditProperties.metadataFromTradition( STEMMA_STORE.state.tradition )
+      );
+      const modal_body = `
+              <form
+              id="edit-tradition-properties-form"
+              class="needs-validation"
+              novalidate=""
+              >
+              ${ metaItems.map( formControlFactory.renderFormControl ).join( '\n' ) }
+              </form>
+          `;
+      StemmawebDialog.show(
+        'Edit properties',
+        modal_body,
+        { onOk: this.processForm },
+        {
+          okLabel: 'Save',
+          elemStyle: this.#createDialogStyle()
+        }
+      );
+    }
   }
 
   /**
@@ -128,9 +132,13 @@ class EditProperties extends HTMLElement {
   }
 
   render() {
+    var styleClasses = [ 'link-secondary', 'greyed-out' ];
+    if( userIsOwner() ) {
+      styleClasses.pop();
+    }    
     this.innerHTML = `
             <a
-            class="link-secondary"
+            class="${styleClasses.join(' ')}"
             href="#"
             aria-label="Edit tradition properties"
             >

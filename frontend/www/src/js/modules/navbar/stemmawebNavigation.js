@@ -27,8 +27,14 @@ class StemmawebNavigation extends HTMLElement {
     stemmawebNavigationService
       .logoutUser()
       .then( () => AUTH_STORE.setUser( null ) )
-      .then( initState )
-      .catch(console.error);
+      .then( () => { 
+        initState();
+        document.querySelector( 'edit-properties-button' ).render();
+        document.querySelector( 'edit-section-properties-button' ).render();
+        document.querySelector( 'delete-section-button' ).render();
+        document.querySelector( 'text-directory' ).render();
+      } )
+      .catch( console.error );
   }
 
   /** @param {import('@types/stemmaweb').StemmawebUserState} user */

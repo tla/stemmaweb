@@ -228,7 +228,7 @@ class AddTraditionModal extends HTMLElement {
     const selectOptions = TRADITION_STORE.state.availableTraditions.map( this.#traditionAsSelectOption ).join('\n');
     return selectOptions;
   }
-//#add_tradition_modal.modal.fade div.modal-dialog 
+
   render() {
     this.innerHTML = `
       <div
@@ -394,4 +394,5 @@ class AddTraditionModal extends HTMLElement {
     `;
   }
 }
+
 customElements.define('add-tradition-modal', AddTraditionModal);

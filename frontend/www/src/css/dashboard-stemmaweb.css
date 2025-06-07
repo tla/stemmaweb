@@ -164,6 +164,11 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
   overflow-y: scroll;
 }
 
+text-directory {
+  width: 100%; 
+  display: flex; 
+  justify-content: space-between;
+}
 
 /* 
  * Stemma buttons
@@ -195,7 +200,10 @@ edit-stemma-buttons {
 }
 
 
-edit-stemma-buttons a.greyed-out div {
+edit-stemma-buttons a.greyed-out div, 
+edit-properties-button a.greyed-out span,
+edit-section-properties-button a.greyed-out span,
+text-directory a.greyed-out span {
   color: #ccc;
 }
 
@@ -503,9 +511,13 @@ social-login-options .btn {
   font-size: calc( var(--bs-btn-font-size) * 4);
 }
 
-delete-section-button .btn-outline-danger, delete-relation-type-button .btn-outline-danger  {
+delete-section-button .btn-outline-danger, delete-relation-type-button .btn-outline-danger {
   color: var(--bs-btn-color);
   padding-right: 0.5em;
+}
+
+delete-section-button a.greyed-out .btn-outline-danger  {
+  color: #ccc;
 }
 
 #message-console-text-panel {

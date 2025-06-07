@@ -13,9 +13,10 @@ class EditStemma extends HTMLElement {
     super();
     this.buttonAction = null;
     // We may encounter the situation where there is no stemma (anymore).
-    // In which case we gery out the edit and delete stemma buttons.
+    // It may also be that the user is not the owner.
+    // In both cases we grey out the edit and delete stemma buttons, and in the latter also the add button.
     STEMMA_STORE.subscribe( ( state ) => {
-      this.greyOut();
+        this.greyOut();
     } );
   }
 
@@ -270,17 +271,31 @@ class EditStemma extends HTMLElement {
   }
 
   greyOut() {
-    var classAction = '';
-    ( STEMMA_STORE.state.availableStemmata.length > 0 ) ? classAction = 'remove' : classAction = 'add';
-    const editAndDeleteStemmaButtonLinkElement = [
-      document.querySelector( '#edit-stemma-button-link' ),
-      document.querySelector( '#delete-stemma-button-link' )
-    ]
-    editAndDeleteStemmaButtonLinkElement.forEach( (elem) => {
-        if( elem ) {
-        elem.classList[classAction]( 'greyed-out' );
-        }
-    } );
+    if( userIsOwner() ) {
+      var classAction = '';
+      ( STEMMA_STORE.state.availableStemmata.length > 0 ) ? classAction = 'remove' : classAction = 'add';
+      const editAndDeleteStemmaButtonLinkElement = [
+        document.querySelector( '#edit-stemma-button-link' ),
+        document.querySelector( '#delete-stemma-button-link' )
+      ]
+      editAndDeleteStemmaButtonLinkElement.forEach( (elem) => {
+          if( elem ) {
+            elem.classList[classAction]( 'greyed-out' );
+          }
+      } );
+      document.querySelector( '#add-stemma-button-link' ).classList.remove( 'greyed-out' );
+    } else {
+      const editAndDeleteStemmaButtonLinkElement = [
+        document.querySelector( '#edit-stemma-button-link' ),
+        document.querySelector( '#add-stemma-button-link' ),
+        document.querySelector( '#delete-stemma-button-link' )
+      ]
+      editAndDeleteStemmaButtonLinkElement.forEach( (elem) => {
+          if( elem ) {
+            elem.classList.add( 'greyed-out' );
+          }
+      } );
+    }
   }
 
   render() {
@@ -292,34 +307,28 @@ class EditStemma extends HTMLElement {
       <div id="edit-stemma-buttons-right">      
         <a
           id="edit-stemma-button-link"
-          class="link-secondary"
-          href="#"
-          aria-label="Edit this stemma">
+          class="link-secondary" href="#" aria-label="Edit this stemma">
             <div>
               ${feather.icons['edit'].toSvg()}
             </div>
         </a>
         <a
-          id="add-stemma-button-link"
-          class="link-secondary"
-          href="#"
-          aria-label="Add a stemma to this tradition">
+          id="add-stemma-button-link" class="link-secondary" href="#" aria-label="Add a stemma to this tradition">
             <div>
               ${feather.icons['plus-circle'].toSvg()}
             </div>
         </a>
         <a
-          id="delete-stemma-button-link"
-          class="link-secondary"
-          href="#"
-          aria-label="delete this stemma">
+          id="delete-stemma-button-link" class="link-secondary" href="#" aria-label="delete this stemma">
             <div class="delete-stemma-danger">
               ${feather.icons['trash'].toSvg()}
             </div>
         </a>
       </div>
     `;
-    this.greyOut();
+    if( userIsOwner() ) {
+      this.greyOut();
+    }
     this.addEditStemmaButtonListeners();
   }
 
