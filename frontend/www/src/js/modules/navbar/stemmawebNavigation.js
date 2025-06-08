@@ -20,7 +20,7 @@ class StemmawebNavigation extends HTMLElement {
   }
 
   render() {
-    this._render(AUTH_STORE.state.user);
+    this._render( AUTH_STORE.state.user );
   }
 
   static logoutUser() {
@@ -30,8 +30,11 @@ class StemmawebNavigation extends HTMLElement {
       .then( () => { 
         initState();
         document.querySelector( 'edit-properties-button' ).render();
-        document.querySelector( 'edit-section-properties-button' ).render();
-        document.querySelector( 'delete-section-button' ).render();
+        const editSectionPropertiesButtonElement = document.querySelector( 'edit-section-properties-button' )
+        if( editSectionPropertiesButtonElement ){ 
+          editSectionPropertiesButtonElement.render();
+          document.querySelector( 'delete-section-button' ).render();
+        }
         document.querySelector( 'text-directory' ).render();
       } )
       .catch( console.error );

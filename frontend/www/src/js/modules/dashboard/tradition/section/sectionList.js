@@ -23,7 +23,7 @@ class SectionList extends HTMLElement {
         this.addEventListener( 'sectionAppended', this.rerenderList );
         this.addEventListener( 'sectionDeleted', this.rerenderList );
         const traditionId = this.getAttribute( 'trad-id' );
-        SECTION_STORE.subscribe( ( state, prevState ) => {
+        SECTION_STORE.subscribe( ( prevState, state ) => {
             // IF this is me…
             if( TRADITION_STORE.state.selectedTradition.id == traditionId ) {
                 // AND if this is not a first time load…
@@ -31,9 +31,9 @@ class SectionList extends HTMLElement {
                     // AND if this is some update concerning the currently selected Section…
                     if( state.selectedSection.id == prevState.selectedSection.id ) {
                         // AND if this is a name change…
-                        // well, THEN we do something (i.e. change the name in the Tradion/Section tree view).
+                        // well, THEN we do something (i.e. change the name in the Tradition/Section tree view).
                         if( state.selectedSection.name != prevState.selectedSection.name ) {
-                            this.querySelector( `ul li div[sect-id="${state.selectedSection.id}"] span` ).innerHTML = prevState.selectedSection.name;
+                            this.querySelector( `ul li div[sect-id="${state.selectedSection.id}"] span` ).innerHTML = state.selectedSection.name;
                         };
                     };
                 };

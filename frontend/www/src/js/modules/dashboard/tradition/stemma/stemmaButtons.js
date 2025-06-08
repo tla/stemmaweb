@@ -26,7 +26,8 @@ class StemmaButtons extends HTMLElement {
     document.querySelector( '#delete-tradition-button' ).addEventListener( 'click', this.handleDelete );
 
     SECTION_STORE.subscribe( this.toggleEditCollationButtonActive );
-
+    TRADITION_STORE.subscribe( ( state ) => { this.greyOut(); } );
+    
     fadeIn( this );
   }
 
@@ -45,6 +46,20 @@ class StemmaButtons extends HTMLElement {
         editCollationButtonElement.classList.add( 'disabled' );
       }
     }
+  }
+
+  /**
+   * This should take care of correctly greying out buttons of this
+   * component when a user logs in or out.
+   */
+  greyOut() {
+    const buttonIds = [ 'run-stemweb-button', 'edit-collation-button', 'delete-tradition-button' ];
+    buttonIds.forEach( (buttonId) => {
+      document.querySelector( `#${buttonId}` ).classList.remove( 'disabled' );
+      if( !userIsOwner() ){
+        document.querySelector( `#${buttonId}` ).classList.add( 'disabled' );
+      }
+    } );
   }
 
   setView( evt ) {
@@ -217,7 +232,7 @@ class StemmaButtons extends HTMLElement {
         <button id="view-stemmata-button" type="button" class="btn btn-sm btn-outline-secondary selected-view">
           View stemmata
         </button>
-        <button id="run-stemweb-button" type="button" class="btn btn-sm btn-outline-secondary">
+        <button id="run-stemweb-button" type="button" class="btn btn-sm btn-outline-secondary disabled">
           Run Stemweb
         </button>
         <button type="button" class="btn btn-sm btn-outline-secondary disabled">
@@ -253,7 +268,7 @@ class StemmaButtons extends HTMLElement {
         </div>
       </div>
       <div class="btn-group ms-2">
-        <button id="delete-tradition-button" type="button" class="btn btn-sm btn-outline-danger">
+        <button id="delete-tradition-button" type="button" class="btn btn-sm btn-outline-danger disabled">
           <span data-feather="trash"></span>
           Delete
         </button>
@@ -262,4 +277,5 @@ class StemmaButtons extends HTMLElement {
     `;
   }
 }
+
 customElements.define('stemma-buttons', StemmaButtons);
