@@ -70,9 +70,14 @@ class SectionList extends HTMLElement {
     connectedCallback() {
         this.render();
         this.populate();
-        this.mysort = libraries.lib_Sortable.Sortable.create( 
-            this.querySelector( 'ul' ), 
+        // this.makeSortable();
+    }
+
+    makeSortable( instance ) {
+        instance.mysort = libraries.lib_Sortable.Sortable.create( 
+            instance.querySelector( 'ul' ), 
             { 
+                disabled: this.disabledState(), 
                 onStart: (evt) => { this.toggleHighlightDragged( evt, evt.oldIndex ) },
                 onEnd: (evt) => { this.toggleHighlightDragged( evt, evt.newIndex ) },
                 onUpdate: (evt) => { 
@@ -94,6 +99,18 @@ class SectionList extends HTMLElement {
         );
     }
 
+    disabledState() {
+        const thisTradition = TRADITION_STORE.state.availableTraditions.find( 
+            (tradition) => { return tradition.id == this.getAttribute( 'trad-id' ) } 
+        );
+        var stateValue;
+        if( thisTradition ){
+            stateValue = ( thisTradition.owner != ( AUTH_STORE.state.user && AUTH_STORE.state.user.id ) ) ? true : false; 
+        }
+        return stateValue;
+    }
+
+
     /**
      * Fetches sections for a tradition and iterates over them 
      * to create a sections list.
@@ -111,7 +128,7 @@ class SectionList extends HTMLElement {
                 } else {
                     StemmawebAlert.show(`Error: ${resp.message}`, 'danger');
                 }
-            });
+            }).then( () => { this.makeSortable( this ) } );
     }
 
     /**

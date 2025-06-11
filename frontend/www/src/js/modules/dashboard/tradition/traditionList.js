@@ -27,12 +27,21 @@ class TraditionList extends HTMLElement {
         // Listen for any state change regarding traditions.
         TRADITION_STORE.subscribe( ( prevState, state ) => {
             // We ignore any state change except when traditions are fetched for the 
-            // very first time. Re-rendering the navigation tree is rather pointless.
+            // very first time. Re-rendering the navigation tree is rather pointless,
+            // and a potential memory leak on top of that.
             if ( prevState.selectedTradition == null ) {
                 this.render( state.availableTraditions );
             } else {
                 // The case when a tradition was deleted or added.
                 if ( prevState.availableTraditions.length !=  state.availableTraditions.length ) {
+                    // TODO: this really shouldn't rerender, because it adds eventListeners
+                    // and sectionLists (and their eventListeners) with each rerender.
+                    // Instead it should really *update* removing the deleted or adding the
+                    // new Tradition.
+                    // We can let is slide for now: checking the console it is clear the 
+                    // innerHTML='' method removes all references to the eventListeners
+                    // which are then garbage collected. Nevertheless we need to clean up after
+                    // ourselves too, no?
                     this.render( state.availableTraditions );
                 }
                 // The case where a name was changed in the metadata.
