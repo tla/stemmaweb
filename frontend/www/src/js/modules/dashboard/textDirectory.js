@@ -2,26 +2,34 @@ class TextDirectory extends HTMLElement {
 
     constructor() {
         super();
-        AUTH_STORE.subscribe( ( state ) => { this.render(); } );
-        this.addEventListener( 'click', () => {
-            if( userIsLoggedIn() ) {
-                bootstrap.Modal.getInstance( document.querySelector( '#add_tradition_modal' ) ).show();
+        TRADITION_STORE.subscribe( ( state ) => {
+            const textDirectoryElementClassList = document.querySelector( 'text-directory a' ).classList;
+            if( userIsOwner() ){
+                if( textDirectoryElementClassList.contains( 'greyed-out' ) ){
+                    textDirectoryElementClassList.remove( 'greyed-out' );
+                    this.addEventListener( 'click', this.clickEventListener );
+                }
+            } else {
+                if( !textDirectoryElementClassList.contains( 'greyed-out' ) ){
+                    textDirectoryElementClassList.add( 'greyed-out' );
+                    this.removeEventListener( 'click', this.clickEventListener );
+                }
             }
-        } );  
+        } );
     }
   
     connectedCallback() {
       this.render();
     }
 
+    clickEventListener() {
+        bootstrap.Modal.getInstance( document.querySelector( '#add_tradition_modal' ) ).show();
+    }
+
     render() {
-        var styleClasses = [ 'link-secondary', 'greyed-out' ];
-        if( userIsLoggedIn() ){
-          styleClasses.pop();
-        }        
         this.innerHTML = `
           <span>Text directory</span>
-            <a class="${styleClasses.join(' ')}" href="#" aria-label="Add a new tradition">
+            <a class="link-secondary greyed-out" href="#" aria-label="Add a new tradition">
                 <span>${feather.icons['plus-circle'].toSvg()}</span>
             </a>
         `;

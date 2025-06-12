@@ -77,7 +77,7 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
   color: rgba(255, 255, 255, 0.7);
 }
 .footer-branding {
-  background-image: url('../../images/logo-light.svg');
+  background-image: url('/stemmaweb/images/logo-light.svg');
   background-position: left bottom;
   background-repeat: no-repeat;
 }

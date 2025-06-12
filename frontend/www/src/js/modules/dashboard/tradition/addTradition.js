@@ -11,6 +11,7 @@ const addTraditionService = stemmarestService;
 class AddTraditionModal extends HTMLElement {
   constructor() {
     super();
+    TRADITION_STORE.subscribe( AddTraditionModal.insertAvailableTraditions );
   }
 
   connectedCallback() {
@@ -34,7 +35,6 @@ class AddTraditionModal extends HTMLElement {
     $('tradition_literal').innerText = 'section';
     $('add_tradition_partial').classList.remove('hide');
     $('new_section_partial').classList.remove('hide');
-    $('upload_for_tradition').innerHTML = AddTraditionModal.#availableTraditionsAsSelectOptions();
   }
 
   static #hide() {
@@ -220,13 +220,27 @@ class AddTraditionModal extends HTMLElement {
     { value: 'stemmaweb', name: 'Legacy Stemmaweb GraphML' }
   ];
 
-  static #traditionAsSelectOption( tradition ) {
-    return `<option value="${tradition.id}">${tradition.name}</option>`
+  static #traditionAsSelectOption( reduced, tradition ) {
+    var selected = '';
+    if( AUTH_STORE.state.user && ( tradition.owner == AUTH_STORE.state.user.id ) ){ 
+      if( TRADITION_STORE.state.selectedTradition.id == tradition.id ){
+        selected = ' selected';
+      }
+      reduced.push( `<option value="${tradition.id}"${selected}>${tradition.name}</option>` );
+    }
+    return reduced;
   }
 
   static #availableTraditionsAsSelectOptions() {
-    const selectOptions = TRADITION_STORE.state.availableTraditions.map( this.#traditionAsSelectOption ).join('\n');
-    return selectOptions;
+    const selectOptions = TRADITION_STORE.state.availableTraditions.reduce( this.#traditionAsSelectOption, [] );
+    return selectOptions ? selectOptions.join('\n') : '';
+  }
+
+  static insertAvailableTraditions() {
+    const selectElement = document.querySelector( '#add_tradition_modal #new_section_partial select#upload_for_tradition' );
+    if( selectElement ){
+      selectElement.innerHTML = AddTraditionModal.#availableTraditionsAsSelectOptions();
+    }
   }
 
   render() {
@@ -366,7 +380,7 @@ class AddTraditionModal extends HTMLElement {
                       name="for_tradition"
                       class="form-select"
                       id="upload_for_tradition"
-                    >${AddTraditionModal.#availableTraditionsAsSelectOptions()}</select>
+                    ></select>
                   </div>
 
                   <!-- Shows in either case -->
