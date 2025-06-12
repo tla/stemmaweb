@@ -9,10 +9,17 @@
 const editPropertiesService = stemmarestService;
 
 class EditProperties extends HTMLElement {
+
+  ownerOptions = [];
+
   constructor() {
     super();
     this.addEventListener( 'click', () => {
-      this.showDialog();
+      stemmarestService.listUsers().then( (resp) => {
+        const options = EditProperties.createOwnerOptions( resp.data )
+        EditProperties.ownerOptions = options;
+        this.showDialog();
+      } );
     } );
   }
 
@@ -21,13 +28,46 @@ class EditProperties extends HTMLElement {
    * @returns {MetaItem[]} Array of metadata items to display on a form.
    */
   static metadataFromTradition(tradition) {
-    const metadata = PropertyTableView.metadataFromTradition(tradition);
+    var metadata = PropertyTableView.metadataFromTradition(tradition);
     metadata.push({
       label: PropertyTableView.traditionMetadataLabels.name,
       value: tradition.name,
-      inputOptions: { control: 'text', size: 40, required: true }
+      inputOptions: { 
+        control: 'text', 
+        size: 40, 
+        required: true 
+      }
     });
+    if( userIsAdmin() ){
+      metadata = metadata.map( EditProperties.addOwnerDropDown );
+    }
     return metadata;
+  }
+
+  static addOwnerDropDown( metaItem ){
+    if( metaItem.label == PropertyTableView.traditionMetadataLabels.owner ){
+      return { 
+        ...metaItem, 
+        inputOptions: {
+          control: 'dropdown',
+          selectOptions: EditProperties.ownerOptions,
+          selected: TRADITION_STORE.state.selectedTradition.owner
+        } 
+      }
+    } else {
+      return metaItem;
+    }
+  }
+
+  static createOwnerOptions( responseData ){
+    const options = responseData.map( (item) => {
+      return {
+        value: item.id,
+        display: item.email
+      }
+    } );
+    console.log( options );
+    return options;
   }
 
   connectedCallback() {
@@ -89,7 +129,8 @@ class EditProperties extends HTMLElement {
     const language = $('language_input').value || null;
     const direction = $('direction_input').value;
     const isPublic = $('access_input').checked;
-    return { name, language, direction, isPublic };
+    const ownerId = $('owner_input').value;
+    return { ownerId, name, language, direction, isPublic };
   }
 
   /** @returns {Promise} */
@@ -102,8 +143,8 @@ class EditProperties extends HTMLElement {
       const tradId = TRADITION_STORE.state.selectedTradition.id;
       const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
       return editPropertiesService
-        .updateTraditionMetadata( userId, tradId, ...values )
-        .then(EditProperties.#handleUpdateTraditionMetadataResponse);
+        .updateTraditionMetadata( tradId, ...values )
+        .then( EditProperties.#handleUpdateTraditionMetadataResponse );
     } else {
       form.classList.add('was-validated');
       return Promise.resolve({
