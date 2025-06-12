@@ -283,7 +283,10 @@ class EditStemma extends HTMLElement {
             elem.classList[classAction]( 'greyed-out' );
           }
       } );
-      document.querySelector( '#add-stemma-button-link' ).classList.remove( 'greyed-out' );
+      var elem = document.querySelector( '#add-stemma-button-link' );
+      if( elem ){
+        document.querySelector( '#add-stemma-button-link' ).classList.remove( 'greyed-out' );
+      }
     } else {
       const editAndDeleteStemmaButtonLinkElement = [
         document.querySelector( '#edit-stemma-button-link' ),
