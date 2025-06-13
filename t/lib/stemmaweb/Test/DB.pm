@@ -37,9 +37,10 @@ sub errorout {
 
 sub new_db {
 	my $datadir = shift;
-	# Get the URL
-	my $cfg = Config::Any->load_stems({stems => ['stemmaweb'], use_ext => 1})->[0];
-	my $dircfg = $cfg->{'stemmaweb.conf'}->{Model}->{Directory};
+	# Find the config file; default is ./stemmaweb.conf but it might be set via environment variable
+	my $config_file = $ENV{STEMMAWEB_CONFIG} || 'stemmaweb.conf';
+	my $cfg = Config::Any->load_files({files => [$config_file], use_ext => 1})->[0];
+	my $dircfg = $cfg->{$config_file}->{Model}->{Directory};
 	my $n4jurl = URI->new($dircfg->{tradition_repo});
 
 	# Add the users

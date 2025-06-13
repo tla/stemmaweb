@@ -1,0 +1,11 @@
+# start from the bootstrap image
+FROM ghcr.io/tla/stemmaweb-bootstrap:latest
+
+# install the debugging tools
+# or don't - getting installation errors here
+# RUN cpanm --force Perl::LanguageServer
+
+# set up the working files
+WORKDIR /var/www/stemmaweb
+ENV STEMMAWEB_CONFIG=stemmaweb-docker.conf
+ENTRYPOINT ["./script/start_development.sh"]

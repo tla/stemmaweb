@@ -194,12 +194,10 @@ sub _process_stemweb_result {
         return _json_error($c, 400,
             "No tradition found with ID " . $answer->{textid});
     }
-    $c->log->debug("first");
     if ($answer->{status} == 0) {
         my @stemmata;
         my @requests;
         my $title = sprintf("%s %d", $answer->{algorithm}, str2time($answer->{start_time}));
-        $c->log->debug("second");
         if (exists($textinfo->{stemweb_jobid})
             && $textinfo->{stemweb_jobid} eq $answer->{jobid}) {
             # This text has the right job ID and is apparently still waiting for an answer. Proceed.
@@ -273,9 +271,7 @@ sub _process_stemweb_result {
             $c->stash->{'result'} = { status => 'notfound' };
         }
     } elsif ($answer->{status} == 1 || $answer->{status} == -1) {
-        $c->log->debug("third");
         # 1 means running, -1 means waiting to run. Either way, 'not ready'.
-        $c->log->debug("Still waiting on the stemma(ta)... ");
         $c->stash->{'result'} = { 'status' => 'running' };
     } else {
 

@@ -52,11 +52,11 @@ services:
     container_name: stemmaweb
     build: 
       context: .
-    command: bash -c "sleep 10; script/n4jtestdb.pl && script/stemmaweb_server.pl"
+      dockerfile: Dockerfile-dev
     depends_on:
       - stemmarest
     volumes:
-      - ./stemmaweb-docker.conf:/var/www/stemmaweb/stemmaweb.conf
+      - ./:/var/www/stemmaweb/
     ports:
       - 127.0.0.1:3000:3000
     networks:

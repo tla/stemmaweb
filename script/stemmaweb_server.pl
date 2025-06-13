@@ -2,7 +2,10 @@
 
 BEGIN {
     $ENV{CATALYST_SCRIPT_GEN} = 40;
-    $DB::deep = 1000;
+    select STDERR;
+    $| = 1;
+    select STDOUT;
+    $| = 1;
 }
 
 use Catalyst::ScriptRunner;
