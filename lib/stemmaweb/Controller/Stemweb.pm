@@ -197,9 +197,10 @@ sub _process_stemweb_result {
     if ($answer->{status} == 0) {
         my @stemmata;
         my @requests;
+        $c->log->debug("Processing a result from " . $answer->{algorithm} . " run");
         my $title = sprintf("%s %d", $answer->{algorithm}, str2time($answer->{start_time}));
-        if (exists($textinfo->{stemweb_jobid})
-            && $textinfo->{stemweb_jobid} eq $answer->{jobid}) {
+        if ($answer->{algorithm} eq 'pars' || (exists($textinfo->{stemweb_jobid})
+            && $textinfo->{stemweb_jobid} eq $answer->{jobid})) {
             # This text has the right job ID and is apparently still waiting for an answer. Proceed.
 
             if ($answer->{algorithm} eq 'Neighbour Net') {
@@ -219,6 +220,7 @@ sub _process_stemweb_result {
                 # Get the resulting Newick trees, separate them and give them names
                 my $ct = 0;
                 foreach my $tree (split(/\s*;\s*/, $answer->{result})) {
+                    $c->log->debug("Found tree $tree");
                     my $req = {
                         identifier => $title . "_$ct",
                         newick => "$tree;",
@@ -324,6 +326,7 @@ sub request :Local :Args(0) {
     my $algorithm  = delete $reqparams->{algorithm};
     if ($self->_has_pars && $algorithm == 100) {
         $reqparams->{'exclude_layers'} = "true";
+        $c->log->debug("Starting a Pars run");
         my $start_time = scalar(gmtime(time()));
         my $newick;
         try {
@@ -344,6 +347,7 @@ sub request :Local :Args(0) {
             result     => $newick,
             start_time => $start_time
         };
+        $c->log->debug("Sending Pars answer to the processor");
         return _process_stemweb_result($c, $answer);
     } else {
         # Split out TSV generation options from algorithm run options.
