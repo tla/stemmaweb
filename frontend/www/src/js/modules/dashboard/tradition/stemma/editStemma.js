@@ -450,7 +450,7 @@ class EditStemma extends HTMLElement {
           id="cancel-edit-stemma-button-link"
           class="link-secondary"
           href="#"
-          aria-label="Add a stemma to this tradition">
+          aria-label="Cancel edits and close stemma editor">
             <div>
               ${feather.icons['x'].toSvg()}
             </div>

@@ -28,6 +28,14 @@ class StemmawebNavigation extends HTMLElement {
       .logoutUser()
       .then( () => AUTH_STORE.setUser( null ) )
       .then( () => { 
+        // If we are looking at the Rhine delta graph, we need to close that first.
+        if( document.querySelector( '#stemma-editor-graph-container' ).style.opacity == '0' ){
+          document.querySelector( '#view-stemmata-button' ).dispatchEvent( new Event( 'click' ) );
+        }
+        // Or maybe the the stemma editor is open, then we first need to close that.
+        if( document.querySelector( '#stemma-editor-container' ).classList.contains( 'expanded' ) ){
+          document.querySelector( 'edit-stemma-buttons' ).cancelEdits();
+        }
         initState();
         document.querySelector( 'edit-properties-button' ).render();
         const editSectionPropertiesButtonElement = document.querySelector( 'edit-section-properties-button' )
