@@ -8,7 +8,12 @@ class MessageConsole extends HTMLElement {
   connectedCallback() {
     this.render();
   }
-   
+  
+  static reset() {
+    const messageConsoleTextPanel = document.querySelector( '#message-console-text-panel' );
+    messageConsoleTextPanel.innerHTML = '';
+  }
+
   static addMessage( message, type ){
     const messageConsoleTextPanel = document.querySelector( '#message-console-text-panel' );
     var consoleInnerHTML = messageConsoleTextPanel.innerHTML;

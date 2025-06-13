@@ -36,6 +36,8 @@ class StemmawebNavigation extends HTMLElement {
         if( document.querySelector( '#stemma-editor-container' ).classList.contains( 'expanded' ) ){
           document.querySelector( 'edit-stemma-buttons' ).cancelEdits();
         }
+        // Clean out the message console.
+        MessageConsole.reset();
         initState();
         document.querySelector( 'edit-properties-button' ).render();
         const editSectionPropertiesButtonElement = document.querySelector( 'edit-section-properties-button' )
