@@ -58,9 +58,11 @@ class StemmaRenderer {
       .selectAll( '.node' )
       .on( 'click', function (e, d) {
         // If the stemma editor is showing, we don't want re-rooting the stemma to be enabled.
-        if( document.querySelector( '#stemma-selector-container' ).classList.contains( "show" ) ){
-          TraditionView.fetch_rooted( tradition, stemma, d.key );
-          stemmaRenderer.renderStemma( tradition, stemma );
+        if( document.querySelector( '#stemma-selector-buttons' ).classList.contains( "show" ) ){
+          if( userIsOwner() ) {
+            TraditionView.fetch_rooted( tradition, stemma, d.key );
+            stemmaRenderer.renderStemma( tradition, stemma );
+          }
         }
       } );
     Download.set_downloads( stemma.dot );

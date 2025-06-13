@@ -77,7 +77,7 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
   color: rgba(255, 255, 255, 0.7);
 }
 .footer-branding {
-  background-image: url('../../images/logo-light.svg');
+  background-image: url('/stemmaweb/images/logo-light.svg');
   background-position: left bottom;
   background-repeat: no-repeat;
 }
@@ -164,6 +164,11 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
   overflow-y: scroll;
 }
 
+text-directory {
+  width: 100%; 
+  display: flex; 
+  justify-content: space-between;
+}
 
 /* 
  * Stemma buttons
@@ -195,7 +200,10 @@ edit-stemma-buttons {
 }
 
 
-edit-stemma-buttons a.greyed-out div {
+edit-stemma-buttons a.greyed-out div, 
+edit-properties-button a.greyed-out span,
+edit-section-properties-button a.greyed-out span,
+text-directory a.greyed-out span {
   color: #ccc;
 }
 
@@ -446,6 +454,15 @@ li.nav-item {
   padding-right: 0.5em;
 }
 
+.access-icon {
+  padding-left: 0.5em;
+}
+
+.access-icon .feather {
+  width: 14px;
+  height: 14px;
+}
+
 ul#traditions-list {
   margin-top: 1.2em;
 }
@@ -456,6 +473,10 @@ ul#traditions-list a {
 
 ul#traditions-list .folder-icon.selected svg {
   fill: #cfdcee;
+}
+
+ul#traditions-list .list-separator {
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 section-list ul {
@@ -490,9 +511,13 @@ social-login-options .btn {
   font-size: calc( var(--bs-btn-font-size) * 4);
 }
 
-delete-section-button .btn-outline-danger, delete-relation-type-button .btn-outline-danger  {
+delete-section-button .btn-outline-danger, delete-relation-type-button .btn-outline-danger {
   color: var(--bs-btn-color);
   padding-right: 0.5em;
+}
+
+delete-section-button a.greyed-out .btn-outline-danger  {
+  color: #ccc;
 }
 
 #message-console-text-panel {

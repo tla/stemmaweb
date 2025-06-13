@@ -177,12 +177,12 @@ class NodeDensityChart extends HTMLElement {
         const xRatio = xClick/xClickRange;
         relationRenderer.panXRatio = xRatio;
         if ( d.section != SECTION_STORE.state.selectedSection.id ) {
-          console.log( 'ndcdebug: clicked a different section' );
+          debugLog( this, 'Clicked in a different section.' );
           const selectedSection = SECTION_STORE.state.availableSections.filter( (section) => section.id == d.section )[0];
           // This causes TWO rerenders!
           SECTION_STORE.setSelectedSection( selectedSection );
         } else {
-          console.log( 'ndcdebug: clicked in the same section' );
+          debugLog( this, 'Clicked in the same section.' );
           relationRenderer.pan();
         }
       } );
@@ -196,8 +196,7 @@ class NodeDensityChart extends HTMLElement {
   }
 
   showPanPosition( panXRatio, extentRatio ) {
-    console.log( 'ndcdebug: showPanPosition called' );
-
+    debugLog( this, 'Function showPanPosition called.' );
     // Calculate dimensions we will need in any case
     const sectionId = SECTION_STORE.state.selectedSection.id;
     const rectElement = document.querySelector( `#section-rect-${sectionId}` );
@@ -218,14 +217,14 @@ class NodeDensityChart extends HTMLElement {
       rectExtentX = maxX - rectX;
     };
 
-    console.log( rectElement.getAttribute( 'x' ), panXRatio );
-    console.log( 'ndcdebug: rectX:', rectX, 'rectExtentX', rectExtentX, 'minX:', minX, 'width:', width );
+    debugLog( this, `rectElement.getAttribute( 'x' ): ${rectElement.getAttribute( 'x' )}, panXRatio: ${panXRatio}.` );
+    debugLog( this, `rectX: ${rectX}, rectExtentX: ${rectExtentX}, minX: ${minX}, width: ${width}.` );
 
     var indicator = d3.select( '#pan-position-indicator' );
 
     // If there is no indicator yet, put it in
     if( indicator.empty() ) {
-      console.log( 'ndcdebug: putting in the pan indicator' );
+      debugLog( this, 'Putting in the pan indicator.' );
       const height = parseFloat( rectElement.getAttribute( 'height' ) );
       const minimapGElement = d3.select( rectElement.parentElement );
       indicator = minimapGElement.insert( 'rect', '#minimap-chart-line' )
@@ -246,7 +245,7 @@ class NodeDensityChart extends HTMLElement {
     indicator.call( d3.drag().on( 'drag', (event) => {
       const currentMinX = Number( indicator.attr( 'x' ) );
       const currentMaxX = currentMinX + Number( indicator.attr( 'width' ) );
-      console.log( 'ndcdebug: minX', minX, 'maxX:', maxX, 'currentMinX:', currentMinX, 'currentMaxX', currentMaxX );
+      debugLog( this, `minX: ${minX}, maxX: ${maxX}, currentMinX: ${currentMinX}, currentMaxX: ${currentMaxX}.` );
       // If the drag event x is inside of the area that we want to consider draggable
       // i.e. if the mouse cursor is within the x span of the indicator…
       if( ( event.x > minX ) && ( event.x < maxX ) ){
@@ -256,8 +255,8 @@ class NodeDensityChart extends HTMLElement {
           const newX = Number( indicator.attr( 'x' ) ) + event.dx;
           indicator.attr( 'x', newX );
           const xRatio = ( newX - minX )/( maxX - minX );
-          console.log( 'ndcdebug: xRatio by drag:', newX, maxX, minX, xRatio );
-          console.log( 'ndcdebug: minX', minX );
+          debugLog( this, `xRatio by drag: (newX: ${newX}, maxX: ${maxX}, minX: ${minX}, xRatio: ${xRatio}.` );
+          debugLog( this, `minX: ${minX}.` );
           relationRenderer.panXRatio = xRatio;
           relationRenderer.panCause = 'drag';
           relationRenderer.pan();
