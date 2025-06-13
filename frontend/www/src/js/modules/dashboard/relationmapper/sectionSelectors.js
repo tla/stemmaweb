@@ -26,8 +26,8 @@ class SectionSelectors extends HTMLElement {
   onSectionStateChanged( prevState, state ) {
     // First off, we don't need to do anything if we're not visible…
     if ( window.getComputedStyle( document.querySelector( 'relation-mapper' ) ).display != 'none' ) { 
-      // We only do something if the section really changed.
-      if ( state.selectedSection != prevState.selectedSection ) { 
+      // We only do something if there is a selected section and if the section really changed.
+      if ( state.selectedSection && ( state.selectedSection != prevState.selectedSection ) ) { 
         sectionSelectorsService.getSectionDot( TRADITION_STORE.state.selectedTradition.id, state.selectedSection.id ).then( (resp) => {
           if ( resp.success ) {
             const graphArea = d3.select('#relation-graph');
