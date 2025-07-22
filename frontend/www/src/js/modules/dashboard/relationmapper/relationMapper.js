@@ -66,7 +66,7 @@ class RelationMapper extends HTMLElement {
 
     static draw_relation( sel ) {
         let classList = 'relation';
-        let rels = sel.insert( 'g', 'g.node')
+        let rels = sel.insert( 'g', 'g.node' )
             .attr( 'id', d => RelationMapper.createRelationId( d.source, d.target ) )
             .attr( 'class', classList );
         rels.append( 'title' ).text( d => d.source + "->" + d.target);

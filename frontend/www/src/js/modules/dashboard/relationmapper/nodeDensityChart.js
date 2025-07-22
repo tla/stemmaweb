@@ -175,15 +175,14 @@ class NodeDensityChart extends HTMLElement {
         const xTarget = document.querySelector( `#section-rect-${d.section}` );
         const xClick = d3.pointer( evt, xTarget )[0] - x( d.xStart );
         const xRatio = xClick/xClickRange;
-        relationRenderer.panXRatio = xRatio;
         if ( d.section != SECTION_STORE.state.selectedSection.id ) {
           debugLog( this, 'Clicked in a different section.' );
           const selectedSection = SECTION_STORE.state.availableSections.filter( (section) => section.id == d.section )[0];
           // This causes TWO rerenders!
           SECTION_STORE.setSelectedSection( selectedSection );
         } else {
-          debugLog( this, 'Clicked in the same section.' );
-          relationRenderer.pan();
+          debugLog( this, 'Clicked in the same section.', xRatio );
+          // relationRenderer.panRelationGraph( xRatio );
         }
       } );
     if( usedOptions.onEnd ) {
@@ -219,6 +218,7 @@ class NodeDensityChart extends HTMLElement {
 
     debugLog( this, `rectElement.getAttribute( 'x' ): ${rectElement.getAttribute( 'x' )}, panXRatio: ${panXRatio}.` );
     debugLog( this, `rectX: ${rectX}, rectExtentX: ${rectExtentX}, minX: ${minX}, width: ${width}.` );
+    debugLog( this, `sectionId, rect: ${sectionId}, ${rectElement}.` );
 
     var indicator = d3.select( '#pan-position-indicator' );
 
@@ -257,9 +257,9 @@ class NodeDensityChart extends HTMLElement {
           const xRatio = ( newX - minX )/( maxX - minX );
           debugLog( this, `xRatio by drag: (newX: ${newX}, maxX: ${maxX}, minX: ${minX}, xRatio: ${xRatio}.` );
           debugLog( this, `minX: ${minX}.` );
-          relationRenderer.panXRatio = xRatio;
-          relationRenderer.panCause = 'drag';
-          relationRenderer.pan();
+          // relationRenderer.panXRatio = xRatio;
+          // relationRenderer.panCause = 'drag';
+          // relationRenderer.pan();
         }
       }
     } ) );
