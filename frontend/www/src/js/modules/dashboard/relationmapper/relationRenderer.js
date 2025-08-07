@@ -1,8 +1,6 @@
 class RelationRenderer {
 
     #relGvr = null;
-    #height = 0;
-    #width = 0;
     #baseTransform = '';
     #ACTIVATE = true;
     #DEACTIVATE = false;
@@ -23,7 +21,7 @@ class RelationRenderer {
     }
 
     set svg( svg ) {
-      this.#svg = svg;
+        this.#svg = svg;
     }
 
     get svg() {
@@ -38,36 +36,27 @@ class RelationRenderer {
         return this.#baseTransform;
     }
 
-    set height( height ) {
-      this.#height = height;
-    }
-
-    set width( width ) {
-      this.#width = width;
-    }
-
-
     // TODO: get rid of this
     set panXRatio( panXRatio ) {
-      this.#panXRatio = panXRatio;
+        this.#panXRatio = panXRatio;
     }
 
     // TODO: get rid of this
     set panCause( panCause ) {
-      this.#panCause = panCause;
+        this.#panCause = panCause;
     }
 
     // TODO: get rid of this
     get panCause() {
-      return this.#panCause;
+         return this.#panCause;
     }
 
 
     get relationMapperGraphvizRoot() {
-      if( this.#relGvr == null ){
-        this.#createGraphvizRoot();
-      }
-      return this.#relGvr;
+        if( this.#relGvr == null ){
+            this.#createGraphvizRoot();
+        }
+        return this.#relGvr;
     }
   
     /**
@@ -81,7 +70,6 @@ class RelationRenderer {
         const graph = selection.empty()
             ? relationMapperArea.append( 'div' ).attr( 'id', 'relation-graph' )
             : selection;
-        graph.style( 'height', `${this.#height}px` );
         this.#relGvr = graph
             .graphviz()
             .zoom( false )
@@ -99,11 +87,10 @@ class RelationRenderer {
             'onEnd': () => {}
         };
         const usedOptions = { ...defaultOptions, ...options };
-        this.#height = usedOptions.height || this.#height;
-        this.#width = usedOptions.width || this.#width;
+        const svgDimensions = this.computeSVGDimensions();
         this.relationMapperGraphvizRoot
-            .width( this.#width )
-            .height( this.#height )
+            .width( svgDimensions.width )
+            .height( svgDimensions.height )
             .on( 'end', () => {
                 // Other initialization stuff when a relation graph is loaded.
                 this.#svg = d3.select( '#relation-graph svg' );
@@ -121,10 +108,7 @@ class RelationRenderer {
                 this.graphZoomPan( this.#ACTIVATE );
 
                 // When a new graph is loaded we need to 'reset' the zoom.
-                // I CANNOT DO THIS, because it makes the graph jump after brush!
-                // But WHY?????
-                // Edit: the brush seems to make the graph jump anyway.. (Yes, it does.)
-                // d3.select( '#relation-graph' ).call( this.#zoom.transform, d3.zoomIdentity );
+                d3.select( '#relation-graph' ).call( this.#zoom.transform, d3.zoomIdentity );
 
                 this.graphNodesDrag( this.#ACTIVATE );
 
@@ -304,102 +288,88 @@ class RelationRenderer {
     // }
 
     calculatePanXRatio( transform ) {
-      const polygonElement = d3.select( '#relation-graph svg g polygon' );
-      var panXRatio = 0;
-      if( polygonElement.node() ) {
-        const scale = transform.k;
-        const xTranslate = transform.x;
-        const gExtent = polygonElement.node().getBBox().width * scale;
-        panXRatio = -( xTranslate / gExtent );
-      }
-      return panXRatio;
+        const polygonElement = d3.select( '#relation-graph svg g polygon' );
+        var panXRatio = 0;
+        if( polygonElement.node() ) {
+            const scale = transform.k;
+            const xTranslate = transform.x;
+            const gExtent = polygonElement.node().getBBox().width * scale;
+            panXRatio = -( xTranslate / gExtent );
+        }
+        return panXRatio;
     }
 
     calculateViewBoxExtentRatio( transform ) {
-      // We'll need scaling at some point.
-      const scale = transform.k;
-      // The pixel width of the svg and the width if the viewBox defined in it
-      // determine the scale factor we need to apply if we want to transform
-      // screen distances in pixels to distances in the coordinate system of the 
-      // svg/viewBox.
-      const svgElement = document.querySelector( '#relation-graph svg' );
-      // svgWidth is the width in actual pixels of the HTML svg container.
-      const svgWidth = svgElement.getAttribute( 'width' );
-      // The svgViewBox size is the virtual dimension of the part of the svg canvas
-      // we can see inside of the HTML container. 
-      const svgViewBox = svgElement.viewBox.baseVal;
-      // length in pixels * screenToViewBoxFactor gives you how much length the 
-      // pixels represent in the coordinate system of the svg canvas.
-      const screenToViewBoxFactor = svgViewBox.width/svgWidth;
-      // How much we can see from the graph depends on the width of the 
-      // div that contains the variant graph. The width of that
-      // we want to express as a ratio of the width of the graph itself.
-      // Note that this is not (yet, in this current code) the same as
-      // svgWidth, as that doesn't resize.
-      const relationGraphElementWidth = document.querySelector( '#relation-graph' ).getBoundingClientRect().width * (1/scale);
-      const extent = relationGraphElementWidth * screenToViewBoxFactor;
+        // We'll need scaling at some point.
+        const scale = transform.k;
+        // The pixel width of the svg and the width if the viewBox defined in it
+        // determine the scale factor we need to apply if we want to transform
+        // screen distances in pixels to distances in the coordinate system of the 
+        // svg/viewBox.
+        const svgElement = document.querySelector( '#relation-graph svg' );
+        // svgWidth is the width in actual pixels of the HTML svg container.
+        const svgWidth = svgElement.getAttribute( 'width' );
+        // The svgViewBox size is the virtual dimension of the part of the svg canvas
+        // we can see inside of the HTML container. 
+        const svgViewBox = svgElement.viewBox.baseVal;
+        // length in pixels * screenToViewBoxFactor gives you how much length the 
+        // pixels represent in the coordinate system of the svg canvas.
+        const screenToViewBoxFactor = svgViewBox.width/svgWidth;
+        // How much we can see from the graph depends on the width of the 
+        // div that contains the variant graph. The width of that
+        // we want to express as a ratio of the width of the graph itself.
+        // Note that this is not (yet, in this current code) the same as
+        // svgWidth, as that doesn't resize.
+        const relationGraphElementWidth = document.querySelector( '#relation-graph' ).getBoundingClientRect().width * (1/scale);
+        const extent = relationGraphElementWidth * screenToViewBoxFactor;
 
-      const polygonElement = d3.select( '#relation-graph svg g polygon' );
-      var panExtentRatio = 0;
-      if( polygonElement.node() ) {
-        const gExtent = polygonElement.node().getBBox().width;
-        panExtentRatio = extent / gExtent;
-      }
-      return panExtentRatio;
+        const polygonElement = d3.select( '#relation-graph svg g polygon' );
+        var panExtentRatio = 0;
+        if( polygonElement.node() ) {
+            const gExtent = polygonElement.node().getBBox().width;
+            panExtentRatio = extent / gExtent;
+        }
+        return panExtentRatio;
 
-      // Lastly we need to factor in a zoom factor (how much did the user
-      // zoom in or out). But we'll do this later.
+        // Lastly we need to factor in a zoom factor (how much did the user
+        // zoom in or out). But we'll do this later.
     }
 
-    // TODO: resizing on window change size.
+    computeSVGDimensions() {
+        const width = document.querySelector( '#topbar-menu' ).getBoundingClientRect().width;
+        const sectionSelectorsHeight = document.querySelector( 'section-selectors' ).getBoundingClientRect().height;
+        // Initially `#relation-mapper-div` is display none, so `.getBoundingClientRect()` will
+        // not work. But `getComputedStyle` does.
+        const height = parseFloat( window.getComputedStyle( document.querySelector( '#relation-mapper-div' ) ).height ) - sectionSelectorsHeight;
+        return { width: width, height: height }
+    }
 
     /**
-     // TODO(?): Why do we destroy the graphviz instance for the relation mapper on the node
-     * on the node we created it for? It makes more sense to keep the instance and reuse
-     * it to depict new versions of the same relation graph, or to depict relations
-     * form other sections/traditions, right? Yes, except if we do the rendering of 
-     * subsequent relation graphs takes forever. Below are the logs of an initial and
-     * follow up renderings (numbers are time in ms per event). No idea why the same
-     * graph takes 7 seconds to render a second time, while it only takes 1 initially.
-     *
-     * Initial rendering
-     * 
-     * Event  2 layoutStart            0
-     * Event  3 layoutEnd            869
-     * Event  4 dataExtractEnd        81
-     * Event  5 dataProcessPass1End   19
-     * Event  6 dataProcessPass2End    5
-     * Event  7 dataProcessEnd         1
-     * Event  8 renderStart            0
-     * Event 14 zoom                 119
-     * Event  9 renderEnd              0
-     * Event 13 end                    0
-     * 
-     * 
-     * Second rendering
-     * 
-     * Event  2 layoutStart            1
-     * Event  3 layoutEnd            847
-     * Event  4 dataExtractEnd        73
-     * Event  5 dataProcessPass1End 6259
-     * Event  6 dataProcessPass2End    5
-     * Event  7 dataProcessEnd         0
-     * Event  8 renderStart            0
-     * Event 14 zoom                   1
-     * Event  9 renderEnd             83
-     * Event 13 end                    1
-     * Event 14 zoom                   0 
+     * Resizes the current graph/stemma when the browser window gets 
+     * resized. Also sets the new corresponding width on the GraphViz 
+     * renderer so that subsequent relation graphs are depicted at 
+     * the right size.
      */
-
-    destroy() {
-      if ( this.#relGvr ) {
-        this.#relGvr.destroy();
-        this.#relGvr = null;
-      }
-      d3.select( '#relation-graph' ).remove();
+    resizeSVG() {
+        console.log( 'resize for relations' );
+        // // TODO: only on visible?
+        // // These width and height are also used in stemmaButtons.js
+        // const width = document.querySelector( '#topbar-menu' ).getBoundingClientRect().width;
+        // const sectionSelectorsHeight = document.querySelector( 'section-selectors' ).getBoundingClientRect().height; 
+        // const height = document.querySelector( '#relation-mapper-div' ).getBoundingClientRect().height - sectionSelectorsHeight;
+        // console.log( height );
+        const svgDimensions = relationRenderer.computeSVGDimensions();
+        const relationGraph = d3.select( '#relation-graph' );
+        const svg = relationGraph.selectWithoutDataPropagation("svg");
+        svg
+            .transition()
+            .duration(700)
+            .attr("width", svgDimensions.width )
+            .attr("height", svgDimensions.height );
     }
 
-  }
+}
   
-  const relationRenderer = new RelationRenderer();
+const relationRenderer = new RelationRenderer();
+window.addEventListener( 'resize', relationRenderer.resizeSVG );
   

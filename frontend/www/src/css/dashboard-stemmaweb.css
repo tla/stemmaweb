@@ -543,6 +543,11 @@ relation-mapper {
   width: 100%;
 }
 
+#relation-mapper-div {
+  width: 100%;
+  height: 80vh;
+}
+
 /* relation-types div {
   display: none;
   opacity: 0;

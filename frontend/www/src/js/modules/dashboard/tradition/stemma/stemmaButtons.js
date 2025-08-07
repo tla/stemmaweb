@@ -90,7 +90,8 @@ class StemmaButtons extends HTMLElement {
       // Figure out which view we are closing, set that as element to 
       // fade out, and remove or stash stuff from the view we are closing.
       if ( currentView == document.querySelector( '#edit-collation-button' ) ) {
-        relationRenderer.destroy(); // Wondering? See the elaborate note in relationRenderer.js.
+        // TODO: Next line seems not necessary anymore since we implemented the zoom using d3.zoom and not Graphviz's.
+        // relationRenderer.destroy(); // Wondering? See the elaborate note in relationRenderer.js.
         document.querySelector( '#section-title' ).innerHTML = '';
         fadeOutElement = document.querySelector( 'relation-mapper' );
         document.querySelector( '#main' ).classList.remove( 'col-9' );
@@ -110,7 +111,7 @@ class StemmaButtons extends HTMLElement {
     if ( resp.success ) {
       SectionSelectors.renderSectionSelectors();
       this.closeStemmaView( 
-        { 'onEnd': (width, height) => { this.openRelationView( resp, sectionId, width, height ) } }
+        { 'onEnd': () => { this.openRelationView( resp, sectionId ) } }
       );
     } else {
       StemmawebAlert.show(
@@ -122,37 +123,27 @@ class StemmaButtons extends HTMLElement {
 
   closeStemmaView( options ) {
     const defaultOptions =  { 
-      'onEnd': ( width, height ) => {}
+      'onEnd': () => {}
     };
     const usedOptions = { ...defaultOptions, ...options };
     const fadeOutElement = document.querySelector( '#stemma-editor-graph-container' );
-    // Because the relation mapper container is `display: none` on initialization we use the height of other elements.
-    // The moment of setting the `graphRendererWidth` and `graphRendererHeight` and is relevant: closeStemmaView 
-    // takes a callback and when that gets executed the stemma graph container is already `display: none` and 
-    // `getBoundingClientRect()` return just zero on any dimension. So `graphRendererHeight` needs to be set before
-    // we fade the stemma container out. But only after that we read the with of the top menubar, because only then
-    // that has expanded to full width.
-    const graphRendererHeight = document.querySelector( '#graph-area' ).getBoundingClientRect().height;
     fadeToDisplayNone( '#sidebar-menu', { 'delay': 0 } );
     document.querySelector( '#main' ).classList.remove( 'col-7' );
     document.querySelector( '#main' ).classList.add( 'col-9' ); // Timed in CSS to 1s with 500ms delay, hence duration of 1500 in next line.
     fadeToDisplayNone( fadeOutElement, { 
       'duration': 1500, 
       'onEnd': () => {
-        const graphRendererWidth = document.querySelector( '#topbar-menu' ).getBoundingClientRect().width;
-        usedOptions.onEnd( graphRendererWidth, graphRendererHeight ); 
+        usedOptions.onEnd(); 
       } 
     } );
   }
 
-  openRelationView( resp, sectionId, width, height ) {
+  openRelationView( resp, sectionId ) {
     // TODO: There is a enormous overlap between this code and
     // code doing practically the same thing in `sectionSelectors.js`
     // Both should probably call some extracted.
     relationRenderer.renderRelationsGraph( 
       resp.data, {
-        'width': width,
-        'height': height,
         'onEnd': () => { 
           this.setSectionTitle();
           this.addInRelations( sectionId );

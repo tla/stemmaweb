@@ -94,7 +94,7 @@ class RelationMapper extends HTMLElement {
       
     render() {
         this.innerHTML = `
-            <div id="relation-mapper-div" style="width:100%;">
+            <div id="relation-mapper-div">
                 <section-selectors></section-selectors>
             </div>`
     }
