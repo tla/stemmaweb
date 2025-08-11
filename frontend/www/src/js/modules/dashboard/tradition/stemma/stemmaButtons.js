@@ -90,14 +90,12 @@ class StemmaButtons extends HTMLElement {
       // Figure out which view we are closing, set that as element to 
       // fade out, and remove or stash stuff from the view we are closing.
       if ( currentView == document.querySelector( '#edit-collation-button' ) ) {
-        // TODO: Next line seems not necessary anymore since we implemented the zoom using d3.zoom and not Graphviz's.
-        // relationRenderer.destroy(); // Wondering? See the elaborate note in relationRenderer.js.
         document.querySelector( '#section-title' ).innerHTML = '';
         fadeOutElement = document.querySelector( 'relation-mapper' );
         document.querySelector( '#main' ).classList.remove( 'col-9' );
         document.querySelector( '#main' ).classList.add( 'col-7' );
         document.querySelector( 'relation-types' ).unrender();
-        // document.querySelector( 'node-density-chart' ).unrender();
+        document.querySelector( 'node-density-chart' ).unrender();
         document.querySelector( 'property-table-view' ).show();
         document.querySelector( '#section-properties-view-title' ).classList.toggle( 'hide' );
         document.querySelector( '#section-reading-properties-tabs' ).classList.toggle( 'hide' );                    
@@ -148,7 +146,7 @@ class StemmaButtons extends HTMLElement {
           this.setSectionTitle();
           this.addInRelations( sectionId );
           this.addInReadingInformation( sectionId );
-          // this.renderDensityChart();
+          this.renderDensityChart();
           this.hideIrrelevantPropertyViews();
           const relationMapperElement = document.querySelector( 'relation-mapper' );
           fadeToDisplayFlex( relationMapperElement, { 'duration': 1500 } );
@@ -196,7 +194,8 @@ class StemmaButtons extends HTMLElement {
           fadeToDisplayNone( document.querySelector( 'node-density-chart div' ), { 
             'reverse': true,
             'onEnd': () => { 
-              relationRenderer.showPan();
+              console.log( 'This is a major TODO!' );
+              //relationRenderer.showPan();
             } 
           } ) 
         } 

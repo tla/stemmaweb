@@ -128,6 +128,8 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
 .sidebar-menu .nav-link {
   font-weight: 500;
   color: #333;
+  line-height: 1.15;
+  margin-top: 2pt;
 }
 
 .sidebar-menu .nav-link .feather {
@@ -147,6 +149,11 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
 .sidebar-menu-heading {
   font-size: 0.75rem;
   text-transform: uppercase;
+}
+
+.sidebar-menu .section-name {
+  line-height: 1.15;
+  margin-top: 2pt;
 }
 
 /* 

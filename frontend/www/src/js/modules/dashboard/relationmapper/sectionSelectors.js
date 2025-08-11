@@ -41,15 +41,12 @@ class SectionSelectors extends HTMLElement {
             const graphArea = d3.select('#relation-graph');
             const stemmaButtonsElement = document.querySelector( 'stemma-buttons' );
             graphArea.transition().call( speedy_transition ).style( 'opacity', '0.0' ).on( 'end', () => {
-              console.log( 'I am trying to get started!' );
               relationRenderer.renderRelationsGraph( 
                 resp.data, {
                   'onEnd': () => { 
-                    console.log( 'I am the onEnd of sectionSelectors.js' );
                     stemmaButtonsElement.setSectionTitle();
                     stemmaButtonsElement.addInRelations( sectionId );
                     stemmaButtonsElement.addInReadingInformation( sectionId );
-                    // relationRenderer.showPan();
                     graphArea.transition().call( mellow_transition ).style('opacity', '1.0' );
                   }
                 }

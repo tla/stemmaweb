@@ -5,16 +5,17 @@ class RelationRenderer {
     #ACTIVATE = true;
     #DEACTIVATE = false;
 
-    // TODO: get rid of this
-    #panXRatio = 0;
-    // TODO: get rid of this
-    #panCause = '';
-
     #svg = null;
     #zoom = null;
-
+    
     constructor() {
+        // This is the listener that catches a user dragging the 
+        // position indicator in the minimap.
+        this.unsubscribePanListener = broadcast.subscribe( 'minimapPan', (eventData) => {
+            this.panRelationGraph( eventData );
+        } );
     }
+    
 
     get zoom() {
         return this.#zoom;
@@ -35,22 +36,6 @@ class RelationRenderer {
     get baseTransform() {
         return this.#baseTransform;
     }
-
-    // TODO: get rid of this
-    set panXRatio( panXRatio ) {
-        this.#panXRatio = panXRatio;
-    }
-
-    // TODO: get rid of this
-    set panCause( panCause ) {
-        this.#panCause = panCause;
-    }
-
-    // TODO: get rid of this
-    get panCause() {
-         return this.#panCause;
-    }
-
 
     get relationMapperGraphvizRoot() {
         if( this.#relGvr == null ){
@@ -91,7 +76,7 @@ class RelationRenderer {
         this.relationMapperGraphvizRoot
             .width( svgDimensions.width )
             .height( svgDimensions.height )
-            .on( 'end', () => {
+            .on( 'end', () => { 
                 // Other initialization stuff when a relation graph is loaded.
                 this.#svg = d3.select( '#relation-graph svg' );
 
@@ -104,21 +89,22 @@ class RelationRenderer {
                 // to the third element of that by `transform.baseVal.getItem(2)`.
                 const gCTM = this.#svg.select( 'g' ).node().transform.baseVal.getItem(2).matrix;
                 this.baseTransform = { 'x': gCTM.e, 'y': gCTM.f };
-                
+
                 this.graphZoomPan( this.#ACTIVATE );
-
-                // When a new graph is loaded we need to 'reset' the zoom.
-                d3.select( '#relation-graph' ).call( this.#zoom.transform, d3.zoomIdentity );
-
                 this.graphNodesDrag( this.#ACTIVATE );
 
                 d3.select( window )
                     .on( 'keydown', (event) => { this.onKeyDown.call( this, event ) } )
                     .on( 'keyup', (event) => { this.onKeyUp.call( this, event ) } );
 
+                // When a new graph is loaded we need to 'reset' the zoom.
+                // Otherwise the newly depicted section's graph will "jump" 
+                // (i.e. use the existing transform).
+                d3.select( '#relation-graph' ).call( this.#zoom.transform, d3.zoomIdentity );
+
                 usedOptions.onEnd();
             } )
-            .renderDot( dot );
+            .renderDot( dot );    
     }
 
     onKeyDown( event ) {
@@ -141,11 +127,38 @@ class RelationRenderer {
         if( zoomable ){
             this.#zoom = d3.zoom()
                 .scaleExtent([0.2, 1.2])
+                // TODO:
+                // .translateExtent( [[0,-200],[2000,800]] )
+                // We will have to think about translateExtent:
+                //   1) It depends on the height and length of the graph
+                //   2) It depends on zoom 
+                //        a) Setting limits to just height-and-a-bit 
+                //           and width-and-a-bit of the graph results
+                //           in barely being able to move the graph inside 
+                //           the window when majorly zoomed out.
+                //        b) But setting very large limits
+                //           allows to pan 'out of' the window area.
+                //
                 // `this` is always the object that owns the call, which is `#the-graph-container`
                 // in this case. But we want this to be `the-graph`, hence we use `.call` to
                 // pass the right 'owner' into the zoomed function. See also
                 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/call
-                .on( 'zoom', ( {transform} ) => { this.repairBaseTranslate.call( this, transform ) } );
+                .on( 'zoom', ( {transform, sourceEvent } ) => { 
+                    this.repairBaseTranslate.call( this, transform );
+                    // In case minimap requested a pan `transform.silent` exists.
+                    // In that case we won't broadcast an event, as it would cause the
+                    // minimap to rerender the indicator (which it already did.)
+                    if( transform.silent === undefined ) {
+                        // We handle this as a promise because the very first render by GrapViz.js takes just a tad
+                        // too long and the pan ratio comes out as NaN because the svg has not been added to the dom
+                        // or something such; `calculatePanZoomRatios` waits for it to appear.
+                        // We only have to do this if sourceEvent of the zoom event is null, which means the zoom/pan
+                        // was caused by the code and not by a user scrolling, clicking, wheeling, etc.
+                        const resolveImmediately = ( sourceEvent != null );
+                            this.calculatePanZoomRatios( resolveImmediately ).then( (ratios) => { broadcast.publish( 'relationGraphPanZoom', ratios ) } );    
+                        }
+                    }
+                );
             d3.select( '#relation-graph' ).call( this.#zoom );
         } else {
             d3.select( '#relation-graph' ).on( '.zoom', null );
@@ -261,45 +274,64 @@ class RelationRenderer {
         // But this causes 'too much recursion' error.
         // d3.select( '#relation-graph' ).call( this.#zoom.transform, newTransform );
 
-        // or this (but rather not):
+        // or this (but according to d3 docs rather not, but how else if the above results in recursion?):
         this.#svg.select( 'g' ).attr( 'transform', transform );
-        
-        // this.showPan();
     }
 
-    // panRelationGraph( panXRatio=null ) {
-    //     if( panXRatio != null  ) {
-    //         const gExtent = this.#svg.select( 'g polygon' ).node().getBBox().width;
-    //         const xTranslate = -1 * panXRatio * gExtent;
-    //         var transform = d3.zoomTransform( this.#svg.select( 'g' ).node() );
-    //         const newTransform = new d3.ZoomTransform( transform.k, transform.k*xTranslate, transform.y );
-    //         d3.select( '#relation-graph' ).call( this.#zoom.transform, newTransform );
-    //         this.showPan( panXRatio );
-    //     }
-    // }
+    panRelationGraph( eventData ) {        
+        if( eventData.panXRatio && eventData.panXRatio != null  ) {
+            const gExtent = this.#svg.select( 'g polygon' ).node().getBBox().width;
+            const xTranslate = -1 * eventData.panXRatio * gExtent;
+            var transform = d3.zoomTransform( this.#svg.select( 'g' ).node() );
+            const newTransform = new d3.ZoomTransform( transform.k, transform.k*xTranslate, transform.y );
+            newTransform.silent = eventData.silent;
+            d3.select( '#relation-graph' ).call( this.#zoom.transform, newTransform );
+        }
+    }
 
-    // showPan( panXRatio=0 ) {
-    //     const transform = d3.zoomTransform( this.#svg.select( 'g' ).node() );
-    //     const extentRatio = relationRenderer.calculateViewBoxExtentRatio( transform );
-    //     console.log( '[relationRenderer.showPan] panXRatio:', panXRatio, (panXRatio != 0) );
-    //     const panRatio = panXRatio == 0 ? panXRatio : relationRenderer.calculatePanXRatio( transform );
-    //     console.log( '[relationRenderer.showPan] PANandEXTENT:', panRatio, extentRatio );
-    //     // document.querySelector( 'node-density-chart' ).showPanPosition( panRatio, extentRatio );
-    // }
+    calculatePanZoomRatios( resolveImmediately ) {
+        // We use a promise to repeatedly calculate panXRatio until it does return a
+        // useful value. This is necessary because the first SVG rendered by GraphViz.js 
+        // takes just a tiny bit too long to arrive in the DOM and then panXRatio 
+        // returns as NaN.
+        // We only have to do this if the sourceEvent of the zoom event was null, which 
+        // means the zoom/pan was caused by the code and not by a user scrolling, 
+        // clicking, wheeling, etc. The parameter `resolveImmediately` may be used to
+        // indicate this.
+        if( resolveImmediately ) {
+            return new Promise( resolve => {
+                const { panXRatio, transform } = relationRenderer.calculateZoomPanXRatio();
+                const panExtentRatio = relationRenderer.calculateZoomPanExtentRatio( transform );
+                resolve( { panXRatio: panXRatio, panExtentRatio: panExtentRatio } );
+            } );
+        } else {
+            return new Promise( resolve => {
+                const theInterval = setInterval( function () {
+                    const { panXRatio, transform } = relationRenderer.calculateZoomPanXRatio();
+                    if( panXRatio != null ) {
+                        clearInterval( theInterval );
+                        const panExtentRatio = relationRenderer.calculateZoomPanExtentRatio( transform );
+                        resolve( { panXRatio: panXRatio, panExtentRatio: panExtentRatio } );
+                    }
+                }, 10);
+            } );
+        }
+    }
 
-    calculatePanXRatio( transform ) {
+    calculateZoomPanXRatio() {
         const polygonElement = d3.select( '#relation-graph svg g polygon' );
-        var panXRatio = 0;
+        const transform = d3.zoomTransform( this.#svg.select( 'g' ).node() );
+        var panXRatio = null;
         if( polygonElement.node() ) {
             const scale = transform.k;
             const xTranslate = transform.x;
             const gExtent = polygonElement.node().getBBox().width * scale;
             panXRatio = -( xTranslate / gExtent );
         }
-        return panXRatio;
+        return { panXRatio: panXRatio, transform: transform };
     }
 
-    calculateViewBoxExtentRatio( transform ) {
+    calculateZoomPanExtentRatio( transform ) {
         // We'll need scaling at some point.
         const scale = transform.k;
         // The pixel width of the svg and the width if the viewBox defined in it
@@ -330,9 +362,6 @@ class RelationRenderer {
             panExtentRatio = extent / gExtent;
         }
         return panExtentRatio;
-
-        // Lastly we need to factor in a zoom factor (how much did the user
-        // zoom in or out). But we'll do this later.
     }
 
     computeSVGDimensions() {
@@ -351,13 +380,7 @@ class RelationRenderer {
      * the right size.
      */
     resizeSVG() {
-        console.log( 'resize for relations' );
         // // TODO: only on visible?
-        // // These width and height are also used in stemmaButtons.js
-        // const width = document.querySelector( '#topbar-menu' ).getBoundingClientRect().width;
-        // const sectionSelectorsHeight = document.querySelector( 'section-selectors' ).getBoundingClientRect().height; 
-        // const height = document.querySelector( '#relation-mapper-div' ).getBoundingClientRect().height - sectionSelectorsHeight;
-        // console.log( height );
         const svgDimensions = relationRenderer.computeSVGDimensions();
         const relationGraph = d3.select( '#relation-graph' );
         const svg = relationGraph.selectWithoutDataPropagation("svg");
