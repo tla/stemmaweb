@@ -10,6 +10,7 @@
     // - Creating user with existing name/id should fail. Don't overwrite users' passwords by re-registering existing ids.
 */
 
+if (Cypress.browser.isHeaded) { // skip when in headless mode
 
 beforeEach(() => {
   cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
@@ -163,3 +164,5 @@ describe('After logout, the previous login credentials should not be retrieved i
     // ...
   });
 });
+
+}

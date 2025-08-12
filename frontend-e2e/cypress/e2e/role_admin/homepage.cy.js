@@ -5,6 +5,8 @@ import users from '../../fixtures/users.json';
 const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 const selected_fill_color = 'rgb(207, 220, 238)';
 
+if (Cypress.browser.isHeaded) { // skip when in headless mode
+
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     cy.viewport(1600, 900);
@@ -133,3 +135,5 @@ describe('message console logs errors and successes', () => {
     });
     }
 });
+
+}

@@ -8,6 +8,8 @@ import test_traditions from '../../fixtures/test_traditions.json';
 import users from '../../fixtures/users.json';
 const user1 = users.filter(({username}) => username === 'user@example.org')[0];
 
+if (Cypress.browser.isHeaded) { // skip when in headless mode
+
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     cy.viewport(1600, 900);
@@ -50,3 +52,5 @@ describe("'Florilegium Coislinianum B' has the right owner and witnesses", funct
     cy.get('#sidebar-properties').contains('A, B, C, D, E, F, G, H, K, P, Q, S, T');
   });
 });
+
+}

@@ -14,6 +14,7 @@ beforeEach(() => {
 
 // some fetch(POST) for headless mode
 describe('login and logout with authentication modal, captcha v3 and fetch(POST)', () => {
+    if (Cypress.browser.isHeaded) { // skip when in headless mode
   it('passes in headless mode local and on github. passes in local headed mode', { defaultCommandTimeout: 10000, requestTimeout: 10000, responseTimeout: 10000 }, () => {
     cy.log("Cypress.browser: " + JSON.stringify(Cypress.browser));
 
@@ -43,10 +44,12 @@ describe('login and logout with authentication modal, captcha v3 and fetch(POST)
     cy.contains('header a', 'Sign in');
     cy.get('header').should('not.contain', 'Sign out');
   })
+    }
 });
 
 // some fetch(POST) for headless mode
 describe('addStemma and deleteStemma with login, passes in headless mode despite fetch(POST)', () => {
+      if (Cypress.browser.isHeaded) { // skip when in headless mode
   // it('passes in headless mode local and on github. passes in local headed mode. with original guest config', { retries: 5 }, () => {
   it('passes in headless mode local and on github. passes in local headed mode. with original guest config', () => {
     cy.loginViaUi(admin);
@@ -68,6 +71,7 @@ describe('addStemma and deleteStemma with login, passes in headless mode despite
 
     cy.logoutViaUi();
   });
+      }
 });
 
 // does intercept work at all on github actions?
