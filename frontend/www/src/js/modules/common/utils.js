@@ -1,4 +1,38 @@
 /**
+ * Simple convenient debug logging to console.
+ * Messages sent here will only show in StemmaWeb's dev mode.
+ * @param caller {object} The calling routine, function, method. In general pass `this`. 
+ * @param message {string} The debug message to print to the console. 
+ */
+function debugLog( caller, message, obj ) {
+  if( LOG_LEVEL=='DEBUG' ){
+    // Logging is fine, but how to get a useful line number?
+    // Nifty: https://stackoverflow.com/a/27074218.
+    var lineNumber;
+    var e = new Error();
+    if( !e.stack ) try {
+      // IE requires the Error to actually be throw or else the Error's 'stack'
+      // property is undefined.
+      throw e;
+    } catch( e ) {
+      if( !e.stack ) {
+        lineNumber =  0; // IE < 10, likely
+      }
+    }
+    var stack = e.stack.toString().split(/\r\n|\n/);
+    // We want our caller's frame. It's index into |stack| depends on the
+    // browser and browser version, so we need to search for the second frame.
+    var frameRE = /:(\d+):(?:\d+)[^\d]*$/;
+    do {
+      var frame = stack.shift();
+    } while( !frameRE.exec( frame ) && stack.length );
+    lineNumber = frameRE.exec( stack.shift() )[1];
+    message = `${caller.constructor.name} (l.${lineNumber}): ${message}`;
+    obj ? console.debug( message, obj ) : console.debug( message );
+  }
+}
+
+/**
  * Creates a `script` tag dynamically with the site key sourced from `env.js`.
  * This tag gets added to the document's `head` element automatically.
  */

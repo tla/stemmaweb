@@ -83,6 +83,16 @@ class StemmarestService extends BaseService {
   }
 
   /**
+   * Fetches a list of all users from the Stemmarest API.
+   *
+   * @returns {Promise<BaseResponse<Tradition[]>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /users}
+   */
+  listUsers() {
+    return this.fetch('/api/users');
+  }
+
+  /**
    * Fetches a list of all traditions from the Stemmarest API.
    *
    * @returns {Promise<BaseResponse<Tradition[]>>}
@@ -191,7 +201,7 @@ class StemmarestService extends BaseService {
   /**
    * Updates metadata for a tradition.
    *
-   * @param {string | null} userId
+   * @param {string | null} ownerId
    * @param {string} tradId - The ID of the tradition being queried
    * @param {string} name - The (new) name of the tradition.
    * @param {string | null} language
@@ -199,8 +209,8 @@ class StemmarestService extends BaseService {
    * @param {boolean} isPublic
    * @returns {Promise<BaseResponse<T>>}
    */
-  updateTraditionMetadata( userId, tradId, name, language, direction, isPublic) {
-    if (userId === null) {
+  updateTraditionMetadata( tradId, ownerId, name, language, direction, isPublic ){
+    if (ownerId === null) {
       return Promise.resolve({
         success: false,
         message: 'You need to be logged in to edit a tradition.'
@@ -212,7 +222,7 @@ class StemmarestService extends BaseService {
       id: tradId,
       language: language,
       name: name,
-      owner: userId
+      owner: ownerId
     };
     return this.fetch(`/api/tradition/${tradId}`, {
       method: 'PUT',

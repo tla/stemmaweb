@@ -3,9 +3,12 @@
 # Array of environment variables to be processed
 # - STEMMAWEB_MIDDLEWARE_URL is the URL of the Stemmaweb middleware
 # - RECAPTCHA_SITE_KEY is the public key for the reCAPTCHA service
+# - LOG_LEVEL indicates the level of debug messages wanted
+
 ENV_VARS_TO_COPY=(
     "STEMMAWEB_MIDDLEWARE_URL"
     "RECAPTCHA_SITE_KEY"
+    "LOG_LEVEL"
 )
 
 statements=""

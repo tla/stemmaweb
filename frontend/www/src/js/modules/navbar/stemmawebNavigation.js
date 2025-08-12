@@ -20,14 +20,34 @@ class StemmawebNavigation extends HTMLElement {
   }
 
   render() {
-    this._render(AUTH_STORE.state.user);
+    this._render( AUTH_STORE.state.user );
   }
 
   static logoutUser() {
     stemmawebNavigationService
       .logoutUser()
-      .then(() => AUTH_STORE.setUser(null))
-      .catch(console.error);
+      .then( () => AUTH_STORE.setUser( null ) )
+      .then( () => { 
+        // If we are looking at the Rhine delta graph, we need to close that first.
+        if( document.querySelector( '#stemma-editor-graph-container' ).style.opacity == '0' ){
+          document.querySelector( '#view-stemmata-button' ).dispatchEvent( new Event( 'click' ) );
+        }
+        // Or maybe the the stemma editor is open, then we first need to close that.
+        if( document.querySelector( '#stemma-editor-container' ).classList.contains( 'expanded' ) ){
+          document.querySelector( 'edit-stemma-buttons' ).cancelEdits();
+        }
+        // Clean out the message console.
+        MessageConsole.reset();
+        initState();
+        document.querySelector( 'edit-properties-button' ).render();
+        const editSectionPropertiesButtonElement = document.querySelector( 'edit-section-properties-button' )
+        if( editSectionPropertiesButtonElement ){ 
+          editSectionPropertiesButtonElement.render();
+          document.querySelector( 'delete-section-button' ).render();
+        }
+        document.querySelector( 'text-directory' ).render();
+      } )
+      .catch( console.error );
   }
 
   /** @param {import('@types/stemmaweb').StemmawebUserState} user */

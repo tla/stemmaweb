@@ -29,17 +29,20 @@ class StemmaRenderer {
    * @returns {Graphviz}
    */
   #createGraphvizRoot = function() {
-    const graphArea = d3.select('#graph-area');
-    const selection = graphArea.select('#graph');
-    const graph = selection.empty()
-      ? graphArea.append('div').attr('id', 'graph')
+    const graphArea = document.querySelector( '#graph-area' );
+    const selection = d3.select( graphArea.querySelector( '#graph' ) );
+    const graph = selection
+      ? d3.select( graphArea ).append( 'div' ).attr( 'id', 'graph' )
       : selection;
-    graph.style('height', '100%');
+    const computedStyle = window.getComputedStyle( graphArea );
+    var graphHeight = graphArea.getBoundingClientRect().height;
+    graphHeight -= parseFloat( computedStyle.paddingTop ) + parseFloat( computedStyle.paddingBottom );
+    // graph.style('height', '100%');
     this.#gvr = graph
       .graphviz()
-      .width(graph.node().getBoundingClientRect().width)
-      .height(graph.node().getBoundingClientRect().height)
-      .fit(true);
+      .width( graph.node().getBoundingClientRect().width )
+      .height( graphHeight )
+      .fit( true );
   }
   
   /**
@@ -58,9 +61,11 @@ class StemmaRenderer {
       .selectAll( '.node' )
       .on( 'click', function (e, d) {
         // If the stemma editor is showing, we don't want re-rooting the stemma to be enabled.
-        if( document.querySelector( '#stemma-selector-container' ).classList.contains( "show" ) ){
-          TraditionView.fetch_rooted( tradition, stemma, d.key );
-          stemmaRenderer.renderStemma( tradition, stemma );
+        if( document.querySelector( '#stemma-selector-buttons' ).classList.contains( "show" ) ){
+          if( userIsOwner() ) {
+            TraditionView.fetch_rooted( tradition, stemma, d.key );
+            stemmaRenderer.renderStemma( tradition, stemma );
+          }
         }
       } );
     Download.set_downloads( stemma.dot );
@@ -68,16 +73,16 @@ class StemmaRenderer {
  
   /**
    * Resizes the current graph/stemma when the browser window gets 
-   * resized. Also set the new corresponding with on the GraphViz 
+   * resized. Also sets the new corresponding width on the GraphViz 
    * renderer so that subsequent stemmas are depicted at the right
    * size.
    */
   resizeSVG() {
+    // TODO: only on visible?
     const margin = 14;
     const stemmaButtonsRowHeight = document.querySelector( '#stemma-buttons' ).getBoundingClientRect()['height'];
     const bbrect = document.querySelector( '#graph-area' ).getBoundingClientRect();
     const width = bbrect['width'] - ( 2 * margin );
-    const factor = bbrect['height'] / window.innerHeight;
     const height = bbrect['height'] - stemmaButtonsRowHeight;
     const graphArea = d3.select('#graph-area');
     const svg = graphArea.select("#graph").selectWithoutDataPropagation("svg");
@@ -98,4 +103,4 @@ class StemmaRenderer {
 }
 
 const stemmaRenderer = new StemmaRenderer();
-d3.select( window ).on( 'resize', stemmaRenderer.resizeSVG );
+window.addEventListener( 'resize', stemmaRenderer.resizeSVG );

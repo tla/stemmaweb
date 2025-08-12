@@ -27,12 +27,21 @@ class TraditionList extends HTMLElement {
         // Listen for any state change regarding traditions.
         TRADITION_STORE.subscribe( ( prevState, state ) => {
             // We ignore any state change except when traditions are fetched for the 
-            // very first time. Re-rendering the navigation tree is rather pointless.
+            // very first time. Re-rendering the navigation tree is rather pointless,
+            // and a potential memory leak on top of that.
             if ( prevState.selectedTradition == null ) {
                 this.render( state.availableTraditions );
             } else {
                 // The case when a tradition was deleted or added.
                 if ( prevState.availableTraditions.length !=  state.availableTraditions.length ) {
+                    // TODO: this really shouldn't rerender, because it adds eventListeners
+                    // and sectionLists (and their eventListeners) with each rerender.
+                    // Instead it should really *update* removing the deleted or adding the
+                    // new Tradition.
+                    // We can let is slide for now: checking the console it is clear the 
+                    // innerHTML='' method removes all references to the eventListeners
+                    // which are then garbage collected. Nevertheless we need to clean up after
+                    // ourselves too, no?
                     this.render( state.availableTraditions );
                 }
                 // The case where a name was changed in the metadata.
@@ -92,20 +101,34 @@ class TraditionList extends HTMLElement {
         const traditionListItem = document.createElement( 'li' );
         traditionListItem.setAttribute( 'class', 'nav-item' );
         const selected = TRADITION_STORE.state.selectedTradition.id == tradition.id ? ' selected' : '';
+        var accessIcon = '\n';
+        if( !tradition.is_public ){
+            traditionListItem.classList.add( 'private' );
+            accessIcon = `\n<div class="access-icon">${privateAccessIcon}</div>`;
+        } else {
+            traditionListItem.classList.add( 'public' );
+        }
         traditionListItem.innerHTML = `
             <div class="tradition-list-item d-flex">
-                <div class="folder-icon${selected}" trad-id="${tradition.id}" class="">${folderIcon}</div>
+                <div class="folder-icon${selected}" trad-id="${tradition.id}">${folderIcon}</div>
                 <div>
                     <a href="api/tradition/${tradition.id}" trad-id="${tradition.id}" class="nav-link">
                         <span class="tradition-nav-name">${tradition.name}</span>
                     </a>
-                </div>
+                </div>${accessIcon}                
             </div>
             <div>
                 <section-list trad-id="${tradition.id}" class="collapse"></section-list>
             </div>`
         traditionListItem.querySelector( 'div div a' ).addEventListener( 'click', (evt) => { this.selectTradition( evt, tradition ) } );
         traditionListItem.querySelector( 'div div.folder-icon' ).addEventListener( 'click', () => { this.toggleSectionList( tradition ) } );
+        return traditionListItem;
+    }
+
+    createListSeparator() {
+        const traditionListItem = document.createElement( 'li' );
+        traditionListItem.setAttribute( 'class', 'nav-item' );
+        traditionListItem.innerHTML = '<div class="list-separator d-flex"></div>';
         return traditionListItem;
     }
 
@@ -120,7 +143,26 @@ class TraditionList extends HTMLElement {
             <ul id="traditions-list" class="nav flex-column mb-2"></ul>
         `
         const traditionListElement = this.querySelector( 'ul' );
-        traditions.forEach( (tradition) => traditionListElement.appendChild( this.createTraditionListItem( tradition ) ) );
+
+        // Add private traditions to the list first.
+        traditions.forEach( (tradition) => {
+            if( !tradition.is_public ){
+                traditionListElement.appendChild( this.createTraditionListItem( tradition ) )
+            };
+        } )
+
+        // If there are any private traditions, add a list separator.
+        if( traditionListElement.querySelector( 'li' ) ) {
+            traditionListElement.appendChild( this.createListSeparator() );
+        }
+
+        // Lastly, add the public traditions.
+        traditions.forEach( (tradition) => {
+            if( tradition.is_public ){
+                traditionListElement.appendChild( this.createTraditionListItem( tradition ) )
+            };
+        } )
+        
     }
 
 }

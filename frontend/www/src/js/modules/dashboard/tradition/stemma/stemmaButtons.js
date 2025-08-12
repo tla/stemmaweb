@@ -22,11 +22,13 @@ class StemmaButtons extends HTMLElement {
     
     document.querySelector( '#view-stemmata-button' ).addEventListener( 'click', this.setView );
     document.querySelector( '#run-stemweb-button' ).addEventListener( 'click', stemwebFrontend.showDialog );
-    document.querySelector( '#edit-collation-button' ).addEventListener( 'click', this.setView );
+    // We want this in the below call to be this class, hence the `.call`, otherwise it will be the button element clicked.
+    document.querySelector( '#edit-collation-button' ).addEventListener( 'click', (event) => { this.setView.call( this, event ) } );
     document.querySelector( '#delete-tradition-button' ).addEventListener( 'click', this.handleDelete );
 
     SECTION_STORE.subscribe( this.toggleEditCollationButtonActive );
-
+    TRADITION_STORE.subscribe( ( state ) => { this.greyOut(); } );
+    
     fadeIn( this );
   }
 
@@ -45,6 +47,20 @@ class StemmaButtons extends HTMLElement {
         editCollationButtonElement.classList.add( 'disabled' );
       }
     }
+  }
+
+  /**
+   * This should take care of correctly greying out buttons of this
+   * component when a user logs in or out.
+   */
+  greyOut() {
+    const buttonIds = [ 'run-stemweb-button', 'edit-collation-button', 'delete-tradition-button' ];
+    buttonIds.forEach( (buttonId) => {
+      document.querySelector( `#${buttonId}` ).classList.remove( 'disabled' );
+      if( !userIsOwner() ){
+        document.querySelector( `#${buttonId}` ).classList.add( 'disabled' );
+      }
+    } );
   }
 
   setView( evt ) {
@@ -67,86 +83,13 @@ class StemmaButtons extends HTMLElement {
           SECTION_STORE.setSelectedSection( section );
         }
         if( section ) {
-          stemmaButtonsService.getSectionDot( TRADITION_STORE.state.selectedTradition.id, section.id ).then( (resp) => {
-            if ( resp.success ) {
-              // Because the relation mapper container is `display: none` on initialization we use the height of other elements.
-              // Timing is relevant: closeStemmaView takes a callback and when that gets executed the stemma graph container
-              // is already `display: none` and `getBoundingClientRect()` return just zero on any dimension.
-              const graphRendererHeight = document.querySelector( '#graph-area' ).getBoundingClientRect().height;
-              SectionSelectors.renderSectionSelectors();
-              StemmaButtons.closeStemmaView( () => {
-                const graphRendererWidth = document.querySelector( '#topbar-menu' ).getBoundingClientRect().width;
-                // TODO: There is a enormous overlap between this code and
-                // code doing practically the same thing in `sectionSelectors.js`
-                // Both should probably call some extracted.
-                relationRenderer.renderRelationsGraph( 
-                  resp.data, {
-                    'width': graphRendererWidth,
-                    'height': graphRendererHeight,
-                    'onEnd': () => { 
-                      fadeToDisplayFlex( targetView, { 
-                        'duration': 1500,
-                        'onEnd': () => {
-                          //Add in relations information
-                          stemmaButtonsService.getSectionRelations( TRADITION_STORE.state.selectedTradition.id, section.id ).then( (resp) => {
-                            if ( resp.success ) {
-                              document.querySelector( 'relation-types' ).renderRelationTypes(
-                                { 'onEnd': () => { fadeToDisplayNone( document.querySelector( 'relation-types div' ), { 'reverse': true } ) } }
-                              );
-                              RelationMapper.addRelations( resp.data );
-                            } else {
-                              StemmawebAlert.show(
-                                `Could not fetch relations information: ${resp.message}`,
-                                'danger'
-                              );                
-                            }
-                          } );
-                        }  
-                      } );
-                      document.querySelector( '#section-title' ).innerHTML = `${SECTION_STORE.state.selectedSection.name}`;
-                      // Add in the reading information
-                      stemmaButtonsService.getSectionReadings( TRADITION_STORE.state.selectedTradition.id, section.id ).then( (resp) => {
-                        if ( resp.success ) {
-                          RelationMapper.addReadings( resp.data );
-                        } else {
-                          StemmawebAlert.show(
-                            `Could not fetch reading information: ${resp.message}`,
-                            'danger'
-                          );                
-                        }
-                      } );
-                      document.querySelector( 'node-density-chart' ).renderChart(
-                        { 'onEnd': () => { 
-                            fadeToDisplayNone( document.querySelector( 'node-density-chart div' ), { 
-                              'reverse': true,
-                              'onEnd': () => { 
-                                relationRenderer.resetZoom();
-                                console.log( 'Do it! Do it! I Dare you!' ) 
-                              } 
-                            } ) 
-                          } 
-                        }
-                      );         
-                      document.querySelector( 'property-table-view' ).hide();      
-                      document.querySelector( '#section-properties-view-title' ).classList.toggle( 'hide' );
-                      document.querySelector( '#section-reading-properties-tabs' ).classList.toggle( 'hide' );                    
-                    }
-                  }
-                );
-              } );
-            } else {
-              StemmawebAlert.show(
-                `Could not fetch section graph information: ${resp.message}`,
-                'danger'
-              );
-            }
-          } );
+          stemmaButtonsService.getSectionDot( TRADITION_STORE.state.selectedTradition.id, section.id )
+            .then( (resp) => { this.switchToRelationMapper( resp, section.id ) } );
         }     
       }
       // Figure out which view we are closing, set that as element to 
       // fade out, and remove or stash stuff from the view we are closing.
       if ( currentView == document.querySelector( '#edit-collation-button' ) ) {
-        relationRenderer.destroy(); // Wondering? See the elaborate note in relationRenderer.js.
         document.querySelector( '#section-title' ).innerHTML = '';
         fadeOutElement = document.querySelector( 'relation-mapper' );
         document.querySelector( '#main' ).classList.remove( 'col-9' );
@@ -162,13 +105,109 @@ class StemmaButtons extends HTMLElement {
     }
   }
 
-  static closeStemmaView( callBack ) {
+  switchToRelationMapper( resp, sectionId ) {
+    if ( resp.success ) {
+      SectionSelectors.renderSectionSelectors();
+      this.closeStemmaView( 
+        { 'onEnd': () => { this.openRelationView( resp, sectionId ) } }
+      );
+    } else {
+      StemmawebAlert.show(
+        `Could not fetch section graph information: ${resp.message}`,
+        'danger'
+      );
+    }
+  }
+
+  closeStemmaView( options ) {
+    const defaultOptions =  { 
+      'onEnd': () => {}
+    };
+    const usedOptions = { ...defaultOptions, ...options };
     const fadeOutElement = document.querySelector( '#stemma-editor-graph-container' );
     fadeToDisplayNone( '#sidebar-menu', { 'delay': 0 } );
     document.querySelector( '#main' ).classList.remove( 'col-7' );
     document.querySelector( '#main' ).classList.add( 'col-9' ); // Timed in CSS to 1s with 500ms delay, hence duration of 1500 in next line.
-    fadeToDisplayNone( fadeOutElement, { 'duration': 1500, 'onEnd': callBack } );
+    fadeToDisplayNone( fadeOutElement, { 
+      'duration': 1500, 
+      'onEnd': () => {
+        usedOptions.onEnd(); 
+      } 
+    } );
   }
+
+  openRelationView( resp, sectionId ) {
+    // TODO: There is a enormous overlap between this code and
+    // code doing practically the same thing in `sectionSelectors.js`
+    // Both should probably call some extracted.
+    relationRenderer.renderRelationsGraph( 
+      resp.data, {
+        'onEnd': () => { 
+          this.setSectionTitle();
+          this.addInRelations( sectionId );
+          this.addInReadingInformation( sectionId );
+          this.renderDensityChart();
+          this.hideIrrelevantPropertyViews();
+          const relationMapperElement = document.querySelector( 'relation-mapper' );
+          fadeToDisplayFlex( relationMapperElement, { 'duration': 1500 } );
+        }
+      }
+    );
+  }
+
+  addInRelations( sectionId ) {
+    stemmaButtonsService.getSectionRelations( TRADITION_STORE.state.selectedTradition.id, sectionId ).then( (resp) => {
+      if ( resp.success ) {
+        document.querySelector( 'relation-types' ).renderRelationTypes(
+          { 'onEnd': () => { fadeToDisplayNone( document.querySelector( 'relation-types div' ), { 'reverse': true } ) } }
+        );
+        RelationMapper.addRelations( resp.data );
+      } else {
+        StemmawebAlert.show(
+          `Could not fetch relations information: ${resp.message}`,
+          'danger'
+        );                
+      }
+    } );
+  }  
+
+  setSectionTitle() {
+    document.querySelector( '#section-title' ).innerHTML = `${SECTION_STORE.state.selectedSection.name}`;
+  }
+
+  addInReadingInformation( sectionId ) {
+    stemmaButtonsService.getSectionReadings( TRADITION_STORE.state.selectedTradition.id, sectionId ).then( (resp) => {
+      if ( resp.success ) {
+        RelationMapper.addReadings( resp.data );
+      } else {
+        StemmawebAlert.show(
+          `Could not fetch reading information: ${resp.message}`,
+          'danger'
+        );                
+      }
+    } );
+  }
+
+  renderDensityChart() {
+    document.querySelector( 'node-density-chart' ).renderChart(
+      { 'onEnd': () => { 
+          fadeToDisplayNone( document.querySelector( 'node-density-chart div' ), { 
+            'reverse': true,
+            'onEnd': () => { 
+              console.log( 'This is a major TODO!' );
+              //relationRenderer.showPan();
+            } 
+          } ) 
+        } 
+      }
+    );
+  }
+  
+  hideIrrelevantPropertyViews() {
+    document.querySelector( 'property-table-view' ).hide();      
+    document.querySelector( '#section-properties-view-title' ).classList.toggle( 'hide' );
+    document.querySelector( '#section-reading-properties-tabs' ).classList.toggle( 'hide' );                    
+  } 
 
   handleDelete() {
     const { selectedTradition: tradition, availableTraditions } =
@@ -217,7 +256,7 @@ class StemmaButtons extends HTMLElement {
         <button id="view-stemmata-button" type="button" class="btn btn-sm btn-outline-secondary selected-view">
           View stemmata
         </button>
-        <button id="run-stemweb-button" type="button" class="btn btn-sm btn-outline-secondary">
+        <button id="run-stemweb-button" type="button" class="btn btn-sm btn-outline-secondary disabled">
           Run Stemweb
         </button>
         <button type="button" class="btn btn-sm btn-outline-secondary disabled">
@@ -253,7 +292,7 @@ class StemmaButtons extends HTMLElement {
         </div>
       </div>
       <div class="btn-group ms-2">
-        <button id="delete-tradition-button" type="button" class="btn btn-sm btn-outline-danger">
+        <button id="delete-tradition-button" type="button" class="btn btn-sm btn-outline-danger disabled">
           <span data-feather="trash"></span>
           Delete
         </button>
@@ -262,4 +301,5 @@ class StemmaButtons extends HTMLElement {
     `;
   }
 }
+
 customElements.define('stemma-buttons', StemmaButtons);
