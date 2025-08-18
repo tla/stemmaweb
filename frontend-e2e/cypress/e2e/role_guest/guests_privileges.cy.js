@@ -84,7 +84,7 @@ describe('Guest sees only public traditions (listed in the toc)', () => {
                 cy.get('#traditions-list').contains(tradition.title).should('not.exist');
             }
             else {
-                throw new Error("The tradition is neither 'Private' nore 'Public'!")
+                throw new Error("The tradition is neither 'Private' nor 'Public'!")
             }
         });
     });
