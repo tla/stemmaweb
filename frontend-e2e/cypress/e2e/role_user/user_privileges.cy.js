@@ -17,8 +17,8 @@ const user = users.filter(({username}) => username === 'user@example.org')[0];
 const test_traditions_user_private = test_traditions.filter(({ owner, access }) => owner === user.username && access === 'Private'); // 2: Florilegium, Legend
 const test_traditions_user_public = test_traditions.filter(({ owner, access }) => owner === user.username && access === 'Public'); // 1: Notre besoin
 const test_traditions_others_public = test_traditions.filter(({ owner, access }) => owner !== user.username && access === 'Public'); // 1: John verse
-const count_traditions_invisible_for_user = test_traditions.filter(({ owner, access }) => owner !== user.username && access !== 'Public').length; // 3: Verbum, checked, Arabic
-const count_traditions_all = test_traditions.length; // 7
+// const count_traditions_invisible_for_user = test_traditions.filter(({ owner, access }) => owner !== user.username && access !== 'Public').length; // 3: Verbum, checked, Arabic
+// const count_traditions_all = test_traditions.length; // 7
 const  count_traditions_listed_user = test_traditions_user_private.length + test_traditions_user_public.length + test_traditions_others_public.length;
 // assert that user_private(2) + user_public(1) + others_public(1) + invisible_for_user equal(3) to total traditions(7).
 
@@ -38,14 +38,14 @@ afterEach(() => {
 // Feat/157 user auth (PR#235)
 describe('User sees only public and their own traditions', () => {
     it('passes', () => {
-        // count traditions filtered by role, owner, access
+        /* // count traditions filtered by role, owner, access
         cy.log('count_traditions_all: ' + count_traditions_all) // 7
         cy.log('count_traditions_user_private: ' + test_traditions_user_private.length) // 2
         cy.log('count_traditions_user_public: ' + test_traditions_user_public.length) // 1
         cy.log('count_traditions_others_public: ' + test_traditions_others_public.length) // 1
         cy.log('count_traditions_invisible_for_user: ' + count_traditions_invisible_for_user) // 3
         cy.log('count_traditions_visible_for_user: ' + (count_traditions_all - count_traditions_invisible_for_user)) // 7-3=4
-        cy.log('count_traditions_listed_user:' + count_traditions_listed_user)
+        cy.log('count_traditions_listed_user:' + count_traditions_listed_user) */
 
         // logged in as a specific user
         // assert the number of visible traditions is that of the own ones + the orthers' public ones
@@ -56,11 +56,18 @@ describe('User sees only public and their own traditions', () => {
             // assert the rigth traditions are displayed
             if (tradition.owner === user.username && tradition.access === 'Private')
                 {   // visible and editable, closed lock sign
-                    cy.get('ul#traditions-list').contains(tradition.title).should('be.visible')
+                    cy.get('ul#traditions-list').contains(tradition.title).should('be.visible').click();
+                    // the edit icon should be visible, not greyed out, on click the editing interface should appear.
+                    cy.get('property-table-view').as('properties-table')
+                    cy.get('@properties-table').find('edit-properties-button').find('a').should('not.have.class', 'greyed-out')
+                    //.click()
+                    // cy.contains('#modalDialogLabel', 'Edit properties').parents('div.modal-dialog').find('button.btn-close').click()
+                    // cy.contains('#modalDialogLabel', 'Edit properties').should('not.exist')
                 }
             else if (tradition.owner === user.username && tradition.access === 'Public')
                 {   // visible and editable, opened lock sign
-                    cy.get('ul#traditions-list').contains(tradition.title).should('be.visible')
+                    cy.get('ul#traditions-list').contains(tradition.title).should('be.visible').click();
+                    cy.get('@properties-table').find('edit-properties-button').find('a').should('not.have.class', 'greyed-out')
                 }
             else if (tradition.owner !== user.username && tradition.access === 'Private')
                 {   // not visible or editable for other users or guests
@@ -68,7 +75,8 @@ describe('User sees only public and their own traditions', () => {
                 }
             else if (tradition.owner !== user.username && tradition.access === 'Public')
                 {   // visible but not editable, opened lock sign
-                    cy.get('ul#traditions-list').contains(tradition.title).should('be.visible')
+                    cy.get('ul#traditions-list').contains(tradition.title).should('be.visible').click();
+                    cy.get('@properties-table').find('edit-properties-button').find('a').should('have.class', 'greyed-out')
                 }
             else { // should not reach here
                 throw new Error("Not all tradition types for the user are covered in the test!")
