@@ -118,3 +118,9 @@ Cypress.Commands.add('reseedDB', () => {
     cy.log('db re-seeded')
 
 });
+
+// Click a modal button
+Cypress.Commands.add('clickModalButton', ([dialogLabel, buttonLabel]) => {
+    cy.get('#modalDialogLabel').contains(dialogLabel).parents('.modal-content').as('propertiesModal')
+    cy.get('@propertiesModal').contains('button', buttonLabel).should('be.visible').wait(500).click()
+});
