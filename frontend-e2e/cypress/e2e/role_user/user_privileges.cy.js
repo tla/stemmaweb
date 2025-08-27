@@ -64,6 +64,8 @@ describe('User sees only public and their own traditions', () => {
                     cy.get('property-table-view').as('properties-table')
                     cy.get('@properties-table').find('edit-properties-button').find('a').should('not.have.class', 'greyed-out')
                     cy.get('@properties-table').find('edit-properties-button').click()
+                    // TO DO: 'Edit properties' modal is visible and the properties are editable
+
                     // close the modal
                     cy.clickModalButton(['Edit properties', 'Close'])
                 }
@@ -74,6 +76,8 @@ describe('User sees only public and their own traditions', () => {
                     cy.get('@properties-table').find('edit-properties-button').find('a[aria-label="Edit tradition properties"]').should('not.have.class', 'greyed-out')
                     // .parents('edit-properties-button).click() // cypress does not like this...
                     cy.get('@properties-table').find('edit-properties-button').click()
+                    // TO DO: 'Edit properties' modal is visible and the properties are editable
+
                     // close the modal
                     cy.clickModalButton(['Edit properties', 'Close'])
                 }
@@ -87,6 +91,10 @@ describe('User sees only public and their own traditions', () => {
                     cy.get('ul#traditions-list').contains(tradition.title).should('be.visible').click();
                     cy.get('property-table-view').as('properties-table')
                     cy.get('@properties-table').find('edit-properties-button').find('a').should('have.class', 'greyed-out')
+                    // upon click the 'Edit properties' modal should not become visible, so the proerties are not editable
+                    cy.get('@properties-table').find('edit-properties-button').click()
+                    // assert the 'Edit properties' modal is not displayed
+                    cy.contains('#modalDialogLabel', 'Edit properties').should('exist').and('not.be.visible')
                 }
             else { // should not reach here
                 throw new Error("Not all tradition types for the user are covered in the test!")
