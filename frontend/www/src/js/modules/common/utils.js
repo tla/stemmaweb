@@ -172,3 +172,33 @@ function timestamp() {
   ];
   return `${datevalues.join('')}_${timeValues.join('')}`;
 }
+
+
+class StemmaWebUtils {
+
+  // TODO: Probably all the above should be moved here too, to not put them in 
+  // global name space.
+
+  /** 
+   * Returns an SVG translate based on current translate
+   * of the provided SVG element and a new translate.
+   * 
+   * @param {SVGElement}  element  SVGElement to compute new translate from.
+   * @param {float}       dX       Newly to add amount of translation in X dimension.
+   * @param {float}       dY       Newly to add amount of translation in Y dimension.
+   */
+  getTranslate( element, dX, dY ) {
+    const baseVal = element.transform.baseVal;
+    let tX = 0;
+    let tY = 0;
+    if( baseVal.length > 0 ){
+        const matrix = baseVal.getItem( baseVal.length - 1 ).matrix; 
+        tX = parseFloat( matrix.e ) + dX;
+        tY = parseFloat( matrix.f ) + dY;
+    }
+    return `translate(${tX} ${tY})`;
+  }
+
+}
+
+const stemmaWebUtils = new StemmaWebUtils();

@@ -702,3 +702,12 @@ ul.stemmaweb-tabs li:not([class='active']):hover::after {
   background-color: #6c757d;
   border-color: #6c757d;
 }
+
+.edge.highlighted path {
+  stroke: lime;
+}
+
+.edge.highlighted polygon  {
+  stroke: lime;
+  fill: lime;
+}

@@ -1,4 +1,4 @@
-class RelationRenderer {
+class EdgeDragSpike extends HTMLElement {
 
     #relGvr = null;
     #baseTransform = '';
@@ -9,13 +9,13 @@ class RelationRenderer {
     #zoom = null;
     
     constructor() {
-        // This is the listener that catches a user dragging the 
-        // position indicator in the minimap.
-        this.unsubscribePanListener = broadcast.subscribe( 'minimapPan', (eventData) => {
-            this.panRelationGraph( eventData );
-        } );
+        super();
     }
     
+    connectedCallback() {
+        const dot = global_dummy_dot;
+        this.renderRelationsGraph( dot );
+    }
 
     get zoom() {
         return this.#zoom;
@@ -61,17 +61,17 @@ class RelationRenderer {
             .logEvents( false );
     }
   
+    computeSVGDimensions() {
+        return { width: 1250, height: 575 }
+    }
+
     /**
      * Renders the supplied variant and relation `dot` as a graph.
      *
      * @param {String} dot GraphViz DOT format description of the graph to display.
      * @param {Object} options
      */
-    renderRelationsGraph( dot, options={} ) {
-        const defaultOptions =  { 
-            'onEnd': () => {}
-        };
-        const usedOptions = { ...defaultOptions, ...options };
+    renderRelationsGraph( dot ) {
         const svgDimensions = this.computeSVGDimensions();
         this.relationMapperGraphvizRoot
             .width( svgDimensions.width )
@@ -101,8 +101,10 @@ class RelationRenderer {
                 // Otherwise the newly depicted section's graph will "jump" 
                 // (i.e. use the existing transform).
                 d3.select( '#relation-graph' ).call( this.#zoom.transform, d3.zoomIdentity );
+                
+                // Added this to start the playing around.
+                this.inspection();
 
-                usedOptions.onEnd();
             } )
             .renderDot( dot );    
     }
@@ -126,7 +128,7 @@ class RelationRenderer {
     graphZoomPan( zoomable ) {
         if( zoomable ){
             this.#zoom = d3.zoom()
-                .scaleExtent([0.2, 1.2])
+                .scaleExtent([0.2, 2.5])
                 // TODO:
                 // .translateExtent( [[0,-200],[2000,800]] )
                 // We will have to think about translateExtent:
@@ -145,20 +147,7 @@ class RelationRenderer {
                 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/call
                 .on( 'zoom', ( {transform, sourceEvent } ) => { 
                     this.repairBaseTranslate.call( this, transform );
-                    // In case minimap requested a pan `transform.silent` exists.
-                    // In that case we won't broadcast an event, as it would cause the
-                    // minimap to rerender the indicator (which it already did.)
-                    if( transform.silent === undefined ) {
-                        // We handle this as a promise because the very first render by GrapViz.js takes just a tad
-                        // too long and the pan ratio comes out as NaN because the svg has not been added to the dom
-                        // or something such; `calculatePanZoomRatios` waits for it to appear.
-                        // We only have to do this if sourceEvent of the zoom event is null, which means the zoom/pan
-                        // was caused by the code and not by a user scrolling, clicking, wheeling, etc.
-                        const resolveImmediately = ( sourceEvent != null );
-                            this.calculatePanZoomRatios( resolveImmediately ).then( (ratios) => { broadcast.publish( 'relationGraphPanZoom', ratios ) } );    
-                        }
-                    }
-                );
+                } );
             d3.select( '#relation-graph' ).call( this.#zoom );
         } else {
             d3.select( '#relation-graph' ).on( '.zoom', null );
@@ -167,12 +156,21 @@ class RelationRenderer {
 
     graphNodesDrag( draggable ) {
         if( draggable ){
+            const thisClassInstance = this;
             this.#svg.selectAll( 'g.node' )
                 .attr( 'cursor', 'grab' )
                 .call( d3.drag()
-                    .on( 'start', this.dragStarted )
-                    .on( 'drag', this.dragged )
-                    .on( 'end', this.dragEnded ) 
+                    .on( 'start', function( event, d ) {  
+                        //NOTE: Changed call signature!
+                        thisClassInstance.dragStarted.call( thisClassInstance, this, event, d );
+                    } )
+                    .on( 'end', function( event, d ) {
+                        //NOTE: Changed call signature!
+                        thisClassInstance.dragEnded.call( thisClassInstance, this, event, d );
+                    } )
+                    .on( 'drag', function( event, d ) { 
+                        thisClassInstance.dragged.call( thisClassInstance, this, event, d ); 
+                    } )
                 );
 			this.#svg.selectAll( 'g.node' ).on( 'click', ()=>( console.log( 'click' ) ) );
         } else {
@@ -238,22 +236,49 @@ class RelationRenderer {
         ];
     }
 
-    dragStarted() {
-        const ellipse = d3.select( this );
-        // ellipse.raise();
-        ellipse.attr( 'cursor', 'grabbing' );
+    // NOTE: changed
+    dragStarted( element, event, d ) {
+        const node = d3.select( element );
+        // node.raise();
+        node.attr( 'cursor', 'grabbing' );
+
+        // Now select the new ones.
+        // Note: d is the data on the svg g element that represents the node.
+        this.#selectedEdges = this.selectEdges( d.key );
+        this.#selectedEdges.forEach( (edge) => { 
+            edge.toggleHighlight();
+            if ( ev ) {
+                edge.renderBezierControls();
+            }
+        } );
     }
     
-    dragged(event, d) {
-        const selection = d3.select( this );        
-        const translate = stemmaWebUtils.getTranslate( selection.node() );
-        const newX = translate.x + parseFloat( event.dx );
-        const newY = translate.y + parseFloat( event.dy );
-        d3.select( this ).attr( 'transform', `translate(${newX} ${newY})` );
+    // NOTE: changed
+    dragged( element, event, d ) {
+        const dX = parseFloat( event.dx );
+        const dY = parseFloat( event.dy );
+        const selection = d3.select( element );        
+        const translate = stemmaWebUtils.getTranslate( selection.node(), dX, dY );
+        // d3.select( element ).attr( 'transform',  );
+        selection.attr( 'transform', translate );
+
+        this.#selectedEdges.forEach( (edge) => { 
+            edge.moveEdgeEndElastic( dX, dY );
+        } );
     }
-    
-    dragEnded() {
-        d3.select( this ).attr( 'cursor', 'grab' );
+
+    dragEnded( element, event, d ) {
+        const node = d3.select( element );
+        node.attr( 'cursor', 'grab' );
+ 
+        const selection = d3.select( element );        
+
+        selection.transition().duration(500).attr( 'transform', 'translate(0 0)' );
+
+        this.#selectedEdges.forEach( (edge) => { 
+            edge.toOrigins(false);
+        } );
+        this.#selectedEdges = [];
     }
 
     repairBaseTranslate( transform ) {
@@ -268,121 +293,35 @@ class RelationRenderer {
         this.#svg.select( 'g' ).attr( 'transform', transform );
     }
 
-    panRelationGraph( eventData ) {        
-        if( eventData.panXRatio && eventData.panXRatio != null  ) {
-            const gExtent = this.#svg.select( 'g polygon' ).node().getBBox().width;
-            const xTranslate = -1 * eventData.panXRatio * gExtent;
-            var transform = d3.zoomTransform( this.#svg.select( 'g' ).node() );
-            const newTransform = new d3.ZoomTransform( transform.k, transform.k*xTranslate, transform.y );
-            newTransform.silent = eventData.silent;
-            d3.select( '#relation-graph' ).call( this.#zoom.transform, newTransform );
-        }
+
+    // Above should be almost 100% identical to `relationRenderer` apart from…
+    //  * deleting the things not used 
+    //  * a slight changed to how `dragged` is called because this is an instantiated
+    //    HTML componentobject and not a static-ish class like `Relationrenderer`.
+    //  * and adding `this.inspection()` to the on end of `renderRelationsGraph( dot )`
+    //    to start the playing around below.
+
+    // Custom inspection and play around code below.
+    #selectedEdges = [];
+
+    inspection() {
     }
 
-    calculatePanZoomRatios( resolveImmediately ) {
-        // We use a promise to repeatedly calculate panXRatio until it does return a
-        // useful value. This is necessary because the first SVG rendered by GraphViz.js 
-        // takes just a tiny bit too long to arrive in the DOM and then panXRatio 
-        // returns as NaN.
-        // We only have to do this if the sourceEvent of the zoom event was null, which 
-        // means the zoom/pan was caused by the code and not by a user scrolling, 
-        // clicking, wheeling, etc. The parameter `resolveImmediately` may be used to
-        // indicate this.
-        if( resolveImmediately ) {
-            return new Promise( resolve => {
-                const { panXRatio, transform } = relationRenderer.calculateZoomPanXRatio();
-                const panExtentRatio = relationRenderer.calculateZoomPanExtentRatio( transform );
-                resolve( { panXRatio: panXRatio, panExtentRatio: panExtentRatio } );
+    selectEdges( key ) {
+        const selected = [];
+        const selection = d3.selectAll( '.edge' )
+            .filter( (d) => {
+                return ( key == d.key.split( '>' )[1] ); // { key: "22->39" … }
             } );
-        } else {
-            return new Promise( resolve => {
-                const theInterval = setInterval( function () {
-                    const { panXRatio, transform } = relationRenderer.calculateZoomPanXRatio();
-                    if( panXRatio != null ) {
-                        clearInterval( theInterval );
-                        const panExtentRatio = relationRenderer.calculateZoomPanExtentRatio( transform );
-                        resolve( { panXRatio: panXRatio, panExtentRatio: panExtentRatio } );
-                    }
-                }, 10);
-            } );
-        }
-    }
-
-    calculateZoomPanXRatio() {
-        const polygonElement = d3.select( '#relation-graph svg g polygon' );
-        const transform = d3.zoomTransform( this.#svg.select( 'g' ).node() );
-        var panXRatio = null;
-        if( polygonElement.node() ) {
-            const scale = transform.k;
-            const xTranslate = transform.x;
-            const gExtent = polygonElement.node().getBBox().width * scale;
-            panXRatio = -( xTranslate / gExtent );
-        }
-        return { panXRatio: panXRatio, transform: transform };
-    }
-
-    calculateZoomPanExtentRatio( transform ) {
-        // We'll need scaling at some point.
-        const scale = transform.k;
-        // The pixel width of the svg and the width if the viewBox defined in it
-        // determine the scale factor we need to apply if we want to transform
-        // screen distances in pixels to distances in the coordinate system of the 
-        // svg/viewBox.
-        const svgElement = document.querySelector( '#relation-graph svg' );
-        // svgWidth is the width in actual pixels of the HTML svg container.
-        const svgWidth = svgElement.getAttribute( 'width' );
-        // The svgViewBox size is the virtual dimension of the part of the svg canvas
-        // we can see inside of the HTML container. 
-        const svgViewBox = svgElement.viewBox.baseVal;
-        // length in pixels * screenToViewBoxFactor gives you how much length the 
-        // pixels represent in the coordinate system of the svg canvas.
-        const screenToViewBoxFactor = svgViewBox.width/svgWidth;
-        // How much we can see from the graph depends on the width of the 
-        // div that contains the variant graph. The width of that
-        // we want to express as a ratio of the width of the graph itself.
-        // Note that this is not (yet, in this current code) the same as
-        // svgWidth, as that doesn't resize.
-        const relationGraphElementWidth = document.querySelector( '#relation-graph' ).getBoundingClientRect().width * (1/scale);
-        const extent = relationGraphElementWidth * screenToViewBoxFactor;
-
-        const polygonElement = d3.select( '#relation-graph svg g polygon' );
-        var panExtentRatio = 0;
-        if( polygonElement.node() ) {
-            const gExtent = polygonElement.node().getBBox().width;
-            panExtentRatio = extent / gExtent;
-        }
-        return panExtentRatio;
-    }
-
-    computeSVGDimensions() {
-        const width = document.querySelector( '#topbar-menu' ).getBoundingClientRect().width;
-        const sectionSelectorsHeight = document.querySelector( 'section-selectors' ).getBoundingClientRect().height;
-        // Initially `#relation-mapper-div` is display none, so `.getBoundingClientRect()` will
-        // not work. But `getComputedStyle` does.
-        const height = parseFloat( window.getComputedStyle( document.querySelector( '#relation-mapper-div' ) ).height ) - sectionSelectorsHeight;
-        return { width: width, height: height }
-    }
-
-    /**
-     * Resizes the current graph/stemma when the browser window gets 
-     * resized. Also sets the new corresponding width on the GraphViz 
-     * renderer so that subsequent relation graphs are depicted at 
-     * the right size.
-     */
-    resizeSVG() {
-        // // TODO: only on visible?
-        const svgDimensions = relationRenderer.computeSVGDimensions();
-        const relationGraph = d3.select( '#relation-graph' );
-        const svg = relationGraph.selectWithoutDataPropagation("svg");
-        svg
-            .transition()
-            .duration(700)
-            .attr("width", svgDimensions.width )
-            .attr("height", svgDimensions.height );
+        selection.each( (d) => { 
+            selected.push( new Edge( d.attributes.id ) );
+        } );
+        return selected;
     }
 
 }
-  
-const relationRenderer = new RelationRenderer();
-window.addEventListener( 'resize', relationRenderer.resizeSVG );
-  
+
+let ev = true;
+
+customElements.define( 'edge-drag-spike', EdgeDragSpike );
+

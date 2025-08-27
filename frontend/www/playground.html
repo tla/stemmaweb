@@ -4,23 +4,41 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Stemmaweb Playground</title>
-    </head>
-    <body>
+        
+        <link rel="stylesheet" href="./src/css/dashboard.css" />
+        <link rel="stylesheet" href="./src/css/dashboard-stemmaweb.css" />
+        <link rel="stylesheet" href="./src/css/normalize.css" />
+    
         <style>
-            .brush .overlay {
-                fill: #bbb;
-                fill-opacity: 0.3;
+            #main {
+                margin-top: 5em;
+                margin-left: 8em;
+                border: 1pt dotted lightsalmon;
             }
-            td { 
-                width: 60px;
-                border: 1px solid lightcoral;
+            #relation-mapper-div {
+                border: 1pt dotted greenyellow;
+            }
+            #relation-mapper-div svg {
+                border: 1pt dotted darkgoldenrod;
             }
         </style>
-        <div style="border: 1px solid lightsalmon">
-            <brush-spike></brush-spike>
-        </div>
+    </head>
 
-        <script src="./src/js/libraries.js" type="application/javascript"></script>
-        <script src="./src/js/modules/dashboard/relationmapper/brushSpike.js" type="application/javascript"></script>
+    <body>
+        <div id="main">
+            <edge-drag-spike>
+                <div id="relation-mapper-div"></div>
+            </edge-drag-spike>
+        </div>
     </body>
+
+    <script src="./src/js/libraries.js" type="application/javascript"></script>
+    <script type="text/javascript">
+        const d3 = libraries.lib_d3;
+    </script>
+    <script src="./src/js/modules/common/utils.js" type="application/javascript"></script>
+    <script src="./src/js/modules/dashboard/relationmapper/edgedragspike/globalDummyDot.js" type="application/javascript"></script>
+    <script src="./src/js/modules/dashboard/relationmapper/edgedragspike/bezierControl.js" type="application/javascript"></script>
+    <script src="./src/js/modules/dashboard/relationmapper/edgedragspike/edge.js" type="application/javascript"></script>
+    <script src="./src/js/modules/dashboard/relationmapper/edgedragspike/edgeDragSpike.js" type="application/javascript"></script>
 </html>
