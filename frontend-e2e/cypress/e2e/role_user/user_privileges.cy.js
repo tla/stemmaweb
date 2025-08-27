@@ -57,16 +57,17 @@ describe('User sees only public and their own traditions', () => {
         // assert user can only edit his own traditions
         test_traditions.forEach((tradition) => {
             cy.log("title: " + tradition.title);
-            /* if (tradition.owner === user.username && tradition.access === 'Private')
+            if (tradition.owner === user.username && tradition.access === 'Private')
                 {   // visible and editable, closed lock sign
                     cy.get('ul#traditions-list').contains(tradition.title).should('be.visible').click();
                     // the edit icon should be visible, not greyed out, on click the editing interface should appear.
                     cy.get('property-table-view').as('properties-table')
                     cy.get('@properties-table').find('edit-properties-button').find('a').should('not.have.class', 'greyed-out')
-                    // cy.contains('#modalDialogLabel', 'Edit properties').parents('div.modal-dialog').find('button.btn-close').click()
-                    // cy.contains('#modalDialogLabel', 'Edit properties').should('not.exist')
+                    cy.get('@properties-table').find('edit-properties-button').click()
+                    // close the modal
+                    cy.clickModalButton(['Edit properties', 'Close'])
                 }
-            else */ if (tradition.owner === user.username && tradition.access === 'Public')
+            else if (tradition.owner === user.username && tradition.access === 'Public')
                 {   // visible and editable, opened lock sign
                     cy.get('ul#traditions-list').contains(tradition.title).should('be.visible').click();
                     cy.get('property-table-view').as('properties-table')
@@ -76,7 +77,7 @@ describe('User sees only public and their own traditions', () => {
                     // close the modal
                     cy.clickModalButton(['Edit properties', 'Close'])
                 }
-            /* else if (tradition.owner !== user.username && tradition.access === 'Private')
+            else if (tradition.owner !== user.username && tradition.access === 'Private')
                 {   // not visible or editable for this user
                     cy.get('ul#traditions-list').contains(tradition.title).should('not.exist'); 
                     // 'Edit properties' is not reachable anyways
@@ -90,7 +91,7 @@ describe('User sees only public and their own traditions', () => {
             else { // should not reach here
                 throw new Error("Not all tradition types for the user are covered in the test!")
                 // role admin: check in role_admin tests.
-            } */
+            }
         });
 
         // TODO: test not only for user@example.org but also for benutzer@example.org.
