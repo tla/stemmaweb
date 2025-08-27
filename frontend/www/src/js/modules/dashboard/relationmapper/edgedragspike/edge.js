@@ -210,7 +210,7 @@ class Edge {
         this.#path.setPathData( this.#pathData );
     }
 
-    toOrigins( remove=true ) {
+    toOrigins( remove=false ) {
 
         const arrowHead = d3.select( this.#arrowHead );      
         arrowHead.transition().duration(500).attr( 'transform', 'translate(0 0)' );

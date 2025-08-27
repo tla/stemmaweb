@@ -13,7 +13,7 @@ class EdgeDragSpike extends HTMLElement {
     }
     
     connectedCallback() {
-        const dot = global_dummy_dot;
+        const dot = global_dummy_dot_verbum;
         this.renderRelationsGraph( dot );
     }
 
@@ -247,7 +247,7 @@ class EdgeDragSpike extends HTMLElement {
         this.#selectedEdges = this.selectEdges( d.key );
         this.#selectedEdges.forEach( (edge) => { 
             edge.toggleHighlight();
-            if ( ev ) {
+            if ( BEZIERS ) {
                 edge.renderBezierControls();
             }
         } );
@@ -276,7 +276,11 @@ class EdgeDragSpike extends HTMLElement {
         selection.transition().duration(500).attr( 'transform', 'translate(0 0)' );
 
         this.#selectedEdges.forEach( (edge) => { 
-            edge.toOrigins(false);
+            if( BEZIERS ) {
+                edge.toOrigins( true );
+            } else {
+               edge.toOrigins();
+            }
         } );
         this.#selectedEdges = [];
     }
@@ -320,8 +324,6 @@ class EdgeDragSpike extends HTMLElement {
     }
 
 }
-
-let ev = true;
 
 customElements.define( 'edge-drag-spike', EdgeDragSpike );
 
