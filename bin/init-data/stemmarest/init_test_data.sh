@@ -168,3 +168,15 @@ else
   echo Created tradition $ASNIP_ID
 fi
 # No stemma
+
+echo; echo Creating Verbum uncorrected
+$CURL --request POST --form name="Verbum" --form file=@data/collatecorr.xml --form filetype=stemmaweb --form userId=benutzer@example.org --form language=Latin $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+VERBUM_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`
+if [ -z $VERBUM_ID ]; then
+  echo Failed to create Verbum uncorrected
+  exit 1
+else
+  echo Created tradition $VERBUM_ID
+fi
+# Stemma is included in XML data
+
