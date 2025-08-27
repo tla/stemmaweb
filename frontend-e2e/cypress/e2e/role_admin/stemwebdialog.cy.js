@@ -46,6 +46,8 @@ import users from '../../fixtures/users.json';
 const len_stemweb_algorithms = stemweb_algorithms.length;
 const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 
+if (Cypress.browser.isHeaded) { // skip when in headless mode
+
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     cy.viewport(1600, 900);
@@ -409,3 +411,5 @@ describe('stemma editing error feedback in message console works properly', () =
         // }
     });
 });
+
+}

@@ -28,6 +28,8 @@ import test_traditions from '../../fixtures/test_traditions.json';
 import users from '../../fixtures/users.json';
 const admin = users.filter(({username}) => username === 'admin@example.org')[0];
 
+if (Cypress.browser.isHeaded) { // skip when in headless mode
+
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     cy.viewport(1600, 900);
@@ -49,3 +51,5 @@ describe('Changing Tradition metadata should be fully functional', () => {
         });
     });
 });
+
+}
