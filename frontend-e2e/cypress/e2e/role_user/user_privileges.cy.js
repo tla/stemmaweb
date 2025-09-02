@@ -64,7 +64,9 @@ describe('User sees only public and their own traditions', () => {
                     cy.get('property-table-view').as('properties-table')
                     cy.get('@properties-table').find('edit-properties-button').find('a').should('not.have.class', 'greyed-out')
                     cy.get('@properties-table').find('edit-properties-button').click()
-                    // TO DO: 'Edit properties' modal is visible and the properties are editable
+                    // 'Edit properties' modal is visible
+                    // cy.contains('h5#modalDialogLabel', 'Edit properties').should('be.visible')
+                    cy.contains('h5#modalDialogLabel', 'Edit properties').parents('#modalDialog', { timeout : 1000 }).should('be.visible')
 
                     // close the modal
                     cy.clickModalButton(['Edit properties', 'Close'])
@@ -76,7 +78,9 @@ describe('User sees only public and their own traditions', () => {
                     cy.get('@properties-table').find('edit-properties-button').find('a[aria-label="Edit tradition properties"]').should('not.have.class', 'greyed-out')
                     // .parents('edit-properties-button).click() // cypress does not like this...
                     cy.get('@properties-table').find('edit-properties-button').click()
-                    // TO DO: 'Edit properties' modal is visible and the properties are editable
+                    // 'Edit properties' modal is visible
+                    // cy.contains('h5#modalDialogLabel', 'Edit properties').should('be.visible')
+                    cy.contains('h5#modalDialogLabel', 'Edit properties').parents('#modalDialog', { timeout : 1000 }).should('be.visible')
 
                     // close the modal
                     cy.clickModalButton(['Edit properties', 'Close'])
