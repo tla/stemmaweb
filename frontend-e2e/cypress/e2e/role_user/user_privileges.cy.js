@@ -65,10 +65,28 @@ describe('User sees only public and their own traditions', () => {
                     cy.get('@properties-table').find('edit-properties-button').find('a').should('not.have.class', 'greyed-out')
                     cy.get('@properties-table').find('edit-properties-button').click()
                     // 'Edit properties' modal is visible
-                    // cy.contains('h5#modalDialogLabel', 'Edit properties').should('be.visible')
-                    cy.contains('h5#modalDialogLabel', 'Edit properties').parents('#modalDialog', { timeout : 1000 }).should('be.visible')
+                    cy.contains('h5#modalDialogLabel', 'Edit properties')
+                        .parents('#modalDialog', { timeout : 1000 })
+                        .should('be.visible')
+                        .as('propsDialogModal')
+                    // Properties are editable
+                    // TODO: edit Name, Language, Direction, Witnesses; and save the changes.
+                    cy.get('@propsDialogModal').find('#name_input').invoke('val', tradition.title + ' EDITED')
+                    cy.get('@propsDialogModal').find('#name_input').invoke('val').should('eq', tradition.title + ' EDITED')
 
-                    // close the modal
+                    // TODO: save it (currently only admin can save edited properties)
+                    cy.get('@propsDialogModal').contains('button', 'Save')
+                        .should('exist') // Ensure the button exists
+                        .and('be.visible') // Ensure the button is visible
+                        .and('not.be.disabled') // Ensure the button is enabled
+                        // .click(); // Click the button
+                        // (uncaught exception) TypeError: Cannot read properties of null (reading 'value')
+
+                    // TODO: assert that change of the tradition name is visible in the navigation bar.
+                    // TODO: assert that after visiting other traditions, the changes are still at the right places.
+                    // TODO: reset the value(s), if needed.
+
+                    // close the modal (for now, until 'Save' is solved)
                     cy.clickModalButton(['Edit properties', 'Close'])
                 }
             else if (tradition.owner === user.username && tradition.access === 'Public')
@@ -81,6 +99,7 @@ describe('User sees only public and their own traditions', () => {
                     // 'Edit properties' modal is visible
                     // cy.contains('h5#modalDialogLabel', 'Edit properties').should('be.visible')
                     cy.contains('h5#modalDialogLabel', 'Edit properties').parents('#modalDialog', { timeout : 1000 }).should('be.visible')
+                    // TODO: 'Edit properties' modal properties are editable
 
                     // close the modal
                     cy.clickModalButton(['Edit properties', 'Close'])
