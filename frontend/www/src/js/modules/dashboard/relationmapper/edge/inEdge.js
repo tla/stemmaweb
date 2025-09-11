@@ -1,4 +1,4 @@
-class Edge {
+class InEdge {
 
     #edgeId;
     #path;

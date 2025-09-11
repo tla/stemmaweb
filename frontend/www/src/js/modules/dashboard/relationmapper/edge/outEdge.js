@@ -1,4 +1,4 @@
-class OutEdge extends Edge {
+class OutEdge extends InEdge {
 
     constructor( edgeId ) {
         super( edgeId );

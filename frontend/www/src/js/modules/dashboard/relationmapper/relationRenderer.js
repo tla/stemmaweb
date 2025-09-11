@@ -8,6 +8,8 @@ class RelationRenderer {
     #svg = null;
     #zoom = null;
     
+    #selectedEdges = [];
+
     constructor() {
         // This is the listener that catches a user dragging the 
         // position indicator in the minimap.
@@ -15,7 +17,6 @@ class RelationRenderer {
             this.panRelationGraph( eventData );
         } );
     }
-    
 
     get zoom() {
         return this.#zoom;
@@ -167,12 +168,21 @@ class RelationRenderer {
 
     graphNodesDrag( draggable ) {
         if( draggable ){
+            const thisClassInstance = this;
             this.#svg.selectAll( 'g.node' )
                 .attr( 'cursor', 'grab' )
                 .call( d3.drag()
-                    .on( 'start', this.dragStarted )
-                    .on( 'drag', this.dragged )
-                    .on( 'end', this.dragEnded ) 
+                    .on( 'start', function( event, d ) {  
+                        //NOTE: Changed call signature!
+                        thisClassInstance.dragStarted.call( thisClassInstance, this, event, d );
+                    } )
+                    .on( 'end', function( event, d ) {
+                        //NOTE: Changed call signature!
+                        thisClassInstance.dragEnded.call( thisClassInstance, this, event, d );
+                    } )
+                    .on( 'drag', function( event, d ) { 
+                        thisClassInstance.dragged.call( thisClassInstance, this, event, d ); 
+                    } )
                 );
 			this.#svg.selectAll( 'g.node' ).on( 'click', ()=>( console.log( 'click' ) ) );
         } else {
@@ -238,22 +248,75 @@ class RelationRenderer {
         ];
     }
 
-    dragStarted() {
-        const ellipse = d3.select( this );
-        // ellipse.raise();
-        ellipse.attr( 'cursor', 'grabbing' );
+    dragStarted( element, event, d ) {
+        const node = d3.select( element );
+        node.raise();
+        node.attr( 'cursor', 'grabbing' );
+
+        // Now select the new ones.
+        // Note: d is the data on the svg g element that represents the node.
+        this.#selectedEdges = this.selectInEdges( d.id );
+        this.#selectedEdges.push( ...this.selectOutEdges( d.id ) )
+        this.#selectedEdges.forEach( (edge) => { 
+            edge.toggleHighlight();
+            if ( BEZIERS ) {
+                edge.renderBezierControls();
+            }
+        } );
     }
     
-    dragged(event, d) {
-        const selection = d3.select( this );        
-        const translate = stemmaWebUtils.getTranslate( selection.node() );
-        const newX = translate.x + parseFloat( event.dx );
-        const newY = translate.y + parseFloat( event.dy );
-        d3.select( this ).attr( 'transform', `translate(${newX} ${newY})` );
+    dragged( element, event, d ) {
+        const dX = parseFloat( event.dx );
+        const dY = parseFloat( event.dy );
+        const selection = d3.select( element );        
+        const translate = stemmaWebUtils.getTranslate( selection.node(), dX, dY );
+        selection.attr( 'transform', translate );
+
+        this.#selectedEdges.forEach( (edge) => { 
+            edge.moveEdgeEndElastic( dX, dY );
+        } );
     }
     
-    dragEnded() {
-        d3.select( this ).attr( 'cursor', 'grab' );
+    dragEnded( element, event, d ) {
+        const node = d3.select( element );
+        node.attr( 'cursor', 'grab' );
+ 
+        const selection = d3.select( element );        
+
+        selection.transition().duration(500).attr( 'transform', 'translate(0 0)' );
+
+        this.#selectedEdges.forEach( (edge) => { 
+            if( BEZIERS ) {
+                edge.toOrigins( true );
+            } else {
+               edge.toOrigins();
+            }
+        } );
+        this.#selectedEdges = [];
+    }
+
+    selectInEdges( nodeId ) {
+        const selected = [];
+        const selection = d3.selectAll( '.edge' )
+            .filter( (d) => {
+                return ( key == d.key.split( '>' )[1] ); // { key: "22->39" … }
+            } );
+        selection.each( (d) => { 
+            selected.push( new InEdge( d.attributes.id ) );
+        } );
+        return selected;
+    }
+
+    selectOutEdges( nodeId ) {
+        const selected = [];
+        const selection = d3.selectAll( '.edge' )
+            .filter( (d) => {
+                return ( key == d.key.split( '-' )[0] ); // { key: "22->39" … }
+            } );
+        selection.each( (d) => { 
+            selected.push( new OutEdge( d.attributes.id ) );
+        } );
+        return selected;
     }
 
     repairBaseTranslate( transform ) {
