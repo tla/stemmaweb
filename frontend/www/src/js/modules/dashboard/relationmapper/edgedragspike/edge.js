@@ -6,6 +6,7 @@ class Edge {
     #pathData;
     #bezierControls;
     #arrowHead;
+    #WEST = 'west';
 
     constructor( edgeId ) {
         this.#edgeId = edgeId;
@@ -16,6 +17,14 @@ class Edge {
         this.#bezierControls = this.coords2BezierControls( edgeId, coords );
         this.#arrowHead = document.querySelector( `#${edgeId} polygon` );
         this.adjustLongEdge();
+    }
+
+    get pathParent() {
+        return this.#pathParent;
+    }
+
+    get bezierControls() {
+        return this.#bezierControls;
     }
 
     toggleHighlight() {
@@ -91,18 +100,9 @@ class Edge {
             const bezierAControlB = [ pathDataA[4], pathDataA[5] ];
             const bezierBControlA = [ pathDataB[0], pathDataB[1] ];
             if ( objectsEqual( bezierA, bezierAControlB ) && objectsEqual( bezierA, bezierBControlA ) ) {
-                console.log( pathDataA[2], pathDataA[0], pathDataA[2]-pathDataA[0] )
-                console.log( pathDataB[4], pathDataB[2], pathDataB[4]-pathDataB[2] )
                 this.#bezierControls[numControls-3].adjustControlB( pathDataA[2]-pathDataA[0] );
                 this.#bezierControls[numControls-2].adjustControlA( pathDataB[2]-pathDataB[4] );
             };
-
-            // this.#bezierControls[numControls-3].correct
-            // this.#bezierControls[numControls-2].adjustEdge( ); // if controlAdata of this Beta is same as
-            // console.log(  ); // controlBdata of this Alpha ---> suspect!
-            //  //als contrlbdata Alpha ook nog bezierpointdata Alpha .. dan zeker
-             // control B Alpha gaat naar x Bezier Alpha + de x afstand tussen control a Alpha en bezier Alpha
-             // contral A Beta gaat naar x Bezier Beta - de x afstand tussen control b Beta en bezier Beta
         }
     }
 
@@ -137,30 +137,40 @@ class Edge {
         this.updatePath();
     }
 
+    calculateTheta( pointX, pointY, rotationPointX, rotationPointY ) {
+        return Math.atan2( (pointY-rotationPointY), ( pointX-rotationPointX) );
+    }
+
     moveEdgeEndElastic( dX, dY ) {
         // Move arrowhead.
         this.moveArrowHead( dX, dY );
-
         // Move edge end point Bezier control.
-        const indexLastControl = this.#bezierControls.length - 1;
-        const endPoint = this.#bezierControls[indexLastControl];
-        endPoint.moveElastic( dX, dY );
+        const controlIndex = this.#bezierControls.length - 1;
+        this.moveEdgeEndPointElastic( dX, dY, controlIndex, stemmaWebUtils.WEST );
+    }
 
+    moveEdgeEndPointElastic( dX, dY, controlIndex, paddingDirection ) {
+        const controlPoint = this.#bezierControls[controlIndex];
+        controlPoint.moveElastic( dX, dY, paddingDirection );
+        this.smooth( controlPoint );
+    }
+
+    smooth( controlPoint ) {
         if( this.#bezierControls.length > 2 ) {
             // the controls of the penultimate Bézier point
             // should move so that their connector is parallel to the line
             // that runs through this Bézier point and the very last one.
             const rotatingPoint = this.#bezierControls[ this.#bezierControls.length - 2 ];
             
-            const endPointData = endPoint.getPathData();
+            const controlPointData = controlPoint.getPathData();
             const rotatingPointData = rotatingPoint.getPathData();
 
-            const ex = endPointData[2];
-            const ey = endPointData[3];
-            const ax = rotatingPointData[2];
-            const ay = rotatingPointData[3];
+            const pointX = controlPointData[2];
+            const pointY = controlPointData[3];
+            const rotationPointX = rotatingPointData[2];
+            const rotationPointY = rotatingPointData[3];
 
-            const thetaRad = Math.atan2( (ey-ay), (ex-ax) );
+            const thetaRad = this.calculateTheta( pointX, pointY, rotationPointX, rotationPointY );
             
             // const thetaDeg = thetaRad * 180 / Math.PI;
             //   -180 is North

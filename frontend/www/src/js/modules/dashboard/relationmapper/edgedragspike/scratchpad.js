@@ -52,3 +52,32 @@ console.log( nArr[1] != null );
 // Indeed nothing happens.
 const myObj = function() {};
 myObj.call( null );
+
+let paddingDirection = 'EAST';
+initalDistance = -100;
+( paddingDirection == 'EAST' ) && ( initalDistance = Math.abs( initalDistance ) );
+console.log( initalDistance ) // => 100
+
+const constTest = {};
+Object.defineProperty( constTest, 'FOO', { value: 'ORIGINAl!!' });
+
+try {
+    constTest = 'hello'; 
+} catch(e) {
+    console.log( 'Expected error thrown.' );
+}
+
+constTest.FOO = 3;
+console.log( constTest.FOO );
+
+
+class Constants {
+    constructor() {
+        Object.defineProperty( this, 'FOO', { value: 1 } );
+    }
+}
+
+const constants = new Constants();
+constants.FOO = 15;
+console.log( constants.FOO );
+console.log( constants.properties );

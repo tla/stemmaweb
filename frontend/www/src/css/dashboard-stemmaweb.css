@@ -711,3 +711,12 @@ ul.stemmaweb-tabs li:not([class='active']):hover::after {
   stroke: lime;
   fill: lime;
 }
+
+.edge.highlighted.outbound path {
+  stroke: rgb(8, 154, 144);
+}
+
+.edge.highlighted.outbound polygon  {
+  stroke: rgb(8, 154, 144);;
+  fill: rgb(8, 154, 144);;
+}

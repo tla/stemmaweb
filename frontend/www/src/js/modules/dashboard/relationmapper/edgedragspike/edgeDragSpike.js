@@ -238,13 +238,15 @@ class EdgeDragSpike extends HTMLElement {
 
     // NOTE: changed
     dragStarted( element, event, d ) {
+        console.log( element );
         const node = d3.select( element );
-        // node.raise();
+        node.raise();
         node.attr( 'cursor', 'grabbing' );
 
         // Now select the new ones.
         // Note: d is the data on the svg g element that represents the node.
         this.#selectedEdges = this.selectEdges( d.key );
+        this.#selectedEdges.push( ...this.selectOutEdges( d.key ) )
         this.#selectedEdges.forEach( (edge) => { 
             edge.toggleHighlight();
             if ( BEZIERS ) {
@@ -323,6 +325,18 @@ class EdgeDragSpike extends HTMLElement {
         return selected;
     }
 
+
+    selectOutEdges( key ) {
+        const selected = [];
+        const selection = d3.selectAll( '.edge' )
+            .filter( (d) => {
+                return ( key == d.key.split( '-' )[0] ); // { key: "22->39" … }
+            } );
+        selection.each( (d) => { 
+            selected.push( new OutEdge( d.attributes.id ) );
+        } );
+        return selected;
+    }
 }
 
 customElements.define( 'edge-drag-spike', EdgeDragSpike );

@@ -179,6 +179,14 @@ class StemmaWebUtils {
   // TODO: Probably all the above should be moved here too, to not put them in 
   // global name space.
 
+  // Define true, immutable constants.
+  constructor() {
+    Object.defineProperties( this, {
+      EAST: { value: 'EAST' },
+      WEST: { value: 'WEST' }
+    } );
+  }
+  
   /** 
    * Returns an SVG translate based on current translate
    * of the provided SVG element and a new translate.

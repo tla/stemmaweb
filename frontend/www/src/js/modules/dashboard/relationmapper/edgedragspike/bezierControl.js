@@ -179,7 +179,10 @@ class BezierControl {
      * @param {float} dX  Amount to move the Bézier controls in the x dimension. 
      * @param {float} dY  Amount to move the Bézier controls in the y dimension. 
      */
-    moveElastic( dX, dY ) {
+    moveElastic( dX, dY, paddingDirection ) {
+        let paddingSign;
+        ( paddingDirection == stemmaWebUtils.EAST ) ? paddingSign = -1 : paddingSign = 1;
+
         const newControlData = [
             this.#controlAData[0] + dX, this.#controlAData[1] + dY,
             this.#bezierPointData[0] + dX, this.#bezierPointData[1] + dY
@@ -190,11 +193,14 @@ class BezierControl {
 
         // For the added negative x movement we need to know how far the 
         // control and Bézier point initially were apart.
-        let initalDistance = this.#origins.bezierPoint.x - this.#origins.controlA.x;
-
+        let initalDistance = Math.abs( this.#origins.bezierPoint.x - this.#origins.controlA.x );
+        
         // We also need to know how far the Bézier point is now from its origin.
         const xBezierPoint = newControlData[2];
-        let distanceBezierPointToOrigin = this.#origins.bezierPoint.x - xBezierPoint;
+        // The padding sign here, conveniently, causes the square root of a negative number
+        // when the user moves the node towards the direction where we don't want/need added 
+        // padding (on the edge attachment to the node).
+        let distanceBezierPointToOrigin = paddingSign * ( this.#origins.bezierPoint.x - xBezierPoint );
 
         // Tha extra 'padding' is a function of how far the Bezier point is 
         // currently from its origin. It adds substantial at first, but less 
@@ -202,12 +208,49 @@ class BezierControl {
         let handlePaddingX = Math.sqrt( 10*distanceBezierPointToOrigin ) || 0;
 
         // Finally we compute where the control should go on the x dimension.
-        const xControl  = xBezierPoint - initalDistance - handlePaddingX;
+        const xControl  = xBezierPoint + ( -1 * paddingSign * ( initalDistance + handlePaddingX ) );
 
         // And we update everything.
         newControlData[0] = xControl;
         this.update( newControlData );
     }
+
+    /**
+     * Same as `moveElastic` but in case the edge is an outbound edge in 
+     * which case this works only when the node is dragged to the right.
+     * 
+     * @param {float} dX  Amount to move the Bézier controls in the x dimension. 
+     * @param {float} dY  Amount to move the Bézier controls in the y dimension. 
+     */
+    // moveElasticEast( dX, dY ) {
+    //     const newControlData = [
+    //         this.#controlAData[0] + dX, this.#controlAData[1] + dY,
+    //         this.#bezierPointData[0] + dX, this.#bezierPointData[1] + dY
+    //     ]
+    //     if( this.#controlBData ) {
+    //         newControlData.push( [ this.#controlBData + dX, this.#controlBData + dY ] );
+    //     }
+
+    //     // For the added negative x movement we need to know how far the 
+    //     // control and Bézier point initially were apart.
+    //     let initalDistance = this.#origins.controlA.x - this.#origins.bezierPoint.x; // Swapped.
+
+    //     // We also need to know how far the Bézier point is now from its origin.
+    //     const xBezierPoint = newControlData[2];
+    //     let distanceBezierPointToOrigin = xBezierPoint - this.#origins.bezierPoint.x; // Swapped.
+
+    //     // Tha extra 'padding' is a function of how far the Bezier point is 
+    //     // currently from its origin. It adds substantial at first, but less 
+    //     // to nothing when dragged far to the left. 
+    //     let handlePaddingX = Math.sqrt( 10*distanceBezierPointToOrigin ) || 0;
+
+    //     // Finally we compute where the control should go on the x dimension.
+    //     const xControl  = xBezierPoint + initalDistance + handlePaddingX;  // Minuses to plusses.
+
+    //     // And we update everything.
+    //     newControlData[0] = xControl;
+    //     this.update( newControlData );
+    // }
 
     calculateR( x1, y1, x2, y2 ) {
         const dimX = x1-x2;  // TODO: Note: same as initialDistance above; we probably should extract these values;
