@@ -256,7 +256,8 @@ class RelationRenderer {
         // Now select the new ones.
         // Note: d is the data on the svg g element that represents the node.
         this.#selectedEdges = this.selectInEdges( d.id );
-        this.#selectedEdges.push( ...this.selectOutEdges( d.id ) )
+        this.#selectedEdges.push( ...this.selectOutEdges( d.id ) );
+        this.#selectedEdges.push( ...this.selectRelations( d.id ) );
         this.#selectedEdges.forEach( (edge) => { 
             edge.toggleHighlight();
             if ( BEZIERS ) {
@@ -299,7 +300,7 @@ class RelationRenderer {
         const selected = [];
         const selection = d3.selectAll( '.edge' )
             .filter( (d) => {
-                return ( key == d.key.split( '>' )[1] ); // { key: "22->39" … }
+                return ( nodeId == d.key.split( '>' )[1] ); // { key: "22->39" … }
             } );
         selection.each( (d) => { 
             selected.push( new InEdge( d.attributes.id ) );
@@ -311,11 +312,28 @@ class RelationRenderer {
         const selected = [];
         const selection = d3.selectAll( '.edge' )
             .filter( (d) => {
-                return ( key == d.key.split( '-' )[0] ); // { key: "22->39" … }
+                return ( nodeId == d.key.split( '-' )[0] ); // { key: "22->39" … }
             } );
         selection.each( (d) => { 
             selected.push( new OutEdge( d.attributes.id ) );
         } );
+        return selected;
+    }
+
+    selectRelations( nodeId ) {
+        const selected = [];
+        const selection = d3.selectAll( '.relation' )
+            .filter( (d) => {
+                return ( nodeId == d.source || nodeId == d.target ); // { source: "2580", target: "2581", id: "4574", … }
+            } );
+        selection.each( (d,i,nodes) => { 
+            if( nodeId == d.source ) {
+                selected.push( new RelationEdge( nodes[i].id ) );
+            } else {
+                selected.push( new RelationEdge( nodes[i].id, stemmaWebUtils.REVERSE ) );
+            }
+        } );
+        console.log( selected );
         return selected;
     }
 

@@ -183,7 +183,8 @@ class StemmaWebUtils {
   constructor() {
     Object.defineProperties( this, {
       EAST: { value: 'EAST' },
-      WEST: { value: 'WEST' }
+      WEST: { value: 'WEST' },
+      REVERSE: { value: 'REVERSE' }
     } );
   }
   
