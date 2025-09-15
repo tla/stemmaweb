@@ -70,9 +70,27 @@ describe('User sees only public and their own traditions', () => {
                         .should('be.visible')
                         .as('propsDialogModal')
                     // Properties are editable
-                    // TODO: edit Name, Language, Direction, Witnesses; and save the changes.
-                    cy.get('@propsDialogModal').find('#name_input').invoke('val', tradition.title + ' EDITED')
-                    cy.get('@propsDialogModal').find('#name_input').invoke('val').should('eq', tradition.title + ' EDITED')
+                    const newName = tradition.title + ' EDITED'
+                    // newAccess: make a Private tradition Public (v.vs.) by .check() / .uncheck()
+                    const newLanguage = 'Another language'
+                    const newDirection = 'BI'
+                    const newDirectionText = 'Bi-directional'
+                    const newWitnesses = 'X, Y, Z'
+                    // input text Name
+                    cy.get('@propsDialogModal').find('#name_input').invoke('val', newName)
+                    cy.get('@propsDialogModal').find('#name_input').invoke('val').should('eq', newName) // check other fields too
+                    // input checkbox Access
+                    cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('not.be.checked');
+                    cy.get('@propsDialogModal').find('input[type="checkbox"]').check('access');
+                    cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('be.checked');
+                    // input text Language
+                    cy.get('@propsDialogModal').find('#language_input').invoke('val', newLanguage)
+                    // select option direction, values LR, RL, BI
+                    cy.get('@propsDialogModal').find('select#direction_input').should('have.value', 'LR').select('BI').should('have.value', newDirection);
+                    cy.get('@propsDialogModal').find('select#direction_input').should('have.value', 'BI');
+                    cy.get('@propsDialogModal').find('select#direction_input').find('option:selected').should('contain', newDirectionText);
+                    // input text Witnesses
+                    cy.get('@propsDialogModal').find('#witnesses_input').invoke('val', newWitnesses)
 
                     // TODO: save it (currently only admin can save edited properties)
                     cy.get('@propsDialogModal').contains('button', 'Save')
@@ -82,11 +100,11 @@ describe('User sees only public and their own traditions', () => {
                         // .click(); // Click the button
                         // (uncaught exception) TypeError: Cannot read properties of null (reading 'value')
 
-                    // TODO: assert that change of the tradition name is visible in the navigation bar.
-                    // TODO: assert that after visiting other traditions, the changes are still at the right places.
-                    // TODO: reset the value(s), if needed.
+                    // TODO: assert that the changed tradition name is visible in the navigation bar.
+                    // TODO: assert that after visiting other traditions, the changes are still at the right places, in the toc and in the props.
 
                     // close the modal (for now, until 'Save' is solved)
+                    // cy.pause()
                     cy.clickModalButton(['Edit properties', 'Close'])
                 }
             else if (tradition.owner === user.username && tradition.access === 'Public')
@@ -99,8 +117,10 @@ describe('User sees only public and their own traditions', () => {
                     // 'Edit properties' modal is visible
                     // cy.contains('h5#modalDialogLabel', 'Edit properties').should('be.visible')
                     cy.contains('h5#modalDialogLabel', 'Edit properties').parents('#modalDialog', { timeout : 1000 }).should('be.visible')
-                    // TODO: 'Edit properties' modal properties are editable
+                    // TODO: 'Edit properties' values are editable
+                    // Similar to "if (tradition.owner === user.username && tradition.access === 'Private')"
 
+                    // TODO: save the changes
                     // close the modal
                     cy.clickModalButton(['Edit properties', 'Close'])
                 }
