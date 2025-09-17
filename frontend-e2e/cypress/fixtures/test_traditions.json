@@ -88,6 +88,21 @@
         "witnesses" : ["Ba96", "Er16", "Go325", "Gr314", "Kf133", "Kr185", "Kr299", "Mü11475", "Mü22405", "Mü28315", "MüU151", "Sg524", "Wi3818"],
         "stemmata" : []
     },
+    {   "title" : "Verbum",
+        "filetype" : "stemmaweb",
+        "owner" : "benutzer@example.org",
+        "language" : "Latin",
+        "access" : "Private",
+        "sectionscount" : 1,
+        "sections" : [
+            {   "name" : "DEFAULT",
+                "language" : "Latin"
+            }
+        ],
+        "direction" : "Left to Right",
+        "witnesses" : ["Ba96", "Er16", "Go325", "Gr314", "Kf133", "Kr185", "Kr299", "Mü11475", "Mü22405", "Mü28315", "MüU151", "Sg524", "Wi3818"],
+        "stemmata" : []
+    },
     {   "title" : "Ժամանակագրութիւն checked",
         "filetype" : "graphml",
         "owner" : "benutzer@example.org",
