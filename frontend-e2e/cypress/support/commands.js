@@ -137,7 +137,6 @@ Cypress.Commands.add('editProperties', ([dialogLabel, u_name, u_role, t_title, t
 
     // 'Edit properties' modal is visible
     cy.contains('h5#modalDialogLabel', dialogLabel).parents('#modalDialog', { timeout : 1000 }).should('be.visible').as('propsDialogModal')
-    // Properties are editable
     const newName = t_title + ' EDITED'
     // newAccess: make a Private tradition Public (v.vs.) by .check() / .uncheck()
     const newLanguage = 'Another language'
