@@ -114,15 +114,7 @@ describe('User sees only public and their own traditions', () => {
                     cy.get('@properties-table').find('edit-properties-button').find('a[aria-label="Edit tradition properties"]').should('not.have.class', 'greyed-out')
                     // .parents('edit-properties-button).click() // cypress does not like this...
                     cy.get('@properties-table').find('edit-properties-button').click()
-                    // 'Edit properties' modal is visible
-                    // cy.contains('h5#modalDialogLabel', 'Edit properties').should('be.visible')
-                    cy.contains('h5#modalDialogLabel', 'Edit properties').parents('#modalDialog', { timeout : 1000 }).should('be.visible')
-                    // TODO: 'Edit properties' values are editable
-                    // Similar to "if (tradition.owner === user.username && tradition.access === 'Private')"
-
-                    // TODO: save the changes
-                    // close the modal
-                    cy.clickModalButton(['Edit properties', 'Close'])
+                    cy.editProperties(['Edit properties', user.username, user.role, tradition.title, tradition.owner, tradition.access ])
                 }
             else if (tradition.owner !== user.username && tradition.access === 'Private')
                 {   // not visible or editable for this user

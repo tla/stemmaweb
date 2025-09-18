@@ -121,6 +121,61 @@ Cypress.Commands.add('reseedDB', () => {
 
 // Click a modal button
 Cypress.Commands.add('clickModalButton', ([dialogLabel, buttonLabel]) => {
-    cy.get('#modalDialogLabel').contains(dialogLabel).parents('.modal-content').as('propertiesModal')
+    cy.get('#modalDialogLabel').contains(dialogLabel).parents('#modalDialog').as('propertiesModal')
     cy.get('@propertiesModal').contains('button', buttonLabel).should('be.visible').wait(500).click()
+});
+
+
+// assert editing properties of own or others' traditions differs correctly
+// diff user,role, tradition, owner, access
+Cypress.Commands.add('editProperties', ([dialogLabel, u_name, u_role, t_title, t_owner, t_access]) => {
+    cy.log('dialogLabel: ' + dialogLabel)
+    cy.log('u_name: ' + u_name)
+    cy.log('u_role:' + u_role)
+    cy.log('t_owner: ' + t_owner)
+    cy.log('t_access: ' + t_access)
+
+    // 'Edit properties' modal is visible
+    cy.contains('h5#modalDialogLabel', dialogLabel).parents('#modalDialog', { timeout : 1000 }).should('be.visible').as('propsDialogModal')
+    // Properties are editable
+    const newName = t_title + ' EDITED'
+    // newAccess: make a Private tradition Public (v.vs.) by .check() / .uncheck()
+    const newLanguage = 'Another language'
+    const newDirection = 'BI'
+    const newDirectionText = 'Bi-directional'
+    const newWitnesses = 'X, Y, Z'
+    // 'Edit properties' values are editable
+    if (t_owner === u_name && t_access === 'Public') {
+        // input text Name
+        cy.get('@propsDialogModal').find('#name_input').invoke('val', newName)
+        cy.get('@propsDialogModal').find('#name_input').invoke('val').should('eq', newName)
+        // input checkbox Access
+        cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('be.checked'); // Public vs. Private
+        cy.get('@propsDialogModal').find('input[type="checkbox"]').uncheck('access');
+        cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('not.be.checked');
+        // input text Language
+        cy.get('@propsDialogModal').find('#language_input').invoke('val', newLanguage)
+        // select option direction, values LR, RL, BI
+        cy.get('@propsDialogModal').find('select#direction_input').should('have.value', 'LR').select('BI').should('have.value', newDirection);
+        cy.get('@propsDialogModal').find('select#direction_input').should('have.value', 'BI');
+        cy.get('@propsDialogModal').find('select#direction_input').find('option:selected').should('contain', newDirectionText);
+        // input text Witnesses
+        cy.get('@propsDialogModal').find('#witnesses_input').invoke('val', newWitnesses)
+
+        // TODO: save it (currently only admin can save edited properties)
+        cy.get('@propsDialogModal').contains('button', 'Save')
+            .should('exist') // Ensure the button exists
+            .and('be.visible') // Ensure the button is visible
+            .and('not.be.disabled') // Ensure the button is enabled
+            // .click(); // Click the button
+            // (uncaught exception) TypeError: Cannot read properties of null (reading 'value')
+
+        // close the modal (for now, until 'Save' is possible for role:user)
+        // cy.pause()
+        cy.clickModalButton(['Edit properties', 'Close'])
+        // TODO: assert that the changed tradition name is visible in the navigation bar.
+        // TODO: assert that after visiting other traditions, the changes are still at the right places, in the toc and in the props.
+
+    }
+
 });
