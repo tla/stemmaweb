@@ -144,14 +144,21 @@ Cypress.Commands.add('editProperties', ([dialogLabel, u_name, u_role, t_title, t
     const newDirectionText = 'Bi-directional'
     const newWitnesses = 'X, Y, Z'
     // 'Edit properties' values are editable
-    if (t_owner === u_name && t_access === 'Public') {
+    if (t_owner === u_name) {
         // input text Name
         cy.get('@propsDialogModal').find('#name_input').invoke('val', newName)
         cy.get('@propsDialogModal').find('#name_input').invoke('val').should('eq', newName)
+    if (t_access === 'Public') {
         // input checkbox Access
-        cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('be.checked'); // Public vs. Private
+        cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('be.checked'); // "Allow Public Access" yes/no Public/Private
         cy.get('@propsDialogModal').find('input[type="checkbox"]').uncheck('access');
         cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('not.be.checked');
+    } else if (t_access === 'Private') {
+        // input checkbox Access
+        cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('not.be.checked'); // "Allow Public Access" yes/no Public/Private
+        cy.get('@propsDialogModal').find('input[type="checkbox"]').check('access');
+        cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('be.checked');
+    }
         // input text Language
         cy.get('@propsDialogModal').find('#language_input').invoke('val', newLanguage)
         // select option direction, values LR, RL, BI
@@ -172,6 +179,8 @@ Cypress.Commands.add('editProperties', ([dialogLabel, u_name, u_role, t_title, t
         // close the modal (for now, until 'Save' is possible for role:user)
         // cy.pause()
         cy.clickModalButton(['Edit properties', 'Close'])
+        cy.get('@propsDialogModal').should('not.be.visible')
+
         // TODO: assert that the changed tradition name is visible in the navigation bar.
         // TODO: assert that after visiting other traditions, the changes are still at the right places, in the toc and in the props.
 

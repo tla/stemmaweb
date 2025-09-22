@@ -64,48 +64,8 @@ describe('User sees only public and their own traditions', () => {
                     cy.get('property-table-view').as('properties-table')
                     cy.get('@properties-table').find('edit-properties-button').find('a').should('not.have.class', 'greyed-out')
                     cy.get('@properties-table').find('edit-properties-button').click()
-                    // 'Edit properties' modal is visible
-                    cy.contains('h5#modalDialogLabel', 'Edit properties')
-                        .parents('#modalDialog', { timeout : 1000 })
-                        .should('be.visible')
-                        .as('propsDialogModal')
-                    // Properties are editable
-                    const newName = tradition.title + ' EDITED'
-                    // newAccess: make a Private tradition Public (v.vs.) by .check() / .uncheck()
-                    const newLanguage = 'Another language'
-                    const newDirection = 'BI'
-                    const newDirectionText = 'Bi-directional'
-                    const newWitnesses = 'X, Y, Z'
-                    // input text Name
-                    cy.get('@propsDialogModal').find('#name_input').invoke('val', newName)
-                    cy.get('@propsDialogModal').find('#name_input').invoke('val').should('eq', newName) // check other fields too
-                    // input checkbox Access
-                    cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('not.be.checked');
-                    cy.get('@propsDialogModal').find('input[type="checkbox"]').check('access');
-                    cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('be.checked');
-                    // input text Language
-                    cy.get('@propsDialogModal').find('#language_input').invoke('val', newLanguage)
-                    // select option direction, values LR, RL, BI
-                    cy.get('@propsDialogModal').find('select#direction_input').should('have.value', 'LR').select('BI').should('have.value', newDirection);
-                    cy.get('@propsDialogModal').find('select#direction_input').should('have.value', 'BI');
-                    cy.get('@propsDialogModal').find('select#direction_input').find('option:selected').should('contain', newDirectionText);
-                    // input text Witnesses
-                    cy.get('@propsDialogModal').find('#witnesses_input').invoke('val', newWitnesses)
 
-                    // TODO: save it (currently only admin can save edited properties)
-                    cy.get('@propsDialogModal').contains('button', 'Save')
-                        .should('exist') // Ensure the button exists
-                        .and('be.visible') // Ensure the button is visible
-                        .and('not.be.disabled') // Ensure the button is enabled
-                        // .click(); // Click the button
-                        // (uncaught exception) TypeError: Cannot read properties of null (reading 'value')
-
-                    // TODO: assert that the changed tradition name is visible in the navigation bar.
-                    // TODO: assert that after visiting other traditions, the changes are still at the right places, in the toc and in the props.
-
-                    // close the modal (for now, until 'Save' is solved)
-                    // cy.pause()
-                    cy.clickModalButton(['Edit properties', 'Close'])
+                    cy.editProperties(['Edit properties', user.username, user.role, tradition.title, tradition.owner, tradition.access ])
                 }
             else if (tradition.owner === user.username && tradition.access === 'Public')
                 {   // visible and editable, opened lock sign
@@ -114,6 +74,7 @@ describe('User sees only public and their own traditions', () => {
                     cy.get('@properties-table').find('edit-properties-button').find('a[aria-label="Edit tradition properties"]').should('not.have.class', 'greyed-out')
                     // .parents('edit-properties-button).click() // cypress does not like this...
                     cy.get('@properties-table').find('edit-properties-button').click()
+
                     cy.editProperties(['Edit properties', user.username, user.role, tradition.title, tradition.owner, tradition.access ])
                 }
             else if (tradition.owner !== user.username && tradition.access === 'Private')
@@ -129,7 +90,9 @@ describe('User sees only public and their own traditions', () => {
                     // upon click the 'Edit properties' modal should not become visible, so the proerties are not editable
                     cy.get('@properties-table').find('edit-properties-button').click()
                     // assert the 'Edit properties' modal is not displayed
-                    cy.contains('#modalDialogLabel', 'Edit properties').should('exist').and('not.be.visible')
+                    cy.contains('#modalDialogLabel', 'Edit properties')
+                        .should('exist') // contains dummy text (not the tradition's properties)
+                        .and('not.be.visible')
                 }
             else { // should not reach here
                 throw new Error("Not all tradition types for the user are covered in the test!")
