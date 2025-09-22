@@ -148,17 +148,17 @@ Cypress.Commands.add('editProperties', ([dialogLabel, u_name, u_role, t_title, t
         // input text Name
         cy.get('@propsDialogModal').find('#name_input').invoke('val', newName)
         cy.get('@propsDialogModal').find('#name_input').invoke('val').should('eq', newName)
-    if (t_access === 'Public') {
-        // input checkbox Access
-        cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('be.checked'); // "Allow Public Access" yes/no Public/Private
-        cy.get('@propsDialogModal').find('input[type="checkbox"]').uncheck('access');
-        cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('not.be.checked');
-    } else if (t_access === 'Private') {
-        // input checkbox Access
-        cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('not.be.checked'); // "Allow Public Access" yes/no Public/Private
-        cy.get('@propsDialogModal').find('input[type="checkbox"]').check('access');
-        cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('be.checked');
-    }
+        if (t_access === 'Public') {
+            // input checkbox Access
+            cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('be.checked'); // "Allow Public Access" yes/no Public/Private
+            cy.get('@propsDialogModal').find('input[type="checkbox"]').uncheck('access');
+            cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('not.be.checked');
+        } else if (t_access === 'Private') {
+            // input checkbox Access
+            cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('not.be.checked'); // "Allow Public Access" yes/no Public/Private
+            cy.get('@propsDialogModal').find('input[type="checkbox"]').check('access');
+            cy.get('@propsDialogModal').find('input[type="checkbox"][value="access"]').should('be.checked');
+        }
         // input text Language
         cy.get('@propsDialogModal').find('#language_input').invoke('val', newLanguage)
         // select option direction, values LR, RL, BI
