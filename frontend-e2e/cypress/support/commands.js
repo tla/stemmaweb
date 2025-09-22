@@ -144,7 +144,7 @@ Cypress.Commands.add('editProperties', ([dialogLabel, u_name, u_role, t_title, t
     const newDirectionText = 'Bi-directional'
     const newWitnesses = 'X, Y, Z'
     // 'Edit properties' values are editable
-    if (t_owner === u_name) {
+    if ((t_owner === u_name && u_role === 'user') || u_role === 'admin') {
         // input text Name
         cy.get('@propsDialogModal').find('#name_input').invoke('val', newName)
         cy.get('@propsDialogModal').find('#name_input').invoke('val').should('eq', newName)
