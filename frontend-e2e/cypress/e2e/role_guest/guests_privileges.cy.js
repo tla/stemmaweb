@@ -48,31 +48,36 @@ admin@example.org (pw AdminPass) has one tradition
 
 Tests for Feat/157 user auth (PR #235), related to 'guest':
 - DONE: Guest sees only public traditions
-- Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
+- DONE: Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
 related to other roles:
-- User sees only public and their own traditions
-- Admin sees all traditions
-- User may change metadata on their own tradition
-- User may not change metadata on traditions they don't own (ideally the edit button wouldn't be there...)
-- Admin may change metadata on any tradition
  */
 
 import test_traditions from '../../fixtures/test_traditions.json';
 
 beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
+    cy.viewport(1600, 900);
+    test_traditions.sort( (tradition_a, tradition_b) => tradition_a.title.localeCompare( tradition_b.title ) );
+
+    // assert guest role: not logged in
+    cy.get('header').as('header');
+    cy.get('@header').contains('a', 'Sign in').should('be.visible');
+    // cy.get('@header').should('not.contain', 'Logged in'); // Default: 'Logged in as Guest'
+    cy.get('@header').should('not.contain', 'Sign out');
 });
+
+const test_traditions_public = test_traditions.filter(({ access }) => access === 'Public');
+
 
 // Guests' rights are restricted to ...
 
 // ToDo: close github issues  #170, #157, #155 when tests are passing for all roles.
 // Test for Feat/157 user auth (PR #235), related to 'guest':
-describe('Guest sees only public traditions (listed in the toc)', () => {
+describe('Cross-check: guest sees only public traditions listed in the toc', () => {
     it('passes', () => {
         // the number of displayed traditions is equal to the number of public traditions
-        const count = test_traditions.filter(({access}) => access === 'Public').length;
-        cy.log("count: " + count);
-        cy.get('ul#traditions-list').children().should('have.length', count);
+        // no separation bar btw own and others' traditions, all are othres'
+        cy.get('ul#traditions-list').children().should('have.length', test_traditions_public.length);
 
         test_traditions.forEach((tradition) => {
             if (tradition.access == "Public") {
@@ -140,28 +145,35 @@ describe('A guest should not be offered to "Edit Collation" of any tradition', (
     });
 });
 
-// Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
+// Feat/157 user auth (PR#235)
 // ToDo: close github issues  #170 and #157 when tests are passing for all roles.
-describe('Guest may not change any metadata', () => {
-    /* At the moment: edit-properties-button is visible,
-    in human interface, it is clickable and 
-    when trying to save changes, it is prevented, giving the message: "Error: You need to be logged in to edit a tradition".
-    But in cypress, even in headed mode, clicking on the button or its descendents leads to
-    "(uncaught exception)TypeError: Cannot read properties of null (reading 'id')"
-    if catching the exception, the click does not result in opening the edit panel, so the behaviour cannot be tested.
-    The edit button should not be visible anyways, so this test is skipped until the edit button is disabled.
-    Then it only needs to be tested that the edit buttun is invisible or disabled. */
-    it.skip('under construction', () => {
-        // cy.get('property-table-view').find('edit-properties-button').find('svg').should('not.be.visible')
-
-        // As long as the edit button is visible and not disabled, guest should still not be able to change the tradition's properties.
-        cy.get('property-table-view').find('h6').find('svg').should('be.visible').as('btn') //.click()
-        // cy.once('uncaught:exception', (err) => {
-        //     if (err.message.includes('Cannot read properties of null')) {
-        //         return false
-        //     }
-        // })
-        cy.get('@btn').click()
+describe('Guest may not change any metadata (Edit properties)', () => {
+    it('passes', () => {
+        // Guest sees only public traditions
+        cy.get('ul#traditions-list').children().find('.folder-icon').should('have.length', test_traditions_public.length);
+        // assert all the right traditions are displayed in the tradition list
+        // assert the 'Edit properties' modal is not visible
+        test_traditions_public.forEach((tradition) => {
+            cy.log("title: " + tradition.title);
+            // Guest sees only public traditions
+            // Guest may not change metadata on traditions (ideally the edit button wouldn't be there...)
+            // the tradition is visible but not editable for a guest, opened lock sign
+            cy.get('ul#traditions-list').contains(tradition.title).should('be.visible').click();
+            cy.get('property-table-view').as('properties-table')
+            cy.get('@properties-table')
+                .should('be.visible')
+                .find('edit-properties-button')
+                .find('a')
+                .should('have.class', 'greyed-out')
+            // upon click the 'Edit properties' modal should not become visible, so the proerties are not editable
+            cy.get('@properties-table')
+                .find('edit-properties-button')
+                .click()
+            // assert the 'Edit properties' modal is not displayed
+            cy.contains('#modalDialogLabel', 'Edit properties')
+                .should('not.exist') // does not exist for a guest, for a user it is not visible
+            // .should('exist').and('not.be.visible') // for a user it exists with a dummy text but is not visible.
+        });
     });
 });
 

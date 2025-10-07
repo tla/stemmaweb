@@ -1,6 +1,6 @@
 /*  User priviledges:
     Users except admins should only be allowed to see and manipulate their own traditions.
-        They should not be able to see other users' traditions, nor edit or delete them.
+    They should not be able to see other users' traditions, nor edit or delete them.
 
     - User sees only public and their own traditions
     - User may change metadata on their own tradition
