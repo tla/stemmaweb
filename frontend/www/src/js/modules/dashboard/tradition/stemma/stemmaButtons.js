@@ -95,10 +95,10 @@ class StemmaButtons extends HTMLElement {
         document.querySelector( '#main' ).classList.remove( 'col-9' );
         document.querySelector( '#main' ).classList.add( 'col-7' );
         document.querySelector( 'relation-types' ).unrender();
-        document.querySelector( 'node-density-chart' ).unrender();
+        document.querySelector( 'node-density-chart' ).hide();
+        document.querySelector( 'reading-properties-view' ).hide();
         document.querySelector( 'property-table-view' ).show();
-        document.querySelector( '#section-properties-view-title' ).classList.toggle( 'hide' );
-        document.querySelector( '#section-reading-properties-tabs' ).classList.toggle( 'hide' );                    
+        document.querySelector( 'section-properties-view' ).show();
         fadeToDisplayNone( '#sidebar-menu', { 'reverse': true, 'delay': 500 } );
         crossFade( targetView, fadeOutElement ); 
       }
@@ -147,6 +147,8 @@ class StemmaButtons extends HTMLElement {
           this.addInRelations( sectionId );
           this.addInReadingInformation( sectionId );
           this.renderDensityChart();
+          // TODO: turn next into document.querySelector( 'reading-properties-view div' ).show()
+          fadeToDisplayNone( document.querySelector( 'reading-properties-view div' ), { 'reverse': true } );
           this.hideIrrelevantPropertyViews();
           const relationMapperElement = document.querySelector( 'relation-mapper' );
           fadeToDisplayFlex( relationMapperElement, { 'duration': 1500 } );
@@ -191,22 +193,15 @@ class StemmaButtons extends HTMLElement {
   renderDensityChart() {
     document.querySelector( 'node-density-chart' ).renderChart(
       { 'onEnd': () => { 
-          fadeToDisplayNone( document.querySelector( 'node-density-chart div' ), { 
-            'reverse': true,
-            'onEnd': () => { 
-              console.log( 'This is a major TODO!' );
-              //relationRenderer.showPan();
-            } 
-          } ) 
-        } 
+          fadeToDisplayNone( document.querySelector( 'node-density-chart div' ), { 'reverse': true } );
+        }
       }
     );
   }
   
   hideIrrelevantPropertyViews() {
-    document.querySelector( 'property-table-view' ).hide();      
-    document.querySelector( '#section-properties-view-title' ).classList.toggle( 'hide' );
-    document.querySelector( '#section-reading-properties-tabs' ).classList.toggle( 'hide' );                    
+    document.querySelector( 'property-table-view' ).hide();
+    document.querySelector( 'section-properties-view' ).hide();
   } 
 
   handleDelete() {

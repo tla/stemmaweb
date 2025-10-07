@@ -35,22 +35,10 @@ class SectionPropertiesView extends HTMLElement {
         // Whenever an item in the section list is selected, update the table
         SECTION_STORE.subscribe( ( { availableSections, selectedSection } ) => {
             if( selectedSection ){
-                if( document.querySelector( '#section-info-table-container' ) ){
+                if( document.querySelector( '#editable-section-info-table-container' ) ){
                     this.updateRender( selectedSection );
                 } else {
                     this.render( selectedSection );
-                    document.querySelector( '#section-properties-tab' ).addEventListener( 'click', () => { 
-                        document.querySelector( '#section-properties-tab' ).classList.add( 'active' );
-                        document.querySelector( '#reading-properties-tab' ).classList.remove( 'active' );
-                        document.querySelector( '#section-info-table-container' ).classList.remove( 'hide' );
-                        document.querySelector( '#reading-info-table-container' ).classList.add( 'hide' );
-                    } );
-                    document.querySelector( '#reading-properties-tab' ).addEventListener( 'click', () => { 
-                        document.querySelector( '#section-properties-tab' ).classList.remove( 'active' );
-                        document.querySelector( '#reading-properties-tab' ).classList.add( 'active' );
-                        document.querySelector( '#section-info-table-container' ).classList.add( 'hide' );
-                        document.querySelector( '#reading-info-table-container' ).classList.remove( 'hide' );
-                    } );
                 }
             }
         });
@@ -60,6 +48,14 @@ class SectionPropertiesView extends HTMLElement {
         this.render();
     }
 
+    hide() {
+        fadeToDisplayNone( document.querySelector( 'section-properties-view div' ) );
+    }
+    
+    show() {
+        fadeToDisplayNone( document.querySelector( 'section-properties-view div' ), { 'reverse': true } );
+    }
+    
     /**
     * @param {MetaItem} item
     * @returns {string}
@@ -72,6 +68,27 @@ class SectionPropertiesView extends HTMLElement {
             </tr>
           `;
     }
+
+    /**
+    * @param {MetaItem} item
+    * @returns {string}
+    */
+    renderMetaItemWide(item) {
+        return `
+            <td class="reading-property-${item.label.toLowerCase()}-cell">${item.value}</td>
+          `;
+    }
+
+    /**
+    * @param {MetaItem} item
+    * @returns {string}
+    */
+    renderMetaItemTHeadWide(item) {
+        return `
+            <td class="reading-property-${item.label.toLowerCase()}-cell reading-property-column-header">${item.label}</td>
+        `;
+    }
+
 
     /** @type {SectionMetaLabels} */
     static #sectionMetadataLabels = {
@@ -158,42 +175,11 @@ class SectionPropertiesView extends HTMLElement {
      */
     static sortedMetaItems(items) {
         return items.sort((a, b) => {
-        const aIndex = SectionPropertiesView.#metadataLabelOrder.indexOf(a.label);
-        const bIndex = SectionPropertiesView.#metadataLabelOrder.indexOf(b.label);
-        return aIndex - bIndex;
+            const aIndex = SectionPropertiesView.#metadataLabelOrder.indexOf(a.label);
+            const bIndex = SectionPropertiesView.#metadataLabelOrder.indexOf(b.label);
+            return aIndex - bIndex;
         });
     }
-
-    showReadingProperties( ReadingId ) {
-        const traditionId = TRADITION_STORE.state.selectedTradition.id;
-        const sectionId = SECTION_STORE.state.selectedSection.id;
-        sectionPropertiesService.getReading( traditionId, sectionId, ReadingId ).then( (resp) => {
-            if ( resp.success ) {
-                document.querySelector( '#section-properties-tab' ).classList.remove( 'active' );
-                document.querySelector( '#reading-properties-tab' ).classList.add( 'active' );
-                document.querySelector( '#section-info-table-container' ).classList.add( 'hide' );
-                document.querySelector( '#reading-info-table-container' ).classList.remove( 'hide' );
-                const readingMeta = SectionPropertiesView.metadataFromReading( resp.data );
-                document.querySelector( '#reading-info-table-container #reading-info' ).innerHTML = readingMeta.map(this.renderMetaItem).join('\n');
-            } else {
-              StemmawebAlert.show(
-                `Could not fetch reading information for reading: ${resp.message}`,
-                'danger'
-              );                
-            }
-        } );
-    }
-
-    //  display: a weird grphviz sspecific form of html to display in the Node, expose (transformer)
-    //  join_next/join_prior: expose and join as two half elllipsis
-    //  grammar invalid (isnonsen): expose
-    //  orig_reading: don't expose
-    //  is_lemma: expose, adn there is a backend call to change the node to a lemma-node and to set the others in the rank to non-lemma (i.e. normal)
-    //  is_emendation: can be set to true, but not changed afterwards to a reading, can be delter
-        // needed if is_emendation == true
-        // emendation get a box shaped node
-    //  rank: show, not editable
-    //  is_start/is_end: internal use
 
     /**
      * Creates an HTML representation of a table listing the names and 
@@ -208,29 +194,17 @@ class SectionPropertiesView extends HTMLElement {
             const sectionMeta = SectionPropertiesView.sortedMetaItems( SectionPropertiesView.metadataFromSection(section) );
             // TODO: h6 for properties view in relation mapper should get margin-bottom: 0.3rem (is 0.5)
             return `            
-                <h6
-                class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 text-muted"
-                >
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 text-muted">
                     <span id="section-properties-view-title">Section Properties</span>
-                    <ul id="section-reading-properties-tabs" class="stemmaweb-tabs hide">
-                        <li id="section-properties-tab" class="active">Section Prop.</li>
-                        <li id="reading-properties-tab">Reading Prop.</li>
-                    </ul>
                     <div class="property-buttons">
                         <delete-section-button></delete-section-button>
                         <edit-section-properties-button></edit-section-properties-button> 
                     </div>
                 </h6>
-                <div id="section-info-table-container" class="table-responsive px-3 py-1">
+                <div id="editable-section-info-table-container" class="table-responsive px-3 py-1">
                     <table class="table table-striped table-sm">
                         <tbody id="section-info">
                             ${sectionMeta.map(this.renderMetaItem).join('\n')}
-                        </tbody>
-                    </table>
-                </div>
-                <div id="reading-info-table-container" class="table-responsive px-3 py-1 hide">
-                    <table class="table table-striped table-sm">
-                        <tbody id="reading-info">
                         </tbody>
                     </table>
                 </div>
@@ -241,7 +215,7 @@ class SectionPropertiesView extends HTMLElement {
     }
 
     updateRender( section ){
-        const sectionInfoTableContainerElement = document.querySelector( '#section-info-table-container' )
+        const sectionInfoTableContainerElement = document.querySelector( '#editable-section-info-table-container' )
         const sectionMeta = SectionPropertiesView.sortedMetaItems( SectionPropertiesView.metadataFromSection( section ) );
         sectionInfoTableContainerElement.innerHTML = `
             <table class="table table-striped table-sm">
@@ -250,11 +224,6 @@ class SectionPropertiesView extends HTMLElement {
                 </tbody>
             </table>
         `;
-        document.querySelector( '#section-properties-tab' ).classList.add( 'active' );
-        document.querySelector( '#reading-properties-tab' ).classList.remove( 'active' );
-        document.querySelector( '#section-info-table-container' ).classList.remove( 'hide' );
-        document.querySelector( '#reading-info-table-container' ).classList.add( 'hide' );
-
     }
 
     /**
