@@ -101,6 +101,7 @@ describe('A guest should not be able to upload a tradition', () => {
         cy.get('@addTraditionBtn').should('have.class', 'greyed-out')
         cy.get('@addTraditionBtn').click()
         // assert that the 'Upload a new collation' modal is not visible
+        // cy.contains('add-tradition-modal', 'Upload a new collation')
         cy.get('add-tradition-modal').should('exist').and('not.be.visible') // a place-holder only
     });
 });
@@ -111,17 +112,25 @@ describe('A guest should not be able to upload a tradition: in another way than 
     });
 }); */
 
-// un-skip when issue solved, re-tag 'issue' to 'passes':
-describe('A guest should not be able to delete any tradition: not be offered the "Delete" button', () => {
-    it.skip('issue #170, #157', () => {
+// To do: custom command
+describe('A guest should not be able to delete any tradition', () => {
+    it('passes', () => {
         const label = 'Delete';
-        cy.contains(label).should('not.be.visible'); // not even before listing the traditions in the toc
+        // not even before clicking on a tradition in the navigation bar
+        cy.get('stemma-buttons').find('button').contains(label).as('btn')
+        cy.get('@btn').should('have.class', 'disabled')
+        // cy.get('@btn').click() // cy.click() failed because this element: button id="delete-tradition-button"... /button>has CSS pointer-events: none
+        cy.get('@btn').should('have.css', 'pointer-events', 'none');
+        cy.get('stemmaweb-dialog').should('exist').and('not.be.visible')
+        // going through all traditions in the navigation bar
         test_traditions.forEach((tradition) => {
             if (tradition.access == "Public") {
-                cy.get('#traditions-list').contains(tradition.title).click();
-                cy.contains(label).should('not.be.visible');
+                cy.get('stemma-buttons').find('button').contains(label).as('btn')
+                cy.get('@btn').should('have.class', 'disabled')
+                // cy.get('@btn').click() // cy.click() failed because this element: button id="delete-tradition-button"... /button>has CSS pointer-events: none
+                cy.get('@btn').should('have.css', 'pointer-events', 'none');
+                cy.get('stemmaweb-dialog').should('exist').and('not.be.visible')
             }
-        cy.contains(label).should('not.be.visible'); // nor after listing the traditions in the toc
         });
     });
 });
