@@ -47,8 +47,8 @@ admin@example.org (pw AdminPass) has one tradition
     Verbum uncorrected, private
 
 Tests for Feat/157 user auth (PR #235), related to 'guest':
-- DONE: Guest sees only public traditions
-- DONE: Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
+- Guest sees only public traditions
+- Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
 related to other roles:
  */
 
@@ -95,10 +95,13 @@ describe('Cross-check: guest sees only public traditions listed in the toc', () 
     });
 });
 
-// un-skip when issue solved, re-tag 'issue' to 'passes':
-describe('A guest should not be able to upload a tradition: not see the feather-plus-circle (next to the toc header "Text directory")', () => {
-    it.skip('issue #170, #157', () => {
-        cy.contains('h6', 'Text directory').find('svg').should('not.be.visible'); // currently, fails as expected.
+describe('A guest should not be able to upload a tradition', () => {
+    it('passes', () => {
+        cy.contains('h6', 'Text directory').find('svg.feather-plus-circle').parents('a').as('addTraditionBtn')
+        cy.get('@addTraditionBtn').should('have.class', 'greyed-out')
+        cy.get('@addTraditionBtn').click()
+        // assert that the 'Upload a new collation' modal is not visible
+        cy.get('add-tradition-modal').should('exist').and('not.be.visible') // a place-holder only
     });
 });
 
