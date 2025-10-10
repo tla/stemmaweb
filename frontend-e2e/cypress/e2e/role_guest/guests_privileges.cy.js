@@ -167,7 +167,7 @@ describe('Guest may not change any metadata (Edit properties)', () => {
                 .find('edit-properties-button')
                 .find('a')
                 .should('have.class', 'greyed-out')
-            // upon click the 'Edit properties' modal should not become visible, so the proerties are not editable
+            // upon click the 'Edit properties' modal should not become visible, so the properties are not editable
             cy.get('@properties-table')
                 .find('edit-properties-button')
                 .click()
@@ -185,13 +185,13 @@ describe('Guest may not change any metadata (Edit properties)', () => {
 describe('A guest should be offered to download a public "Tradition"', () => {
     it('passes', () => {
         const label = 'Tradition';
-        // Private traditions should not be visible for a guest: is verified in another test
-        test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
+        // asserted in another test: private traditions are not visible for a guest
+        test_traditions_public.forEach((tradition) => {
             cy.log('title: ' + tradition.title);
             // click through all traditions
             cy.get('#traditions-list').contains(tradition.title).click();
             cy. get('#stemma-buttons').contains(label).should('be.visible').and('be.enabled');
-            // TODO test functionality
+            // TODO test functionality when coded
         });
     });
 });
@@ -207,7 +207,7 @@ describe('A guest should be offered to "Examine Stemma" of a public tradition on
         const label_examine = 'Examine Stemma';
         const label_download_stemma = 'Stemma';
         // Private traditions should not be visible for a guest: is verified in another test
-        test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
+        test_traditions_public.forEach((tradition) => {
             // click through all public traditions
             cy.log('title: ' + tradition.title);
             // cy.wait(1000);
