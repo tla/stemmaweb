@@ -192,6 +192,7 @@ Cypress.Commands.add('assertPointerEventsDisabledForLabel', (buttontext) => {
   // cy.get(selector).should('have.css', 'pointer-events', 'none');
 
     cy.get('stemma-buttons').find('button').contains(buttontext).as('btn')
+    // the button's feature is "not being offered"
     cy.get('@btn').should('have.class', 'disabled')
     // cy.get('@btn').click() // cy.click() failed because this element: button id="delete-tradition-button"... /button>has CSS pointer-events: none
     cy.get('@btn').should('have.css', 'pointer-events', 'none');
