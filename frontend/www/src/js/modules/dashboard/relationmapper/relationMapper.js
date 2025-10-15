@@ -38,6 +38,7 @@ class RelationMapper extends HTMLElement {
         // is clicked (outside of any node).
         document.querySelector( '#relation-graph' ).addEventListener( 'click', () => { 
             d3.select( '#relation-graph svg g' ).selectAll( 'g.node' ).classed( 'selected', false );
+            document.querySelector( 'reading-properties-view' ).showReadingProperties( null );
         } );
         // Click event for node selection and showing reading properties.
         d3.select( '#relation-graph svg g' ).selectAll( 'g.node' )

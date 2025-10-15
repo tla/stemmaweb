@@ -74,9 +74,14 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
 }
 
 .follows-feather {
-  /* width: 16px;
-  height: 16px; */
+  width: 28px;
+  height: 28px;
   vertical-align: text-bottom;
+  border: 1px solid #cac7c7;
+  padding: 2px;
+  border-radius: 4px 4px;
+  background-color: rgb(238, 240, 242);
+  margin-bottom: 2px;
 }
 
 .brand-dark {
@@ -574,20 +579,18 @@ delete-section-button a.greyed-out .btn-outline-danger  {
   color: #ccc;
 }
 
-concatenate-nodes-button, split-nodes-button, detach-nodes-button {
+concatenate-nodes-button, split-nodes-button, detach-nodes-button, merge-nodes-button {
   color: var(--bs-btn-color);
-  padding-right: 0.5em;
   & a {
     text-decoration: none;
+    &.greyed-out svg {
+      color: #c1c4c8;
+    }
   }
 }
 
 merge-nodes-button {
-  color: var(--bs-btn-color);
   padding-right: 0.25em;
-  & a {
-    text-decoration: none;
-  }
 }
 
 #message-console-text-panel {

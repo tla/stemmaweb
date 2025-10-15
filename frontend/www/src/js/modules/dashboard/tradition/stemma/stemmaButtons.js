@@ -147,8 +147,7 @@ class StemmaButtons extends HTMLElement {
           this.addInRelations( sectionId );
           this.addInReadingInformation( sectionId );
           this.renderDensityChart();
-          // TODO: turn next into document.querySelector( 'reading-properties-view div' ).show()
-          fadeToDisplayNone( document.querySelector( 'reading-properties-view div' ), { 'reverse': true } );
+          document.querySelector( 'reading-properties-view' ).show();
           this.hideIrrelevantPropertyViews();
           const relationMapperElement = document.querySelector( 'relation-mapper' );
           fadeToDisplayFlex( relationMapperElement, { 'duration': 1500 } );

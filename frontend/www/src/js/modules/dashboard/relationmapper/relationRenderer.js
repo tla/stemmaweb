@@ -182,7 +182,6 @@ class RelationRenderer {
                         thisClassInstance.dragged.call( thisClassInstance, this, event, d ); 
                     } )
                 );
-			// this.#svg.selectAll( 'g.node' ).on( 'click', ()=>( console.log( 'click' ) ) );
         } else {
             // Unset draggability of nodes, d3.drag internally uses `.drag` for
             // the listeners; see https://d3js.org/d3-drag#_drag.

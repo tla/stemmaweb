@@ -21,11 +21,23 @@ class ConcatenateNodes extends HTMLElement {
 
   handleConcatenateNodes() {
     // TODO Implement splitting nodes.
-    if( userIsOwner() ) {
+    if( this.isActive() && userIsOwner() ) {
       const { selectedTradition: tradition } = TRADITION_STORE.state;
       const { selectedSection: section, availableSections } = SECTION_STORE.state;
     }
     console.log( 'Concatenate nodes not implemented.' );
+  }
+
+  isActive() {
+    return !this.querySelector( 'a' ).classList.contains( 'greyed-out' );
+  }
+
+  setInactive(){
+    this.querySelector( 'a' ).classList.add( 'greyed-out' );
+  }
+
+  setActive(){
+    this.querySelector( 'a' ).classList.remove( 'greyed-out' );
   }
 
   render() {
