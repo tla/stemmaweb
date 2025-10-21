@@ -26,30 +26,35 @@ Cypress tests to be added:
 
 import test_traditions from '../../fixtures/test_traditions.json';
 import users from '../../fixtures/users.json';
-const admin = users.filter(({username}) => username === 'admin@example.org')[0];
+const admin = users.filter(
+  ({ username }) => username === 'admin@example.org'
+)[0];
 
-if (Cypress.browser.isHeaded) { // skip when in headless mode
+if (Cypress.browser.isHeaded) {
+  // skip when in headless mode
 
-beforeEach(() => {
+  beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     cy.viewport(1600, 900);
-    test_traditions.sort( (tradition_a, tradition_b) => tradition_a.title.localeCompare( tradition_b.title ) );
+    test_traditions.sort((tradition_a, tradition_b) =>
+      tradition_a.title.localeCompare(tradition_b.title)
+    );
     cy.loginViaUi(admin);
-});
+  });
 
-afterEach(() => {
+  afterEach(() => {
     cy.logoutViaUi();
-});
+  });
 
-// count sections of each (public) tradition is correct
-describe('Changing Tradition metadata should be fully functional', () => {
-    it.skip('under construction', () => { // set db to initial state
-        // test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
-        test_traditions.forEach((tradition) => {
-            cy.log(tradition.title);
-            // ...
-        });
+  // count sections of each (public) tradition is correct
+  describe('Changing Tradition metadata should be fully functional', () => {
+    it.skip('under construction', () => {
+      // set db to initial state
+      // test_traditions.filter(({access}) => access === 'Public').forEach((tradition) => {
+      test_traditions.forEach((tradition) => {
+        cy.log(tradition.title);
+        // ...
+      });
     });
-});
-
+  });
 }
