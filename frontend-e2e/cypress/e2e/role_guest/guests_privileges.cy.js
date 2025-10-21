@@ -82,6 +82,7 @@ describe('Cross-check: guest sees only public traditions listed in the toc', () 
     // no separation bar btw own and others' traditions, all are othres'
     cy.get('ul#traditions-list')
       .children()
+      // .find('.folder-icon') // no separation line btw own and others' traditions or public and private
       .should('have.length', test_traditions_public.length);
 
     test_traditions.forEach((tradition) => {
@@ -161,16 +162,10 @@ describe('A guest should not be offered or able to "Edit Collation" of any tradi
 // ToDo: close github issues  #170 and #157 when tests are passing for all roles.
 describe('Guest may not change any metadata (Edit properties)', () => {
   it('passes', () => {
-    // Guest sees only public traditions
-    cy.get('ul#traditions-list')
-      .children()
-      .find('.folder-icon')
-      .should('have.length', test_traditions_public.length);
-    // assert all the right traditions are displayed in the tradition list
+    // Guest sees only all public traditions -- asserted separately, above
     // assert the 'Edit properties' modal is not visible
     test_traditions_public.forEach((tradition) => {
       cy.log('title: ' + tradition.title);
-      // Guest sees only public traditions
       // Guest may not change metadata on traditions (ideally the edit button wouldn't be there...)
       // the tradition is visible but not editable for a guest, opened lock sign
       cy.get('ul#traditions-list')
@@ -186,8 +181,8 @@ describe('Guest may not change any metadata (Edit properties)', () => {
       // upon click the 'Edit properties' modal should not become visible, so the properties are not editable
       cy.get('@properties-table').find('edit-properties-button').click();
       // assert the 'Edit properties' modal is not displayed
-      cy.contains('#modalDialogLabel', 'Edit properties').should('not.exist'); // does not exist for a guest, for a user it is not visible
-      // .should('exist').and('not.be.visible') // for a user it exists with a dummy text but is not visible.
+      cy.contains('#modalDialogLabel', 'Edit properties').should('not.exist'); // does not exist for a guest
+      // .should('exist').and('not.be.visible') // for a user it exists with a dummy text but is not visible
     });
   });
 });
@@ -321,7 +316,7 @@ describe('A guest should be offered to "Sign in" (the actual sign-in behaviour i
 
 describe('A guest should be offered to navigate to the "About" page', () => {
   it('passes', () => {
-    cy.get('header').find('a').contains('About');
+    cy.get('header').contains('a', 'About').should('be.visible');
     // TODO: check the right address is linked and visited
   });
 });
