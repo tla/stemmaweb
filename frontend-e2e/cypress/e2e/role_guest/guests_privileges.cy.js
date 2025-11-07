@@ -212,8 +212,10 @@ describe('A guest should be offered to download a public "Tradition"', () => {
 // see the respective Stemma identifier(, see its correct Witnesses ?),
 // 'Examine Stemma' and 'Download Stemma' in all available formats.
 // TODO, issue: disable or hide certain elements when no stemma available, etc. see below
+
+// Examine Stemma: tabular representation of variants and how they affect the stemma
 describe('A guest should be offered to "Examine Stemma" of a public tradition only for any of its stemmata', () => {
-  it.skip('under construction', () => {
+  it.skip('under construction', () => { // the feature is not implemented yet, it is being re-established
     const label_examine = 'Examine Stemma';
     const label_download_stemma = 'Stemma';
     // Private traditions should not be visible for a guest: is verified in another test
