@@ -70,7 +70,6 @@ class SectionList extends HTMLElement {
     connectedCallback() {
         this.render();
         this.populate();
-        // this.makeSortable();
     }
 
     makeSortable( instance ) {

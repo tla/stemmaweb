@@ -509,13 +509,18 @@ section-list ul li.dragging-highlight {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-.tradition-property-label-cell, .section-property-label-cell {
+.tradition-property-label-cell, .section-property-label-cell, .reading-property-label-cell {
   min-width: 6em;
 }
 
-.tradition-property-value-cell, .section-property-value-cell {
+.tradition-property-value-cell, .section-property-value-cell, .reading-property-value-cell {
   width: 100%;
   overflow-wrap: anywhere;
+}
+
+.reading-property-value-cell div {
+  display: flex;
+  justify-content: space-between;
 }
 
 reading-properties-view h6 {
@@ -554,7 +559,7 @@ reading-properties-view #reading-info-table-container {
   }
 }
 
-.reading-property-text-cell, .reading-property-witnesses-cell {
+.reading-property-text-cell, .reading-property-witnesses-cell, .reading-property-action-button-cell {
   width: 43%;
   border-left: 1px solid #ddd;
   &.reading-property-column-header {

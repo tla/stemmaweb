@@ -24,6 +24,10 @@ class TraditionList extends HTMLElement {
 
     constructor() {
         super();
+        // Listen for any state change regarding user.
+        AUTH_STORE.subscribe( (state) => { 
+            this.render( TRADITION_STORE.state.availableTraditions ); 
+        } );
         // Listen for any state change regarding traditions.
         TRADITION_STORE.subscribe( ( prevState, state ) => {
             // We ignore any state change except when traditions are fetched for the 
@@ -87,7 +91,12 @@ class TraditionList extends HTMLElement {
         SECTION_STORE.setSelectedSection( null );
         const sectionListElement = this.querySelector( `section-list[trad-id="${tradition.id}"]` );
         fadeIn( sectionListElement ); 
+        console.log( 'action' );
         sectionListElement.classList.toggle( 'show' );
+        if ( sectionListElement.classList.contains( 'show' ) ) {
+            console.log( 'section');
+            sectionListElement.querySelector( 'li.nav-item' ).dispatchEvent( new Event( 'mousedown' ) );
+        }
     }
     
     /**
@@ -120,7 +129,12 @@ class TraditionList extends HTMLElement {
             <div>
                 <section-list trad-id="${tradition.id}" class="collapse"></section-list>
             </div>`
-        traditionListItem.querySelector( 'div div a' ).addEventListener( 'click', (evt) => { this.selectTradition( evt, tradition ) } );
+        // traditionListItem.querySelector( 'div div a' ).addEventListener( 'click', (evt) => { this.selectTradition( evt, tradition ) } );
+        traditionListItem.querySelector( 'div div a' ).addEventListener( 'click', (evt) => { 
+            evt.preventDefault();
+            const sectId = traditionListItem.querySelector( 'div section-list div' ).getAttribute( 'sect-id' );
+            this.toggleSectionList( tradition );
+        } );
         traditionListItem.querySelector( 'div div.folder-icon' ).addEventListener( 'click', () => { this.toggleSectionList( tradition ) } );
         return traditionListItem;
     }
@@ -144,24 +158,31 @@ class TraditionList extends HTMLElement {
         `
         const traditionListElement = this.querySelector( 'ul' );
 
-        // Add private traditions to the list first.
-        traditions.forEach( (tradition) => {
-            if( !tradition.is_public ){
-                traditionListElement.appendChild( this.createTraditionListItem( tradition ) )
-            };
-        } )
-
-        // If there are any private traditions, add a list separator.
-        if( traditionListElement.querySelector( 'li' ) ) {
-            traditionListElement.appendChild( this.createListSeparator() );
+        let ownedTraditions = [];
+        let publicTraditions = [];
+        if ( AUTH_STORE.state.user ) {
+            ownedTraditions = traditions.filter( (tradition) => {
+                return ( tradition.owner == AUTH_STORE.state.user.id );
+            } );
+            publicTraditions = traditions.filter( (tradition) => {
+                return ( ( tradition.owner != AUTH_STORE.state.user.id ) && tradition.is_public );
+            })
+        } else {
+            publicTraditions = traditions.filter( (tradition) => tradition.is_public )
         }
 
+
+        ownedTraditions.forEach( (tradition) => {
+            traditionListElement.appendChild( this.createTraditionListItem( tradition ) )
+        } );
+        // If there are any owned traditions, add a list separator.
+        if ( traditionListElement.querySelector( 'li' ) ) {
+            traditionListElement.appendChild( this.createListSeparator() );
+        }
         // Lastly, add the public traditions.
-        traditions.forEach( (tradition) => {
-            if( tradition.is_public ){
-                traditionListElement.appendChild( this.createTraditionListItem( tradition ) )
-            };
-        } )
+        publicTraditions.forEach( (tradition) => {
+            traditionListElement.appendChild( this.createTraditionListItem( tradition ) )
+        } );
         
     }
 

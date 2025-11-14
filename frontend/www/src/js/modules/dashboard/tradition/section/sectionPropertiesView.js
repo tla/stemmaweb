@@ -31,6 +31,7 @@ class SectionPropertiesView extends HTMLElement {
             if( prevState.selectedTradition && ( prevState.selectedTradition.id != state.selectedTradition.id ) ) {
                 this.innerHTML = '';
             };
+            
         });
         // Whenever an item in the section list is selected, update the table
         SECTION_STORE.subscribe( ( { availableSections, selectedSection } ) => {
@@ -40,6 +41,8 @@ class SectionPropertiesView extends HTMLElement {
                 } else {
                     this.render( selectedSection );
                 }
+            } else {
+                this.innerHTML = '';
             }
         });
     }
@@ -69,27 +72,6 @@ class SectionPropertiesView extends HTMLElement {
           `;
     }
 
-    /**
-    * @param {MetaItem} item
-    * @returns {string}
-    */
-    renderMetaItemWide(item) {
-        return `
-            <td class="reading-property-${item.label.toLowerCase()}-cell">${item.value}</td>
-          `;
-    }
-
-    /**
-    * @param {MetaItem} item
-    * @returns {string}
-    */
-    renderMetaItemTHeadWide(item) {
-        return `
-            <td class="reading-property-${item.label.toLowerCase()}-cell reading-property-column-header">${item.label}</td>
-        `;
-    }
-
-
     /** @type {SectionMetaLabels} */
     static #sectionMetadataLabels = {
         id: 'Section',
@@ -118,39 +100,6 @@ class SectionPropertiesView extends HTMLElement {
             {   
                 label: labels.language,
                 value:  section.language,
-                inputOptions: { control: 'text', size: 40, required: true }
-            }
-        ];
-    }
-
-    /** @type {ReadingMetaLabels} */
-    static #readingMetadataLabels = {
-        id: 'Reading',
-        text: 'Text',
-        witnesses: 'Witnesses'
-    };
-
-    /**
-     * Maps reading metadata to appropriate labels.
-     * 
-     * @param {Reading} reading Reading to render the metadata for.
-     * @returns {MetaItem[]} Array of metadata items to display.
-    */
-    static metadataFromReading( reading ) {
-        const labels = SectionPropertiesView.#readingMetadataLabels;
-        return [
-            {
-                label: labels.id,
-                value: reading.id
-            },
-            {
-                label: labels.text,
-                value: reading.text,
-                inputOptions: { control: 'text', size: 40, required: true }
-            },
-            {   
-                label: labels.witnesses,
-                value: reading.witnesses.sort().join( ', ' ),
                 inputOptions: { control: 'text', size: 40, required: true }
             }
         ];

@@ -12,7 +12,7 @@ class ReadingPropertiesView extends HTMLElement {
     }
 
     connectedCallback() {
-        this.renderReadingProperties();
+        this.renderReadingPropertiesView();
         document.querySelector( '#section-properties-tab' ).addEventListener( 'click', () => { 
             this.ensureSectionTabActive();
         } );
@@ -30,7 +30,7 @@ class ReadingPropertiesView extends HTMLElement {
         fadeToDisplayNone( document.querySelector( 'reading-properties-view div' ), { 'reverse': true } );
     }
 
-    renderReadingProperties( options ) {
+    renderReadingPropertiesView( options ) {
         const defaultOptions = { 'onEnd': null, 'display': 'none', 'opacity': 0 };
         const usedOptions = { ...defaultOptions, ...options };        
         this.innerHTML = `
@@ -120,15 +120,122 @@ class ReadingPropertiesView extends HTMLElement {
         }
     }
 
+    /** @type {ReadingMetaLabels} */
+    static #readingMetadataLabels = {
+        id: 'Reading',
+        text: 'Text',
+        witnesses: 'Witnesses'
+    };
+
+    /**
+     * Maps reading metadata to appropriate labels.
+     * 
+     * @param {Reading} reading Reading to render the metadata for.
+     * @returns {MetaItem[]} Array of metadata items to display.
+    */
+    metadataFromReading( reading ) {
+        const labels = ReadingPropertiesView.#readingMetadataLabels;
+        return [
+            {
+                label: labels.id,
+                value: reading.id
+            },
+            {
+                label: labels.text,
+                value: reading.text,
+                inputOptions: { control: 'text', size: 40, required: true }
+            },
+            {   
+                label: labels.witnesses,
+                value: reading.witnesses.sort().join( ', ' ),
+                inputOptions: { control: 'text', size: 40, required: true }
+            }
+        ];
+    }
+    
+    /**
+    * @param {MetaItem} metaItem
+    * @returns {string}
+    */
+    createMetaItemElement( metaItem, readingId ) {
+        const trElement = document.createElement( 'tr' );
+        const tdLabelElement = document.createElement( 'td' );
+        tdLabelElement.setAttribute( 'class', 'reading-property-label-cell' );
+        tdLabelElement.append( metaItem.label );
+        trElement.appendChild( tdLabelElement );
+        const tdValueElement = document.createElement( 'td' );
+        tdValueElement.setAttribute( 'class', 'reading-property-value-cell' );
+        const divElement = document.createElement( 'div' );
+        const spanElement = document.createElement( 'span' );
+        spanElement.append( metaItem.value );
+        spanElement.setAttribute( 'class', 'reading-property-value' );
+        divElement.appendChild( spanElement );
+        tdValueElement.appendChild( divElement );
+        trElement.appendChild( tdValueElement );
+        if ( metaItem.inputOptions ) { 
+            const editButtonElement = this.createReadingEditButtonElement( readingId );
+            divElement.appendChild( editButtonElement );
+        }
+        return trElement;
+    }
+
+    /**
+    * @param {MetaItem} metaItem
+    * @returns {string}
+    */
+    createMetaItemWideTdElement(metaItem) {
+        const tdElement = document.createElement( 'td' );
+        tdElement.setAttribute( 'class', `reading-property-${metaItem.label.toLowerCase()}-cell` );
+        if ( metaItem.label == 'action-button' ) {
+            tdElement.appendChild( metaItem.editButtonElement );
+        } else {
+            tdElement.append( metaItem.value );
+        }
+        return tdElement;
+    }
+
+    /**
+    * @param {MetaItem} metaItem
+    * @returns {string}
+    */
+    renderMetaItemTHeadWide( metaItem ) {
+        const display_label = metaItem.label == 'action-button' ? '' : metaItem.label;
+        const tdElement = document.createElement( 'td' );
+        tdElement.setAttribute( 'class', `reading-property-${metaItem.label.toLowerCase()}-cell reading-property-column-header` );
+        tdElement.append( display_label );
+        return tdElement;
+    }
+    
+    createReadingEditButtonElement( readingId ) {
+        const buttonElement = document.createElement( 'span' );
+        buttonElement.setAttribute( 'class', 'edit-reading-button' );
+        var styleClasses = [ 'link-secondary', 'greyed-out' ];
+        if( userIsOwner() ) {
+          styleClasses.pop();
+        }
+        let linkHtml =
+            `<a class="${styleClasses.join(' ')}" href="#" aria-label="Edit reading">
+                <span>${feather.icons['edit'].toSvg()}</span>
+            </a>`;
+        buttonElement.addEventListener( 'click', () => { 
+            console.log( readingId );
+            editReadingProperties.showDialog( readingId ) 
+        } ); 
+        buttonElement.innerHTML = linkHtml;
+        return buttonElement;
+      }
+    
     showReadingProperties( readingId ) {
         if( readingId ) {
             const traditionId = TRADITION_STORE.state.selectedTradition.id;
             const sectionId = SECTION_STORE.state.selectedSection.id;
-            const sectionPropertiesView = document.querySelector( 'section-properties-view' );
+            // const sectionPropertiesView = document.querySelector( 'section-properties-view' );
             readingPropertiesService.getReading( traditionId, sectionId, readingId ).then( (resp) => {
                 if ( resp.success ) {
-                    const readingMeta = SectionPropertiesView.metadataFromReading( resp.data );
-                    document.querySelector( '#reading-info-table-container #reading-info' ).innerHTML = readingMeta.map(sectionPropertiesView.renderMetaItem).join('\n');
+                    const readingMeta = this.metadataFromReading( resp.data );
+                    const readingInfoTableElement = document.querySelector( '#reading-info-table-container #reading-info' );
+                    readingInfoTableElement.innerHTML = '';
+                    readingMeta.map( (metaItem) => { readingInfoTableElement.appendChild( this.createMetaItemElement( metaItem, readingId ) ) } );
                     this.setReadingActionButtonsInactive();
                     this.ensureReadingTabActive();
                 } else {
@@ -145,24 +252,20 @@ class ReadingPropertiesView extends HTMLElement {
     }
 
     showMultiReadingProperties( d3Selection ) {
-        let sortedSelection = d3.sort( d3Selection, (a, b) => { 
-            return d3.ascending( d3.select( a ).datum().rank, d3.select( b ).datum().rank );
-        } );
-        let promises = [];
-        let readingMeta = null;
-        let rows = '';
-        const sectionPropertiesView = document.querySelector( 'section-properties-view' );
-        sortedSelection.forEach( (selected) => {
-            const traditionId = TRADITION_STORE.state.selectedTradition.id;
-            const sectionId = SECTION_STORE.state.selectedSection.id;
-            const readingId = d3.select( selected ).datum().id;
+        // let sortedSelection = d3.sort( d3Selection, (a, b) => { 
+        //     return d3.ascending( d3.select( a ).datum().rank, d3.select( b ).datum().rank );
+        // } );
+        const promises = [];
+        const readingMetas = {};
+        const traditionId = TRADITION_STORE.state.selectedTradition.id;
+        const sectionId = SECTION_STORE.state.selectedSection.id;
+        d3Selection.each( (d) => {
+            const readingId = d.id; //d3.select( selected ).datum().id;
             promises.push(
-                sectionPropertiesService.getReading( traditionId, sectionId, readingId )
+                readingPropertiesService.getReading( traditionId, sectionId, readingId )
                     .then( (resp) => {
                         if ( resp.success ) {
-                            readingMeta = SectionPropertiesView.metadataFromReading( resp.data );
-                            const cells = readingMeta.map(sectionPropertiesView.renderMetaItemWide).join('\n');
-                            rows += '<tr>' + cells + '</tr>\n';
+                            readingMetas[ d.rank ] = this.metadataFromReading( resp.data );
                         } else {
                             StemmawebAlert.show(
                                 `Could not fetch reading information for reading: ${resp.message}`,
@@ -173,9 +276,29 @@ class ReadingPropertiesView extends HTMLElement {
             );
         } );
         Promise.all( promises ).then( () => { 
-            const thead = readingMeta.map( sectionPropertiesView.renderMetaItemTHeadWide ).join('\n');
-            rows = thead + '\n' + rows;
-            document.querySelector( '#reading-info-table-container #reading-info' ).innerHTML = rows;
+            const tbodyElement = document.querySelector( '#reading-info-table-container #reading-info' );
+            tbodyElement.innerHTML = '';
+            const theadRow = document.createElement( 'tr' );
+            tbodyElement.appendChild( theadRow );
+            const sortedKeys = Object.keys( readingMetas ).sort();
+            readingMetas[ sortedKeys[0] ].map( ( readingMetaItem ) => { theadRow.appendChild( this.renderMetaItemTHeadWide( readingMetaItem ) ) } );
+            let buttonMeta = { 'label': 'action-button', 'editButtonElement': null };
+            theadRow.appendChild( this.renderMetaItemTHeadWide( buttonMeta ) );
+            sortedKeys.forEach( (key) => {
+                const row = document.createElement( 'tr' );
+                let readingMeta = readingMetas[key];
+                readingMeta.map( ( readingMetaItem ) => { 
+                    row.appendChild( this.createMetaItemWideTdElement( readingMetaItem ) ) 
+                } );
+                const readingId = readingMeta[0].value;
+                buttonMeta = { 'label': 'action-button', 'editButtonElement': this.createReadingEditButtonElement( readingId ) };
+                row.appendChild( this.createMetaItemWideTdElement( buttonMeta ) );
+                tbodyElement.appendChild( row );
+            } );
+            // document.querySelectorAll( '.edit-reading-button' ).forEach( (editReadingButton) => {
+            //     const readingId = editReadingButton.dataset.readingId;
+            //     editReadingButton.addEventListener( 'click', () => { editReadingProperties.showDialog( readingId ) } );
+            // });
             this.ensureReadingTabActive();
         } );
         

@@ -45,6 +45,7 @@ class StemmawebNavigation extends HTMLElement {
           editSectionPropertiesButtonElement.render();
           document.querySelector( 'delete-section-button' ).render();
         }
+        // This guarantees a fresh TraditionList on log out.
         document.querySelector( 'text-directory' ).render();
       } )
       .catch( console.error );
