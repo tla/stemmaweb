@@ -218,7 +218,6 @@ class ReadingPropertiesView extends HTMLElement {
                 <span>${feather.icons['edit'].toSvg()}</span>
             </a>`;
         buttonElement.addEventListener( 'click', () => { 
-            console.log( readingId );
             editReadingProperties.showDialog( readingId ) 
         } ); 
         buttonElement.innerHTML = linkHtml;

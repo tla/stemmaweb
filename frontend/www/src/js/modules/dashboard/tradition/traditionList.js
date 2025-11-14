@@ -91,10 +91,8 @@ class TraditionList extends HTMLElement {
         SECTION_STORE.setSelectedSection( null );
         const sectionListElement = this.querySelector( `section-list[trad-id="${tradition.id}"]` );
         fadeIn( sectionListElement ); 
-        console.log( 'action' );
         sectionListElement.classList.toggle( 'show' );
         if ( sectionListElement.classList.contains( 'show' ) ) {
-            console.log( 'section');
             sectionListElement.querySelector( 'li.nav-item' ).dispatchEvent( new Event( 'mousedown' ) );
         }
     }
