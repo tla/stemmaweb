@@ -129,10 +129,8 @@ describe('A guest should not be offered or able to delete any tradition', () => 
     // not even before clicking on a tradition in the navigation bar
     cy.assertPointerEventsDisabledForLabel(label);
     // going through all traditions in the navigation bar
-    test_traditions.forEach((tradition) => {
-      if (tradition.access == 'Public') {
-        cy.assertPointerEventsDisabledForLabel(label);
-      }
+    test_traditions_public.forEach(() => {
+      cy.assertPointerEventsDisabledForLabel(label);
     });
   });
 });
@@ -150,10 +148,8 @@ describe('A guest should not be offered or able to "Edit Collation" of any tradi
     // not even before clicking on a tradition in the navigation bar
     cy.assertPointerEventsDisabledForLabel(label);
     // going through all traditions in the navigation bar
-    test_traditions.forEach((tradition) => {
-      if (tradition.access == 'Public') {
-        cy.assertPointerEventsDisabledForLabel(label);
-      }
+    test_traditions_public.forEach(() => {
+      cy.assertPointerEventsDisabledForLabel(label);
     });
   });
 });
