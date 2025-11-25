@@ -22,34 +22,11 @@ A guest should further
     - be offered to 'Sign in' (there will be another file to test this feature)
     - be able to navigate to the 'About' page 'https://stemmaweb.net/'.
 */
-
 /*  test users & traditions (https://github.com/tla/stemmaweb/pull/152):
-
-changes in https://github.com/tla/stemmaweb/pull/167:
-set 'Notre besoin' and 'John verse' to be public;
-'Matthew 401' stays private in line with existing data.
-
-
-user@example.org (pw UserPass) has three traditions
-
-    Notre besoin, public
-    Florilegium, private (with multiple sections)
-    Legend fragment, private (with multiple sections)
-
-benutzer@example.org (pw BenutzerKW) has three traditions
-
-    Matthew 401, private
-    John verse, public
-    Arabic snippet, private
-
-admin@example.org (pw AdminPass) has one tradition
-
-    Verbum uncorrected, private
-
+...
 Tests for Feat/157 user auth (PR #235), related to 'guest':
 - Guest sees only public traditions
 - Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
-related to other roles:
  */
 
 import test_traditions from '../../fixtures/test_traditions.json';
