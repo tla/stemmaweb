@@ -1,26 +1,21 @@
-/*  A guest (i.e. a visitor who has not signed in yet) should,
-as far as the user interface is concerned (functionalities to be verified in separate tests) and
-as far as the public traditions are concerned,
-
+/*  A guest (i.e. a visitor who has not signed in) should
     - not see any private test tradition listed in the toc,
     - not be able to upload a tradition:
         - not see the feather-plus-circle (next to the toc header 'TEXT DIRECTORY'),
-        - ? not be able to add a tradition in another way,
     - not be able to delete any tradition:
         - not see the 'Delete' button,
-        - ? not be able to delete a tradition in another way,
     - not be offered to 'Edit Collation',
     - not be offered to edit Properties.
 
     - see all public test traditions listed in the toc,
-    - be able to download 'Tradition' (e.g. Notre besoin),
-    - be able to download 'Stemma' (e.g. of Notre besoin),
-    - be able to 'Examine Stemma' (e.g. of Notre besoin),
+    - be able to download 'Tradition' (e.g. Notre besoin), TBD
+    - be able to download 'Stemma' (e.g. of Notre besoin), TBD
+    - be able to 'Examine Stemma' (e.g. of Notre besoin), TBD
 
 A guest should further
-    - see the heading 'Stemmaweb — a collection of tools for the analysis of collated texts',
+    - see the heading 'Stemmaweb — a collection of tools for the analysis of collated texts'
     - be offered to 'Sign in' (there will be another file to test this feature)
-    - be able to navigate to the 'About' page 'https://stemmaweb.net/'.
+    - be able to navigate to the 'About' page 'https://stemmaweb.net/' (link will change, TBD)
 */
 /*  test users & traditions (https://github.com/tla/stemmaweb/pull/152):
 ...
@@ -111,13 +106,6 @@ describe('A guest should not be offered or able to delete any tradition', () => 
     });
   });
 });
-
-/* // delete with cy.intercept() ?
-describe('A guest should not be able to delete a tradition: in another way than with a "Delete" button, e.g. for "Notre besoin"', () => {
-    it.skip('to do', () => {
-        cy.contains('Delete').should('not.be.visible');
-    });
-}); */
 
 describe('A guest should not be offered or able to "Edit Collation" of any tradition', () => {
   it('passes', () => {
