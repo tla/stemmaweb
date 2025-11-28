@@ -235,6 +235,7 @@ Cypress.Commands.add(
         .find('#witnesses_input')
         .invoke('val', newWitnesses);
 
+      // Issue#256: Enable role user to save their own edited traditions' properties
       // TODO: save it (currently only admin can save edited properties)
       cy.get('@propsDialogModal')
         .contains('button', 'Save')

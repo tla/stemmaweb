@@ -30,6 +30,7 @@ if (Cypress.browser.isHeaded) {
     // test for both users: user@example.org and benutzer@example.org
     const users_user = users_all.filter(({ role }) => role === 'user');
     users_user.forEach((user) => {
+      cy.log('user.username: ' + user.username)
       const test_traditions_own_private = test_traditions.filter(
         ({ owner, access }) => owner === user.username && access === 'Private'
       );
