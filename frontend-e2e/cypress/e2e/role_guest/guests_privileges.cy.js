@@ -89,12 +89,6 @@ describe('A guest should not be able to upload a tradition', () => {
   });
 });
 
-/* // upload with cy.intercept() ?
-describe('A guest should not be able to upload a tradition: in another way than by the feather-plus-circle (next to the toc header "TEXT DIRECTORY", e.g. by interception)', () => {
-    it.skip('to do', () => {
-    });
-}); */
-
 describe('A guest should not be offered or able to delete any tradition', () => {
   it('passes', () => {
     const label = 'Delete';
