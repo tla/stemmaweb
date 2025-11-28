@@ -36,6 +36,7 @@ beforeEach(() => {
   // assert guest role: not logged in
   cy.get('header').as('header');
   cy.get('@header').contains('a', 'Sign in').should('be.visible');
+  // issue#254 Before signing in, the stemmaweb-navigation header should say "Welcome, Guest", "Welcome as Guest", or alike, instead of "Logged in as Guest"
   // cy.get('@header').should('not.contain', 'Logged in'); // Default: 'Logged in as Guest'
   cy.get('@header').should('not.contain', 'Sign out');
 });
@@ -165,7 +166,7 @@ describe('A guest should be offered to download a public "Tradition"', () => {
 // and only when a stemma is available, to:
 // select stemma, see preview
 // see the respective Stemma identifier(, see its correct Witnesses ?),
-// 'Examine Stemma' and 'Download Stemma' in all available formats.
+// 'Examine Stemma', and 'Download Stemma' in all available formats.
 // TODO, issue: disable or hide certain elements when no stemma available, etc. see below
 
 // Examine Stemma: tabular representation of variants and how they affect the stemma
@@ -249,6 +250,19 @@ describe('A guest should be offered to "Examine Stemma" of a public tradition on
         // cy.get('#stemma-buttons').find('#stemma_image_downloadbtn').contains(label_download_stemma).should('not.be.enabled'); // or .should('not.exist')
       }
     });
+  });
+});
+
+// issue#253: "Download tradition" should be implemented for different formats by api calls
+describe('A guest should be offered to "Download tradition" of a public tradition in different formats', () => {
+  it.skip('under construction', () => { // the feature is not implemented yet
+  });
+});
+
+// issue#252: Stemma download file should have the same name as the stemma
+// issue#255: Make sure the right stemma is downloaded and traditions without stemma don't offer "Download stemma"
+describe('A guest should be offered to "Download Stemma" of a public tradition only for any of its stemmata', () => {
+  it.skip('under construction', () => { // the feature is not implemented yet
   });
 });
 
