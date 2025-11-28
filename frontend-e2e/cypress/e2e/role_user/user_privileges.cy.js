@@ -13,6 +13,8 @@
 import users_all from '../../fixtures/users.json';
 import test_traditions from '../../fixtures/test_traditions.json';
 
+const users_user = users_all.filter(({ role }) => role === 'user');
+
 if (Cypress.browser.isHeaded) {
   // skip when in headless mode
 
@@ -28,9 +30,7 @@ if (Cypress.browser.isHeaded) {
   // Feat/157 user auth (PR#235)
   describe('User authentication and role behaviour', () => {
     // test for both users: user@example.org and benutzer@example.org
-    const users_user = users_all.filter(({ role }) => role === 'user');
     users_user.forEach((user) => {
-      cy.log('user.username: ' + user.username)
       const test_traditions_own_private = test_traditions.filter(
         ({ owner, access }) => owner === user.username && access === 'Private'
       );
@@ -53,7 +53,15 @@ if (Cypress.browser.isHeaded) {
             test_traditions_own_private.length +
               test_traditions_own_public.length +
               test_traditions_others_public.length
-          );
+        );
+
+        // TODO when https://github.com/tla/stemmaweb/issues/245 is solved:
+        // The tradition list should be devided into the current user's/admin's traditions and those of others.
+        // Own traditions should be listed first (private and public ones), 
+        // separated from and followed by those of others 
+        // (users can view others' public traditions, admins can view and edit others' public and private traditions). 
+        // Otherwise it is hard for a user to see at first glance which traditions are editable, namely only his/hers.
+        cy.traditionDivider(user)
 
         // assert all the right traditions are displayed in the tradition list
         // assert the 'Edit properties' modal is visible

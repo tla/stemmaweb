@@ -42,6 +42,7 @@ Cypress.Commands.add(
       });
     }
     cy.log('Cypress.browser.isHeaded? ' + Cypress.browser.isHeaded);
+    cy.log('userObj.username: ' + userObj.username)
     cy.contains('header a', 'Sign in').click();
     cy.get('#loginEmail').wait(500).type(userObj.username, { delay: 50 });
     cy.get('#loginPassword').wait(500).type(userObj.password, { delay: 50 });
@@ -265,4 +266,13 @@ Cypress.Commands.add('assertPointerEventsDisabledForLabel', (buttontext) => {
   // cy.get('@btn').click() // cy.click() failed because this element: button id="delete-tradition-button"... /button>has CSS pointer-events: none
   cy.get('@btn').should('have.css', 'pointer-events', 'none');
   cy.get('stemmaweb-dialog').should('exist').and('not.be.visible');
+});
+
+Cypress.Commands.add('traditionDivider', (usr) => {
+  // To-Do when implemented https://github.com/tla/stemmaweb/issues/245
+  // The tradition list should be devided into the current user's/admin's traditions and those of others.
+  // sub-issues:
+  // Change traditions list divider behavior #249
+  // Change TraditionList behavior #250
+  cy.log(usr.username)
 });
