@@ -2,6 +2,7 @@
     Users except admins should only be allowed to see and manipulate their own traditions.
     They should not be able to see other users' traditions, nor edit or delete them.
 
+    https://github.com/tla/stemmaweb/pull/235
     - User sees only public and their own traditions
     - User may change metadata on their own tradition
     - User may not change metadata on traditions they don't own (ideally the edit button wouldn't be there...)
