@@ -8,7 +8,7 @@ const admin = users.filter(
 const selected_fill_color = 'rgb(207, 220, 238)';
 
 if (Cypress.browser.isHeaded) {
-  // skip when in headless mode
+  // skip when in headless mode until headless login is fixed
 
   beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);

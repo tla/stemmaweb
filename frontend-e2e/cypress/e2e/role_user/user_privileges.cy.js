@@ -15,34 +15,60 @@ import test_traditions from '../../fixtures/test_traditions.json';
 
 const users_user = users_all.filter(({ role }) => role === 'user');
 
+/* for each user:
+    reset db
+    log in
+    assert number of visible traditions is correct
+    assert all the right traditions are displayed in the tradition list
+    to do when implemented: traditions are listed in the right order
+  each own private+public tradition:
+    assert the 'Edit properties' modal is visible
+    assert user can only edit his own traditions
+  each others' public tradition:
+    assert 'Edit properties' is disabled
+    assert edit is disabled
+  each others' private tradition:
+    should not be visible
+
+  to do: add tests for delete, download, etc for each group of roles
+  log out
+ */
+
+
 if (Cypress.browser.isHeaded) {
-  // skip when in headless mode
+  // skip when in headless mode until headless login is fixed
 
-  beforeEach(() => {
-    cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
-    cy.viewport(1600, 900);
-    test_traditions.sort((tradition_a, tradition_b) =>
-      tradition_a.title.localeCompare(tradition_b.title)
+  // any tests are to be carried out for each of the users who have the role 'user'
+  users_user.forEach( (user) => {
+    const test_traditions_own_private = test_traditions.filter(
+      ({ owner, access }) => owner === user.username && access === 'Private'
     );
-    // login and logout within the tests, for each user
-  });
+    const test_traditions_own_public = test_traditions.filter(
+      ({ owner, access }) => owner === user.username && access === 'Public'
+    );
+    const test_traditions_others_public = test_traditions.filter(
+      ({ owner, access }) => owner !== user.username && access === 'Public'
+    );
 
-  // Feat/157 user auth (PR#235)
-  describe('User authentication and role behaviour', () => {
-    // test for both users: user@example.org and benutzer@example.org
-    users_user.forEach((user) => {
-      const test_traditions_own_private = test_traditions.filter(
-        ({ owner, access }) => owner === user.username && access === 'Private'
-      );
-      const test_traditions_own_public = test_traditions.filter(
-        ({ owner, access }) => owner === user.username && access === 'Public'
-      );
-      const test_traditions_others_public = test_traditions.filter(
-        ({ owner, access }) => owner !== user.username && access === 'Public'
-      );
+    // Feat/157 user auth (PR#235)
+    describe('User authentication and role behaviour for user ' + user.username, () => {
+    // describe('tests for user ' + user.username, () => {
+      // test for both users: user@example.org and benutzer@example.org
+      beforeEach(() => {
+        cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
+        cy.viewport(1600, 900);
+        test_traditions.sort((tradition_a, tradition_b) =>
+          tradition_a.title.localeCompare(tradition_b.title)
+        );
+        cy.loginViaUi(user); // fist step in users_user.forEach((user) => { ...
+      });
+
+      afterEach(() => {
+        cy.logoutViaUi(); // last step in users_user.forEach((user) => { ...
+        cy.log('end of test for this user')
+      });
 
       it('passes', () => {
-        cy.loginViaUi(user);
 
         // User sees only public and their own traditions
         cy.get('ul#traditions-list')
@@ -55,11 +81,11 @@ if (Cypress.browser.isHeaded) {
               test_traditions_others_public.length
         );
 
-        // TODO when https://github.com/tla/stemmaweb/issues/245 is solved:
+        // TODO when https://github.com/tla/stemmaweb/issues/245 (The tradition list should be devided into the current user's/admin's traditions and those of others) is solved:
         // The tradition list should be devided into the current user's/admin's traditions and those of others.
-        // Own traditions should be listed first (private and public ones), 
-        // separated from and followed by those of others 
-        // (users can view others' public traditions, admins can view and edit others' public and private traditions). 
+        // Own traditions should be listed first (private and public ones),
+        // separated from and followed by those of others
+        // (users can view others' public traditions, admins can view and edit others' public and private traditions).
         // Otherwise it is hard for a user to see at first glance which traditions are editable, namely only his/hers.
         cy.traditionDivider(user)
 
@@ -162,8 +188,8 @@ if (Cypress.browser.isHeaded) {
             // role admin: check in role_admin tests.
           }
         });
-        cy.logoutViaUi();
       });
-    });
-  });
+
+    })
+  })
 }
