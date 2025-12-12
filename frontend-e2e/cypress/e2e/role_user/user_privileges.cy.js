@@ -1,13 +1,13 @@
-/*  User priviledges:
+/*  User priviledges (anyone with role 'user'):
     Users except admins should only be allowed to see and manipulate their own traditions.
     They should not be able to see other users' traditions, nor edit or delete them.
+      DONE: tests for Edit properties
+      TODO: tests for Edit collation, Delete, Download, etc (re. roles user and admin)
 
     https://github.com/tla/stemmaweb/pull/235
     - User sees only public and their own traditions
-    - User may change metadata on their own tradition
+    - User may change metadata on their own tradition // i.e. Edit properties
     - User may not change metadata on traditions they don't own (ideally the edit button wouldn't be there...)
-
-    Should work for both, 'user' and 'benutzer', i.e. for any who have the role 'user'.
 */
 
 import users_all from '../../fixtures/users.json';
@@ -15,22 +15,21 @@ import test_traditions from '../../fixtures/test_traditions.json';
 
 const users_user = users_all.filter(({ role }) => role === 'user');
 
-/* for each user:
-    reset db
+/* Steps overview
+  for each user:
+    reset db // called before each it() test from within cypress/support/e2e.js
     log in
     assert number of visible traditions is correct
     assert all the right traditions are displayed in the tradition list
     to do when implemented: traditions are listed in the right order
   each own private+public tradition:
     assert the 'Edit properties' modal is visible
-    assert user can only edit his own traditions
+    assert user can edit, delete, download, etc. his own traditions
   each others' public tradition:
     assert 'Edit properties' is disabled
-    assert edit is disabled
+    assert edit tradition, delete, download, etc. is disabled
   each others' private tradition:
     should not be visible
-
-  to do: add tests for delete, download, etc for each group of roles
   log out
  */
 
@@ -50,9 +49,9 @@ if (Cypress.browser.isHeaded) {
       ({ owner, access }) => owner !== user.username && access === 'Public'
     );
 
-    // Feat/157 user auth (PR#235)
+    // Feat/157 user auth (PR#235) (re. guest, user, admin)
     describe('User authentication and role behaviour for user ' + user.username, () => {
-    // describe('tests for user ' + user.username, () => {
+      // reset db is called before each it() test from within cypress/support/e2e.js
       // test for both users: user@example.org and benutzer@example.org
       beforeEach(() => {
         cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
@@ -68,6 +67,7 @@ if (Cypress.browser.isHeaded) {
         cy.log('end of test for this user')
       });
 
+      // >>> NEXT: check these tests are correct and complete. remove unnecessary bak files.
       it('passes', () => {
 
         // User sees only public and their own traditions
@@ -86,7 +86,6 @@ if (Cypress.browser.isHeaded) {
         // Own traditions should be listed first (private and public ones),
         // separated from and followed by those of others
         // (users can view others' public traditions, admins can view and edit others' public and private traditions).
-        // Otherwise it is hard for a user to see at first glance which traditions are editable, namely only his/hers.
         cy.traditionDivider(user)
 
         // assert all the right traditions are displayed in the tradition list
@@ -97,7 +96,10 @@ if (Cypress.browser.isHeaded) {
           // User may change metadata on their own tradition
           if (
             tradition.owner === user.username &&
-            tradition.access === 'Private'
+            (
+              tradition.access === 'Private' ||
+              tradition.access === 'Public'
+            )
           ) {
             // visible and editable, closed lock sign
             cy.get('ul#traditions-list')
@@ -110,35 +112,12 @@ if (Cypress.browser.isHeaded) {
               .find('edit-properties-button')
               .find('a')
               .should('not.have.class', 'greyed-out');
-            cy.get('@properties-table').find('edit-properties-button').click();
-
-            cy.editProperties([
-              'Edit properties',
-              user.username,
-              user.role,
-              tradition.title,
-              tradition.owner,
-              tradition.access
-            ]);
-          }
-          // User may change metadata on their own tradition
-          else if (
-            tradition.owner === user.username &&
-            tradition.access === 'Public'
-          ) {
-            // visible and editable, opened lock sign
-            cy.get('ul#traditions-list')
-              .contains(tradition.title)
-              .should('be.visible')
-              .click();
-            cy.get('property-table-view').as('properties-table');
-            cy.get('@properties-table')
-              .find('edit-properties-button')
-              .find('a[aria-label="Edit tradition properties"]')
-              .should('not.have.class', 'greyed-out');
             // .parents('edit-properties-button).click() // cypress does not like this...
             cy.get('@properties-table').find('edit-properties-button').click();
 
+            // TODO, in cypress/support/comands.js 'editProperties'
+            // when the feature is implemented for role 'user':
+            // assert save the changes passes
             cy.editProperties([
               'Edit properties',
               user.username,
