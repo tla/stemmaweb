@@ -66,7 +66,6 @@ class EditProperties extends HTMLElement {
         display: item.email
       }
     } );
-    console.log( options );
     return options;
   }
 

@@ -215,8 +215,8 @@ class NodeDensityChart extends HTMLElement {
         }
     }
 
-    unrender() {
-        fadeToDisplayNone(document.querySelector('node-density-chart div'));
+    hide() {
+        fadeToDisplayNone( document.querySelector( 'node-density-chart div' ) );
     }
 
 

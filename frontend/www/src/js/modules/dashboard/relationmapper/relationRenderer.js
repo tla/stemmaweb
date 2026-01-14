@@ -173,18 +173,15 @@ class RelationRenderer {
                 .attr( 'cursor', 'grab' )
                 .call( d3.drag()
                     .on( 'start', function( event, d ) {  
-                        //NOTE: Changed call signature!
                         thisClassInstance.dragStarted.call( thisClassInstance, this, event, d );
                     } )
                     .on( 'end', function( event, d ) {
-                        //NOTE: Changed call signature!
                         thisClassInstance.dragEnded.call( thisClassInstance, this, event, d );
                     } )
                     .on( 'drag', function( event, d ) { 
                         thisClassInstance.dragged.call( thisClassInstance, this, event, d ); 
                     } )
                 );
-			this.#svg.selectAll( 'g.node' ).on( 'click', ()=>( console.log( 'click' ) ) );
         } else {
             // Unset draggability of nodes, d3.drag internally uses `.drag` for
             // the listeners; see https://d3js.org/d3-drag#_drag.
@@ -203,32 +200,46 @@ class RelationRenderer {
                     .keyModifiers( false )
                     .on( 'brush', ( event ) => {
                             if( event.selection ){
-                            const [[x0, y0], [x1, y1]] = event.selection;
-                            // Note that `event.selection` gets you the viewport coordinates 
-                            // that the brush masks. You need to transform these into coordinates
-                            // in the svg coordinate space. 
-                            // (Note that for this you need to know an origin, in case of
-                            // GraphViz.ja the upper left corner of the viewBox is (0,0) when 
-                            // no other default transformations are applied.)
-                            // See `viewboxCoordinates2SVGCoordinates` for the actual transformation.
-                            const ellipses = this.#svg.selectAll( 'g g.node ellipse' );
-                            ellipses
-                                .each( (d,i,nodes) => {
+                                const [[x0, y0], [x1, y1]] = event.selection;
+                                // Note that `event.selection` gets you the viewport coordinates 
+                                // that the brush masks. You need to transform these into coordinates
+                                // in the svg coordinate space. 
+                                // (Note that for this you need to know an origin, in case of
+                                // GraphViz.ja the upper left corner of the viewBox is (0,0) when 
+                                // no other default transformations are applied.)
+                                // See `viewboxCoordinates2SVGCoordinates` for the actual transformation.
+                                const gNodes = this.#svg.selectAll( 'g g.node' );
+                                gNodes.each( (d,i,nodes) => {
+                                    const gNode = d3.select( nodes[i] );
                                     // What is the 'extent' of the brush mask in the svg coordinate space?
                                     const [ x0Svg, y0Svg ] = this.viewboxCoordinates2SVGCoordinates( [x0, y0] );
                                     const [ x1Svg, y1Svg ] = this.viewboxCoordinates2SVGCoordinates( [x1, y1] );
                                     // What is de center x and y of an ellips in that space?
-                                    const ellipseCenter = this.getEllipseCenter( nodes[i] );
-                                    const cxEllipse = ellipseCenter.x + this.baseTransform.x; 
-                                    const cyEllipse = ellipseCenter.y + this.baseTransform.y;
-                                    // Does de mask cover the center of the ellipse (datum)? 
-                                    if ( cxEllipse>=x0Svg &&  cxEllipse<=x1Svg && cyEllipse>=y0Svg && cyEllipse<=y1Svg ) {
-                                        // TODO: Should be CSS classed.
-                                        d3.select( nodes[i] ).attr( 'stroke', 'red' );
-                                    } else {
-                                        d3.select( nodes[i] ).attr( 'stroke', 'black' );
-                                    };
+                                    const ellipse = gNode.select( 'ellipse' ).node();
+                                    if( ellipse ) {
+                                        const ellipseCenter = this.getEllipseCenter( ellipse );
+                                        const cxEllipse = ellipseCenter.x + this.baseTransform.x; 
+                                        const cyEllipse = ellipseCenter.y + this.baseTransform.y;
+                                        // Does de mask cover the center of the ellipse (datum)? 
+                                        if ( cxEllipse>=x0Svg &&  cxEllipse<=x1Svg && cyEllipse>=y0Svg && cyEllipse<=y1Svg ) {
+                                            gNode.classed( 'selected', true );
+                                        } else {
+                                            gNode.classed( 'selected', false );
+                                        };
+                                    }
                                 } );
+                            }
+                        } 
+                    )
+                    .on( 'end', (event) => {
+                            const selection = d3.select( '#relation-graph svg g' ).selectAll( 'g.node.selected' );
+                            if ( selection.size() > 1 ) {
+                                document.querySelector( 'reading-properties-view' ).showMultiReadingProperties( selection );
+                            } else {
+                                if ( !selection.empty ) {
+                                    const d = selection.datum();
+                                    document.querySelector( 'reading-properties-view' ).showReadingProperties( d.id );
+                                }
                             }
                         } 
                     )
@@ -333,7 +344,6 @@ class RelationRenderer {
                 selected.push( new RelationEdge( nodes[i].id, stemmaWebUtils.REVERSE ) );
             }
         } );
-        console.log( selected );
         return selected;
     }
 

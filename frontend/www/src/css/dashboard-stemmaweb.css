@@ -73,6 +73,17 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
   fill: var(--color-brown);
 }
 
+.follows-feather {
+  width: 28px;
+  height: 28px;
+  vertical-align: text-bottom;
+  border: 1px solid #cac7c7;
+  padding: 2px;
+  border-radius: 4px 4px;
+  background-color: rgb(238, 240, 242);
+  margin-bottom: 2px;
+}
+
 .brand-dark {
   color: rgba(255, 255, 255, 0.7);
 }
@@ -498,20 +509,66 @@ section-list ul li.dragging-highlight {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-.tradition-property-label-cell, .section-property-label-cell {
+.tradition-property-label-cell, .section-property-label-cell, .reading-property-label-cell {
   min-width: 6em;
 }
 
-.tradition-property-value-cell, .section-property-value-cell {
+.tradition-property-value-cell, .section-property-value-cell, .reading-property-value-cell {
   width: 100%;
   overflow-wrap: anywhere;
+}
+
+.reading-property-value-cell div {
+  display: flex;
+  justify-content: space-between;
+}
+
+reading-properties-view h6 {
+  margin-bottom: 0;
+}
+
+reading-properties-view #section-info-table-container,
+reading-properties-view #reading-info-table-container {
+  padding-top: 0;
+  & tbody {
+    background-color: aliceblue;
+  }
+}
+
+#reading-properties-view-tabs-bottom-spacer-background {
+  height: 5px;
+  background-color: aliceblue;
 }
 
 #section-properties-view-title.hide,
 #section-reading-properties-tabs.hide,
 #section-info-table-container.hide,
+#editable-section-info-table-container.hide,
 #reading-info-table-container.hide {
   display: none;
+}
+
+.reading-property-reading-cell {
+  width: 14%;
+  &.reading-property-column-header {
+    color: #6c757d !important;
+    background-color: #cfd8e6;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+}
+
+.reading-property-text-cell, .reading-property-witnesses-cell, .reading-property-action-button-cell {
+  width: 43%;
+  border-left: 1px solid #ddd;
+  &.reading-property-column-header {
+    color: #6c757d !important;
+    background-color: #cfd8e6;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
 }
 
 social-login-options .btn {
@@ -525,6 +582,20 @@ delete-section-button .btn-outline-danger, delete-relation-type-button .btn-outl
 
 delete-section-button a.greyed-out .btn-outline-danger  {
   color: #ccc;
+}
+
+concatenate-nodes-button, split-nodes-button, detach-nodes-button, merge-nodes-button {
+  color: var(--bs-btn-color);
+  & a {
+    text-decoration: none;
+    &.greyed-out svg {
+      color: #c1c4c8;
+    }
+  }
+}
+
+merge-nodes-button {
+  padding-right: 0.25em;
 }
 
 #message-console-text-panel {
@@ -616,9 +687,16 @@ button.selected-view {
 }
 
 
-/* Styling for tabs, 
- * kudos: https://stackoverflow.com/questions/19363759/how-to-make-rounded-tabs-with-css
- */
+/* Styling for right menu bar tabs */
+
+section-properties-view div.vertical-spacer {
+  width: 100%;
+  height: 8px;
+  background-color: #e8f0f7;
+  &.hide {
+    display: none;
+  }
+}
 
 ul.stemmaweb-tabs {
   list-style: none;
@@ -634,53 +712,24 @@ ul.stemmaweb-tabs {
 
 ul.stemmaweb-tabs li {
   background: inherit;
-  padding: 7px 11px 5px 10px;
-  margin: 0px -6px 0 10px;
+  padding: 6px 11px 6px 10px;
   position: relative;
   float: left;
   text-align: center;
   z-index: 1;
+  border: 1px solid #6c757d;
+  border-left: none;
+  border-radius: 4px 4px 0 0;
 }
 
-ul.stemmaweb-tabs li::before {
-  content: '';
-  display: block;
-  position: absolute;
-  top: 0px; left: -3px;
-  width: 70%;
-  height: 100%;
-  border-style: solid;
-  border-color: #6c757d;
-  border-width: 1px 0 1px 1px;
-  border-radius: 8px 0 0 0;
-  transform: skewX(-20deg);
-  background-color: inherit;
-  z-index: -1;
-}
-
-ul.stemmaweb-tabs li::after {
-  content: '';
-  display: block;
-  position: absolute;
-  top: 0; right: 0;
-  width: 70%;
-  height: 100%;
-  border-style: solid;
-  border-color: #6c757d;
-  border-width: 1px 1px 1px 0;
-  border-radius: 0 8px 0 0;
-  transform: skewX(20deg);
-  background-color: inherit;
-  z-index: -1;
+ul.stemmaweb-tabs li:first-child {
+  border-left: 1px solid #6c757d;;
+  border-radius: 4px 4px 0 0;
 }
 
 ul.stemmaweb-tabs li.active {
-  z-index: 10;
-}
-
-ul.stemmaweb-tabs li.active::before,
-ul.stemmaweb-tabs li.active::after {
-  border-bottom: 0px;
+  border-bottom: 1px solid aliceblue;
+  background-color: aliceblue;
 }
 
 ul.stemmaweb-tabs li:not([class='active']) {
@@ -689,9 +738,10 @@ ul.stemmaweb-tabs li:not([class='active']) {
 
 ul.stemmaweb-tabs li:not([class='active']):hover {
   color: #fff;
+  background-color: #6c757d;
 }
 
-ul.stemmaweb-tabs li:not([class='active'])::before,
+/* ul.stemmaweb-tabs li:not([class='active'])::before,
 ul.stemmaweb-tabs li:not([class='active'])::after {
   border-color: #c1c4c8;
   border-bottom-color: #6c757d;
@@ -701,7 +751,7 @@ ul.stemmaweb-tabs li:not([class='active']):hover::before,
 ul.stemmaweb-tabs li:not([class='active']):hover::after {
   background-color: #6c757d;
   border-color: #6c757d;
-}
+} */
 
 .edge.highlighted path {
   stroke: lime;
@@ -719,4 +769,12 @@ ul.stemmaweb-tabs li:not([class='active']):hover::after {
 .edge.highlighted.outbound polygon  {
   stroke: rgb(8, 154, 144);;
   fill: rgb(8, 154, 144);;
+}
+
+relation-mapper svg g.node ellipse {
+  fill: #e2fcf8;
+}
+
+g.node.selected ellipse {
+  fill: #f8d8a7;
 }

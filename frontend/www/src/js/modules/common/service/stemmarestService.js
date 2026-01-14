@@ -463,7 +463,7 @@ class StemmarestService extends BaseService {
    * Fetches the readings for a section.
    * 
    * @param {string} traditionId
-   * * @param {string} sectionId
+   * @param {string} sectionId
    * @returns {Promise<BaseResponse<T>>}
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/readings/
    */
@@ -494,4 +494,27 @@ class StemmarestService extends BaseService {
   getReading( traditionId, sectionId, readingId ) {
     return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/reading/${readingId}`);
   }
+
+  /**
+   * Requests to merge two readings.
+   *
+   * @param {string | null} userId
+   * @param {string} readingId - ID if the first reading that is part of this merge.
+   * @param {string} secondReadingId - ID if the second reading that is part of this merge.
+   * @returns {Promise<BaseResponse<{ tradId: string }>>}
+   */
+  mergeReadings( userId, readingId, secondReadingId ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to merge readings.'
+      });
+    }
+    return this.fetch( `/api/reading/${readingId}/merge/${secondReadingId}/`, {
+      method: 'POST',
+      'Content-Type': 'multipart/form-data',
+      body: null
+    });
+  }
+  
 }

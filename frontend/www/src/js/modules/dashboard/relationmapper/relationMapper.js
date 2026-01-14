@@ -34,11 +34,34 @@ class RelationMapper extends HTMLElement {
      * 
      */ 
     static addReadings( data ) {
+        // Event listener to unselected any selected node when the graph area 
+        // is clicked (outside of any node).
+        document.querySelector( '#relation-graph' ).addEventListener( 'click', () => { 
+            d3.select( '#relation-graph svg g' ).selectAll( 'g.node' ).classed( 'selected', false );
+            document.querySelector( 'reading-properties-view' ).showReadingProperties( null );
+        } );
+        // Click event for node selection and showing reading properties.
         d3.select( '#relation-graph svg g' ).selectAll( 'g.node' )
             .data( data, function(d) { 
                 return d.key ? d.key : d.id;
             } )
-            .on( 'click',  (evt, d) => { document.querySelector( 'section-properties-view' ).showReadingProperties( d.id ) } );
+            .on( 'click',  (evt, d) => { 
+                const selectedNodeId = evt.currentTarget.id;
+                const otherSelectedNodes = d3.select( '#relation-graph svg g' )
+                    .selectAll( 'g.node.selected' )
+                    .select( function( d, i ) { return d.id != selectedNodeId ? this : null } );
+                if ( !( evt.metaKey || evt.ctrlKey ) ) {
+                    otherSelectedNodes.classed( 'selected', false );
+                }
+                evt.currentTarget.classList.add( 'selected' );
+                evt.stopPropagation();
+                let selection = d3.select( '#relation-graph svg g' ).selectAll( 'g.node.selected' );
+                if ( selection.size() > 1 ) {
+                    document.querySelector( 'reading-properties-view' ).showMultiReadingProperties( selection );
+                } else {
+                    document.querySelector( 'reading-properties-view' ).showReadingProperties( d.id );
+                }
+            } );
     }
 
     /**
