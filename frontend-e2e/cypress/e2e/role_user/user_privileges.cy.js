@@ -104,6 +104,17 @@ if (Cypress.browser.isHeaded) {
             // visible and editable, closed lock sign
             cy.get('ul#traditions-list')
               .contains(tradition.title)
+              .as('tradition_title_elem_in_nav')
+            // test_traditions.forEach: if own trad, a following sibling should contain descendant with .list-separator,
+            // else: no following sibling should contain the separator.
+            // the separator comes if there are any own traditions.
+            // if only others trads, there is no separator.
+            cy.get('@tradition_title_elem_in_nav')
+              .closest('li')
+              .nextAll()
+              .find('.list-separator')
+              .should('exist');
+            cy.get('@tradition_title_elem_in_nav')
               .should('be.visible')
               .click();
             // the edit icon should be visible, not greyed out, on click the editing interface should appear.
@@ -146,6 +157,19 @@ if (Cypress.browser.isHeaded) {
             // visible but not editable for this user, opened lock sign
             cy.get('ul#traditions-list')
               .contains(tradition.title)
+              .as('tradition_title_elem_in_nav')
+            // test_traditions.forEach: if own trad, a following sibling should contain descendant with .list-separator,
+            // else: no following sibling should contain the separator.
+            // the separator comes if there are any own traditions.
+            // if only others trads, there is no separator.
+            cy.get('@tradition_title_elem_in_nav')
+              .closest('li')
+              // .nextAll() // fails when no following siblings // shouldnt happen according to docs.
+              // .find('.list-separator')
+              // .should('not.exist');
+              .nextAll(':has(.list-separator)')
+              .should('not.exist');
+            cy.get('@tradition_title_elem_in_nav')
               .should('be.visible')
               .click();
             cy.get('property-table-view').as('properties-table');
