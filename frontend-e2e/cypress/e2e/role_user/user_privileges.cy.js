@@ -1,7 +1,7 @@
 /*  User priviledges (anyone with role 'user'):
     Users except admins should only be allowed to see and manipulate their own traditions.
     They should not be able to see other users' traditions, nor edit or delete them.
-      DONE: tests for Edit properties
+      paritally DONE: tests for Edit properties; TODO when imlemented: Assert 'Save' edited properties.
       TODO: tests for Edit collation, Delete, Download, etc (re. roles user and admin)
 
     https://github.com/tla/stemmaweb/pull/235
