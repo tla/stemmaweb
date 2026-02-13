@@ -25,6 +25,7 @@ const users_user = users_all.filter(({ role }) => role === 'user');
   each own private+public tradition:
     assert the 'Edit properties' modal is visible
     assert user can edit, delete, download, etc. his own traditions
+    assert the list of own traditions in the toc is followed by a separator, followed by any other traditions
   each others' public tradition:
     assert 'Edit properties' is disabled
     assert edit tradition, delete, download, etc. is disabled
@@ -80,13 +81,6 @@ if (Cypress.browser.isHeaded) {
               test_traditions_own_public.length +
               test_traditions_others_public.length
         );
-
-        // TODO when https://github.com/tla/stemmaweb/issues/245 (The tradition list should be devided into the current user's/admin's traditions and those of others) is solved:
-        // The tradition list should be devided into the current user's/admin's traditions and those of others.
-        // Own traditions should be listed first (private and public ones),
-        // separated from and followed by those of others
-        // (users can view others' public traditions, admins can view and edit others' public and private traditions).
-        cy.traditionDivider(user)
 
         // assert all the right traditions are displayed in the tradition list
         // assert the 'Edit properties' modal is visible

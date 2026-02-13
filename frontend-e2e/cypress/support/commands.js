@@ -267,12 +267,3 @@ Cypress.Commands.add('assertPointerEventsDisabledForLabel', (buttontext) => {
   cy.get('@btn').should('have.css', 'pointer-events', 'none');
   cy.get('stemmaweb-dialog').should('exist').and('not.be.visible');
 });
-
-Cypress.Commands.add('traditionDivider', (usr) => {
-  // To-Do when implemented https://github.com/tla/stemmaweb/issues/245
-  // The tradition list should be devided into the current user's/admin's traditions and those of others.
-  // sub-issues:
-  // Change traditions list divider behavior #249
-  // Change TraditionList behavior #250
-  cy.log(usr.username)
-});
