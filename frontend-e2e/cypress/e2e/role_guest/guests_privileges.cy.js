@@ -127,6 +127,7 @@ describe('Guest may not change any metadata (Edit properties)', () => {
       cy.get('ul#traditions-list')
         .contains(tradition.title)
         .should('be.visible')
+        .wait(300)
         .click();
       cy.get('property-table-view').as('properties-table');
       cy.get('@properties-table')
@@ -152,7 +153,10 @@ describe('A guest should be offered to download a public "Tradition"', () => {
     test_traditions_public.forEach((tradition) => {
       cy.log('title: ' + tradition.title);
       // click through all traditions
-      cy.get('#traditions-list').contains(tradition.title).click();
+      cy.get('#traditions-list')
+        .contains(tradition.title)
+        .wait(300)
+        .click();
       cy.get('#stemma-buttons')
         .contains(label)
         .should('be.visible')
