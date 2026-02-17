@@ -46,7 +46,7 @@ if (Cypress.browser.isHeaded) {
       test_traditions.sort((tradition_a, tradition_b) =>
         tradition_a.title.localeCompare(tradition_b.title)
       );
-      cy.loginViaUi(user); // fist step in users_user.forEach((user) => { ...
+      cy.loginViaUi(user); // first step in users_user.forEach((user) => { ...
     });
 
     afterEach(() => {
