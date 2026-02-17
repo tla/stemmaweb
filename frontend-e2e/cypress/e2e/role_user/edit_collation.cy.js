@@ -10,7 +10,7 @@ const users_user = users_all.filter(({ role }) => role === 'user');
   for each user:
     reset db // called before each it() test from within cypress/support/e2e.js
     log in
-    assert Edit Collation entrance steps (to be defined: highlighting and unfolding of sections, enabling Edit C. button)
+    assert Edit Collation entrance steps (to be defined: highlighting and unfolding of sections, enabling Edit/View Collation button)
   each own private+public tradition:
     assert Edit Collation functionality
       assert graph and accordingly minimap display
