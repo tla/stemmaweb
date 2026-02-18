@@ -137,6 +137,7 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
 }
 
 .sidebar-menu .nav-link {
+  display: flex;
   font-weight: 500;
   color: #333;
   line-height: 1.15;
@@ -466,10 +467,12 @@ stemmaweb-alert {
 
 li.nav-item {
   padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);
+  cursor: pointer;
 }
 
 .folder-icon {
-  padding-right: 0.5em;
+  padding-right: 0.2em;
+  cursor: pointer;
 }
 
 .access-icon {
@@ -495,6 +498,10 @@ ul#traditions-list .folder-icon.selected svg {
 
 ul#traditions-list .list-separator {
   border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+section-list {
+  opacity: 0;
 }
 
 section-list ul {

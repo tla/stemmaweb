@@ -78,12 +78,19 @@ class StemmaButtons extends HTMLElement {
       if ( evt.currentTarget == document.querySelector( '#edit-collation-button' ) ) {
         targetView = document.querySelector( 'relation-mapper' );     
         var section = SECTION_STORE.state.selectedSection;
-        if ( !section ) {
-          section = SECTION_STORE.state.availableSections[0];
-          SECTION_STORE.setSelectedSection( section );
-        }
+        const traditionId = TRADITION_STORE.state.selectedTradition.id;
+        // TODO: THe idea here was that If no section is selected but the user clicks the 'Edit Collation' button
+        // this would select the first section of SectionList.#sections. This works, but the relationmapper needs
+        // all section of a tradition in proper order within the state object. So we need something else here.
+        // NOTE: The original request was: if a user clicks on the greyed out 'Edit Collation' button, message
+        // the user "you need to select a section first". However, I thought this might be a good solution too. Actually
+        // because Bootstrap has no way of detecting clicks on a greyed out button (it sets `pointer-events: none` in CSS).
+        // if ( !section ) {
+        //   section = document.querySelector( `section-list[trad-id="${traditionId}"]` ).getFirstSection();
+        //   console.log( 'done', section );
+        // }
         if( section ) {
-          stemmaButtonsService.getSectionDot( TRADITION_STORE.state.selectedTradition.id, section.id )
+          stemmaButtonsService.getSectionDot( traditionId, section.id )
             .then( (resp) => { this.switchToRelationMapper( resp, section.id ) } );
         }     
       }

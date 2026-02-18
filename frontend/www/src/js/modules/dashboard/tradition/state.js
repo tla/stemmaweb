@@ -89,6 +89,11 @@ const TRADITION_STORE = new TraditionStore({
 });
 
 
+function sortAlphabetical( tradition_a, tradition_b ) {
+  return tradition_a.name.localeCompare( tradition_b.name );
+}
+
+// 20260218 Not used anymore at this point.
 function sortPrivatePublicThenAlphabetical( tradition_a, tradition_b ) {
   var a;
   var b;
@@ -110,7 +115,7 @@ function initState() {
     if (res.success) {
       /** @type {Tradition[]} */
       const availableTraditions = res.data;
-      availableTraditions.sort( sortPrivatePublicThenAlphabetical );
+      availableTraditions.sort( sortAlphabetical );
       const selectedTradition = availableTraditions[0];
       /** @type {TraditionState} */
       const state = { availableTraditions, selectedTradition };

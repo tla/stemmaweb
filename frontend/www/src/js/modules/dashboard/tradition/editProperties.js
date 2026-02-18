@@ -128,7 +128,12 @@ class EditProperties extends HTMLElement {
     const language = $('language_input').value || null;
     const direction = $('direction_input').value;
     const isPublic = $('access_input').checked;
-    const ownerId = $('owner_input').value;
+    let ownerId = null;
+    if ( userIsAdmin() ) {
+      ownerId = $('owner_input').value;
+    } else {
+      ownerId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
+    }
     return { ownerId, name, language, direction, isPublic };
   }
 
@@ -140,7 +145,6 @@ class EditProperties extends HTMLElement {
         EditProperties.#extractFormValuesTradition()
       );
       const tradId = TRADITION_STORE.state.selectedTradition.id;
-      const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
       return editPropertiesService
         .updateTraditionMetadata( tradId, ...values )
         .then( EditProperties.#handleUpdateTraditionMetadataResponse );

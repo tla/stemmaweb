@@ -67,6 +67,10 @@ class SectionList extends HTMLElement {
         return sectionListItem ? sectionListItem.querySelector( 'div' ).getAttribute( 'sect-id' ) : 'none';
     }
 
+    getFirstSection() {
+        return this.#sections[0];
+    }
+    
     connectedCallback() {
         this.render();
         this.populate();
@@ -84,6 +88,9 @@ class SectionList extends HTMLElement {
                     // figure out tradition.id, section.id, priorSectionId.
                     const moveSectionId = this.getSectionId( evt, evt.newIndex );
                     const moveAfterSectionId = this.getSectionId( evt, evt.newIndex-1 );
+                    // Reflect new order in private list of sections.
+                    // See: https://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another
+                    this.#sections.splice( evt.newIndex, 0, this.#sections.splice( evt.oldIndex, 1)[0] );
                     sectionService.moveSection( this.getAttribute( 'trad-id' ), moveSectionId, moveAfterSectionId )
                         .then( (resp) => {
                             if( !resp.success ) {
@@ -142,7 +149,6 @@ class SectionList extends HTMLElement {
                 (tradition) => { return tradition.id == traditionId } 
             )
         );
-        TraditionList.highlightFolderSelectedTradition( traditionId );
         SECTION_STORE.setSelectedSection( section );
     }
     
