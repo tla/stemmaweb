@@ -116,7 +116,10 @@ function initState() {
       /** @type {Tradition[]} */
       const availableTraditions = res.data;
       availableTraditions.sort( sortAlphabetical );
-      const selectedTradition = availableTraditions[0];
+      let selectedTradition = availableTraditions[0];
+      if( AUTH_STORE.state.user ) {
+        selectedTradition = availableTraditions.find( (tradition) => tradition.owner == AUTH_STORE.state.user.id );
+      }
       /** @type {TraditionState} */
       const state = { availableTraditions, selectedTradition };
       TRADITION_STORE.setState(state);

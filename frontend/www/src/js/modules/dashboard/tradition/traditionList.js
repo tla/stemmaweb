@@ -168,16 +168,16 @@ class TraditionList extends HTMLElement {
         const traditionListElement = this.querySelector( 'ul' );
 
         let ownedTraditions = [];
-        let publicTraditions = [];
+        let otherAllowedTraditions = [];
         if ( AUTH_STORE.state.user ) {
             ownedTraditions = traditions.filter( (tradition) => {
-                return ( tradition.owner == AUTH_STORE.state.user.id || userIsAdmin() );
+                return ( tradition.owner == AUTH_STORE.state.user.id );
             } );   
-            publicTraditions = traditions.filter( (tradition) => {
-                return ( ( tradition.owner != AUTH_STORE.state.user.id ) && tradition.is_public && !userIsAdmin() );
+            otherAllowedTraditions = traditions.filter( (tradition) => {
+                return ( ( tradition.owner != AUTH_STORE.state.user.id ) && ( tradition.is_public || userIsAdmin() ) );
             })
         } else {
-            publicTraditions = traditions.filter( (tradition) => tradition.is_public )
+            otherAllowedTraditions = traditions.filter( (tradition) => tradition.is_public )
         }
 
 
@@ -185,11 +185,11 @@ class TraditionList extends HTMLElement {
             traditionListElement.appendChild( this.createTraditionListItem( tradition ) )
         } );
         // If there are both owned and public traditions, add a list separator.
-        if ( ownedTraditions.length > 0 && publicTraditions.length > 0 ) {
+        if ( ownedTraditions.length > 0 && otherAllowedTraditions.length > 0 ) {
             traditionListElement.appendChild( this.createListSeparator() );
         }
         // Lastly, add the public traditions.
-        publicTraditions.forEach( (tradition) => {
+        otherAllowedTraditions.forEach( (tradition) => {
             traditionListElement.appendChild( this.createTraditionListItem( tradition ) )
         } );
         
