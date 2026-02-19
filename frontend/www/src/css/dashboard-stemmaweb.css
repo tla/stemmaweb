@@ -221,6 +221,7 @@ edit-stemma-buttons {
 
 edit-stemma-buttons a.greyed-out div, 
 edit-properties-button a.greyed-out span,
+.edit-reading-button a.greyed-out span,
 edit-section-properties-button a.greyed-out span,
 text-directory a.greyed-out span {
   color: #ccc;

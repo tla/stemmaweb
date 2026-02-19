@@ -26,8 +26,8 @@ class StemmaButtons extends HTMLElement {
     document.querySelector('#edit-collation-button').addEventListener('click', (event) => { this.setView.call(this, event) });
     document.querySelector('#delete-tradition-button').addEventListener('click', this.handleDelete);
 
-    TRADITION_STORE.subscribe((state) => { this.greyOut(); });
-
+    AUTH_STORE.subscribe( ( state ) => { this.greyOut(); } )
+    TRADITION_STORE.subscribe( (state) => { this.greyOut(); } );
     fadeIn(this);
   }
 
@@ -36,13 +36,22 @@ class StemmaButtons extends HTMLElement {
    * component when a user logs in or out.
    */
   greyOut() {
-    const buttonIds = ['run-stemweb-button', 'edit-collation-button', 'delete-tradition-button'];
+    const buttonIds = ['run-stemweb-button', 'delete-tradition-button'];
     buttonIds.forEach((buttonId) => {
       document.querySelector(`#${buttonId}`).classList.remove('disabled');
       if (!userIsOwner()) {
         document.querySelector(`#${buttonId}`).classList.add('disabled');
       }
     });
+    const editCollationButton = document.querySelector(`#edit-collation-button`);
+    editCollationButton.classList.remove( 'disabled' );
+    const VIEW_COLLATION = 'View Collation';
+    const EDIT_COLLATION = 'Edit Collation';
+    let editCollationButtonText = VIEW_COLLATION;
+    if ( userIsOwner() ) {
+      editCollationButtonText = EDIT_COLLATION;
+    }
+    editCollationButton.innerHTML = editCollationButtonText;
   }
 
   setView(evt) {
