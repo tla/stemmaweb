@@ -22,7 +22,7 @@ class SectionStore extends StateStore {
 
   /** @param {Section} selectedSection */
   setSelectedSection( selectedSection ) {
-    sectionStoreService.listSections( TRADITION_STORE.state.selectedTradition.id ).then((res) => {
+    return sectionStoreService.listSections( TRADITION_STORE.state.selectedTradition.id ).then( (res) => {
       if (res.success) {
         const availableSections = res.data;
         // refresh state of Section,it may be stale.
@@ -34,8 +34,9 @@ class SectionStore extends StateStore {
       } else {
         StemmawebAlert.show( `Error: ${resp.message}`, 'danger' );
       }
-    });
+    } );
   }
+
 
   /**
    * @returns {number} The index of the currently selected section in the list of
