@@ -2,9 +2,9 @@ class TextDirectory extends HTMLElement {
 
     constructor() {
         super();
-        TRADITION_STORE.subscribe( ( state ) => {
+        AUTH_STORE.subscribe( ( state ) => {
             const textDirectoryElementClassList = document.querySelector( 'text-directory a' ).classList;
-            if( userIsOwner() ){
+            if( state.user ){
                 if( textDirectoryElementClassList.contains( 'greyed-out' ) ){
                     textDirectoryElementClassList.remove( 'greyed-out' );
                     this.addEventListener( 'click', this.clickEventListener );
