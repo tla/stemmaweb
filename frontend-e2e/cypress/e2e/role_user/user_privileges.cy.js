@@ -1,7 +1,7 @@
 /*  User priviledges (anyone with role 'user'):
     Users except admins should only be allowed to see and manipulate their own traditions.
     They should not be able to see other users' traditions, nor edit or delete them.
-      paritally DONE: tests for Edit properties; TODO when imlemented: Assert 'Save' edited properties.
+      paritally DONE: tests for Edit properties; TODO when feature is imlemented: Assert 'Save' edited properties.
       TODO: tests for Edit collation, Delete, Download, etc (re. roles user and admin)
 
     https://github.com/tla/stemmaweb/pull/235
@@ -21,7 +21,7 @@ const users_user = users_all.filter(({ role }) => role === 'user');
     log in
     assert number of visible traditions is correct
     assert all the right traditions are displayed in the tradition list
-    to do when implemented: traditions are listed in the right order
+    TODO: traditions are listed in the right order
   each own private+public tradition:
     assert the 'Edit properties' modal is visible
     assert user can edit, delete, download, etc. his own traditions
@@ -68,7 +68,6 @@ if (Cypress.browser.isHeaded) {
         cy.log('end of test for this user')
       });
 
-      // >>> NEXT: check these tests are correct and complete. remove unnecessary bak files.
       it('passes', () => {
 
         // User sees only public and their own traditions
@@ -120,7 +119,7 @@ if (Cypress.browser.isHeaded) {
             // .parents('edit-properties-button).click() // cypress does not like this...
             cy.get('@properties-table').find('edit-properties-button').click();
 
-            // TODO, in cypress/support/comands.js 'editProperties'
+            // TODO, in cypress/support/commands.js 'editProperties'
             // when the feature is implemented for role 'user':
             // assert save the changes passes
             cy.editProperties([
@@ -186,6 +185,51 @@ if (Cypress.browser.isHeaded) {
           }
         });
       });
+
+      // own and others' traditions are each sorted alphabetically, before and after the separator
+      // TODO: consider own or others' traditions array to be empty
+      // own traditions (being private or public within the own traditions does not affect the sequence)
+      it('asserts pre-separator tradition titles equal expected titles', () => {
+        const test_traditions_own = test_traditions_own_private.concat(test_traditions_own_public)
+          .sort((tradition_a, tradition_b) => tradition_a.title.localeCompare(tradition_b.title)
+        );
+        cy.wrap(test_traditions_own).then(data => {
+          const expectedTitles = data.map(d => d.title);
+          cy.log('test_traditions_own: ' + expectedTitles)
+
+          cy.get('#traditions-list > li:has(.list-separator)')
+            .prevAll('li')
+            .find('span.tradition-nav-name')
+            .then($spans => {
+              const titles = [...$spans].map(el => el.textContent.trim())//.reverse();
+              cy.log('titles in toc: ' + titles)
+              // TODO: uncomment when the actual feature is implemented (now, first the own private, and then the own public traditions are listed, but which should be mixed and sorted only alphabetically, still distinguishable by a lock sign near the private ones)
+              // expect(titles, 'titles before separator').to.deep.equal(expectedTitles);
+            });
+        });
+      });
+      // others' traditions:
+      it('asserts post-separator tradition titles equal expected titles', () => {
+        test_traditions_others_public.sort((tradition_a, tradition_b) => tradition_a.title.localeCompare(tradition_b.title)
+        );
+        cy.wrap(test_traditions_others_public).then(data => {
+          const expectedTitles = data.map(d => d.title);
+          cy.log('test_traditions_others_public: ' + expectedTitles)
+
+          cy.get('#traditions-list > li:has(.list-separator)')
+            .nextAll('li')
+            .find('span.tradition-nav-name')
+            .then($spans => {
+              const titles = [...$spans].map(el => el.textContent.trim())//.reverse();
+              cy.log('titles in toc: ' + titles)
+              expect(titles, 'titles before separator').to.deep.equal(expectedTitles);
+            });
+        });
+      });
+
+
+
+
 
     })
   })
