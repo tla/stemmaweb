@@ -19,34 +19,16 @@ class StemmaButtons extends HTMLElement {
      *  needs to be shown and what button needs to be highlighted and
      *  un-highligthed.
      */
-    
-    document.querySelector( '#view-stemmata-button' ).addEventListener( 'click', this.setView );
-    document.querySelector( '#run-stemweb-button' ).addEventListener( 'click', stemwebFrontend.showDialog );
+
+    document.querySelector('#view-stemmata-button').addEventListener('click', this.setView);
+    document.querySelector('#run-stemweb-button').addEventListener('click', stemwebFrontend.showDialog);
     // We want this in the below call to be this class, hence the `.call`, otherwise it will be the button element clicked.
-    document.querySelector( '#edit-collation-button' ).addEventListener( 'click', (event) => { this.setView.call( this, event ) } );
-    document.querySelector( '#delete-tradition-button' ).addEventListener( 'click', this.handleDelete );
+    document.querySelector('#edit-collation-button').addEventListener('click', (event) => { this.setView.call(this, event) });
+    document.querySelector('#delete-tradition-button').addEventListener('click', this.handleDelete);
 
-    SECTION_STORE.subscribe( this.toggleEditCollationButtonActive );
-    TRADITION_STORE.subscribe( ( state ) => { this.greyOut(); } );
-    
-    fadeIn( this );
-  }
-
-  /** 
-   * This takes care of the edit collation button to be greyed out
-   * if there is no section selected.
-   */
-  toggleEditCollationButtonActive() {
-    const editCollationButtonElement = document.querySelector( '#edit-collation-button' );
-    if( SECTION_STORE.state.selectedSection ) {
-      if ( editCollationButtonElement.classList.contains( 'disabled' ) ) {
-        editCollationButtonElement.classList.remove( 'disabled' );
-      }
-    } else {
-      if ( !editCollationButtonElement.classList.contains( 'disabled' ) ) {
-        editCollationButtonElement.classList.add( 'disabled' );
-      }
-    }
+    AUTH_STORE.subscribe( ( state ) => { this.greyOut(); } )
+    TRADITION_STORE.subscribe( (state) => { this.greyOut(); } );
+    fadeIn(this);
   }
 
   /**
@@ -54,62 +36,81 @@ class StemmaButtons extends HTMLElement {
    * component when a user logs in or out.
    */
   greyOut() {
-    const buttonIds = [ 'run-stemweb-button', 'edit-collation-button', 'delete-tradition-button' ];
-    buttonIds.forEach( (buttonId) => {
-      document.querySelector( `#${buttonId}` ).classList.remove( 'disabled' );
-      if( !userIsOwner() ){
-        document.querySelector( `#${buttonId}` ).classList.add( 'disabled' );
+    const buttonIds = ['run-stemweb-button', 'delete-tradition-button'];
+    buttonIds.forEach((buttonId) => {
+      document.querySelector(`#${buttonId}`).classList.remove('disabled');
+      if (!userIsOwner()) {
+        document.querySelector(`#${buttonId}`).classList.add('disabled');
       }
-    } );
+    });
+    const editCollationButton = document.querySelector(`#edit-collation-button`);
+    editCollationButton.classList.remove( 'disabled' );
+    const VIEW_COLLATION = 'View Collation';
+    const EDIT_COLLATION = 'Edit Collation';
+    let editCollationButtonText = VIEW_COLLATION;
+    if ( userIsOwner() ) {
+      editCollationButtonText = EDIT_COLLATION;
+    }
+    editCollationButton.innerHTML = editCollationButtonText;
   }
 
-  setView( evt ) {
-    const currentView = document.querySelector( '#view-selectors .selected-view ' );
+  setView(evt) {
+    const currentView = document.querySelector('#view-selectors .selected-view ');
     var targetView = null;
     var fadeOutElement = null;
-    if ( !( evt.currentTarget == currentView ) ) {
+    if (!(evt.currentTarget == currentView)) {
       // Set the right button to highlight.
-      currentView.classList.remove( 'selected-view' );
-      evt.currentTarget.classList.add( 'selected-view' );
+      currentView.classList.remove('selected-view');
+      evt.currentTarget.classList.add('selected-view');
       // Figure out the chosen view (targetView) and do what needs to happen to prepare it.
-      if ( evt.currentTarget == document.querySelector( '#view-stemmata-button' ) ) {
-        targetView = document.querySelector( '#stemma-editor-graph-container' );
+      if (evt.currentTarget == document.querySelector('#view-stemmata-button')) {
+        targetView = document.querySelector('#stemma-editor-graph-container');
       }
-      if ( evt.currentTarget == document.querySelector( '#edit-collation-button' ) ) {
-        targetView = document.querySelector( 'relation-mapper' );     
+      if (evt.currentTarget == document.querySelector('#edit-collation-button')) {
+        targetView = document.querySelector('relation-mapper');
         var section = SECTION_STORE.state.selectedSection;
-        if ( !section ) {
-          section = SECTION_STORE.state.availableSections[0];
-          SECTION_STORE.setSelectedSection( section );
+        const traditionId = TRADITION_STORE.state.selectedTradition.id;
+        // In the case no section was selected by the user, we select the first section of the current tradition.
+        if (!section) {
+          section = document.querySelector( `section-list[trad-id="${traditionId}"]` ).getFirstSection();
+          SECTION_STORE.setSelectedSection( section ).then(
+            this.getSectionDot( traditionId, section.id ).then( (resp) => {
+              this.switchToRelationMapper( resp, section.id );
+            } )
+          );
+        } else {
+          this.getSectionDot( traditionId, section.id ).then( (resp) => 
+            this.switchToRelationMapper(resp, section.id)
+          );
         }
-        if( section ) {
-          stemmaButtonsService.getSectionDot( TRADITION_STORE.state.selectedTradition.id, section.id )
-            .then( (resp) => { this.switchToRelationMapper( resp, section.id ) } );
-        }     
       }
       // Figure out which view we are closing, set that as element to 
       // fade out, and remove or stash stuff from the view we are closing.
-      if ( currentView == document.querySelector( '#edit-collation-button' ) ) {
-        document.querySelector( '#section-title' ).innerHTML = '';
-        fadeOutElement = document.querySelector( 'relation-mapper' );
-        document.querySelector( '#main' ).classList.remove( 'col-9' );
-        document.querySelector( '#main' ).classList.add( 'col-7' );
-        document.querySelector( 'relation-types' ).unrender();
-        document.querySelector( 'node-density-chart' ).hide();
-        document.querySelector( 'reading-properties-view' ).hide();
-        document.querySelector( 'property-table-view' ).show();
-        document.querySelector( 'section-properties-view' ).show();
-        fadeToDisplayNone( '#sidebar-menu', { 'reverse': true, 'delay': 500 } );
-        crossFade( targetView, fadeOutElement ); 
+      if (currentView == document.querySelector('#edit-collation-button')) {
+        document.querySelector('#section-title').innerHTML = '';
+        fadeOutElement = document.querySelector('relation-mapper');
+        document.querySelector('#main').classList.remove('col-9');
+        document.querySelector('#main').classList.add('col-7');
+        document.querySelector('relation-types').unrender();
+        document.querySelector('node-density-chart').hide();
+        document.querySelector('reading-properties-view').hide();
+        document.querySelector('property-table-view').show();
+        document.querySelector('section-properties-view').show();
+        fadeToDisplayNone('#sidebar-menu', { 'reverse': true, 'delay': 500 });
+        crossFade(targetView, fadeOutElement);
       }
     }
   }
 
-  switchToRelationMapper( resp, sectionId ) {
-    if ( resp.success ) {
+  getSectionDot(traditionId, sectionId) {
+    return stemmaButtonsService.getSectionDot( traditionId, sectionId );
+  }
+
+  switchToRelationMapper(resp, sectionId) {
+    if (resp.success) {
       SectionSelectors.renderSectionSelectors();
-      this.closeStemmaView( 
-        { 'onEnd': () => { this.openRelationView( resp, sectionId ) } }
+      this.closeStemmaView(
+        { 'onEnd': () => { this.openRelationView(resp, sectionId) } }
       );
     } else {
       StemmawebAlert.show(
@@ -119,89 +120,90 @@ class StemmaButtons extends HTMLElement {
     }
   }
 
-  closeStemmaView( options ) {
-    const defaultOptions =  { 
-      'onEnd': () => {}
+  closeStemmaView(options) {
+    const defaultOptions = {
+      'onEnd': () => { }
     };
     const usedOptions = { ...defaultOptions, ...options };
-    const fadeOutElement = document.querySelector( '#stemma-editor-graph-container' );
-    fadeToDisplayNone( '#sidebar-menu', { 'delay': 0 } );
-    document.querySelector( '#main' ).classList.remove( 'col-7' );
-    document.querySelector( '#main' ).classList.add( 'col-9' ); // Timed in CSS to 1s with 500ms delay, hence duration of 1500 in next line.
-    fadeToDisplayNone( fadeOutElement, { 
-      'duration': 1500, 
+    const fadeOutElement = document.querySelector('#stemma-editor-graph-container');
+    fadeToDisplayNone('#sidebar-menu', { 'delay': 0 });
+    document.querySelector('#main').classList.remove('col-7');
+    document.querySelector('#main').classList.add('col-9'); // Timed in CSS to 1s with 500ms delay, hence duration of 1500 in next line.
+    fadeToDisplayNone(fadeOutElement, {
+      'duration': 1500,
       'onEnd': () => {
-        usedOptions.onEnd(); 
-      } 
-    } );
+        usedOptions.onEnd();
+      }
+    });
   }
 
-  openRelationView( resp, sectionId ) {
+  openRelationView(resp, sectionId) {
     // TODO: There is a enormous overlap between this code and
     // code doing practically the same thing in `sectionSelectors.js`
     // Both should probably call some extracted.
-    relationRenderer.renderRelationsGraph( 
+    relationRenderer.renderRelationsGraph(
       resp.data, {
-        'onEnd': () => { 
-          this.setSectionTitle();
-          this.addInRelations( sectionId );
-          this.addInReadingInformation( sectionId );
-          this.renderDensityChart();
-          document.querySelector( 'reading-properties-view' ).show();
-          this.hideIrrelevantPropertyViews();
-          const relationMapperElement = document.querySelector( 'relation-mapper' );
-          fadeToDisplayFlex( relationMapperElement, { 'duration': 1500 } );
-        }
+      'onEnd': () => {
+        this.setSectionTitle();
+        this.addInRelations(sectionId);
+        this.addInReadingInformation(sectionId);
+        this.renderDensityChart();
+        document.querySelector('reading-properties-view').show();
+        this.hideIrrelevantPropertyViews();
+        const relationMapperElement = document.querySelector('relation-mapper');
+        fadeToDisplayFlex(relationMapperElement, { 'duration': 1500 });
       }
+    }
     );
   }
 
-  addInRelations( sectionId ) {
-    stemmaButtonsService.getSectionRelations( TRADITION_STORE.state.selectedTradition.id, sectionId ).then( (resp) => {
-      if ( resp.success ) {
-        document.querySelector( 'relation-types' ).renderRelationTypes(
-          { 'onEnd': () => { fadeToDisplayNone( document.querySelector( 'relation-types div' ), { 'reverse': true } ) } }
+  addInRelations(sectionId) {
+    stemmaButtonsService.getSectionRelations(TRADITION_STORE.state.selectedTradition.id, sectionId).then((resp) => {
+      if (resp.success) {
+        document.querySelector('relation-types').renderRelationTypes(
+          { 'onEnd': () => { fadeToDisplayNone(document.querySelector('relation-types div'), { 'reverse': true }) } }
         );
-        RelationMapper.addRelations( resp.data );
+        RelationMapper.addRelations(resp.data);
       } else {
         StemmawebAlert.show(
           `Could not fetch relations information: ${resp.message}`,
           'danger'
-        );                
+        );
       }
-    } );
-  }  
-
-  setSectionTitle() {
-    document.querySelector( '#section-title' ).innerHTML = `${SECTION_STORE.state.selectedSection.name}`;
+    });
   }
 
-  addInReadingInformation( sectionId ) {
-    stemmaButtonsService.getSectionReadings( TRADITION_STORE.state.selectedTradition.id, sectionId ).then( (resp) => {
-      if ( resp.success ) {
-        RelationMapper.addReadings( resp.data );
+  setSectionTitle() {
+    document.querySelector('#section-title').innerHTML = `${SECTION_STORE.state.selectedSection.name}`;
+  }
+
+  addInReadingInformation(sectionId) {
+    stemmaButtonsService.getSectionReadings(TRADITION_STORE.state.selectedTradition.id, sectionId).then((resp) => {
+      if (resp.success) {
+        RelationMapper.addReadings(resp.data);
       } else {
         StemmawebAlert.show(
           `Could not fetch reading information: ${resp.message}`,
           'danger'
-        );                
+        );
       }
-    } );
+    });
   }
 
   renderDensityChart() {
-    document.querySelector( 'node-density-chart' ).renderChart(
-      { 'onEnd': () => { 
-          fadeToDisplayNone( document.querySelector( 'node-density-chart div' ), { 'reverse': true } );
+    document.querySelector('node-density-chart').renderChart(
+      {
+        'onEnd': () => {
+          fadeToDisplayNone(document.querySelector('node-density-chart div'), { 'reverse': true });
         }
       }
     );
   }
-  
+
   hideIrrelevantPropertyViews() {
-    document.querySelector( 'property-table-view' ).hide();
-    document.querySelector( 'section-properties-view' ).hide();
-  } 
+    document.querySelector('property-table-view').hide();
+    document.querySelector('section-properties-view').hide();
+  }
 
   handleDelete() {
     const { selectedTradition: tradition, availableTraditions } =

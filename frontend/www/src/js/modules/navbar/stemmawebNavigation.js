@@ -104,8 +104,8 @@ class StemmawebNavigation extends HTMLElement {
         </div>
         <div class="navbar-nav">
           <div class="nav-item text-nowrap">
-            <a class="nav-link px-3">Logged in as ${
-              !user ? 'Guest' : user['email']
+            <a class="nav-link px-3">${
+              !user ? 'Welcome guest' : `Logged in as ${user['email']}`
             }</a>
           </div>
         </div>

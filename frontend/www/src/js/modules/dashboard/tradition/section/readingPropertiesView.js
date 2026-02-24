@@ -108,14 +108,17 @@ class ReadingPropertiesView extends HTMLElement {
     }
 
     setReadingActionButtonsActive() {
-        // Do not activate buttons if no readings are selected. 
-        if( document.querySelector( '#reading-info tr' ) ) {
-            document.querySelector( 'split-nodes-button' ).setActive();
-            document.querySelector( 'detach-nodes-button' ).setActive();
-            // Do only show concatenate and merge buttons if multiple readings are selected.
-            if( document.querySelector( '#reading-info tr td.reading-property-column-header' ) ) {
-                document.querySelector( 'concatenate-nodes-button' ).setActive();
-                document.querySelector( 'merge-nodes-button' ).setActive();
+        // Is this user the owner?
+        if( userIsOwner() ) {
+            // Do not activate buttons if no readings are selected. 
+            if( document.querySelector( '#reading-info tr' ) ) {
+                document.querySelector( 'split-nodes-button' ).setActive();
+                document.querySelector( 'detach-nodes-button' ).setActive();
+                // Do only show concatenate and merge buttons if multiple readings are selected.
+                if( document.querySelector( '#reading-info tr td.reading-property-column-header' ) ) {
+                    document.querySelector( 'concatenate-nodes-button' ).setActive();
+                    document.querySelector( 'merge-nodes-button' ).setActive();
+                }
             }
         }
     }
