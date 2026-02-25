@@ -21,7 +21,7 @@ const users_user = users_all.filter(({ role }) => role === 'user');
     log in
     assert number of visible traditions is correct
     assert all the right traditions are displayed in the tradition list
-    TODO: traditions are listed in the right order
+    traditions are listed in the right order
   each own private+public tradition:
     assert the 'Edit properties' modal is visible
     assert user can edit, delete, download, etc. his own traditions
@@ -187,8 +187,9 @@ if (Cypress.browser.isHeaded) {
       });
 
       // own and others' traditions are each sorted alphabetically, before and after the separator
-      // TODO: consider own or others' traditions array to be empty
-      // own traditions (being private or public within the own traditions does not affect the sequence)
+      // TODO: consider the case, own or others' traditions array to be empty
+
+      // own traditions:
       it('asserts pre-separator tradition titles equal expected titles', () => {
         const test_traditions_own = test_traditions_own_private.concat(test_traditions_own_public)
           .sort((tradition_a, tradition_b) => tradition_a.title.localeCompare(tradition_b.title)
@@ -203,11 +204,11 @@ if (Cypress.browser.isHeaded) {
             .then($spans => {
               const titles = [...$spans].map(el => el.textContent.trim())//.reverse();
               cy.log('titles in toc: ' + titles)
-              // TODO: uncomment when the actual feature is implemented (now, first the own private, and then the own public traditions are listed, but which should be mixed and sorted only alphabetically, still distinguishable by a lock sign near the private ones)
-              // expect(titles, 'titles before separator').to.deep.equal(expectedTitles);
+              expect(titles, 'titles before separator').to.deep.equal(expectedTitles);
             });
         });
       });
+
       // others' traditions:
       it('asserts post-separator tradition titles equal expected titles', () => {
         test_traditions_others_public.sort((tradition_a, tradition_b) => tradition_a.title.localeCompare(tradition_b.title)
@@ -226,11 +227,6 @@ if (Cypress.browser.isHeaded) {
             });
         });
       });
-
-
-
-
-
     })
   })
 }

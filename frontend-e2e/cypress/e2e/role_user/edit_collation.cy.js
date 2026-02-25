@@ -54,6 +54,7 @@ if (Cypress.browser.isHeaded) {
       cy.log('end of test for this user')
     });
 
+    // TODO: check if test is complete
     it('passes', () => {
 
       // assert user can only edit his own collations
