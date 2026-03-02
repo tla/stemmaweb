@@ -175,34 +175,50 @@ if (Cypress.browser.isHeaded) {
   });
 
   describe('message console logs errors and successes', () => {
+    // TODO: test case where error message is expected:
+
     if (Cypress.browser.isHeaded) {
-      it.skip('UC: add stemma fails for both Verbum traditions', () => {
+      it('"Stemma added" and "deleted" marker are displayed in the message console and remain', () => {
         // Login needed to add a stemma. Skip in headless mode for now.
         const stemma_added_marker = 'Stemma added';
         const stemma_deleted_marker = 'Deleted';
         // initially the message panel should exist without text content
         cy.get('#message-console-text-panel').as('messageconsole');
         cy.get('@messageconsole').should('have.value', '');
-        // Add a stemma (the default example stemma)
-        cy.get('#add-stemma-button-link').click();
-        cy.get('#save-stemma-button-link').wait(500).click();
-        // when a stemma is saved it should have a message with the text "Stemma added"
-        cy.get('@messageconsole').contains(stemma_added_marker);
-        // delete the added stemma in order to reset the db
-        cy.get('#delete-stemma-button-link').click();
-        cy.get('.modal-content')
-          .contains('button', 'Yes, delete it')
-          .wait(500)
-          .click();
-        cy.get('#modalDialog').should('not.be.visible');
-        cy.get('@messageconsole').contains(stemma_deleted_marker);
 
-        // assert the content in the message console stays there also upon clicking on another tradition.
-        cy.get('ul#traditions-list > li').eq(-1).wait(500).click(); // ultimate tradition
-        cy.get('@messageconsole')
-          .should('be.visible')
-          .contains(stemma_deleted_marker);
-        cy.get('@messageconsole').contains(stemma_added_marker);
+        test_traditions.forEach((tradition) => {
+          cy.log('title: ' + tradition.title);
+          if (!tradition.title.includes('Verbum')) { // test fails for the two Verbum traditions. UC / TODO.
+            cy.get('ul#traditions-list')
+              .contains(tradition.title)
+              .should('be.visible')
+              .click();
+            // Add a stemma (the default example stemma)
+            // to the second tradition (verbum fails at the moment )
+            // cy.get('ul#traditions-list > li').eq(2).wait(500).click()
+            // cy.pause()
+            cy.get('#add-stemma-button-link').click();
+            cy.get('#save-stemma-button-link').wait(500).click();
+            // cy.pause()
+            // when a stemma is saved it should have a message with the text "Stemma added"
+            cy.get('@messageconsole').contains(stemma_added_marker);
+            // delete the added stemma in order to reset the db
+            cy.get('#delete-stemma-button-link').click();
+            cy.get('.modal-content')
+              .contains('button', 'Yes, delete it')
+              .wait(500)
+              .click();
+            cy.get('#modalDialog').should('not.be.visible');
+            cy.get('@messageconsole').contains(stemma_deleted_marker);
+
+            // assert the content in the message console stays there also upon clicking on another tradition.
+            cy.get('ul#traditions-list > li').eq(-1).wait(500).click(); // ultimate tradition
+            cy.get('@messageconsole')
+              .should('be.visible')
+              .contains(stemma_deleted_marker);
+            cy.get('@messageconsole').contains(stemma_added_marker);
+          }
+        })
       });
     }
   });
