@@ -1,3 +1,6 @@
+
+let BEZIERS = false;
+
 /**
  * Object to interact with the Stemmarest Middleware's API through high-level
  * functions.

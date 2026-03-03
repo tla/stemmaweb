@@ -20,42 +20,48 @@ class DeleteSection extends HTMLElement {
   }
 
   handleDelete() {
-    const { selectedTradition: tradition } = TRADITION_STORE.state;
-    const { selectedSection: section, availableSections } = SECTION_STORE.state;
-    StemmawebDialog.show(
-      'Delete Section',
-      `<p>Are you sure you want to delete <span class="fst-italic">${section.name}</span>?</p>`,
-      {
-        onOk: () => {
-          deleteSectionService.deleteSection( tradition.id, section.id ).then((res) => {
-            if (res.success) {
-              StemmawebAlert.show(
-                `<p class="d-inline">Deleted <span class="fst-italic">${section.name}</span></p>`,
-                'success'
-              );
-              SECTION_STORE.sectionDeleted( section.id, tradition.id );
-            } else {
-              StemmawebAlert.show(
-                `Error during deletion: ${res.message}`,
-                'danger'
-              );
-            }
-          });
+    if( userIsOwner() ) {
+      const { selectedTradition: tradition } = TRADITION_STORE.state;
+      const { selectedSection: section, availableSections } = SECTION_STORE.state;
+      StemmawebDialog.show(
+        'Delete Section',
+        `<p>Are you sure you want to delete <span class="fst-italic">${section.name}</span>?</p>`,
+        {
+          onOk: () => {
+            deleteSectionService.deleteSection( tradition.id, section.id ).then((res) => {
+              if (res.success) {
+                StemmawebAlert.show(
+                  `<p class="d-inline">Deleted <span class="fst-italic">${section.name}</span></p>`,
+                  'success'
+                );
+                SECTION_STORE.sectionDeleted( section.id, tradition.id );
+              } else {
+                StemmawebAlert.show(
+                  `Error during deletion: ${res.message}`,
+                  'danger'
+                );
+              }
+            });
+          }
+        },
+        {
+          okLabel: 'Yes, delete it',
+          okType: 'danger',
+          closeLabel: 'Cancel',
+          closeType: 'secondary'
         }
-      },
-      {
-        okLabel: 'Yes, delete it',
-        okType: 'danger',
-        closeLabel: 'Cancel',
-        closeType: 'secondary'
-      }
-    );
+      );
+    }
   }
 
   render() {
+    var styleClasses = [ 'link-secondary', 'greyed-out' ];
+    if( userIsOwner() ) {
+      styleClasses.pop();
+    }    
     this.innerHTML = `
         <a
-            class="link-secondary"
+            class="${styleClasses.join(' ')}"
             href="#"
             aria-label="Delete section properties"
         ><span class="btn-outline-danger">${feather.icons['trash-2'].toSvg()}</span></a>

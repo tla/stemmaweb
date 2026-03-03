@@ -104,7 +104,7 @@
     <meta name="msapplication-config" content="browserconfig.xml" />
 
     <!-- 3rd-party CSS imports -->
-    <link rel="stylesheet" href="./src/css/vendor/bootstrap.min.css" />
+    <link rel="stylesheet" href="./src/css/libraries.css" />
 
     <!-- Local CSS imports -->
     <link rel="stylesheet" href="./src/css/dashboard.css" />
@@ -116,39 +116,27 @@
     <stemmaweb-navigation></stemmaweb-navigation>
     <div class="container-fluid">
       <div class="row">
-        <nav
-          id="sidebarMenu"
-          class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse"
-        >
-          <div class="position-sticky pt-3">
-            <h6
-              class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
-            >
-              <span>Text directory</span>
-              <a
-                class="link-secondary"
-                href="#"
-                aria-label="Add a new tradition"
-                data-bs-toggle="modal"
-                data-bs-target="#add_tradition_modal"
-              >
-                <span data-feather="plus-circle"></span>
-              </a>
+        <div id="sidebar-menu" class="col-2 sidebar-menu bg-light footer-branding collapse show">
+          <div class="position-sticky pt-2">
+            <h6 class="sidebar-menu-heading d-flex justify-content-between align-items-center px-3 mt-2 mb-1 text-muted">
+              <text-directory></text-directory>
             </h6>
             <tradition-list></tradition-list>
           </div>
-        </nav>
+        </div>
 
-        <main class="col-md-9 col-lg-7 ms-md-perc px-md-4">
+        <div id="main" class="col-7">
           <tradition-view></tradition-view>
-        </main>
+        </div>
 
-        <div
-          id="sidebar_properties"
-          class="col-md-3 d-md-block col-lg-3 bg-light sidebar_properties"
-        >
+        <div id="sidebar-properties" class="col-3 sidebar-properties bg-light">
+          <relation-types></relation-types>
+          <node-density-chart></node-density-chart>
           <property-table-view id="property-table-view"></property-table-view>
           <section-properties-view></section-properties-view>
+          <reading-properties-view></reading-properties-view>
+          <stemweb-job-status></stemweb-job-status>
+          <message-console></message-console>
         </div>
       </div>
     </div>
@@ -160,49 +148,31 @@
     <stemmaweb-dialog></stemmaweb-dialog>
 
     <!-- 3rd-party JS imports -->
-    <script
+    <!-- <script
       src="./src/js/vendor/bootstrap.bundle.min.js"
       type="application/javascript"
-    ></script>
-    <script
-      src="./src/js/vendor/feather.min.js"
-      type="application/javascript"
-    ></script>
-    <script
-      src="./src/js/vendor/d3.min.js"
-      type="application/javascript"
-    ></script>
-    <script
-      src="./src/js/vendor/hpccWasm.min.js"
-      type="application/javascript"
-    ></script>
-    <script
-      src="./src/js/vendor/d3-graphviz.min.js"
-      type="application/javascript"
-    ></script>
-    <script
-      src="./src/js/vendor/d3-graphviz.min.js"
-      type="application/javascript"
-    ></script>
-    <script
-      src="./src/js/vendor/saveSvgAsPng.js"
-      type="application/javascript"
-    ></script>
-    <script
-      src="./src/js/vendor/Sortable.min.js"
-      type="application/javascript"
-    ></script>
+    ></script> -->
+    <script src="./src/js/libraries.js" type="application/javascript"></script>
+
 
     <!-- Local JS imports -->
 
     <!-- Core -->
     <script src="./src/js/env.js" type="application/javascript"></script>
     <script
+      src="src/js/modules/dashboard/stemmaweb.js"
+      type="application/javascript"
+    ></script>
+    <script
       src="./src/js/modules/common/utils.js"
       type="application/javascript"
     ></script>
     <script
       src="./src/js/modules/common/effects.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/common/broadcast.js"
       type="application/javascript"
     ></script>
     <script
@@ -221,8 +191,17 @@
       src="src/js/modules/common/service/stemwebService.js"
       type="application/javascript"
     ></script>
+    <script
+      src="src/js/modules/dashboard/tradition/stemma/stemmaRenderer.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="src/js/modules/dashboard/relationmapper/relationRenderer.js"
+      type="application/javascript"
+    ></script>
     <script src="./src/js/config.js" type="application/javascript"></script>
 
+    
     <!-- State -->
     <script
       src="./src/js/modules/common/state/store.js"
@@ -230,6 +209,10 @@
     ></script>
     <script
       src="./src/js/modules/auth/state.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/auth/utils.js"
       type="application/javascript"
     ></script>
     <script
@@ -244,6 +227,11 @@
       src="./src/js/modules/dashboard/tradition/state.js"
       type="application/javascript"
     ></script>
+    <script
+      src="./src/js/modules/common/download.js"
+     type="application/javascript"
+    ></script>
+
 
     <!-- Components -->
     <script
@@ -263,7 +251,7 @@
       type="application/javascript"
     ></script>
     <script
-      src="src/js/modules/dashboard/stemmaweb.js"
+      src="src/js/modules/dashboard/textDirectory.js"
       type="application/javascript"
     ></script>
     <script
@@ -271,7 +259,11 @@
       type="application/javascript"
     ></script>
     <script
-      src="src/js/modules/dashboard/tradition/stemmaButtons.js"
+      src="./src/js/modules/dashboard/tradition/stemwebFrontend.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="src/js/modules/dashboard/tradition/stemma/stemmaButtons.js"
       type="application/javascript"
     ></script>
     <script
@@ -320,6 +312,82 @@
     ></script>
     <script
       src="./src/js/modules/dashboard/tradition/section/deleteSection.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/stemwebJobStatus.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/stemma/editStemma.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/messageConsole.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/mergeNodes.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/splitNodes.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/concatenateNodes.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/detachNodes.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/relationMapper.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/section/readingPropertiesView.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/tradition/section/editReadingProperties.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/sectionSelectors.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/relationTypes.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/deleteRelationType.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/editRelationType.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/nodeDensityChart.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/edge/bezierControl.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/edge/inEdge.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/edge/outEdge.js"
+      type="application/javascript"
+    ></script>
+    <script
+      src="./src/js/modules/dashboard/relationmapper/edge/relationEdge.js"
       type="application/javascript"
     ></script>
   </body>

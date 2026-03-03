@@ -35,12 +35,23 @@ async function baseFetch(endpoint, options, params = {}) {
     const isJson = (res.headers.get('content-type') || '').includes(
       'application/json'
     );
+    const isText = (res.headers.get('content-type') || '').includes(
+      'text/plain'
+    );
     if (res.ok) {
-      return {
-        success: true,
-        message: res.statusText,
-        ...(isJson ? { data: await res.json() } : {})
-      };
+      if( isText ) {
+        return {
+          success: true,
+          message: res.statusText,
+          data: await res.text()
+        };
+      } else {
+        return {
+          success: true,
+          message: res.statusText,
+          ...(isJson ? { data: await res.json() } : {})
+        };
+      }
     } else {
       return {
         success: false,

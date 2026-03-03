@@ -88,12 +88,38 @@ const TRADITION_STORE = new TraditionStore({
   availableTraditions: []
 });
 
+
+function sortAlphabetical( tradition_a, tradition_b ) {
+  return tradition_a.name.localeCompare( tradition_b.name );
+}
+
+// 20260218 Not used anymore at this point.
+function sortPrivatePublicThenAlphabetical( tradition_a, tradition_b ) {
+  var a;
+  var b;
+  // is_public may be true, false, or undefined. This way we make it more securely comparable.
+  tradition_a.is_public == true ? a=1 : a=0;
+  tradition_b.is_public == true ? b=1 : b=0;
+  if( a < b ) {
+    return -1;
+  } else if( a > b ) { 
+    return 1;
+  }
+  // If there is no sorting resolution at this point
+  // go to the 2nd item
+  return tradition_a.name.localeCompare( tradition_b.name );
+}
+
 function initState() {
   traditionStoreService.listTraditions().then((res) => {
     if (res.success) {
       /** @type {Tradition[]} */
       const availableTraditions = res.data;
-      const selectedTradition = availableTraditions[0];
+      availableTraditions.sort( sortAlphabetical );
+      let selectedTradition = availableTraditions[0];
+      if( AUTH_STORE.state.user ) {
+        selectedTradition = availableTraditions.find( (tradition) => tradition.owner == AUTH_STORE.state.user.id );
+      }
       /** @type {TraditionState} */
       const state = { availableTraditions, selectedTradition };
       TRADITION_STORE.setState(state);

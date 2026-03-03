@@ -68,6 +68,15 @@ class LoginForm extends HTMLElement {
     );
   }
 
+  /** Erases the input in the login form.
+   *  @returns void 
+   * */
+  static eraseFields() {
+    Object.entries(this.FIELD_IDS).forEach( ( [fieldName, fieldId] ) => {
+      document.getElementById(fieldId).value = '';
+    } );
+  }
+
   attributeChangedCallback(property, oldValue, newValue) {
     if (oldValue === newValue) return;
     this[property] = newValue;
@@ -104,7 +113,9 @@ class LoginForm extends HTMLElement {
       /** @type {import('@types/stemmaweb').StemmawebUser} */
       const user = response.data;
       delete user.passphrase;
+      LoginForm.eraseFields();
       AUTH_STORE.setUser(user);
+      initState();
       AuthModal.close();
     } else {
       // The server responded, but does not allow a login

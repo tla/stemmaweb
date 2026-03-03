@@ -20,14 +20,35 @@ class StemmawebNavigation extends HTMLElement {
   }
 
   render() {
-    this._render(AUTH_STORE.state.user);
+    this._render( AUTH_STORE.state.user );
   }
 
   static logoutUser() {
     stemmawebNavigationService
       .logoutUser()
-      .then(() => AUTH_STORE.setUser(null))
-      .catch(console.error);
+      .then( () => AUTH_STORE.setUser( null ) )
+      .then( () => { 
+        // If we are looking at the Rhine delta graph, we need to close that first.
+        if( document.querySelector( '#stemma-editor-graph-container' ).style.opacity == '0' ){
+          document.querySelector( '#view-stemmata-button' ).dispatchEvent( new Event( 'click' ) );
+        }
+        // Or maybe the the stemma editor is open, then we first need to close that.
+        if( document.querySelector( '#stemma-editor-container' ).classList.contains( 'expanded' ) ){
+          document.querySelector( 'edit-stemma-buttons' ).cancelEdits();
+        }
+        // Clean out the message console.
+        MessageConsole.reset();
+        initState();
+        document.querySelector( 'edit-properties-button' ).render();
+        const editSectionPropertiesButtonElement = document.querySelector( 'edit-section-properties-button' )
+        if( editSectionPropertiesButtonElement ){ 
+          editSectionPropertiesButtonElement.render();
+          document.querySelector( 'delete-section-button' ).render();
+        }
+        // This guarantees a fresh TraditionList on log out.
+        document.querySelector( 'text-directory' ).render();
+      } )
+      .catch( console.error );
   }
 
   /** @param {import('@types/stemmaweb').StemmawebUserState} user */
@@ -60,8 +81,8 @@ class StemmawebNavigation extends HTMLElement {
         class="navbar-toggler position-absolute d-md-none collapsed"
         type="button"
         data-bs-toggle="collapse"
-        data-bs-target="#sidebarMenu"
-        aria-controls="sidebarMenu"
+        data-bs-target="#sidebar-menu"
+        aria-controls="sidebar-menu"
         aria-expanded="false"
         aria-label="Toggle navigation"
       >
@@ -83,8 +104,8 @@ class StemmawebNavigation extends HTMLElement {
         </div>
         <div class="navbar-nav">
           <div class="nav-item text-nowrap">
-            <a class="nav-link px-3">Logged in as ${
-              !user ? 'Guest' : user['email']
+            <a class="nav-link px-3">${
+              !user ? 'Welcome guest' : `Logged in as ${user['email']}`
             }</a>
           </div>
         </div>

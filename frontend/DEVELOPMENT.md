@@ -3,8 +3,9 @@
 ## Project Structure
 
 - `scripts/` - Utility scripts written in `node` to automate common tasks
-  - `copyVendor` - Copies the vendor files from `node_modules` to `www` so that it can be deployed to a server as a
-    standalone folder
+  - `requirements` - NPM libraries that should be available to the client can be im- and exported in this file.
+    After adding a requirement execute `npm run build` to build `www/src/css/libraries.js` and 
+    `www/src/js/libraries.css`.
   - `serve` - Starts a local web server to serve the `www` folder supporting hot reloading on file changes
 - `types/` - Typescript type definitions. While we **DO NOT** use any TypeScript in the project, we do use the type
   definitions with [JSDoc](https://jsdoc.app/) to get better code completion in our IDEs. Files in this folder only help
@@ -17,9 +18,7 @@
 The `package.json` file contains the project metadata and the dependencies. The `package-lock.json` file pins the actual
 versions of the dependencies that are installed. The `package-lock.json` file is automatically generated and should not
 be edited manually. Distribution files from the node modules installed after `npm install` are copied to `www` by
-executing `npm run build`. This step is required only after you add / change a dependency. In this case it is likely
-that you also need to edit `scripts/copyVendor` to define the source path under `node_modules` and the destination path
-in `www`.
+executing `npm run build`.
 
 ## Code Formatting
 

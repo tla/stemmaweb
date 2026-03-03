@@ -24,18 +24,25 @@ class SectionPropertiesView extends HTMLElement {
     constructor() {
         super();
         // If I was deleted, I go away.
-        this.addEventListener( 'sectionDeleted', () => { console.log( 'hi', this ); this.innerHTML = '' } );
+        this.addEventListener( 'sectionDeleted', () => { this.innerHTML = '' } );
         // Whenever a tradition is selected that is not me, I go away.
         TRADITION_STORE.subscribe( ( prevState, state ) => {
             // Check on id because other metadata may have changed.
             if( prevState.selectedTradition && ( prevState.selectedTradition.id != state.selectedTradition.id ) ) {
                 this.innerHTML = '';
             };
+            
         });
         // Whenever an item in the section list is selected, update the table
         SECTION_STORE.subscribe( ( { availableSections, selectedSection } ) => {
             if( selectedSection ){
-                this.render( selectedSection );
+                if( document.querySelector( '#editable-section-info-table-container' ) ){
+                    this.updateRender( selectedSection );
+                } else {
+                    this.render( selectedSection );
+                }
+            } else {
+                this.innerHTML = '';
             }
         });
     }
@@ -44,6 +51,14 @@ class SectionPropertiesView extends HTMLElement {
         this.render();
     }
 
+    hide() {
+        fadeToDisplayNone( document.querySelector( 'section-properties-view div' ) );
+    }
+    
+    show() {
+        fadeToDisplayNone( document.querySelector( 'section-properties-view div' ), { 'reverse': true } );
+    }
+    
     /**
     * @param {MetaItem} item
     * @returns {string}
@@ -109,9 +124,9 @@ class SectionPropertiesView extends HTMLElement {
      */
     static sortedMetaItems(items) {
         return items.sort((a, b) => {
-        const aIndex = SectionPropertiesView.#metadataLabelOrder.indexOf(a.label);
-        const bIndex = SectionPropertiesView.#metadataLabelOrder.indexOf(b.label);
-        return aIndex - bIndex;
+            const aIndex = SectionPropertiesView.#metadataLabelOrder.indexOf(a.label);
+            const bIndex = SectionPropertiesView.#metadataLabelOrder.indexOf(b.label);
+            return aIndex - bIndex;
         });
     }
 
@@ -126,27 +141,38 @@ class SectionPropertiesView extends HTMLElement {
         if( section ) {
             /** @type {MetaItem[]} */
             const sectionMeta = SectionPropertiesView.sortedMetaItems( SectionPropertiesView.metadataFromSection(section) );
+            // TODO: h6 for properties view in relation mapper should get margin-bottom: 0.3rem (is 0.5)
             return `            
-                <h6
-                class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
-                >
-                    <span>Section Properties</span>
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 text-muted">
+                    <span id="section-properties-view-title">Section Properties</span>
                     <div class="property-buttons">
                         <delete-section-button></delete-section-button>
                         <edit-section-properties-button></edit-section-properties-button> 
                     </div>
                 </h6>
-                <div class="table-responsive px-3 py-3">
-                <table class="table table-striped table-sm">
-                    <tbody id="section_info">
-                        ${sectionMeta.map(this.renderMetaItem).join('\n')}
-                    </tbody>
-                </table>
+                <div id="editable-section-info-table-container" class="table-responsive px-3 py-1">
+                    <table class="table table-striped table-sm">
+                        <tbody id="section-info">
+                            ${sectionMeta.map(this.renderMetaItem).join('\n')}
+                        </tbody>
+                    </table>
                 </div>
             `
         } else {
             return '';
         }
+    }
+
+    updateRender( section ){
+        const sectionInfoTableContainerElement = document.querySelector( '#editable-section-info-table-container' )
+        const sectionMeta = SectionPropertiesView.sortedMetaItems( SectionPropertiesView.metadataFromSection( section ) );
+        sectionInfoTableContainerElement.innerHTML = `
+            <table class="table table-striped table-sm">
+                <tbody id="section-info">
+                    ${sectionMeta.map(this.renderMetaItem).join('\n')}
+                </tbody>
+            </table>
+        `;
     }
 
     /**
@@ -158,7 +184,7 @@ class SectionPropertiesView extends HTMLElement {
     render( selectedSection) {
         if( selectedSection ) {
             this.innerHTML = `
-                <div class="position-sticky pt-3">
+                <div class="position-sticky pt-2">
                     ${ this.createSectionTable( selectedSection ) }
                 </div>
             `;

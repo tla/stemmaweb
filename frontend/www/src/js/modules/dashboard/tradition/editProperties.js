@@ -9,9 +9,18 @@
 const editPropertiesService = stemmarestService;
 
 class EditProperties extends HTMLElement {
+
+  ownerOptions = [];
+
   constructor() {
     super();
-    this.addEventListener('click', this.showDialog);
+    this.addEventListener( 'click', () => {
+      stemmarestService.listUsers().then( (resp) => {
+        const options = EditProperties.createOwnerOptions( resp.data )
+        EditProperties.ownerOptions = options;
+        this.showDialog();
+      } );
+    } );
   }
 
   /**
@@ -19,13 +28,45 @@ class EditProperties extends HTMLElement {
    * @returns {MetaItem[]} Array of metadata items to display on a form.
    */
   static metadataFromTradition(tradition) {
-    const metadata = PropertyTableView.metadataFromTradition(tradition);
+    var metadata = PropertyTableView.metadataFromTradition(tradition);
     metadata.push({
       label: PropertyTableView.traditionMetadataLabels.name,
       value: tradition.name,
-      inputOptions: { control: 'text', size: 40, required: true }
+      inputOptions: { 
+        control: 'text', 
+        size: 40, 
+        required: true 
+      }
     });
+    if( userIsAdmin() ){
+      metadata = metadata.map( EditProperties.addOwnerDropDown );
+    }
     return metadata;
+  }
+
+  static addOwnerDropDown( metaItem ){
+    if( metaItem.label == PropertyTableView.traditionMetadataLabels.owner ){
+      return { 
+        ...metaItem, 
+        inputOptions: {
+          control: 'dropdown',
+          selectOptions: EditProperties.ownerOptions,
+          selected: TRADITION_STORE.state.selectedTradition.owner
+        } 
+      }
+    } else {
+      return metaItem;
+    }
+  }
+
+  static createOwnerOptions( responseData ){
+    const options = responseData.map( (item) => {
+      return {
+        value: item.id,
+        display: item.email
+      }
+    } );
+    return options;
   }
 
   connectedCallback() {
@@ -41,34 +82,36 @@ class EditProperties extends HTMLElement {
    * @todo: Add responsiveness on resize.
    */
   #createDialogStyle() {
-    const width = $('sidebar_properties').getBoundingClientRect().width;
+    const width = $('sidebar-properties').getBoundingClientRect().width;
     return (
       `margin-right: 0px; width: ${width}px; margin-top: 50px;`
     );
   }
 
   showDialog() {
-    const metaItems = PropertyTableView.sortedMetaItems(
-      EditProperties.metadataFromTradition( STEMMA_STORE.state.parentTradition )
-    );
-    const modal_body = `
-            <form
-            id="edit-tradition-properties-form"
-            class="needs-validation"
-            novalidate=""
-            >
-            ${ metaItems.map( formControlFactory.renderFormControl ).join( '\n' ) }
-            </form>
-        `;
-    StemmawebDialog.show(
-      'Edit properties',
-      modal_body,
-      { onOk: this.processForm },
-      {
-        okLabel: 'Save',
-        elemStyle: this.#createDialogStyle()
-      }
-    );
+    if( userIsOwner() ) {
+      const metaItems = PropertyTableView.sortedMetaItems(
+        EditProperties.metadataFromTradition( STEMMA_STORE.state.tradition )
+      );
+      const modal_body = `
+              <form
+              id="edit-tradition-properties-form"
+              class="needs-validation"
+              novalidate=""
+              >
+              ${ metaItems.map( formControlFactory.renderFormControl ).join( '\n' ) }
+              </form>
+          `;
+      StemmawebDialog.show(
+        'Edit properties',
+        modal_body,
+        { onOk: this.processForm },
+        {
+          okLabel: 'Save',
+          elemStyle: this.#createDialogStyle()
+        }
+      );
+    }
   }
 
   /**
@@ -85,7 +128,13 @@ class EditProperties extends HTMLElement {
     const language = $('language_input').value || null;
     const direction = $('direction_input').value;
     const isPublic = $('access_input').checked;
-    return { name, language, direction, isPublic };
+    let ownerId = null;
+    if ( userIsAdmin() ) {
+      ownerId = $('owner_input').value;
+    } else {
+      ownerId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
+    }
+    return { ownerId, name, language, direction, isPublic };
   }
 
   /** @returns {Promise} */
@@ -96,10 +145,9 @@ class EditProperties extends HTMLElement {
         EditProperties.#extractFormValuesTradition()
       );
       const tradId = TRADITION_STORE.state.selectedTradition.id;
-      const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
       return editPropertiesService
-        .updateTraditionMetadata( userId, tradId, ...values )
-        .then(EditProperties.#handleUpdateTraditionMetadataResponse);
+        .updateTraditionMetadata( tradId, ...values )
+        .then( EditProperties.#handleUpdateTraditionMetadataResponse );
     } else {
       form.classList.add('was-validated');
       return Promise.resolve({
@@ -113,7 +161,6 @@ class EditProperties extends HTMLElement {
   static #handleUpdateTraditionMetadataResponse(resp) {
     if (resp.success) {
       StemmawebAlert.show('Metadata properties updated.', 'success');
-      // @todo: Should the next line be wrapped in a try..catch?
       TRADITION_STORE.updateTradition(resp.data);
       return Promise.resolve({
         success: true,
@@ -129,9 +176,13 @@ class EditProperties extends HTMLElement {
   }
 
   render() {
+    var styleClasses = [ 'link-secondary', 'greyed-out' ];
+    if( userIsOwner() ) {
+      styleClasses.pop();
+    }    
     this.innerHTML = `
             <a
-            class="link-secondary"
+            class="${styleClasses.join(' ')}"
             href="#"
             aria-label="Edit tradition properties"
             >

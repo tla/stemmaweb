@@ -1,4 +1,5 @@
 from flask import Flask, request
+import time
 
 app = Flask(__name__)
 
@@ -151,7 +152,7 @@ def run_job(algo):
 
 
 # Allow query of a job ID.
-@app.get('/algorithms/jobstatus/<jobid>')
+@app.get('/algorithms/jobstatus/<jobid>/')
 def query_job(jobid):
     if jobid == '1':
         return {"jobid":1,"status":0,"result":{

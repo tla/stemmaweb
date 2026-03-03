@@ -1,11 +1,12 @@
-const svg_slide_indicator = `<svg
+  const job_running_indicator = `<svg
+  style="vertical-align: baseline;"
   class="indicator-svg"
-  data-active="false"
+  data-active="true"
   xmlns="http://www.w3.org/2000/svg"
   width="15"
   height="12"
-  viewBox="0 0 24 24"
-  fill="none"
+  viewBox="0 -2 24 24"
+  fill="#aae18b"
   stroke="currentColor"
   stroke-width="1"
   stroke-linecap="round"
@@ -14,14 +15,15 @@ const svg_slide_indicator = `<svg
   <circle cx="12" cy="12" r="10"></circle>
 </svg>`;
 
-const svg_slide_indicator_active = `<svg
+const job_error_indicator = `<svg
+  style="vertical-align: baseline;"
   class="indicator-svg"
   data-active="true"
   xmlns="http://www.w3.org/2000/svg"
   width="15"
   height="12"
-  viewBox="0 0 24 24"
-  fill="rgb(180,180,180)"
+  viewBox="0 -2 24 24"
+  fill="#dc3545"
   stroke="currentColor"
   stroke-width="1"
   stroke-linecap="round"
@@ -37,3 +39,83 @@ const google_icon = `
 const github_icon = `
 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59c.4.07.55-.17.55-.38c0-.19-.01-.82-.01-1.49c-2.01.37-2.53-.49-2.69-.94c-.09-.23-.48-.94-.82-1.13c-.28-.15-.68-.52-.01-.53c.63-.01 1.08.58 1.23.82c.72 1.21 1.87.87 2.33.66c.07-.52.28-.87.51-1.07c-1.78-.2-3.64-.89-3.64-3.95c0-.87.31-1.59.82-2.15c-.08-.2-.36-1.02.08-2.12c0 0 .67-.21 2.2.82c.64-.18 1.32-.27 2-.27c.68 0 1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82c.44 1.1.16 1.92.08 2.12c.51.56.82 1.27.82 2.15c0 3.07-1.87 3.75-3.65 3.95c.29.25.54.73.54 1.48c0 1.07-.01 1.93-.01 2.2c0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
 `;
+
+const feather_check_square_alt = `
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check-square"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path><polyline points="9 11 12 14 22 4"></polyline></svg>
+`;
+
+const detach_nodes_icon = `
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg class="follows-feather" width="24" height="24" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg">
+   <g transform="matrix(3.83173,0,0,3.83173,-533.48471,-697.25408)">
+      <g transform="translate(0,-0.00781185)">
+        <g transform="translate(0.303985,-0.12904178)">
+          <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 141.84581,182.55085 0.92269,0.9227" />
+          <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 141.84581,184.03935 0.92269,-0.9227" />
+        </g>
+        <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.27207,185.17752 c 0,-1.90414 1.35436,-2.16222 2.56448,-2.0034" />
+      </g>
+      <g transform="matrix(1,0,0,-1,0,370.20826)">
+        <g transform="translate(0.303985,-0.12904178)">
+          <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 141.84581,182.55085 0.92269,0.9227" />
+          <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 141.84581,184.03935 0.92269,-0.9227" />
+        </g>
+        <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.27207,185.17752 c 0,-1.90414 1.35436,-2.16222 2.56448,-2.0034" />
+      </g>
+      <circle style="fill:#ffffff;stroke:currentColor;stroke-width:0.391468" cx="144.44774" cy="183.01239" r="0.58720225"/>
+      <circle style="fill:#ffffff;stroke:currentColor;stroke-width:0.391468" cx="144.44774" cy="187.18805" r="0.58720225"/>
+      <circle style="fill:#ffffff;stroke:currentColor;stroke-width:0.391468" cx="140.27208" cy="185.10022" r="0.58720225"/>
+   </g>
+</svg>
+`
+
+const merge_nodes_icon = `
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg class="follows-feather" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <g transform="matrix(3.83173,0,0,3.83173,-533.48471,-697.25408)">
+      <g transform="matrix(-1,0,0,1,283.03235,1.7117237)">
+        <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.87048,182.64425 -0.92269,0.9227"/>
+        <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.87048,184.13275 -0.92269,-0.9227"/>
+      </g>
+      <circle style="fill:#ffffff;stroke:currentColor;stroke-width:0.391468" cx="-144.44774" cy="185.10022" r="0.58720225" transform="scale(-1,1)" />
+      <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.29407,183.06694 c 0,1.90414 1.37421,2.0034 2.56448,2.0034"/>
+      <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.29407,187.11644 c 0,-1.90414 1.37421,-2.0034 2.56448,-2.0034"/>
+      <circle style="fill:#ffffff;stroke:currentColor;stroke-width:0.391468" cx="-140.27208" cy="183.01239" r="0.58720225" transform="scale(-1,1)"/>
+      <circle style="fill:#ffffff;stroke:currentColor;stroke-width:0.391468" cx="-140.27208" cy="187.18805" r="0.58720225" transform="scale(-1,1)"/>
+    </g>
+</svg>
+`
+
+const split_nodes_icon = `
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg class="follows-feather" width="24" height="24" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g transform="matrix(3.83173,0,0,3.83173,-533.28502,-690.69522)">
+    <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.87048,182.64425 -0.92269,0.9227"/>
+    <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.87048,184.13275 -0.92269,-0.9227"/>
+  </g>
+  <circle style="fill:#ffffff;stroke:currentColor;stroke-width:1.5" cx="-12" cy="12" r="2.2500005" transform="scale(-1,1)"/>
+  <g transform="matrix(-3.83173,0,0,3.83173,557.22124,-690.69522)">
+    <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.87048,182.64425 -0.92269,0.9227"/>
+    <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.87048,184.13275 -0.92269,-0.9227"/>
+  </g>
+  <path style="fill:none;stroke:currentColor;stroke-width:2" d="M 9.7499999,11.999986 H 5.0338877"/>
+  <path style="fill:none;stroke:currentColor;stroke-width:2" d="M 18.966092,11.999986 H 14.250001"/>
+</svg>
+`
+
+const concatenate_nodes_icon = `
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg class="follows-feather" width="24" height="24" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g transform="matrix(-3.83173,0,0,3.83173,544.60022,-690.69523)">
+    <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.87048,182.64425 -0.92269,0.9227"/>
+    <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.87048,184.13275 -0.92269,-0.9227"/>
+  </g>
+  <circle style="fill:#ffffff;stroke:currentColor;stroke-width:1.5" cx="-12" cy="12" r="2.2500005" transform="scale(-1,1)"/>
+  <g transform="matrix(3.83173,0,0,3.83173,-520.60021,-690.69523)">
+    <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.87048,182.64425 -0.92269,0.9227"/>
+    <path style="fill:none;stroke:currentColor;stroke-width:0.521957" d="m 140.87048,184.13275 -0.92269,-0.9227"/>
+  </g>
+  <path style="fill:none;stroke:currentColor;stroke-width:2" d="M 0.99999539,11.999986 H 7.6798097"/>
+  <path style="fill:none;stroke:currentColor;stroke-width:1.99999" d="m 16.291406,11.999986 h 6.708309"/>
+</svg>
+`

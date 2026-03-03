@@ -2,11 +2,15 @@
 .PHONY: serve
 serve:
 	@echo "==> 📡 Serve"
-	@poetry run gunicorn --reload --bind=0.0.0.0:3000  'stemmaweb_middleware:create_app()'
+	@poetry run gunicorn --reload --bind=0.0.0.0:3000  --workers=1 'stemmaweb_middleware:create_app()'
 
 serve-background:
 	@echo "==> 📡 Serve in Background"
-	@(poetry run gunicorn --reload --bind=0.0.0.0:3000  'stemmaweb_middleware:create_app()') &> /dev/null
+	@(poetry run gunicorn --reload --bind=0.0.0.0:3000  --workers=1 'stemmaweb_middleware:create_app()') &> /dev/null
+
+serve-debug:
+	@echo "==> 🪲 Serve in debug mode"
+	@(poetry run python -Xfrozen_modules=off -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m gunicorn --reload --bind=0.0.0.0:3000  --workers=1 --timeout 600 'stemmaweb_middleware:create_app()') &
 
 # Prints the middleware routes
 .PHONY: routes

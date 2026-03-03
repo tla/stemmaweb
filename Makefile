@@ -68,11 +68,17 @@ run-middleware:
 	@echo "==> 📡 Run Middleware"
 	@cd middleware && make serve-background && cd -
 
+debug-middleware:
+	@echo "==> 🪲 Run in debug mode"
+	@cd middleware && make serve-debug && cd -
+
 run-frontend:
 	@echo "==> 📡 Run Frontend"
 	@cd frontend && npm run serve:background && cd -
 
 run: run-middleware run-frontend
+
+debug: debug-middleware run-frontend
 
 stop-middleware:
 	@echo "==> 🛑 Stop Middleware"

@@ -4,6 +4,7 @@ node_modules
 .env*
 scratchpad
 HOURS.md
+next_commit_fixes_and_tests.md
 
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
@@ -174,3 +175,8 @@ cython_debug/
 !.env*.example
 env.zip
 env_passphrase
+
+relationmapper_theory/
+
+# volume bind folder for the init script in headless mode
+.initdata4headless

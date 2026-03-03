@@ -1,5 +1,5 @@
 # General-purpose bash environment for utility scripts
-FROM ubuntu:latest
+FROM ubuntu:jammy
 
 # install core utilities
 RUN apt-get update &&  \

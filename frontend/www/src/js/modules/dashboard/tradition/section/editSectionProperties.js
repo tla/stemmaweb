@@ -7,7 +7,7 @@ class EditSectionProperties extends HTMLElement {
 
     constructor() {
         super();
-        this.addEventListener('click', this.showDialog);
+        this.addEventListener( 'click', this.showDialog );
     }
 
     connectedCallback() {
@@ -23,7 +23,7 @@ class EditSectionProperties extends HTMLElement {
      * @todo: Add responsiveness on resize.
      */
     #createDialogStyle() {
-        const width = $('sidebar_properties').getBoundingClientRect().width;
+        const width = $('sidebar-properties').getBoundingClientRect().width;
         const top = $('property-table-view').getBoundingClientRect().bottom;
         return (
             `margin-right: 0px; width: ${width}px; margin-top: ${top}px;`
@@ -31,28 +31,30 @@ class EditSectionProperties extends HTMLElement {
     }
 
     showDialog() {
-        const section = SECTION_STORE.state.selectedSection;
-        const metaItems = SectionPropertiesView.sortedMetaItems( 
-            SectionPropertiesView.metadataFromSection(section) 
-        );
-        const modal_body = `
-            <form
-                id="edit-section-properties-form"
-                class="needs-validation"
-                novalidate=""
-            >
-                ${metaItems.map( formControlFactory.renderFormControl ).join( '\n' )}
-            </form>
-        `;
-        StemmawebDialog.show(
-            'Edit section properties',
-            modal_body,
-            { onOk: this.processForm },
-            {
-                okLabel: 'Save',
-                elemStyle: this.#createDialogStyle()
-            }
-        );
+        if( userIsOwner() ) {
+            const section = SECTION_STORE.state.selectedSection;
+            const metaItems = SectionPropertiesView.sortedMetaItems( 
+                SectionPropertiesView.metadataFromSection(section) 
+            );
+            const modal_body = `
+                <form
+                    id="edit-section-properties-form"
+                    class="needs-validation"
+                    novalidate=""
+                >
+                    ${metaItems.map( formControlFactory.renderFormControl ).join( '\n' )}
+                </form>
+            `;
+            StemmawebDialog.show(
+                'Edit section properties',
+                modal_body,
+                { onOk: this.processForm },
+                {
+                    okLabel: 'Save',
+                    elemStyle: this.#createDialogStyle()
+                }
+            );
+        }
       }
     
     /**
@@ -113,9 +115,13 @@ class EditSectionProperties extends HTMLElement {
     }
 
     render() {
+        var styleClasses = [ 'link-secondary', 'greyed-out' ];
+        if( userIsOwner() ) {
+          styleClasses.pop();
+        }    
         this.innerHTML = `
             <a
-                class="link-secondary"
+                class="${styleClasses.join(' ')}"
                 href="#"
                 aria-label="Edit section properties"
             >

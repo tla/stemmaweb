@@ -83,6 +83,16 @@ class StemmarestService extends BaseService {
   }
 
   /**
+   * Fetches a list of all users from the Stemmarest API.
+   *
+   * @returns {Promise<BaseResponse<Tradition[]>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /users}
+   */
+  listUsers() {
+    return this.fetch('/api/users');
+  }
+
+  /**
    * Fetches a list of all traditions from the Stemmarest API.
    *
    * @returns {Promise<BaseResponse<Tradition[]>>}
@@ -110,6 +120,7 @@ class StemmarestService extends BaseService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
    */
   deleteTradition(tradId) {
+    // Todo: check userId?
     return this.fetch(`/api/tradition/${tradId}`, {
       method: 'DELETE'
     });
@@ -176,6 +187,7 @@ class StemmarestService extends BaseService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemma/[name]/reorient/[nodeId]}
    */
   reorientStemmaTree(tradId, name, nodeId) {
+    // Todo: check useId?
     // Note: see issue #92, API/middleware needs updating for non ASCII sigils
     const endpoint = this.endpoint(
       `/api/tradition/${tradId}/stemma/${name}/reorient/${nodeId}`
@@ -189,7 +201,7 @@ class StemmarestService extends BaseService {
   /**
    * Updates metadata for a tradition.
    *
-   * @param {string | null} userId
+   * @param {string | null} ownerId
    * @param {string} tradId - The ID of the tradition being queried
    * @param {string} name - The (new) name of the tradition.
    * @param {string | null} language
@@ -197,8 +209,8 @@ class StemmarestService extends BaseService {
    * @param {boolean} isPublic
    * @returns {Promise<BaseResponse<T>>}
    */
-  updateTraditionMetadata( userId, tradId, name, language, direction, isPublic) {
-    if (userId === null) {
+  updateTraditionMetadata( tradId, ownerId, name, language, direction, isPublic ){
+    if (ownerId === null) {
       return Promise.resolve({
         success: false,
         message: 'You need to be logged in to edit a tradition.'
@@ -210,7 +222,7 @@ class StemmarestService extends BaseService {
       id: tradId,
       language: language,
       name: name,
-      owner: userId
+      owner: ownerId
     };
     return this.fetch(`/api/tradition/${tradId}`, {
       method: 'PUT',
@@ -230,11 +242,85 @@ class StemmarestService extends BaseService {
     return this.fetch(`/api/tradition/${traditionId}/sections`);
   }
 
+  /** 
+   * Save a stemma.
+   * 
+   * @param {string | null} userId.
+   * @param {string} tradId - The ID of the tradition being queried.
+   * @param {string} stemma_name - The name of the stemma.
+   * @param {string} stemma_dot - The stemma in dot language representation.
+   * @returns {Promise<BaseResponse<T>>}
+   * 
+   * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/name/ }
+   */
+  saveStemma( userId, tradId, stemma_name, stemma_dot ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to edit a tradition.'
+      });
+    }
+    const formData = {
+      identifier: stemma_name,
+      dot: stemma_dot
+      // jobid: null,
+      // newick: null
+    };
+    return this.fetch(`/api/tradition/${tradId}/stemma/${stemma_name}`, {
+      method: 'PUT',
+      body: JSON.stringify( formData) ,
+      headers: new Headers({ 'Content-Type': 'application/json' })
+    });
+  }
+  
+  /** 
+   * Add a stemma.
+   * 
+   * @param {string | null} userId.
+   * @param {string} tradId - The ID of the tradition being queried.
+   * @param {string} stemma_name - The name of the stemma.
+   * @param {string} stemma_dot - The stemma in dot language representation.
+   * @returns {Promise<BaseResponse<T>>}
+   * 
+   * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/ }
+   */
+  addStemma( userId, tradId, stemma_name, stemma_dot ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to edit a tradition.'
+      });
+    }
+    const formData = {
+      identifier: stemma_name,
+      dot: stemma_dot
+      // jobid: null,
+      // newick: null
+    };
+    return this.fetch(`/api/tradition/${tradId}/stemma/`, {
+      method: 'POST',
+      body: JSON.stringify( formData ),
+      headers: new Headers({ 'Content-Type': 'application/json' })
+    });
+  }
+
+  /**
+   * Deletes a stemma using the Stemmarest API.
+   *
+   * @param {Stemma} stemma - The stemma to be deleted
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemma}
+   */
+  deleteStemma( tradId, stemma ) {
+    return this.fetch(`/api/tradition/${tradId}/stemma/${stemma.identifier}`, {
+      method: 'DELETE'
+    });
+  }
+  
   /**
    * Deletes a section using the Stemmarest API.
    *
    * @param {string} sectionId
-   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section}
    */
   deleteSection( traditionId, sectionId ) {
     return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}`, {
@@ -314,4 +400,121 @@ class StemmarestService extends BaseService {
     });
   }
 
+  /**
+   * Fetches a list of relation types for a particular tradition.
+   *
+   * @param {string} traditionId
+   * @returns {Promise<BaseResponse<Section[]>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/relationtypes}
+   */
+    listRelationTypes( traditionId ) {
+      return this.fetch(`/api/tradition/${traditionId}/relationtypes`);
+    }
+  
+  /** 
+   * Fetches the dot for a section.
+   * 
+   * @param {string} traditionId
+   * * @param {string} sectionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/dot/
+   */
+    getSectionDot( traditionId, sectionId ) {
+      return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/dot`);
+    }
+
+  /** 
+   * Fetches the relations for a section.
+   * 
+   * @param {string} traditionId
+   * * @param {string} sectionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/relations/
+   */
+  getSectionRelations( traditionId, sectionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/relations`);
+  }
+
+  /** 
+   * Fetches the relation types for a tradition.
+   * 
+   * @param {string} traditionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/relationtypes/
+   */
+  getRelationTypes( traditionId ) {
+    return this.fetch( `/api/tradition/${traditionId}/relationtypes` );
+  }
+
+  /** 
+   * Deletes a particular relation type for a tradition.
+   * 
+   * @param {string} traditionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/relationtypes/
+   */
+  deleteRelationType( traditionId, relationName ) {
+    return this.fetch( `/api/tradition/${traditionId}/relationtype/${relationName}`, {
+      method: 'DELETE'
+    } );
+  }
+
+  /** 
+   * Fetches the readings for a section.
+   * 
+   * @param {string} traditionId
+   * @param {string} sectionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/readings/
+   */
+  getSectionReadings( traditionId, sectionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/readings`);
+  }
+
+  /** 
+   * Fetches the readings for the whole tradition.
+   * 
+   * @param {string} traditionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/readings/
+   */
+  getAllReadings( traditionId, sectionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/readings`);
+  }
+
+  /** 
+   * Fetches a specific reading.
+   * 
+   * @param {string} traditionId
+   * @param {string} sectionId
+   * @param {string} readingId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: tradition/[tradId]/section/[sectionId]/reading/[readingId]/
+   */
+  getReading( traditionId, sectionId, readingId ) {
+    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/reading/${readingId}`);
+  }
+
+  /**
+   * Requests to merge two readings.
+   *
+   * @param {string | null} userId
+   * @param {string} readingId - ID if the first reading that is part of this merge.
+   * @param {string} secondReadingId - ID if the second reading that is part of this merge.
+   * @returns {Promise<BaseResponse<{ tradId: string }>>}
+   */
+  mergeReadings( userId, readingId, secondReadingId ) {
+    if (userId === null) {
+      return Promise.resolve({
+        success: false,
+        message: 'You need to be logged in to merge readings.'
+      });
+    }
+    return this.fetch( `/api/reading/${readingId}/merge/${secondReadingId}/`, {
+      method: 'POST',
+      'Content-Type': 'multipart/form-data',
+      body: null
+    });
+  }
+  
 }

@@ -86,9 +86,7 @@ class BasePermissionHandler(ABC, Generic[EndpointType]):
 
             # Embed the current response transformer into the previous one
             if cfg.response_transformer is not None:
-                chained_transformer = cfg.response_transformer(
-                    (chained_transformer or (lambda x: x))
-                )
+                chained_transformer = cfg.response_transformer(chained_transformer, args)
 
         return PermissionCheckResult(
             violations=violations,

@@ -1,4 +1,38 @@
 /**
+ * Simple convenient debug logging to console.
+ * Messages sent here will only show in StemmaWeb's dev mode.
+ * @param caller {object} The calling routine, function, method. In general pass `this`. 
+ * @param message {string} The debug message to print to the console. 
+ */
+function debugLog( caller, message, obj ) {
+  if( LOG_LEVEL=='DEBUG' ){
+    // Logging is fine, but how to get a useful line number?
+    // Nifty: https://stackoverflow.com/a/27074218.
+    var lineNumber;
+    var e = new Error();
+    if( !e.stack ) try {
+      // IE requires the Error to actually be throw or else the Error's 'stack'
+      // property is undefined.
+      throw e;
+    } catch( e ) {
+      if( !e.stack ) {
+        lineNumber =  0; // IE < 10, likely
+      }
+    }
+    var stack = e.stack.toString().split(/\r\n|\n/);
+    // We want our caller's frame. It's index into |stack| depends on the
+    // browser and browser version, so we need to search for the second frame.
+    var frameRE = /:(\d+):(?:\d+)[^\d]*$/;
+    do {
+      var frame = stack.shift();
+    } while( !frameRE.exec( frame ) && stack.length );
+    lineNumber = frameRE.exec( stack.shift() )[1];
+    message = `${caller.constructor.name} (l.${lineNumber}): ${message}`;
+    obj ? console.debug( message, obj ) : console.debug( message );
+  }
+}
+
+/**
  * Creates a `script` tag dynamically with the site key sourced from `env.js`.
  * This tag gets added to the document's `head` element automatically.
  */
@@ -73,3 +107,107 @@ function $(query, all = false) {
 function objectsEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
+
+
+/**
+ * Compares two strings alphbetically .
+ *
+ * @param {any} a - The first string to be compared.
+ * @param {any} b - The second string to be compared.
+ * @returns {boolean} - An integer indicating whether a comes before (-1), is equal to (0), or should follow (1) b. 
+ */
+function compareAlphabetic( a, b ) {
+  const nameA = a.name.toUpperCase(); // ignore upper and lowercase
+  const nameB = b.name.toUpperCase(); // ignore upper and lowercase
+  if (nameA < nameB) {
+    return -1;
+  }
+  if (nameA > nameB) {
+    return 1;
+  }
+  // names must be equal
+  return 0;
+}
+
+
+/**
+ * Returns a function that will execute exactly one time only.
+ *
+ * @param {function} fn - The function to be executed.
+ * @param {any} context - The context of the function.
+ * @returns {boolean} - An integer indicating whether a comes before (-1), is equal to (0), or should follow (1) b. 
+ */
+function once(fn, context) { 
+  var result;
+  return function() { 
+      if (fn) {
+          result = fn.apply(context || this, arguments);
+          fn = null;
+      }
+      return result;
+  };
+}
+
+
+function leftPadTwoZeroes( n ) {
+  return ('00'+n).slice(-2);
+}
+
+/**
+ * Returns a string formatted timestamp.
+ * 
+ * @returns {string} - A string represented the timestamp of 'now'.
+ */
+function timestamp() {
+  const date = new Date( Date.now() );
+  const datevalues = [
+    date.getFullYear(),
+    leftPadTwoZeroes( date.getMonth()+1 ),
+    leftPadTwoZeroes( date.getDate() )
+  ];
+  const timeValues = [
+    leftPadTwoZeroes( date.getHours() ),
+    leftPadTwoZeroes( date.getMinutes() ),
+    leftPadTwoZeroes( date.getSeconds() )
+  ];
+  return `${datevalues.join('')}_${timeValues.join('')}`;
+}
+
+
+class StemmaWebUtils {
+
+  // TODO: Probably all the above should be moved here too, to not put them in 
+  // global name space.
+
+  // Define true, immutable constants.
+  constructor() {
+    Object.defineProperties( this, {
+      EAST: { value: 'EAST' },
+      WEST: { value: 'WEST' },
+      REVERSE: { value: 'REVERSE' }
+    } );
+  }
+  
+  /** 
+   * Returns an SVG translate based on current translate
+   * of the provided SVG element and a new translate.
+   * 
+   * @param {SVGElement}  element  SVGElement to compute new translate from.
+   * @param {float}       dX       Newly to add amount of translation in X dimension.
+   * @param {float}       dY       Newly to add amount of translation in Y dimension.
+   */
+  getTranslate( element, dX, dY ) {
+    const baseVal = element.transform.baseVal;
+    let tX = 0;
+    let tY = 0;
+    if( baseVal.length > 0 ){
+        const matrix = baseVal.getItem( baseVal.length - 1 ).matrix; 
+        tX = parseFloat( matrix.e ) + dX;
+        tY = parseFloat( matrix.f ) + dY;
+    }
+    return `translate(${tX} ${tY})`;
+  }
+
+}
+
+const stemmaWebUtils = new StemmaWebUtils();

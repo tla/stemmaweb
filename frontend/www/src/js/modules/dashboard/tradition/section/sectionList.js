@@ -23,7 +23,7 @@ class SectionList extends HTMLElement {
         this.addEventListener( 'sectionAppended', this.rerenderList );
         this.addEventListener( 'sectionDeleted', this.rerenderList );
         const traditionId = this.getAttribute( 'trad-id' );
-        SECTION_STORE.subscribe( ( state, prevState ) => {
+        SECTION_STORE.subscribe( ( prevState, state ) => {
             // IF this is me…
             if( TRADITION_STORE.state.selectedTradition.id == traditionId ) {
                 // AND if this is not a first time load…
@@ -31,9 +31,9 @@ class SectionList extends HTMLElement {
                     // AND if this is some update concerning the currently selected Section…
                     if( state.selectedSection.id == prevState.selectedSection.id ) {
                         // AND if this is a name change…
-                        // well, THEN we do something (i.e. change the name in the Tradion/Section tree view).
+                        // well, THEN we do something (i.e. change the name in the Tradition/Section tree view).
                         if( state.selectedSection.name != prevState.selectedSection.name ) {
-                            this.querySelector( `ul li div[sect-id="${state.selectedSection.id}"] span` ).innerHTML = prevState.selectedSection.name;
+                            this.querySelector( `ul li div[sect-id="${state.selectedSection.id}"] span` ).innerHTML = state.selectedSection.name;
                         };
                     };
                 };
@@ -67,12 +67,20 @@ class SectionList extends HTMLElement {
         return sectionListItem ? sectionListItem.querySelector( 'div' ).getAttribute( 'sect-id' ) : 'none';
     }
 
+    getFirstSection() {
+        return this.#sections[0];
+    }
+    
     connectedCallback() {
         this.render();
         this.populate();
-        Sortable.create( 
-            this.querySelector( 'ul' ), 
+    }
+
+    makeSortable( instance ) {
+        instance.mysort = libraries.lib_Sortable.Sortable.create( 
+            instance.querySelector( 'ul' ), 
             { 
+                disabled: this.disabledState(), 
                 onStart: (evt) => { this.toggleHighlightDragged( evt, evt.oldIndex ) },
                 onEnd: (evt) => { this.toggleHighlightDragged( evt, evt.newIndex ) },
                 onUpdate: (evt) => { 
@@ -80,6 +88,9 @@ class SectionList extends HTMLElement {
                     // figure out tradition.id, section.id, priorSectionId.
                     const moveSectionId = this.getSectionId( evt, evt.newIndex );
                     const moveAfterSectionId = this.getSectionId( evt, evt.newIndex-1 );
+                    // Reflect new order in private list of sections.
+                    // See: https://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another
+                    this.#sections.splice( evt.newIndex, 0, this.#sections.splice( evt.oldIndex, 1)[0] );
                     sectionService.moveSection( this.getAttribute( 'trad-id' ), moveSectionId, moveAfterSectionId )
                         .then( (resp) => {
                             if( !resp.success ) {
@@ -93,6 +104,18 @@ class SectionList extends HTMLElement {
             }
         );
     }
+
+    disabledState() {
+        const thisTradition = TRADITION_STORE.state.availableTraditions.find( 
+            (tradition) => { return tradition.id == this.getAttribute( 'trad-id' ) } 
+        );
+        var stateValue;
+        if( thisTradition ){
+            stateValue = ( thisTradition.owner != ( AUTH_STORE.state.user && AUTH_STORE.state.user.id ) ) ? true : false; 
+        }
+        return stateValue;
+    }
+
 
     /**
      * Fetches sections for a tradition and iterates over them 
@@ -109,9 +132,9 @@ class SectionList extends HTMLElement {
                     });
                     this.#sections.forEach( (section) => this.renderSectionName(section) );
                 } else {
-                    StemmawebAlert.show(`Error: ${res.message}`, 'danger');
+                    StemmawebAlert.show(`Error: ${resp.message}`, 'danger');
                 }
-            });
+            }).then( () => { this.makeSortable( this ) } );
     }
 
     /**

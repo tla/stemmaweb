@@ -22,9 +22,9 @@ class PropertyTableView extends HTMLElement {
   constructor() {
     super();
     // Whenever a new tradition / related stemma is selected, update the table
-    STEMMA_STORE.subscribe(({ parentTradition, selectedStemma }) => {
-      this.render(parentTradition, selectedStemma);
-    });
+    STEMMA_STORE.subscribe( ( { tradition, selectedStemma } ) => {
+      this.render( tradition, selectedStemma );
+    } );
   }
 
   /** @type {TraditionMetaLabels} */
@@ -211,6 +211,14 @@ class PropertyTableView extends HTMLElement {
       `;
   }
 
+  hide() {
+    fadeToDisplayNone( document.querySelector( 'property-table-view div' ) );
+  }
+
+  show() {
+    fadeToDisplayNone( document.querySelector( 'property-table-view div' ), { 'reverse': true } );
+  }
+
   /**
    * @param {Tradition | null} tradition
    * @param {Stemma | null} stemma
@@ -229,14 +237,14 @@ class PropertyTableView extends HTMLElement {
       ...stemmaMeta
     ]);
     this.innerHTML = `
-      <div class="position-sticky pt-3">
+      <div class="position-sticky pt-2">
       <h6
-        class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
+        class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 text-muted"
       >
-        <span>Properties</span>
+        <span>Tradition Properties</span>
         <edit-properties-button/>
       </h6>
-      <div class="table-responsive px-3 py-3">
+      <div class="table-responsive px-3 py-1">
         <table class="table table-striped table-sm">
           <tbody id="tradition_info">
           ${metaItems.map(this.renderMetaItem).join('\n')}
