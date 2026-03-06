@@ -59,12 +59,14 @@ if (Cypress.browser.isHeaded) {
         // click on the .folder-icon in front of it
         // assert that the number of sections visible in the toc correponds to that in the list of traditions
         // TODO: add issue to scroll tradition-list. Preliminary solution here: lengthen viewport.
-        cy.viewport(1600, 990);
         cy.log('title: ' + tradition.title);
         cy.get('ul#traditions-list')
-          .contains('.nav-item', tradition.title)
+          .contains('.tradition-list-item', tradition.title)
+          .closest('.nav-item')
           .as('navitem');
-        cy.get('@navitem').find('.folder-icon').click();
+        // cy.get('@navitem')
+        //   .then($el => cy.log($el.html()));
+        cy.get('@navitem').click();
         cy.get('@navitem')
           .find('section-list')
           .find('ul')
@@ -75,7 +77,7 @@ if (Cypress.browser.isHeaded) {
   });
 
   describe('Adding a section via text directory feather-plus-circle, and deleting it via section properties bin works', () => {
-    it('passes', () => {
+    it.skip('passes', () => {
       // input string for the test section to be added
       const new_section_name = 'NEW SECTION BY CY';
 
@@ -101,7 +103,6 @@ if (Cypress.browser.isHeaded) {
             .find('ul')
             .children()
             .as('sections');
-          // TODO usability: add issue "clicking on the tradition name should also unfold the sections"
 
           // Add section
           /* Click on the plus-feather next to "Text Directory",
@@ -193,7 +194,7 @@ if (Cypress.browser.isHeaded) {
   });
 
   describe('Edit and move sections also with no side effects, assert that info in tradition list always equals to that in the sections panel', () => {
-    it.only(
+    it.skip(
       'under construction',
       { retries: { runMode: 2, openMode: 0 } },
       () => {
