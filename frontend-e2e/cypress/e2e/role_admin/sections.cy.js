@@ -60,12 +60,19 @@ if (Cypress.browser.isHeaded) {
         // assert that the number of sections visible in the toc correponds to that in the list of traditions
         // TODO: add issue to scroll tradition-list. Preliminary solution here: lengthen viewport.
         cy.log('title: ' + tradition.title);
+        // TODO: adapt other tests accordingly
+        // assert that the title is linked
         cy.get('ul#traditions-list')
-          .contains('.tradition-list-item', tradition.title)
+          .contains('.tradition-list-item a.nav-link', tradition.title)
           .closest('.nav-item')
           .as('navitem');
         // cy.get('@navitem')
         //   .then($el => cy.log($el.html()));
+        // assert that the link also includes the folder-icon
+        cy.get('@navitem')
+          .find('a.nav-link')
+          .should('have.descendants', '.folder-icon');
+        // assert clicking on the navitem unfolds the tradition's sections
         cy.get('@navitem').click();
         cy.get('@navitem')
           .find('section-list')
