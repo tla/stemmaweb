@@ -53,10 +53,10 @@ if (Cypress.browser.isHeaded) {
   // count sections of each tradition is correct
   describe('Each tradition should have the right number of sections listed in the toc', () => {
     it('passes', () => {
-      // admin should see all traditions and sections // do not .filter(({access}) => access === 'Public').forEach(...
+      // admin should see all traditions and sections
       test_traditions.forEach((tradition) => {
-        // choose the tradition in the toc that has the right title
-        // click on the .folder-icon in front of it
+        // choose the tradition title in the toc
+        // click on it or on the .folder-icon in front of it
         // assert that the number of sections visible in the toc correponds to that in the list of traditions
         // TODO: add issue to scroll tradition-list. Preliminary solution here: lengthen viewport.
         cy.log('title: ' + tradition.title);
