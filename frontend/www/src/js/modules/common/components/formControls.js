@@ -36,6 +36,21 @@ class FormControlFactory {
               Input for this field is required for the tradition.
           </div>
       `;
+      const input_element = document.createElement( 'input' );
+      const id_name_string = `${FormControlFactory.#toHtmlId( item.label )}_input`;
+      input_element.setAttribute( 'id', id_name_string );
+      input_element.setAttribute( 'type', 'text' );
+      input_element.setAttribute( 'name', id_name_string );
+      input_element.setAttribute( 'value', item.value );
+      const class_string = `form-control ${item.inputOptions.required ? 'has-validation' : ''}`;
+      input_element.setAttribute( 'class', class_string );
+      if ( item.inputOptions.size ) {
+        const size_string = `${item.inputOptions.size}`;
+        input_element.setAttribute( 'size', size_string );
+      }
+      if ( item.inputOptions.required ) {
+        input_element.setAttribute( 'required', '' );
+      }
       return `
           <label 
               for="${FormControlFactory.#toHtmlId( item.label )}_input"
@@ -45,19 +60,7 @@ class FormControlFactory {
               ${FormControlFactory.#createLabel(item)}
           </label>
           <div class="form-textfield">
-              <input
-                  id="${FormControlFactory.#toHtmlId( item.label )}_input"
-                  type="text"
-                  name="${FormControlFactory.#toHtmlId( item.label )}_input"
-                  value="${item.value}"
-                  class="form-control ${item.inputOptions.required ? 'has-validation' : ''}"
-                  ${
-                      item.inputOptions.size
-                      ? 'size="' + item.inputOptions.size + '"'
-                      : ''
-                  }
-                  ${item.inputOptions.required ? 'required=""' : ''}
-              />
+              ${input_element.outerHTML}
               ${item.inputOptions.required ? invalidFeedback : ''}
           </div>
       `;
