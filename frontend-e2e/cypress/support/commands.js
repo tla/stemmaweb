@@ -177,7 +177,7 @@ Cypress.Commands.add(
       .parents('#modalDialog', { timeout: 1000 })
       .should('be.visible')
       .as('propsDialogModal');
-    const newName = t_title + ' EDITED';
+    const newName = t_title + ' "EDITED"';
     // newAccess: make a Private tradition Public (v.vs.) by .check() / .uncheck()
     const newLanguage = 'Another language';
     const newDirection = 'BI';
@@ -246,7 +246,7 @@ Cypress.Commands.add(
       // the modal should have closed by itself
       cy.get('@propsDialogModal').should('not.be.visible');
 
-      // TODO: assert that the changed tradition name is visible in the navigation bar.
+      // TODO: assert that the changed tradition name newName is visible in the navigation bar.
       // TODO: assert that after visiting other traditions, the changes are still at the right places, in the toc and in the props.
     }
   }
