@@ -236,19 +236,14 @@ Cypress.Commands.add(
         .find('#witnesses_input')
         .invoke('val', newWitnesses);
 
-      // Issue#256: Enable role user to save their own edited traditions' properties
-      // TODO: save it (currently only admin can save edited properties)
+      // Save the changes
       cy.get('@propsDialogModal')
         .contains('button', 'Save')
         .should('exist') // Ensure the button exists
         .and('be.visible') // Ensure the button is visible
-        .and('not.be.disabled'); // Ensure the button is enabled
-      // .click(); // Click the button
-      // (uncaught exception) TypeError: Cannot read properties of null (reading 'value')
-
-      // close the modal (for now, until 'Save' is possible for role:user)
-      // cy.pause()
-      cy.clickModalButton(['Edit properties', 'Close']);
+        .and('not.be.disabled') // Ensure the button is enabled
+        .click(); // Click the button
+      // the modal should have closed by itself
       cy.get('@propsDialogModal').should('not.be.visible');
 
       // TODO: assert that the changed tradition name is visible in the navigation bar.
