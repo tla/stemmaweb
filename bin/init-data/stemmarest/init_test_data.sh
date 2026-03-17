@@ -86,7 +86,7 @@ fi
 echo; echo Adding stemweb_jobid 2 to Florilegium
 $CURL --request PUT --header 'Content-Type: application/json' --data '{"stemweb_jobid":2}' $STEMMAREST_ENDPOINT/tradition/$FLOR_ID
 echo Uploading three sections
-for e in w x y; do 
+for e in w x x{1..50} y; do
   $CURL --request POST --form name="section '$e'" --form file=@data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response
   SECTID=`jq -r -e ".sectionId" /tmp/stemmarest.response`
   if [ -z $SECTID ]; then
