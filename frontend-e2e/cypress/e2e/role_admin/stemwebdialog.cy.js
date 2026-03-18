@@ -53,7 +53,6 @@ if (Cypress.browser.isHeaded) {
 
   beforeEach(() => {
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
-    cy.viewport(1600, 900);
     test_traditions.sort((tradition_a, tradition_b) =>
       tradition_a.title.localeCompare(tradition_b.title)
     );
