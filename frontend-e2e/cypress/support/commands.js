@@ -163,6 +163,7 @@ Cypress.Commands.add('clickModalButton', ([dialogLabel, buttonLabel]) => {
 
 // assert editing properties of own or others' traditions differs correctly
 // diff user,role, tradition, owner, access
+// TODO: assert the tradition properties belong to the right tradition (tradition name in the properties equals the clicked one in the tradition list)
 Cypress.Commands.add(
   'editProperties',
   ([dialogLabel, u_name, u_role, t_title, t_owner, t_access]) => {
@@ -247,6 +248,7 @@ Cypress.Commands.add(
       cy.get('@propsDialogModal').should('not.be.visible');
 
       // TODO: assert that the changed tradition name newName is visible in the navigation bar.
+      // TODO: all edited tradition properties are updated: Name, access, language, direction, witnesses?
       // TODO: assert that after visiting other traditions, the changes are still at the right places, in the toc and in the props.
     }
   }
