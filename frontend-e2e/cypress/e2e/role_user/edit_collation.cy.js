@@ -22,6 +22,8 @@ const user = users_all.filter(
     assert View Collation is enabled
   each others' private tradition:
     tested in user_privileges: assert they are not visible
+  any other tradition
+    assert it does not exit
   log out
  */
 
@@ -44,7 +46,7 @@ if (Cypress.browser.isHeaded) {
       cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
       test_traditions.sort((tradition_a, tradition_b) =>
         tradition_a.title.localeCompare(tradition_b.title)
-      );
+      ).reverse(); // reverse in order not to start with click on the first tradition title
       cy.loginViaUi(user); // first step in users_user.forEach((user) => { ...
     });
 
@@ -53,7 +55,6 @@ if (Cypress.browser.isHeaded) {
       cy.log('end of test for this user')
     });
 
-    // TODO: check if test is complete
     it('passes', () => {
 
       // assert user can only edit his own collations
@@ -72,6 +73,14 @@ if (Cypress.browser.isHeaded) {
           cy.get('ul#traditions-list')
             .contains(tradition.title)
             .as('tradition_title_elem_in_nav')
+          cy.get('@tradition_title_elem_in_nav').click()
+// TODO: CONTINUE HERE
+          // cy.get('@tradition_title_elem_in_nav')
+          //   .find('section-list')
+          //   .find('ul')
+          //   .children()
+          //   .as('sections');
+
         }
         // public traditions the user doesn't own
         // View Collation but not Edit Collation

@@ -24,6 +24,8 @@ Tests for Feat/157 user auth (PR #235), related to 'guest':
 - Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
  */
 
+// TODO: When role user and admin tests are completed, check guest privileges to adapt or complete if necessary.
+
 import test_traditions from '../../fixtures/test_traditions.json';
 
 beforeEach(() => {
