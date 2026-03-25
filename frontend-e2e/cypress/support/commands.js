@@ -184,7 +184,6 @@ Cypress.Commands.add(
       .should('be.visible')
       .as('propsDialogModal');
     const newName = '"EDITED" ' + tradition.title;
-    // newAccess: make a Private tradition Public (v.vs.) by .check() / .uncheck()
     const newLanguage = 'Another language for ' + tradition.title;
     const newDirection = 'BI'; // none of the test traditions is bi-directional originally
     const newDirectionText = 'Bi-directional';
@@ -197,6 +196,8 @@ Cypress.Commands.add(
         .find('#name_input')
         .invoke('val')
         .should('eq', newName);
+
+      // newAccess: make a Private tradition Public (v.vs.) by .check() / .uncheck()
       if (tradition.access === 'Public') {
         // input checkbox Access
         cy.get('@propsDialogModal')
@@ -220,6 +221,7 @@ Cypress.Commands.add(
           .find('input[type="checkbox"][value="access"]')
           .should('be.checked');
       }
+
       // input text Language
       cy.get('@propsDialogModal')
         .find('#language_input')
