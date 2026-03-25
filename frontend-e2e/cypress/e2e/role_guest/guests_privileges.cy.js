@@ -24,11 +24,12 @@ Tests for Feat/157 user auth (PR #235), related to 'guest':
 - Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
  */
 
+// TODO: When role user and admin tests are completed, check guest privileges to adapt or complete if necessary.
+
 import test_traditions from '../../fixtures/test_traditions.json';
 
 beforeEach(() => {
   cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
-  cy.viewport(1600, 900);
   test_traditions.sort((tradition_a, tradition_b) =>
     tradition_a.title.localeCompare(tradition_b.title)
   );

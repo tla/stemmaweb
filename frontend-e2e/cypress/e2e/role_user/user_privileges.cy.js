@@ -1,7 +1,7 @@
 /*  User priviledges (anyone with role 'user'):
     Users except admins should only be allowed to see and manipulate their own traditions.
     They should not be able to see other users' traditions, nor edit or delete them.
-      paritally DONE: tests for Edit properties; TODO when feature is imlemented: Assert 'Save' edited properties.
+      partially DONE: tests for Edit properties; TODO when feature is imlemented: Assert 'Save' edited properties.
       TODO: tests for Edit collation, Delete, Download, etc (re. roles user and admin)
 
     https://github.com/tla/stemmaweb/pull/235
@@ -56,7 +56,6 @@ if (Cypress.browser.isHeaded) {
       // test for both users: user@example.org and benutzer@example.org
       beforeEach(() => {
         cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
-        cy.viewport(1600, 900);
         test_traditions.sort((tradition_a, tradition_b) =>
           tradition_a.title.localeCompare(tradition_b.title)
         );
@@ -119,9 +118,9 @@ if (Cypress.browser.isHeaded) {
             // .parents('edit-properties-button).click() // cypress does not like this...
             cy.get('@properties-table').find('edit-properties-button').click();
 
-            // TODO, in cypress/support/commands.js 'editProperties'
+            // in cypress/support/commands.js 'editProperties'
             // when the feature is implemented for role 'user':
-            // assert save the changes passes
+            // TODO: assert save any changes passes
             cy.editProperties([
               'Edit properties',
               user.username,

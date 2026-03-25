@@ -111,7 +111,9 @@ class SectionList extends HTMLElement {
         );
         var stateValue;
         if( thisTradition ){
-            stateValue = ( thisTradition.owner != ( AUTH_STORE.state.user && AUTH_STORE.state.user.id ) ) ? true : false; 
+            stateValue = ( thisTradition.owner != ( AUTH_STORE.state.user && AUTH_STORE.state.user.id ) ) ? true : false;
+            // Admin overrides
+            stateValue = !userIsOwner();
         }
         return stateValue;
     }
