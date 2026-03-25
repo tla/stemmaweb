@@ -166,33 +166,38 @@ Cypress.Commands.add('clickModalButton', ([dialogLabel, buttonLabel]) => {
 // TODO: assert the tradition properties belong to the right tradition (tradition name in the properties equals the clicked one in the tradition list)
 Cypress.Commands.add(
   'editProperties',
-  ([dialogLabel, u_name, u_role, t_title, t_owner, t_access]) => {
+  ([dialogLabel, u_name, u_role, tradition]) => {
     cy.log('dialogLabel: ' + dialogLabel);
     cy.log('u_name: ' + u_name);
     cy.log('u_role:' + u_role);
-    cy.log('t_owner: ' + t_owner);
-    cy.log('t_access: ' + t_access);
+    cy.log('tradition.owner: ' + tradition.owner);
+
+    // Tradition properties to be editable: title, access, language, direction.
+    cy.log('tradition.title: ' + tradition.title);
+    cy.log('tradition.access: ' + tradition.access);
+    cy.log('tradition.language: ' + tradition.language);
+    cy.log('tradition.direction: ' + tradition.direction);
 
     // 'Edit properties' modal is visible
     cy.contains('h5#modalDialogLabel', dialogLabel)
       .parents('#modalDialog', { timeout: 1000 })
       .should('be.visible')
       .as('propsDialogModal');
-    const newName = t_title + ' "EDITED"';
+    const newName = '"EDITED" ' + tradition.title;
     // newAccess: make a Private tradition Public (v.vs.) by .check() / .uncheck()
-    const newLanguage = 'Another language';
-    const newDirection = 'BI';
+    const newLanguage = 'Another language for ' + tradition.title;
+    const newDirection = 'BI'; // none of the test traditions is bi-directional originally
     const newDirectionText = 'Bi-directional';
-    const newWitnesses = 'X, Y, Z';
+
     // 'Edit properties' values are editable
-    if ((t_owner === u_name && u_role === 'user') || u_role === 'admin') {
-      // input text Name
+    if ((tradition.owner === u_name && u_role === 'user') || u_role === 'admin') {
+      // insert new tradition title
       cy.get('@propsDialogModal').find('#name_input').invoke('val', newName);
       cy.get('@propsDialogModal')
         .find('#name_input')
         .invoke('val')
         .should('eq', newName);
-      if (t_access === 'Public') {
+      if (tradition.access === 'Public') {
         // input checkbox Access
         cy.get('@propsDialogModal')
           .find('input[type="checkbox"][value="access"]')
@@ -203,7 +208,7 @@ Cypress.Commands.add(
         cy.get('@propsDialogModal')
           .find('input[type="checkbox"][value="access"]')
           .should('not.be.checked');
-      } else if (t_access === 'Private') {
+      } else if (tradition.access === 'Private') {
         // input checkbox Access
         cy.get('@propsDialogModal')
           .find('input[type="checkbox"][value="access"]')
@@ -222,7 +227,7 @@ Cypress.Commands.add(
       // select option direction, values LR, RL, BI
       cy.get('@propsDialogModal')
         .find('select#direction_input')
-        .should('have.value', 'LR')
+        .should('have.value', 'LR') // all test traditions originally say direction LR
         .select('BI')
         .should('have.value', newDirection);
       cy.get('@propsDialogModal')
@@ -232,10 +237,6 @@ Cypress.Commands.add(
         .find('select#direction_input')
         .find('option:selected')
         .should('contain', newDirectionText);
-      // input text Witnesses
-      cy.get('@propsDialogModal')
-        .find('#witnesses_input')
-        .invoke('val', newWitnesses);
 
       // Save the changes
       cy.get('@propsDialogModal')
@@ -248,7 +249,7 @@ Cypress.Commands.add(
       cy.get('@propsDialogModal').should('not.be.visible');
 
       // TODO: assert that the changed tradition name newName is visible in the navigation bar.
-      // TODO: all edited tradition properties are updated: Name, access, language, direction, witnesses?
+      // TODO: assert that all edited tradition properties are updated: Name, access, language, direction.
       // TODO: assert that after visiting other traditions, the changes are still at the right places, in the toc and in the props.
     }
   }

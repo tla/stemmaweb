@@ -125,9 +125,7 @@ if (Cypress.browser.isHeaded) {
               'Edit properties',
               user.username,
               user.role,
-              tradition.title,
-              tradition.owner,
-              tradition.access
+              tradition
             ]);
           }
           // User sees only public and their own traditions
