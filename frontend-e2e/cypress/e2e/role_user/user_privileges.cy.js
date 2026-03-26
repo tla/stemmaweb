@@ -1,4 +1,4 @@
-/*  User priviledges (anyone with role 'user'):
+/*  User privileges (anyone with role 'user'):
     Users except admins should only be allowed to see and manipulate their own traditions.
     They should not be able to see other users' traditions, nor edit or delete them.
       partially DONE: tests for Edit properties; TODO when feature is imlemented: Assert 'Save' edited properties.
