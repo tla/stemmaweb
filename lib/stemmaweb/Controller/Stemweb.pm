@@ -222,7 +222,7 @@ sub _process_stemweb_result {
                 foreach my $tree (split(/\s*;\s*/, $answer->{result})) {
                     $c->log->debug("Found tree $tree");
                     my $req = {
-                        identifier => $title . "_$ct",
+                        name => $title . "_$ct",
                         newick => "$tree;",
                         from_jobid => $answer->{jobid}
                     };
