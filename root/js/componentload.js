@@ -223,6 +223,10 @@ function load_stemma(idx) {
     loadSVG(stemmadata.svg);
     $('#stemma_identifier').text(stemmadata.name);
     setTimeout('start_element_height = $("#stemma_graph .node")[0].getBBox().height;', 500);
+  } else {
+    // Clear any stemma that is in the box.
+    $('#stemma_graph').empty();
+    $('#stemma_identifier').empty();
   }
 }
 
@@ -341,7 +345,7 @@ function set_stemma_interactive(svg_element) {
     $("#root_tree_dialog_button_ok").unbind();
     $("#root_tree_dialog_button_ok").click(function() {
       $("#stemma_load_status").empty();
-      var stemmaid = selectedTextInfo.stemmata[selectedStemmaSequence].name;
+      var stemmaid = selectedTextInfo.stemmata[selectedStemmaSequence].stemmaid;
       var requrl = _get_url(["stemma", "reroot", selectedTextID, stemmaid]);
       var targetnode = $('#root_tree_dialog').data('selectedNode');
       $.post(requrl, {
@@ -396,10 +400,11 @@ function set_stemma_interactive(svg_element) {
 }
 
 function confirm_delete_stemma(seq) {
-  // Get the stemma identifier
-  var stemmaid = selectedTextInfo.stemmata[seq].name;
+  // Get the stemma id and name
+  var stemmaid = selectedTextInfo.stemmata[seq].stemmaid;
+  var stemmaname = selectedTextInfo.stemmata[seq].name;
   // First confirm that the user wants to proceed
-  var really = confirm("This will delete the stemma " + stemmaid + " permanently. Are you sure?")
+  var really = confirm("This will delete the stemma " + stemmaname + " permanently. Are you sure?")
   if (really) {
     var requrl = _get_url(["stemma", "delete", selectedTextID, stemmaid]);
     $.post(requrl, function(remaining) {
@@ -707,7 +712,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         mybuttons.button('disable');
         var stemmaseq = $('#stemmaseq').val();
         var stemmaid = stemmaseq === 'n' ? '__NEW__' :
-          selectedTextInfo.stemmata[stemmaseq].name;
+          selectedTextInfo.stemmata[stemmaseq].stemmaid;
         var requrl = _get_url(["stemma", selectedTextID, stemmaid]);
         var reqparam = {
           'dot': $('#dot_field').val()
@@ -750,7 +755,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         $(evt.target).dialog('option', 'title', 'Edit selected stemma')
         $('#dot_field').val('Loading, please wait...');
         // Get the stemma identifier
-        var stemmaid = selectedTextInfo.stemmata[stemmaseq].name;
+        var stemmaid = selectedTextInfo.stemmata[stemmaseq].stemmaid;
         var doturl = _get_url(["stemma", "dot", selectedTextID, stemmaid]);
         $.getJSON(doturl, function(data) {
           // Re-insert the line breaks

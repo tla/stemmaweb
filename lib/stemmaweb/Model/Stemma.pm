@@ -93,11 +93,18 @@ has graph => (
     predicate => 'has_graph',
     );
 
-has identifier => (
+has stemmaid => (
+	is => 'ro',
+	isa => 'Int',
+	writer => 'set_stemmaid',
+	predicate => 'has_stemmaid',
+	);
+
+has name => (
 	is => 'ro',
 	isa => 'Str',
-	writer => 'set_identifier',
-	predicate => 'has_identifier',
+	writer => 'set_name',
+	predicate => 'has_name',
 	);
 
 has from_jobid => (
@@ -149,7 +156,7 @@ sub _graph_from_dot {
 	my $graph_id = $graph->has_graph_attribute( 'name' )
 		? $graph->get_graph_attribute( 'name' ) : 'stemma';
 	$self->graph( $graph );
-	$self->set_identifier( $graph_id );
+	$self->set_name( $graph_id );
 }
 
 sub is_undirected {
@@ -239,8 +246,8 @@ sub as_dot {
 		map { $extant->{$_} = 1 } $self->witnesses;
 		$graph = $self->situation_graph( $extant, $opts->{'layerwits'} );
 	}
-	if( $self->has_identifier ) {
-		$opts->{'name'} = $self->identifier;
+	if( $self->has_name ) {
+		$opts->{'name'} = $self->name;
 	}
 	return display_graph( $graph, $opts );
 }
@@ -271,8 +278,8 @@ situation_graph should be passed via $opts->{'extant'} and $opts->{'layerwits'}.
 sub editable {
 	my( $self, $opts ) = @_;
 	my $graph = $self->graph;
-	if( $self->has_identifier ) {
-		$opts->{'name'} = $self->identifier;
+	if( $self->has_name ) {
+		$opts->{'name'} = $self->name;
 	}
 	## See if we need an editable version of a situational graph.
 	if( exists $opts->{'layerwits'} || exists $opts->{'extant'} ) {
@@ -402,7 +409,7 @@ If it is directed, re-root it.
 sub root_graph {
 	my( $self, $rootvertex ) = @_;
 	my $graph;
-	my $ident = $self->identifier; # will have to restore this at the end
+	my $stemmaname = $self->name; # will have to restore this at the end
 	if( $self->is_undirected ) {
 		$graph = $self->graph;
 	} else {
@@ -438,7 +445,7 @@ sub root_graph {
 	map { $rooted->set_vertex_attribute( $_, 'class', 'extant' ) }
 		$self->witnesses;
 	$self->graph( $rooted );
-	$self->set_identifier( $ident );
+	$self->set_name( $stemmaname );
 }
 
 

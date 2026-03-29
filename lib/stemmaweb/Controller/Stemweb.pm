@@ -210,7 +210,7 @@ sub _process_stemweb_result {
                 my $dotspec = parse_neighbournet($stemweb_result, $title);
                 $c->log->debug("Parsed into dotfile: $dotspec");
                 my $req = {
-                    identifier => $title,
+                    name => $title,
                     dot => $dotspec,
                     from_jobid => $answer->{jobid}
                 };
