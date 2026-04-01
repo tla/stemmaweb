@@ -128,13 +128,19 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
 }
 
-.sidebar-menu-sticky {
+#sidebar-menu > div {
+  height: 100%;
+}
+
+/* TODO: This declaration does not seem to be used anymore (20260401, not an April's Fool joke). */
+/* `overflow-y: auto;` Scrollable contents if viewport is shorter than content. */
+/*.sidebar-menu-sticky {
   top: 0;
   height: calc(100vh - 48px);
   padding-top: 0.5rem;
   overflow-x: hidden;
-  overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
-}
+  overflow-y: auto; 
+}*/
 
 .sidebar-menu .nav-link {
   display: flex;
@@ -161,6 +167,7 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
 .sidebar-menu-heading {
   font-size: 0.75rem;
   text-transform: uppercase;
+  margin-bottom: 2.2em;
 }
 
 .sidebar-menu .section-name {
@@ -521,8 +528,15 @@ li.nav-item {
   height: 14px;
 }
 
-ul#traditions-list {
-  margin-top: 1.2em;
+tradition-list {
+  height: 100%;
+  overflow-y: scroll;
+  display: block;
+  padding-bottom: 350px;
+}
+
+ul#traditions-list > li:first-child {
+  padding-top: 0;
 }
 
 ul#traditions-list a {
