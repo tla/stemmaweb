@@ -107,6 +107,9 @@ class PropertyTableView extends HTMLElement {
   /**
    * @param {Tradition} tradition Tradition to render the metadata for.
    * @returns {MetaItem[]} Array of metadata items to display.
+   * 
+   * Only fields that have `inputOptions` will also be represented on 
+   * a dialogue to be editable. (See: EditProperties.js.)
    */
   static metadataFromTradition(tradition) {
     const labels = PropertyTableView.traditionMetadataLabels;
@@ -144,8 +147,7 @@ class PropertyTableView extends HTMLElement {
       },
       {
         label: labels.witnesses,
-        value: tradition.witnesses.sort().join( ', ' ),
-        inputOptions: { control: 'text', size: 80, required: true }
+        value: tradition.witnesses.sort().join( ', ' )
       }
     ];
   }

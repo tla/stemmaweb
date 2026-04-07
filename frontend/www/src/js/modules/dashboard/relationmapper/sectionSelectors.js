@@ -8,7 +8,8 @@ const sectionSelectorsService = stemmarestService;
 
 class SectionSelectors extends HTMLElement {
 
-  #thePromise = null;
+  #scrollMessage = ' (Scroll to view more sections.)';
+  #showScrollMessage = true;
 
   constructor() {
     super();
@@ -17,19 +18,28 @@ class SectionSelectors extends HTMLElement {
   connectedCallback() {
     this.render();
     SECTION_STORE.subscribe( this.onSectionStateChanged );
+    const sectionSelectorsContainer = document.querySelector( 'section-selectors' );
+    const sectionSelectorsElement = document.querySelector( '#section-selectors' );
+    sectionSelectorsElement.addEventListener( 'scroll', this.scrollGage );
   }
 
-  addPromise( aPromise ){
-    this.#thePromise = aPromise;
+  set showScrollMessage( bool ) {
+    this.#showScrollMessage = bool;
+  }
+  get showScrollMessage() {
+    return this.#showScrollMessage;
+  }
+  get scrollMessage() {
+    return this.#scrollMessage;
   }
 
   /**
- * This function will be called each time the state persisted in the
- * `SECTION_STORE` changes. It will update the UI to reflect the current
- * state.
- *
- * @param {SectionState} state
- */
+  * This function will be called each time the state persisted in the
+  * `SECTION_STORE` changes. It will update the UI to reflect the current
+  * state.
+  *
+  * @param {SectionState} state
+  */
   onSectionStateChanged( prevState, state ) {
     // First off, we don't need to do anything if we're not visible…
     if ( window.getComputedStyle( document.querySelector( 'relation-mapper' ) ).display != 'none' ) { 
@@ -64,6 +74,26 @@ class SectionSelectors extends HTMLElement {
     }
   }
   
+  scrollGage( evt ) {
+    let sectionSelectorsContainer = document.querySelector( 'section-selectors' );  // => <section-selectors>
+    let sectionSelectorsElement = evt.currentTarget;  // => <div id="section-selectors">
+    // Note that the right padding here is a 100 px to have some decent scroll possibility if 
+    // the container is just a tad too narrow and only one or a few section selector buttons
+    // are not showing.
+    if ( sectionSelectorsElement.scrollLeft > 100 ) {
+      sectionSelectorsContainer.showScrollMessage = false;
+      sectionSelectorsElement.removeEventListener( 'scroll', sectionSelectorsContainer.scrollGage );
+    }
+  }
+
+  createTooltip( sectionName ) {
+    let tooltip = `Click to go to section ${sectionName}.`;
+    if ( this.#showScrollMessage && ( SECTION_STORE.state.availableSections.length > 17 ) ) {
+        tooltip += this.#scrollMessage;
+    }
+    return tooltip;
+  }
+
   static renderSectionSelectors() {
     const sections = SECTION_STORE.state.availableSections;
     // Here we put in the slide indicators that will allow the user to
@@ -83,10 +113,20 @@ class SectionSelectors extends HTMLElement {
           ? " selected"
           : "";
         return `<div class="section-selector link-secondary${selectedAttr}" data-index="${i}">${feather.icons['file-text'].toSvg()}</div>`;
-      })
+      } )
       .on( 'click', function (e, d) {
         // Update the state with the selected section
         SECTION_STORE.setSelectedSection( d );
+      } )
+      .on( 'mouseover', function( e, d ) {
+        d3.select( '#section-selector-tooltip' )
+          .html( document.querySelector( 'section-selectors' ).createTooltip( d.name ) )
+          // .html( `Click to go to section ${d.name}.${scrollMessage}` )
+          .classed( 'show', true );
+      } )
+      .on( 'mouseout', function( e, d ) {
+        d3.select( '#section-selector-tooltip' )
+          .classed( 'show', false );
       } );
   }
 
@@ -95,6 +135,7 @@ class SectionSelectors extends HTMLElement {
       <div id="section-selector-buttons" class="collapse show">
         <div id="section-selectors">
         </div>
+        <div id="section-selector-tooltip"></div>
       </div>
     `;
   }

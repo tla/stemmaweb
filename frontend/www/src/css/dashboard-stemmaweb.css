@@ -128,13 +128,19 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
 }
 
-.sidebar-menu-sticky {
+#sidebar-menu > div {
+  height: 100%;
+}
+
+/* TODO: This declaration does not seem to be used anymore (20260401, not an April's Fool joke). */
+/* `overflow-y: auto;` Scrollable contents if viewport is shorter than content. */
+/*.sidebar-menu-sticky {
   top: 0;
   height: calc(100vh - 48px);
   padding-top: 0.5rem;
   overflow-x: hidden;
-  overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
-}
+  overflow-y: auto; 
+}*/
 
 .sidebar-menu .nav-link {
   display: flex;
@@ -161,6 +167,7 @@ span.relation-colors.color-brown  svg.feather.feather-check-square {
 .sidebar-menu-heading {
   font-size: 0.75rem;
   text-transform: uppercase;
+  margin-bottom: 2.2em;
 }
 
 .sidebar-menu .section-name {
@@ -370,8 +377,44 @@ text-directory a.greyed-out span {
   justify-content: flex-start;
 }
 
+/* TODO: probably similar in case lots of stemma selectors */
+#section-selectors {
+  /* Because the height and width of svg icons are hard set to 24, we can just compute the space we need */
+  /* TODO: Nice to have, scaling icons. If we set height and width as 'em' we can have them scale nicely with the interface?
+     This should have a min+max setting though, as we don't want tiny nor giant icons. So maybe 24px fixed is not too bad? Not sure. */
+  height: 28px;
+  width: 280px;
+  /* Note that the right padding here is a 100 px to have some decent scroll possibility if 
+     the container is just a tad too narrow and only one or a few section selector buttons
+     are not showing. This is relevant to the method scrollGage() in sectionSelectors.js */
+  padding-right: 100px;
+  overflow: scroll;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE 10+ */
+}
+
+#section-selectors::-webkit-scrollbar {
+  background: transparent; /* Chrome/Safari/Webkit */
+  width: 0px;
+}
+
 .stemma-selector.selected svg, .section-selector.selected svg {
   fill: rgb(210,210,210);
+}
+
+#section-selector-buttons {
+  display: flex;
+}
+
+#section-selector-tooltip {
+  display: none;
+}
+
+#section-selector-tooltip.show {
+    display: block;
+    padding-top: 3pt;
+    padding-left: 6pt;
+    font-size: 80%;
 }
 
 @media (min-width: 200px) {
@@ -485,8 +528,15 @@ li.nav-item {
   height: 14px;
 }
 
-ul#traditions-list {
-  margin-top: 1.2em;
+tradition-list {
+  height: 100%;
+  overflow-y: scroll;
+  display: block;
+  padding-bottom: 350px;
+}
+
+ul#traditions-list > li:first-child {
+  padding-top: 0;
 }
 
 ul#traditions-list a {
