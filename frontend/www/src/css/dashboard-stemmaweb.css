@@ -570,6 +570,18 @@ section-list ul li.dragging-highlight {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
+section-list div.selected svg {
+  fill: #cfdcee;
+}
+
+section-list div.selected span.section-name {
+  font-weight: 500;
+}
+
+.section-list-item-pointer-span {
+  cursor: pointer;
+}
+
 .tradition-property-label-cell, .section-property-label-cell, .reading-property-label-cell {
   min-width: 6em;
 }
