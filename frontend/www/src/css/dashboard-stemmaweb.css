@@ -511,16 +511,15 @@ stemmaweb-alert {
 
 li.nav-item {
   padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);
-  cursor: pointer;
 }
 
 .folder-icon {
   padding-right: 0.2em;
-  cursor: pointer;
 }
 
 .access-icon {
   padding-left: 0.5em;
+  padding-top: 3pt;
 }
 
 .access-icon .feather {
@@ -549,6 +548,10 @@ ul#traditions-list .folder-icon.selected svg {
 
 ul#traditions-list .list-separator {
   border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+div.tradition-list-item div {
+  display: flex;
 }
 
 section-list {
