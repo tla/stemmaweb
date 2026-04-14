@@ -253,7 +253,7 @@ class StemmarestService extends BaseService {
    * 
    * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/name/ }
    */
-  saveStemma( userId, tradId, stemma_name, stemma_dot ) {
+  saveStemma( userId, tradId, stemmaId, stemmaName, stemmaDot ) {
     if (userId === null) {
       return Promise.resolve({
         success: false,
@@ -261,12 +261,13 @@ class StemmarestService extends BaseService {
       });
     }
     const formData = {
-      identifier: stemma_name,
-      dot: stemma_dot
+      stemmaid: stemmaId,
+      name: stemmaName,
+      dot: stemmaDot
       // jobid: null,
       // newick: null
     };
-    return this.fetch(`/api/tradition/${tradId}/stemma/${stemma_name}`, {
+    return this.fetch(`/api/tradition/${tradId}/stemma/${stemmaId}`, {
       method: 'PUT',
       body: JSON.stringify( formData) ,
       headers: new Headers({ 'Content-Type': 'application/json' })
@@ -284,7 +285,7 @@ class StemmarestService extends BaseService {
    * 
    * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/ }
    */
-  addStemma( userId, tradId, stemma_name, stemma_dot ) {
+  addStemma( userId, tradId, stemmaName, stemmaDot ) {
     if (userId === null) {
       return Promise.resolve({
         success: false,
@@ -292,8 +293,8 @@ class StemmarestService extends BaseService {
       });
     }
     const formData = {
-      identifier: stemma_name,
-      dot: stemma_dot
+      name: stemmaName,
+      dot: stemmaDot
       // jobid: null,
       // newick: null
     };
@@ -311,7 +312,7 @@ class StemmarestService extends BaseService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemma}
    */
   deleteStemma( tradId, stemma ) {
-    return this.fetch(`/api/tradition/${tradId}/stemma/${stemma.identifier}`, {
+    return this.fetch(`/api/tradition/${tradId}/stemma/${stemma.stemmaid}`, {
       method: 'DELETE'
     });
   }
