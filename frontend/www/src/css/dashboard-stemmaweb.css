@@ -511,16 +511,15 @@ stemmaweb-alert {
 
 li.nav-item {
   padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);
-  cursor: pointer;
 }
 
 .folder-icon {
   padding-right: 0.2em;
-  cursor: pointer;
 }
 
 .access-icon {
   padding-left: 0.5em;
+  padding-top: 3pt;
 }
 
 .access-icon .feather {
@@ -551,6 +550,10 @@ ul#traditions-list .list-separator {
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+div.tradition-list-item div {
+  display: flex;
+}
+
 section-list {
   opacity: 0;
 }
@@ -565,6 +568,18 @@ section-list ul li {
 
 section-list ul li.dragging-highlight {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+section-list div.selected svg {
+  fill: #cfdcee;
+}
+
+section-list div.selected span.section-name {
+  font-weight: 500;
+}
+
+.section-list-item-pointer-span {
+  cursor: pointer;
 }
 
 .tradition-property-label-cell, .section-property-label-cell, .reading-property-label-cell {

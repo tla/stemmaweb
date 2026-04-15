@@ -85,16 +85,20 @@ else
 fi
 echo; echo Adding stemweb_jobid 2 to Florilegium
 $CURL --request PUT --header 'Content-Type: application/json' --data '{"stemweb_jobid":2}' $STEMMAREST_ENDPOINT/tradition/$FLOR_ID
-echo Uploading three sections
-for e in w x x{1..50} y; do
-  $CURL --request POST --form name="section '$e'" --form file=@data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response
-  SECTID=`jq -r -e ".sectionId" /tmp/stemmarest.response`
-  if [ -z $SECTID ]; then
-    echo Failed to create section $e
-    exit 1
-  else
-    echo ...added section $SECTID
-  fi
+echo Uploading 4x20 sections
+for e in w x y z; do
+  for s in {1..20}; do
+    NAME="section ${e}-${s}"
+    echo ...uploading section $NAME
+    $CURL --request POST --form name="$NAME" --form file=@data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response
+    SECTID=`jq -r -e ".sectionId" /tmp/stemmarest.response`
+    if [ -z $SECTID ]; then
+      echo Failed to create section $NAME
+      exit 1
+    else
+      echo ...added section $SECTID
+    fi
+  done
 done
 echo ...and its stemma
 $CURL --request POST --header 'Content-Type: application/json' --data @data/florilegium_stemma.json $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/stemma

@@ -87,6 +87,15 @@ class EditStemma extends HTMLElement {
     const tab = '    ';
     var rootAndWitnesses = TRADITION_STORE.state.selectedTradition.witnesses.sort(); 
     rootAndWitnesses = rootAndWitnesses.slice( 0, 9 ); // [ 'A', 'B', 'C', … ]
+    // Double quote witness names that have non-ascii chars.
+    const regex = /^[\u0000-\u007f]*$/;
+    rootAndWitnesses = rootAndWitnesses.map( (witness) => {
+      let mapped = witness;
+      if ( !regex.test( witness ) ) {
+        mapped = `"${witness}"`;
+      }
+      return mapped
+    } );
     // Add an example hypothetical witness.
     rootAndWitnesses.splice( 1, 0, '"2"' ); // [ 'A', '"2"', 'B', 'C', … ]
     const witnesses = rootAndWitnesses.slice( 1, 10 ); // [ '"2"', 'B', 'C', … ]
@@ -157,14 +166,20 @@ class EditStemma extends HTMLElement {
       // If no error we can try to save the stemma.
       const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
       const tradId = TRADITION_STORE.state.selectedTradition.id;
-      const stemma_dot = stemmaDotEditorTextarea.value;
-      // Distinguish edit from add stemma, if add do a POST instead of a PUT
-      if( this.buttonAction == 'add' ) {
-        const stemma_name = ast[0].id;
-        return( editStemmaService.addStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleResponse( resp ) } ) );
+      const stemmaDot = stemmaDotEditorTextarea.value;
+      const stemmaName = ast[0].id || '';
+      const regex = /^\s*$/;
+      const matchArr = stemmaName.match( regex );
+      if ( matchArr ) {
+          throw new Error( 'Stemma has no or an invalid name.' );
       } else {
-        const stemma_name = STEMMA_STORE.state.selectedStemma.identifier;
-        return( editStemmaService.saveStemma( userId, tradId, stemma_name, stemma_dot ).then( (resp) => { return this.handleResponse( resp ) } ) );
+        // Distinguish edit from add stemma, if add do a POST instead of a PUT
+        if( this.buttonAction == 'add' ) {
+          return( editStemmaService.addStemma( userId, tradId, stemmaName, stemmaDot ).then( (resp) => { return this.handleResponse( resp ) } ) );
+        } else {
+          const stemmaId = STEMMA_STORE.state.selectedStemma.stemmaid;
+          return( editStemmaService.saveStemma( userId, tradId, stemmaId, stemmaName, stemmaDot ).then( (resp) => { return this.handleResponse( resp ) } ) );
+        }
       }
     } catch( { name, message } ) {
       StemmawebAlert.show(`Cannot save stemma: ${name} - ${message}`, 'danger');
@@ -180,13 +195,13 @@ class EditStemma extends HTMLElement {
     const stemma = STEMMA_STORE.state.selectedStemma;
     StemmawebDialog.show(
       'Delete Stemma',
-      `<p>Are you sure you want to delete <span class="fst-italic">${stemma.identifier}</span>?</p>`,
+      `<p>Are you sure you want to delete the stemma <span class="fst-italic">${stemma.name}</span>?</p>`,
       {
         onOk: () => {
           editStemmaService.deleteStemma( tradId, stemma ).then((res) => {
             if (res.success) {
               StemmawebAlert.show(
-                `<p class="d-inline">Deleted <span class="fst-italic">${stemma.identifier}</span></p>`,
+                `<p class="d-inline">Deleted stemma <span class="fst-italic">${stemma.name}</span></p>`,
                 'success'
               );
               STEMMA_STORE.stemmaDeleted( stemma );

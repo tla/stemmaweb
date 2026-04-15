@@ -52,6 +52,9 @@ class TraditionList extends HTMLElement {
                 if ( prevState.selectedTradition.name != state.selectedTradition.name ) {
                     this.querySelector( `a[trad-id="${state.selectedTradition.id}"].nav-link span.tradition-nav-name` ).innerHTML = state.selectedTradition.name;
                 }
+                if ( prevState.selectedTradition.is_public != state.selectedTradition.is_public ) {
+                    this.setAccessIcon( state.selectedTradition );
+                }
                 // The case where another tradition was selected.
                 if ( prevState.selectedTradition != state.selectedTradition ) {
                     this.highlightFolderIcon( state.selectedTradition );
@@ -108,6 +111,15 @@ class TraditionList extends HTMLElement {
         });
     }
 
+    setAccessIcon( tradition ) {
+        const accessIconElement = this.querySelector( `a[trad-id="${tradition.id}"].nav-link + div.access-icon` );
+        let accessIconElementContent = '';
+        if ( !tradition.is_public ) {
+            accessIconElementContent = privateAccessIcon;
+        }
+        accessIconElement.innerHTML = accessIconElementContent;
+    }
+
     /**
      * Creates a list item for a tradition to be added to the 
      * traditions and sections navigation tree.
@@ -119,21 +131,23 @@ class TraditionList extends HTMLElement {
         const traditionListItem = document.createElement( 'li' );
         traditionListItem.setAttribute( 'class', 'nav-item' );
         const selected = TRADITION_STORE.state.selectedTradition.id == tradition.id ? ' selected' : '';
-        var accessIcon = '\n';
+        let accessIconElement = '';
+        let accessIcon = '';
         if( !tradition.is_public ){
             traditionListItem.classList.add( 'private' );
-            accessIcon = `\n<div class="access-icon">${privateAccessIcon}</div>`;
+            accessIcon = privateAccessIcon;
         } else {
             traditionListItem.classList.add( 'public' );
         }
+        accessIconElement = `\n<div class="access-icon">${accessIcon}</div>`;
         traditionListItem.innerHTML = `
             <div class="tradition-list-item d-flex">
                 <div>
                     <a href="api/tradition/${tradition.id}" trad-id="${tradition.id}" class="nav-link">
                         <div class="folder-icon${selected}" trad-id="${tradition.id}">${folderIcon}</div>
                         <span class="tradition-nav-name">${tradition.name}</span>
-                    </a>
-                </div>${accessIcon}                
+                    </a>${accessIconElement}
+                </div>  
             </div>
             <div>
                 <section-list trad-id="${tradition.id}" class="collapse"></section-list>

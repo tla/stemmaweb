@@ -4,6 +4,7 @@
     "sortablejs": "^1.15.0"
   },
   "devDependencies": {
-    "cypress": "^12.5.1"
+    "cypress": "^12.5.1",
+    "esbuild": "0.28.0"
   }
 }

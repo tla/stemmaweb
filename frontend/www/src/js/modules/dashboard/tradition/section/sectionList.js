@@ -22,6 +22,7 @@ class SectionList extends HTMLElement {
         super();
         this.addEventListener( 'sectionAppended', this.rerenderList );
         this.addEventListener( 'sectionDeleted', this.rerenderList );
+        this.addEventListener( 'sectionSelected', this.setSectionHighlight );
         const traditionId = this.getAttribute( 'trad-id' );
         SECTION_STORE.subscribe( ( prevState, state ) => {
             // IF this is me…
@@ -50,6 +51,28 @@ class SectionList extends HTMLElement {
     rerenderList( evt ) {
         if ( this.getAttribute( 'trad-id' ) == evt.detail.traditionId ) {
             this.connectedCallback();
+        }
+    }
+
+    setSectionHighlight( evt ) {
+        let sectionId = evt.detail.sectionId;
+        // None selected or not my section, makes sure mine are all deselected.
+        if ( !sectionId || this.getAttribute( 'trad-id' ) != evt.detail.traditionId ) {
+            this.querySelectorAll( 'section-list div' ).forEach( (elem) => {
+                elem.classList.remove( 'selected' );
+            } );
+        }
+        // A section was selected and it is one of mine.
+        if ( sectionId && this.getAttribute( 'trad-id' ) == evt.detail.traditionId ) {
+            this.querySelectorAll( 'section-list div' ).forEach( (elem) => {
+                if ( elem.getAttribute( 'sect-id' ) != sectionId ) {
+                    elem.classList.remove( 'selected' );
+                } else {
+                    if ( !elem.classList.contains( 'selected' ) ) {
+                        elem.classList.add( 'selected' );
+                    }
+                }
+            } );
         }
     }
 
@@ -163,8 +186,14 @@ class SectionList extends HTMLElement {
     renderSectionName( section ) {
         const sectionListItem = document.createElement( 'li' );
         sectionListItem.setAttribute( 'class', 'nav-item' );
-        sectionListItem.innerHTML = `<div sect-id="${section.id}">${textIcon}&nbsp;<span class="section-name">${section.name}</span></div>`;
-        sectionListItem.addEventListener( 'mousedown', () => { this.selectSection( section ) } );
+        const sectionDiv = document.createElement( 'div' );
+        sectionDiv.setAttribute( 'sect-id', section.id );
+        sectionListItem.appendChild( sectionDiv );
+        const sectionPointerSpan = document.createElement( 'span' );
+        sectionPointerSpan.setAttribute( 'class', 'section-list-item-pointer-span' );
+        sectionPointerSpan.innerHTML = `${textIcon}&nbsp;<span class="section-name">${section.name}</span>`;
+        sectionPointerSpan.addEventListener( 'mousedown', () => { this.selectSection( section ) } );
+        sectionDiv.appendChild( sectionPointerSpan );
         this.querySelector( 'ul' ).appendChild( sectionListItem );
     }
 

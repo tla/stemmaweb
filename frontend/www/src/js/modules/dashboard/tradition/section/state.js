@@ -31,6 +31,13 @@ class SectionStore extends StateStore {
         }
         const state = { availableSections, selectedSection };
         this.setState( state );
+        const sectionSelectedEvent = new CustomEvent( 'sectionSelected', { 
+          detail: { 
+            sectionId: SECTION_STORE.state.selectedSection ? SECTION_STORE.state.selectedSection.id : null, 
+            traditionId: TRADITION_STORE.state.selectedTradition.id
+          } 
+        } );
+        document.querySelectorAll( 'section-list' ).forEach( (elem) => { elem.dispatchEvent( sectionSelectedEvent ) } );
       } else {
         StemmawebAlert.show( `Error: ${resp.message}`, 'danger' );
       }

@@ -161,7 +161,7 @@ class PropertyTableView extends HTMLElement {
     return [
       {
         label: labels.stemma,
-        value: stemma.identifier
+        value: stemma.name
       }
     ];
   }
