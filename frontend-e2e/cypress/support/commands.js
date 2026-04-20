@@ -200,22 +200,24 @@ Cypress.Commands.add(
       // newAccess: make a Private tradition Public (v.vs.) by .check() / .uncheck()
       if (tradition.access === 'Public') {
         // input checkbox Access
+        cy.log("tradition.access === 'Public'")
         cy.get('@propsDialogModal')
           .find('input[type="checkbox"][value="access"]')
           .should('be.checked'); // "Allow Public Access" yes/no Public/Private
         cy.get('@propsDialogModal')
-          .find('input[type="checkbox"]')
+          .find('input[type="checkbox"][value="access"]')
           .uncheck('access');
         cy.get('@propsDialogModal')
           .find('input[type="checkbox"][value="access"]')
           .should('not.be.checked');
       } else if (tradition.access === 'Private') {
         // input checkbox Access
+        cy.log("tradition.access === 'Private'")
         cy.get('@propsDialogModal')
           .find('input[type="checkbox"][value="access"]')
           .should('not.be.checked'); // "Allow Public Access" yes/no Public/Private
         cy.get('@propsDialogModal')
-          .find('input[type="checkbox"]')
+          .find('input[type="checkbox"][value="access"]')
           .check('access');
         cy.get('@propsDialogModal')
           .find('input[type="checkbox"][value="access"]')
