@@ -14,6 +14,7 @@ import users_all from '../../fixtures/users.json';
 import test_traditions from '../../fixtures/test_traditions.json';
 
 const users_admin = users_all.filter(({ role }) => role === 'admin');
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // for "equals" instead of "contains"
 
 /* Steps overview
   for each user:
@@ -66,7 +67,7 @@ if (Cypress.browser.isHeaded) {
         cy.log('end of test for this admin')
       });
 
-      it('passes', () => {
+      it('asserts admin can see and edit own and others\' traditions', () => {
 
         // Admin sees all traditions: own and others' public and private.
         cy.get('ul#traditions-list')
@@ -86,10 +87,11 @@ if (Cypress.browser.isHeaded) {
         test_traditions.forEach((tradition) => {
           cy.log('title: ' + tradition.title);
           // admin may change metadata on their own and others' traditions
+          const text = tradition.title;
           if (!tradition.title.includes('Verbum')) { // TODO: test should also include the two Verbum traditions
             // visible and editable, closed lock sign
             cy.get('ul#traditions-list')
-              .contains(tradition.title) // TODO: equals title
+              .contains(new RegExp(`^${escapeRegExp(text)}$`)) // exact match
               .as('tradition_title_elem_in_nav')
             cy.get('@tradition_title_elem_in_nav')
               .should('be.visible')
