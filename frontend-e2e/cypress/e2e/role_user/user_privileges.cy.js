@@ -67,7 +67,7 @@ if (Cypress.browser.isHeaded) {
         cy.log('end of test for this user')
       });
 
-      it('passes', () => {
+      it('asserts the user sees only public and their own traditions, and can only edit own traditions', () => {
 
         // User sees only public and their own traditions
         cy.get('ul#traditions-list')
