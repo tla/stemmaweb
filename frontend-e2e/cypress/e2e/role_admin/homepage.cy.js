@@ -191,36 +191,34 @@ if (Cypress.browser.isHeaded) {
         test_traditions.forEach((tradition) => {
           cy.log('title: ' + tradition.title);
           const text = tradition.title;
-          if (!tradition.title.includes('Verbum')) { // test fails for the two Verbum traditions. UC / TODO.
-            cy.get('ul#traditions-list')
-              .contains(new RegExp(`^${escapeRegExp(text)}$`)) // exact match
-              .should('be.visible')
-              .click();
-            // Add a stemma (the default example stemma)
-            // to the second tradition (verbum fails at the moment )
-            // cy.get('ul#traditions-list > li').eq(2).wait(500).click()
-            // cy.pause()
-            cy.get('#add-stemma-button-link').click();
-            cy.get('#save-stemma-button-link').wait(500).click();
-            // cy.pause()
-            // when a stemma is saved it should have a message with the text "Stemma added"
-            cy.get('@messageconsole').contains(stemma_added_marker);
-            // delete the added stemma in order to reset the db
-            cy.get('#delete-stemma-button-link').click();
-            cy.get('.modal-content')
-              .contains('button', 'Yes, delete it')
-              .wait(500)
-              .click();
-            cy.get('#modalDialog').should('not.be.visible');
-            cy.get('@messageconsole').contains(stemma_deleted_marker);
+          cy.get('ul#traditions-list')
+            .contains(new RegExp(`^${escapeRegExp(text)}$`)) // exact match
+            .should('be.visible')
+            .click();
+          // Add a stemma (the default example stemma)
+          // to the second tradition (verbum fails at the moment )
+          // cy.get('ul#traditions-list > li').eq(2).wait(500).click()
+          // cy.pause()
+          cy.get('#add-stemma-button-link').click();
+          cy.get('#save-stemma-button-link').wait(500).click();
+          // cy.pause()
+          // when a stemma is saved it should have a message with the text "Stemma added"
+          cy.get('@messageconsole').contains(stemma_added_marker);
+          // delete the added stemma in order to reset the db
+          cy.get('#delete-stemma-button-link').click();
+          cy.get('.modal-content')
+            .contains('button', 'Yes, delete it')
+            .wait(500)
+            .click();
+          cy.get('#modalDialog').should('not.be.visible');
+          cy.get('@messageconsole').contains(stemma_deleted_marker);
 
-            // assert the content in the message console stays there also upon clicking on another tradition.
-            cy.get('ul#traditions-list > li').eq(-1).wait(500).click(); // ultimate tradition
-            cy.get('@messageconsole')
-              .should('be.visible')
-              .contains(stemma_deleted_marker);
-            cy.get('@messageconsole').contains(stemma_added_marker);
-          }
+          // assert the content in the message console stays there also upon clicking on another tradition.
+          cy.get('ul#traditions-list > li').eq(-1).wait(500).click(); // ultimate tradition
+          cy.get('@messageconsole')
+            .should('be.visible')
+            .contains(stemma_deleted_marker);
+          cy.get('@messageconsole').contains(stemma_added_marker);
         })
       });
     }

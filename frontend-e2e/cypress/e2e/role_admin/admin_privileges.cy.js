@@ -88,30 +88,28 @@ if (Cypress.browser.isHeaded) {
           cy.log('title: ' + tradition.title);
           // admin may change metadata on their own and others' traditions
           const text = tradition.title;
-          if (!tradition.title.includes('Verbum')) { // TODO: test should also include the two Verbum traditions
-            // visible and editable, closed lock sign
-            cy.get('ul#traditions-list')
-              .contains(new RegExp(`^${escapeRegExp(text)}$`)) // exact match
-              .as('tradition_title_elem_in_nav')
-            cy.get('@tradition_title_elem_in_nav')
-              .should('be.visible')
-              .click();
-            // the edit icon should be visible, not greyed out, on click the editing interface should appear.
-            cy.get('property-table-view').as('properties-table');
-            cy.get('@properties-table')
-              .find('edit-properties-button')
-              .find('a')
-              .should('not.have.class', 'greyed-out');
-            // .parents('edit-properties-button).click() // cypress does not like this...
-            cy.get('@properties-table').find('edit-properties-button').click();
+          // visible and editable, closed lock sign
+          cy.get('ul#traditions-list li .tradition-list-item')
+            .contains(new RegExp(`^${escapeRegExp(text)}$`)) // exact match
+            .as('tradition_title_elem_in_nav')
+          cy.get('@tradition_title_elem_in_nav')
+            .should('be.visible')
+            .click();
+          // the edit icon should be visible, not greyed out, on click the editing interface should appear.
+          cy.get('property-table-view').as('properties-table');
+          cy.get('@properties-table')
+            .find('edit-properties-button')
+            .find('a')
+            .should('not.have.class', 'greyed-out');
+          // .parents('edit-properties-button).click() // cypress does not like this...
+          cy.get('@properties-table').find('edit-properties-button').click();
 
-            cy.editProperties([
-              'Edit properties',
-              admin.username,
-              admin.role,
-              tradition
-            ]);
-          }
+          cy.editProperties([
+            'Edit properties',
+            admin.username,
+            admin.role,
+            tradition
+          ]);
         });
       });
 
