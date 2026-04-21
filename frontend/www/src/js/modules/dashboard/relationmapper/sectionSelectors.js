@@ -125,7 +125,7 @@ class SectionSelectors extends HTMLElement {
           const selectedAttr = isSelected
             ? " selected"
             : "";
-          return `<div class="section-selector link-secondary${selectedAttr}" data-index="${i}">${feather.icons['file'].toSvg()} ${d.name}</div>`;
+          return `<div class="section-selector link-secondary${selectedAttr}" data-index="${i}">${feather.icons['file-text'].toSvg()} ${d.name}</div>`;
         } )
         .on( 'click', function (e, d) {
           // Update the state with the selected stemma

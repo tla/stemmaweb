@@ -517,5 +517,16 @@ class StemmarestService extends BaseService {
       body: null
     });
   }
+
+  /**
+   * Request download of tradition in specified format.
+   * 
+   * @param {string} traditionId
+   * @param {('json'|'csv'|'tsv'|'phyl'|'dot'|'svg'|'graphml')}
+   * @returns {Promise<BaseResponse<{ tradId: string }>>}
+   */
+  getTraditionDownload( traditionId, format ) {
+    return this.fetch( `/api/tradition/${traditionId}/${format}/` );
+  }
   
 }

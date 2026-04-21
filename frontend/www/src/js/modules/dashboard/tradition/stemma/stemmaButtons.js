@@ -26,9 +26,68 @@ class StemmaButtons extends HTMLElement {
     document.querySelector('#edit-collation-button').addEventListener('click', (event) => { this.setView.call(this, event) });
     document.querySelector('#delete-tradition-button').addEventListener('click', this.handleDelete);
 
+    this.setTraditionDownloadListeners();
+
     AUTH_STORE.subscribe( ( state ) => { this.greyOut(); } )
     TRADITION_STORE.subscribe( (state) => { this.greyOut(); } );
     fadeIn(this);
+  }
+
+  setTraditionDownloadListeners() {
+    const formats_mimeTypes = {
+      'json': { 
+        'ext': 'json', 
+        'mimeType': 'application/json'
+      },
+      'csv': { 
+        'ext': 'csv', 
+        'mimeType': 'text/csv'
+      },
+      'tsv': {
+        'ext': 'tsv',
+        'mimeType': 'text/tab-separated-values'
+      },
+      'phyl': {
+        'ext': 'phyl',
+        'mimeType': 'text/plain'
+      },
+      'dot': {
+        'ext': 'dot',
+        'mimeType': 'text/plain'
+      },
+      'svg':  {
+        'ext': 'svg',
+        'mimeType': 'image/svg+xml'
+      },
+      // GraphML not supported yet.
+      // 'graphml': {
+      //   'ext': 'zip',
+      //   'mimeType': 'application/zip'
+      // }
+    };
+    for ( const[ format, ext_mimeType ] of Object.entries( formats_mimeTypes ) ) {
+      d3.select( `#download_trad_${format}` ).on( 'click', function (evt) {
+        evt.preventDefault();
+        const tradition = TRADITION_STORE.state.selectedTradition ? TRADITION_STORE.state.selectedTradition : null
+        if( tradition ) {
+          const traditionFilename = `${libraries.lib_SanitizeFilename.sanitize( tradition.name )}.${ext_mimeType['ext']}`;
+          stemmarestService.getTraditionDownload( tradition.id, format ).then( (res) => {
+              if (res.success) {
+                let downloadData = res.data;
+                if ( format=='json' ) {
+                    downloadData = JSON.stringify( downloadData );
+                }
+                Download.download( traditionFilename, downloadData, ext_mimeType['mimeType'] );
+              } else {
+                StemmawebAlert.show(
+                  `Error retrieving tradition data: ${res.message}`,
+                  'danger'
+                );
+              }
+          } );
+        }   
+      } );
+    }
   }
 
   /**
@@ -263,10 +322,22 @@ class StemmaButtons extends HTMLElement {
         </button>
       </div>
       <div class="btn-group me-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary">
+        <button id="tradition-download-button" type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
           <span data-feather="download"></span>
           Tradition
         </button>
+        <div
+          class="dropdown-menu"
+          aria-labelledby="tradition_downloadbtn"
+        > 
+          <a class="dropdown-item" id="download_trad_json" href="#">JSON table (collation only)</a>
+          <a class="dropdown-item" id="download_trad_csv" href="#">Comma-separated values (collation only)</a>
+          <a class="dropdown-item" id="download_trad_tsv" href="#">Tab-separated values (collation only)</a>
+          <a class="dropdown-item" id="download_trad_phyl" href="#">Phylip character matrix (collation only)</a>
+          <a class="dropdown-item" id="download_trad_dot" href="#">Graphviz dot format (collation and relationships)</a>
+          <a class="dropdown-item" id="download_trad_svg" href="#">SVG graph display (collation and relationships)</a>
+          <a class="dropdown-item" id="download_trad_graphml" href="#">Native GraphML ZIP format</a>
+        </div>
       </div>
       <div class="dropdown">
         <button
@@ -285,7 +356,6 @@ class StemmaButtons extends HTMLElement {
           <a class="dropdown-item" id="download_svg" href="#">.svg</a>
           <a class="dropdown-item" id="download_png" href="#">.png</a>
           <a class="dropdown-item" id="download_dot" href="#">.dot</a>
-          <div class="dropdown-item" id="no_action">${feather.icons['file'].toSvg()} does it work?</div>
         </div>
       </div>
       <div class="btn-group ms-2">

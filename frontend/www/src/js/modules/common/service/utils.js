@@ -38,6 +38,12 @@ async function baseFetch(endpoint, options, params = {}) {
     const isText = (res.headers.get('content-type') || '').includes(
       'text/plain'
     );
+    // TODO: we need something below to read a zip stream. (If graphml is
+    // served as a zip that is. Check with stemmarest developer.)
+    // See: https://developer.mozilla.org/en-US/docs/Web/API/Streams_API/Using_readable_streams
+    const isZip = (res.headers.get('content-type') || '').includes(
+      'application/zip'
+    );
     if (res.ok) {
       if( isText ) {
         return {

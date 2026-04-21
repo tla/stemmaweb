@@ -24,6 +24,8 @@ class Download {
 
   static download(filename, data, mime_type) {
     const blob = new Blob([data], { type: mime_type });
+    console.log( data );
+    console.log( blob );
     if (window.navigator.msSaveOrOpenBlob) {
       window.navigator.msSaveBlob(blob, filename);
     } else {
