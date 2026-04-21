@@ -96,38 +96,43 @@ class SectionSelectors extends HTMLElement {
 
   static renderSectionSelectors() {
     const sections = SECTION_STORE.state.availableSections;
-    // Here we put in the slide indicators that will allow the user to
-    // switch to different sections in the relation mapper.
-    const sectionSelector = d3.select('#section-selectors');
-    sectionSelector.selectAll('*').remove();
-    sectionSelector
-      .selectAll( 'span' )
-      .data( sections )
-      .enter()
-      .append( 'span' )
-      .html( (d, i) => {
-        const selectedIndex = SECTION_STORE.selectedIndex;
-        const isSelected =
-          (selectedIndex === -1 && i === 0) || selectedIndex === i;
-        const selectedAttr = isSelected
-          ? " selected"
-          : "";
-        return `<div class="section-selector link-secondary${selectedAttr}" data-index="${i}">${feather.icons['file-text'].toSvg()}</div>`;
-      } )
-      .on( 'click', function (e, d) {
-        // Update the state with the selected section
-        SECTION_STORE.setSelectedSection( d );
-      } )
-      .on( 'mouseover', function( e, d ) {
-        d3.select( '#section-selector-tooltip' )
-          .html( document.querySelector( 'section-selectors' ).createTooltip( d.name ) )
-          // .html( `Click to go to section ${d.name}.${scrollMessage}` )
-          .classed( 'show', true );
-      } )
-      .on( 'mouseout', function( e, d ) {
-        d3.select( '#section-selector-tooltip' )
-          .classed( 'show', false );
+    const stemmaSelector = d3.select('#section-selectors');
+    stemmaSelector.selectAll('*').remove();
+    const hasData = sections && sections.length > 0;
+    if ( hasData ) {
+      stemmaSelector.insert( () => {
+        const buttonElement = document.createElement( 'button' );
+        buttonElement.setAttribute( 'id', 'section-selectors-menu-button' );
+        buttonElement.setAttribute( 'class', 'btn btn-sm btn-outline-secondary dropdown-toggle' );
+        buttonElement.setAttribute( 'data-bs-toggle', 'dropdown' );
+        buttonElement.innerHTML = 'Select section';
+        return buttonElement;
       } );
+      stemmaSelector.append( () => {
+        const dropDownMenuDiv = document.createElement( 'div' );
+        dropDownMenuDiv.setAttribute( 'class', 'dropdown-menu' );
+        dropDownMenuDiv.setAttribute( 'aria-labelledby', 'section-selector-dropdown-menu' );
+        return dropDownMenuDiv;
+      } )
+        .selectAll( 'span' )
+        .data( sections )
+        .enter()
+        .append( 'span' )
+        .html( (d, i) => {
+          const selectedIndex = SECTION_STORE.selectedIndex;
+          const isSelected =
+            (selectedIndex === -1 && i === 0) || selectedIndex === i;
+          const selectedAttr = isSelected
+            ? " selected"
+            : "";
+          return `<div class="section-selector link-secondary${selectedAttr}" data-index="${i}">${feather.icons['file'].toSvg()} ${d.name}</div>`;
+        } )
+        .on( 'click', function (e, d) {
+          // Update the state with the selected stemma
+          SECTION_STORE.setSelectedSection( d );
+        } );
+    }
+
   }
 
   render() {
@@ -135,7 +140,7 @@ class SectionSelectors extends HTMLElement {
       <div id="section-selector-buttons" class="collapse show">
         <div id="section-selectors">
         </div>
-        <div id="section-selector-tooltip"></div>
+        <div id="section-title"></div>
       </div>
     `;
   }

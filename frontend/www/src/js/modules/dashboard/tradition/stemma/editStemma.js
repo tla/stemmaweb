@@ -321,6 +321,8 @@ class EditStemma extends HTMLElement {
       <div id="stemma-selector-buttons" class="collapse show">
         <div id="stemma-selectors">
         </div>
+        <div id="stemma-name">
+        </div>
       </div>
       <div id="edit-stemma-buttons-right">      
         <a

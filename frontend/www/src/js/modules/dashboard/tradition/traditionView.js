@@ -70,30 +70,47 @@ class TraditionView extends HTMLElement {
       TraditionView.renderStemmaSelectors( stemmata );
     } );
   }
-  
+
   static renderStemmaSelectors( stemmata ) {
-    // Here we put in the slide indicators that will allow the user to
-    // switch to different stemmata.
-    const stemmaSelector = d3.select('#stemma-selectors');
+    const stemmaSelector = d3.select( '#stemma-selectors' );
     stemmaSelector.selectAll('*').remove();
-    stemmaSelector
-      .selectAll( 'span' )
-      .data( stemmata )
-      .enter()
-      .append( 'span' )
-      .html( (d, i) => {
-        const selectedIndex = STEMMA_STORE.selectedIndex;
-        const isSelected =
-          (selectedIndex === -1 && i === 0) || selectedIndex === i;
-        const selectedAttr = isSelected
-          ? " selected"
-          : "";
-        return `<div class="stemma-selector link-secondary${selectedAttr}" data-index="${i}">${feather.icons['file'].toSvg()}</div>`;
-      })
-      .on( 'click', function (e, d) {
-        // Update the state with the selected stemma
-        STEMMA_STORE.setSelectedStemma( d );
+    const hasData = stemmata && stemmata.length > 0;
+    if ( hasData ) {
+      stemmaSelector.insert( () => {
+        const buttonElement = document.createElement( 'button' );
+        buttonElement.setAttribute( 'id', 'stemma-selectors-menu-button' );
+        buttonElement.setAttribute( 'class', 'btn btn-sm btn-outline-secondary dropdown-toggle' );
+        buttonElement.setAttribute( 'data-bs-toggle', 'dropdown' );
+        buttonElement.innerHTML = 'Select stemma';
+        return buttonElement;
       } );
+      stemmaSelector.append( () => {
+        const dropDownMenuDiv = document.createElement( 'div' );
+        dropDownMenuDiv.setAttribute( 'class', 'dropdown-menu' );
+        dropDownMenuDiv.setAttribute( 'aria-labelledby', 'stemma-selector-dropdown-menu' );
+        return dropDownMenuDiv;
+      } )
+        .selectAll( 'span' )
+        .data( stemmata )
+        .enter()
+        .append( 'span' )
+        .html( (d, i) => {
+          const selectedIndex = STEMMA_STORE.selectedIndex;
+          const isSelected =
+            (selectedIndex === -1 && i === 0) || selectedIndex === i;
+          const selectedAttr = isSelected
+            ? " selected"
+            : "";
+          if ( isSelected ) {
+            d3.select( '#stemma-name' ).node().innerHTML = d.name;
+          }  
+          return `<div class="stemma-selector link-secondary${selectedAttr}" data-index="${i}">${feather.icons['file'].toSvg()} ${d.name}</div>`;
+        } )
+        .on( 'click', function (e, d) {
+          // Update the state with the selected stemma
+          STEMMA_STORE.setSelectedStemma( d );
+        } );
+    }
   }
 
   render() {
@@ -101,7 +118,6 @@ class TraditionView extends HTMLElement {
       <div id="topbar-menu" class="d-flex justify-content-between flex-wrap align-items-center pt-2 pb-1 border-bottom">
         <tradition-title></tradition-title>
         <div id="stemma-buttons-container" class="d-flex justify-content-between ms-0 pt-3 mb-2 lex-nowrap">
-          <div id="section-title"></div>
           <stemma-buttons></stemma-buttons>
         </div>
       </div>

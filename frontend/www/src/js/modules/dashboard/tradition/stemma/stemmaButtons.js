@@ -285,6 +285,7 @@ class StemmaButtons extends HTMLElement {
           <a class="dropdown-item" id="download_svg" href="#">.svg</a>
           <a class="dropdown-item" id="download_png" href="#">.png</a>
           <a class="dropdown-item" id="download_dot" href="#">.dot</a>
+          <div class="dropdown-item" id="no_action">${feather.icons['file'].toSvg()} does it work?</div>
         </div>
       </div>
       <div class="btn-group ms-2">

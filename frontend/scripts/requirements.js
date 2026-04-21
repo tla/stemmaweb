@@ -1,7 +1,9 @@
 import 'bootstrap/dist/css/bootstrap.min.css'
 import { Modal } from 'bootstrap'
+import { Dropdown } from 'bootstrap'
 export const lib_bootstrap ={
-    'Modal': Modal
+    'Modal': Modal,
+    'Dropdown': Dropdown
 }
 
 export { Graphviz } from '@hpcc-js/wasm/graphviz'

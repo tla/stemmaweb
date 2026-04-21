@@ -201,12 +201,16 @@ text-directory {
  */
 #stemma-buttons-container {
   width: 100%;
+  justify-content: right !important;
+  /* The person that invented/suggested "!important" is a stupid )%(*#@&!
+     It only causes bad designers to put "!important" everywhere. */
 }
 
 edit-stemma-buttons {
   width: 100%;
   display: flex;
   align-items: flex-start;
+  padding-top: 3px;
 }
 
 #edit-stemma-buttons-right .greyed-out {
@@ -217,6 +221,22 @@ edit-stemma-buttons {
   width: 50%;
   display: flex;
   justify-content: left;
+}
+
+#stemma-selector-dropdown {
+  width: 50%;
+  display: flex;
+  justify-content: left;
+}
+
+#stemma-selectors .dropdown-menu, #section-selectors .dropdown-menu {
+  height: 250px;
+  overflow-y: scroll;
+}
+
+.stemma-selector.link-secondary, .section-selector.link-secondary {
+  padding-left: 3px;
+  padding-right: 10px;
 }
 
 #edit-stemma-buttons-right {
@@ -373,8 +393,15 @@ text-directory a.greyed-out span {
 }
 
 #stemma-selectors, #section-selectors {
+  padding-top: 4px;
   display: flex;
   justify-content: flex-start;
+}
+
+#stemma-name, #section-title {
+  padding-left: 0.7em;
+  font-size: 120%;
+  line-height: 210%;
 }
 
 /* TODO: probably similar in case lots of stemma selectors */
@@ -382,15 +409,15 @@ text-directory a.greyed-out span {
   /* Because the height and width of svg icons are hard set to 24, we can just compute the space we need */
   /* TODO: Nice to have, scaling icons. If we set height and width as 'em' we can have them scale nicely with the interface?
      This should have a min+max setting though, as we don't want tiny nor giant icons. So maybe 24px fixed is not too bad? Not sure. */
-  height: 28px;
-  width: 280px;
+  /* height: 28px;
+  width: 280px; */
   /* Note that the right padding here is a 100 px to have some decent scroll possibility if 
      the container is just a tad too narrow and only one or a few section selector buttons
      are not showing. This is relevant to the method scrollGage() in sectionSelectors.js */
-  padding-right: 100px;
+  /* padding-right: 100px;
   overflow: scroll;
   scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none;  /* IE 10+ */
+  /* -ms-overflow-style: none;  IE 10+ */
 }
 
 #section-selectors::-webkit-scrollbar {
@@ -745,10 +772,6 @@ relation-mapper {
 button.selected-view {
   color: #fff;
   background-color: #87aade;
-}
-
-#section-title {
-  font-size: 140%;
 }
 
 #section-loader-spinner {
