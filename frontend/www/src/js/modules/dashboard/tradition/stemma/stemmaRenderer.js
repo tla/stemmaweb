@@ -53,22 +53,24 @@ class StemmaRenderer {
    * @param {Stemma} stemma
    */
   renderStemma( tradition, stemma ) {
-    this.graphvizRoot.renderDot( this.ellipse_border_to_none( stemma.dot ) );
-    if( this.graphvizRoot.zoomSelection() != null ){
-      this.graphvizRoot.resetZoom();
-    };
-    d3.select( 'g#graph0' )
-      .selectAll( '.node' )
-      .on( 'click', function (e, d) {
-        // If the stemma editor is showing, we don't want re-rooting the stemma to be enabled.
-        if( document.querySelector( '#stemma-selector-buttons' ).classList.contains( "show" ) ){
-          if( userIsOwner() ) {
-            TraditionView.fetch_rooted( tradition, stemma, d.key );
-            stemmaRenderer.renderStemma( tradition, stemma );
+    if( tradition && stemma ) {
+      this.graphvizRoot.renderDot( this.ellipse_border_to_none( stemma.dot ) );
+      if( this.graphvizRoot.zoomSelection() != null ){
+        this.graphvizRoot.resetZoom();
+      };
+      d3.select( 'g#graph0' )
+        .selectAll( '.node' )
+        .on( 'click', function (e, d) {
+          // If the stemma editor is showing, we don't want re-rooting the stemma to be enabled.
+          if( document.querySelector( '#stemma-selector-buttons' ).classList.contains( "show" ) ){
+            if( userIsOwner() ) {
+              TraditionView.fetch_rooted( tradition, stemma, d.key );
+              stemmaRenderer.renderStemma( tradition, stemma );
+            }
           }
-        }
-      } );
-    Download.set_downloads( stemma.dot );
+        } );
+    }
+    Download.set_downloads( stemma && stemma.dot );
   }
  
   /**

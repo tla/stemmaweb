@@ -62,10 +62,8 @@ class TraditionView extends HTMLElement {
         .on('renderEnd', function () {
           graphArea.transition().call( mellow_transition ).style('opacity', '1.0' );
         });
-        // Render the stemma, if any. 
-        if (stemmata.length > 0) {
-          stemmaRenderer.renderStemma( tradition, selectedStemma || stemmata[0] );
-        }
+        // Tell stemmaRenderer to render the stemma, if any, or null if none. 
+        stemmaRenderer.renderStemma( tradition, selectedStemma || ( stemmata && stemmata.length > 0 && stemmata[0] ) )
       // Render the stemma selector buttons.
       TraditionView.renderStemmaSelectors( stemmata );
     } );

@@ -1,25 +1,31 @@
 class Download {
 
   static set_downloads(dot) {
-    d3.select('#download_dot').on('click', function (evt) {
-      evt.preventDefault();
-      Download.download('stemma.dot', dot, 'text/plain');
-    }); 
-    d3.select('#download_svg').on('click', function (evt) {
-      evt.preventDefault();
-      Download.download(
-        'stemma.svg',
-        d3.select('#graph-area div').html(),
-        'image/svg+xml'
-      );
-    });
-    d3.select('#download_png').on('click', function (evt) {
-      evt.preventDefault();
-      libraries.lib_SaveSvgAsPng.saveSvgAsPng(
-        d3.select('#graph-area div').select('svg').node(),
-        'stemma.png'
-      );
-    });
+    const dropdownbtn_element = d3.select( '#stemma_image_downloadbtn' );
+    if( dot ) {
+      d3.select('#download_dot').on('click', function (evt) {
+        evt.preventDefault();
+        Download.download('stemma.dot', dot, 'text/plain');
+      }); 
+      d3.select('#download_svg').on('click', function (evt) {
+        evt.preventDefault();
+        Download.download(
+          'stemma.svg',
+          d3.select('#graph-area div').html(),
+          'image/svg+xml'
+        );
+      });
+      d3.select('#download_png').on('click', function (evt) {
+        evt.preventDefault();
+        libraries.lib_SaveSvgAsPng.saveSvgAsPng(
+          d3.select('#graph-area div').select('svg').node(),
+          'stemma.png'
+        );
+      });
+      dropdownbtn_element.classed( 'disabled', false );
+    } else {
+      dropdownbtn_element.classed( 'disabled', true );
+    }
   }
 
   static download(filename, data, mime_type) {
