@@ -47,8 +47,8 @@ class StemmaButtons extends HTMLElement {
         'ext': 'tsv',
         'mimeType': 'text/tab-separated-values'
       },
-      'phyl': {
-        'ext': 'phyl',
+      'matrix': {
+        'ext': 'txt',
         'mimeType': 'text/plain'
       },
       'dot': {
@@ -333,7 +333,7 @@ class StemmaButtons extends HTMLElement {
           <a class="dropdown-item" id="download_trad_json" href="#">JSON table (collation only)</a>
           <a class="dropdown-item" id="download_trad_csv" href="#">Comma-separated values (collation only)</a>
           <a class="dropdown-item" id="download_trad_tsv" href="#">Tab-separated values (collation only)</a>
-          <a class="dropdown-item" id="download_trad_phyl" href="#">Phylip character matrix (collation only)</a>
+          <a class="dropdown-item" id="download_trad_matrix" href="#">Phylip character matrix (collation only)</a>
           <a class="dropdown-item" id="download_trad_dot" href="#">Graphviz dot format (collation and relationships)</a>
           <a class="dropdown-item" id="download_trad_svg" href="#">SVG graph display (collation and relationships)</a>
           <a class="dropdown-item" id="download_trad_graphml" href="#">Native GraphML ZIP format</a>
