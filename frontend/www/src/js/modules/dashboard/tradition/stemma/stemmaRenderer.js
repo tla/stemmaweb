@@ -70,7 +70,7 @@ class StemmaRenderer {
           }
         } );
     }
-    Download.set_downloads( stemma && stemma.dot );
+    Download.set_downloads( tradition, stemma && stemma.dot );
   }
  
   /**
