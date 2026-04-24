@@ -43,6 +43,19 @@ class StemmaRenderer {
       .width( graph.node().getBoundingClientRect().width )
       .height( graphHeight )
       .fit( true );
+    // This takes care of the nasty thing of graphviz.js loading slowly (and)
+    // asynchronically the first time round. This mean that the elements
+    // `svg g#graph0` may not have been added to the DOM yet when 
+    // `setRerootingListeners` called by `renderStemma` needs it. Therefore
+    // this watches when the `svg` child has been added and calls 
+    // `setRerootingListeners` then. Once the child of `#graph` (`svg`) has 
+    // been added, the observer never fires again.
+    // In the theoretical case that both the observer and `renderStemma` would
+    // call `setRerootingListeners` the listeners are not added in duplex as
+    // a named function is used as the listener.
+    const mutationObserver = new MutationObserver( () => { this.setRerootingListeners.call( this ) } );
+    const observerTarget = document.querySelector( '#graph' );
+    mutationObserver.observe( observerTarget, { childList: true } );
   }
   
   /**
@@ -58,21 +71,29 @@ class StemmaRenderer {
       if( this.graphvizRoot.zoomSelection() != null ){
         this.graphvizRoot.resetZoom();
       };
-      d3.select( 'g#graph0' )
-        .selectAll( '.node' )
-        .on( 'click', function (e, d) {
-          // If the stemma editor is showing, we don't want re-rooting the stemma to be enabled.
-          if( document.querySelector( '#stemma-selector-buttons' ).classList.contains( "show" ) ){
-            if( userIsOwner() ) {
-              TraditionView.fetch_rooted( tradition, stemma, d.key );
-              stemmaRenderer.renderStemma( tradition, stemma );
-            }
-          }
-        } );
+      this.setRerootingListeners();
     }
     Download.set_downloads( tradition, stemma && stemma.dot );
   }
  
+  rerootStemma( e, d ) {
+    // If the stemma editor is showing, we don't want re-rooting the stemma to be enabled.
+    if( document.querySelector( '#stemma-selector-buttons' ).classList.contains( "show" ) ){
+      if( userIsOwner() ) {
+        const tradition = TRADITION_STORE.state.selectedTradition;
+        const stemma = STEMMA_STORE.state.selectedStemma;
+        TraditionView.fetch_rooted( tradition, stemma, d.key );
+        stemmaRenderer.renderStemma( tradition, stemma );
+      }
+    }
+  }
+
+  setRerootingListeners() {
+    d3.select( 'g#graph0' )
+      .selectAll( '.node' )
+      .on( 'click', this.rerootStemma );
+  } 
+
   /**
    * Resizes the current graph/stemma when the browser window gets 
    * resized. Also sets the new corresponding width on the GraphViz 
