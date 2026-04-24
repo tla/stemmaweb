@@ -20,7 +20,7 @@ class TraditionView extends HTMLElement {
    */
   static fetch_rooted( tradition, stemma, sigil ) {
     stemmarestService
-      .reorientStemmaTree( tradition.id, stemma.identifier, sigil )
+      .reorientStemmaTree( tradition.id, stemma.stemmaid, sigil )
       .then( (resp) => {
         // We first fade out the existing graph…
         const graphArea = d3.select('#graph-area');
