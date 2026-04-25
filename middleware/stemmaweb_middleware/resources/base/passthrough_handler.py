@@ -59,24 +59,33 @@ def handle_passthrough_request(
             # https://stackoverflow.com/questions/47188244/what-is-the-difference-between-the-data-and-json-named-arguments-with-reques#47188297  # noqa: E501
             **{"json" if request.is_json else "data": args["data"]},
         )
-        # Decode the response content
+        # See what kind of content we are dealing with.
         content_is_json = False
-        try:
-            content = response.json()
-            content_is_json = True
-        except json.JSONDecodeError:
-            content = response.text
-            content_is_json = False
-        
-        # Transform it if we need to
-        if response_transformer is not None:
-            logger.debug("passthrough_handler: Applying response transformer")
-            content = response_transformer(content)
-        # Re-encode it
-        if content_is_json:
-            content = json.dumps(content, ensure_ascii=False)
+        content_type = response.headers.get("Content-Type", "")
+        is_binary = not (
+            content_type.startswith("text/")
+            or "json" in content_type
+            or "xml" in content_type
+        )
+        if is_binary:
+            # Just pass it through unchanged.
+            content = response.content
         else:
-            content = content.encode('utf-8')
+            # Decode it, either from JSON or from text encoding
+            try:
+                content = response.json()
+                content_is_json = True
+            except json.JSONDecodeError:
+                content = response.text
+            # Transform it if we need to
+            if response_transformer is not None:
+                logger.debug("passthrough_handler: Applying response transformer")
+                content = response_transformer(content)
+            # Re-encode it
+            if content_is_json:
+                content = json.dumps(content, ensure_ascii=False)
+            else:
+                content = content.encode('utf-8')
 
         # Patching response headers
         # Needed, since Stemweb returns a Content-Type of "text/html" in some cases
@@ -98,19 +107,6 @@ def handle_passthrough_request(
             message="An error occurred while processing the request.",
             body=dict(type=f"{type(e).__name__}", message=str(e)),
         )
-
-
-def __response_content_is_json(content: bytes) -> bool:
-    """
-    Checks if the given content is valid JSON.
-    :param content: the content to check.
-    :return: True if the content is valid JSON, False otherwise.
-    """
-    try:
-        json.loads(content)
-        return True
-    except json.JSONDecodeError:
-        return False
 
 
 def __extract_data_from_request(req: Request):
