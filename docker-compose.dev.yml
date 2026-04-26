@@ -40,9 +40,11 @@ services:
     env_file:
       - .env.dev
     entrypoint: >
-      /bin/bash -c "make install-middleware && 
+      /bin/bash -c "make install-middleware &&
                     make install-frontend &&
-                    tail -F just-forcing-the-container-to-keep-running"
+                    (cd middleware && poetry run gunicorn --reload --bind=0.0.0.0:3000 --workers=1 'stemmaweb_middleware:create_app()') &
+                    (cd frontend && npm run serve) &
+                    wait"
     ports:
       - "5678:5678"
 
