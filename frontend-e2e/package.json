@@ -13,8 +13,11 @@
   },
   "keywords": [],
   "author": "",
+  "overrides": {
+    "uuid": "^14.0.0"
+  },
   "devDependencies": {
-    "cypress": "^12.5.1",
+    "cypress": "^15.0.0",
     "prettier": "^2.8.4"
   }
 }
