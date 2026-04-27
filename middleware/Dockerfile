@@ -1,5 +1,5 @@
 # Builder for Poetry, its sole task is to generate `requirements.txt`
-FROM python:3.13.3-slim-bookworm AS builder
+FROM python:3.14-slim-bookworm AS builder
 WORKDIR /usr/src/app
 
 # Install Poetry
@@ -9,7 +9,7 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry export --without-hashes --format requirements.txt > requirements.txt
 
 # Python 3.10 image to run the application
-FROM python:3.13.3-slim-bookworm AS runner
+FROM python:3.14-slim-bookworm AS runner
 WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/app/requirements.txt .
@@ -19,4 +19,4 @@ COPY stemmaweb_middleware stemmaweb_middleware
 ENV GUNICORN_WORKERS=2
 ENV GUNICORN_BIND='0.0.0.0:3000'
 
-CMD gunicorn --workers=$GUNICORN_WORKERS --bind=$GUNICORN_BIND --log-level=debug --access-logfile=- --error-logfile=- 'stemmaweb_middleware:create_app()'
+CMD ["sh", "-c", "exec gunicorn --workers=$GUNICORN_WORKERS --bind=$GUNICORN_BIND --log-level=debug --access-logfile=- --error-logfile=- 'stemmaweb_middleware:create_app()'"]

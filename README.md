@@ -88,20 +88,7 @@ so, you can start the development environment with:
 make dev
 ```
 
-This will start the necessary services in the foreground, so you can see the logs. You can start the frontend and
-middleware
-by opening a new terminal session and running:
-
-```shell
-make shell
-```
-
-This will give you a shell in the `stemmaweb` container. From there, you can run the following command to start the
-frontend and middleware:
-
-```shell
-make run
-```
+This will start the necessary services in the foreground, so you can see the logs. It will also start the frontend and middleware services on the `stemmaweb` container that is created. Logs for these containers will be available in the usual way via `docker logs`.
 
 To run the frontend and middleware with Python remote debugging enabled, run the following instead:
 
