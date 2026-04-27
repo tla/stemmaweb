@@ -200,22 +200,24 @@ Cypress.Commands.add(
       // newAccess: make a Private tradition Public (v.vs.) by .check() / .uncheck()
       if (tradition.access === 'Public') {
         // input checkbox Access
+        cy.log("tradition.access === 'Public'")
         cy.get('@propsDialogModal')
           .find('input[type="checkbox"][value="access"]')
           .should('be.checked'); // "Allow Public Access" yes/no Public/Private
         cy.get('@propsDialogModal')
-          .find('input[type="checkbox"]')
+          .find('input[type="checkbox"][value="access"]')
           .uncheck('access');
         cy.get('@propsDialogModal')
           .find('input[type="checkbox"][value="access"]')
           .should('not.be.checked');
       } else if (tradition.access === 'Private') {
         // input checkbox Access
+        cy.log("tradition.access === 'Private'")
         cy.get('@propsDialogModal')
           .find('input[type="checkbox"][value="access"]')
           .should('not.be.checked'); // "Allow Public Access" yes/no Public/Private
         cy.get('@propsDialogModal')
-          .find('input[type="checkbox"]')
+          .find('input[type="checkbox"][value="access"]')
           .check('access');
         cy.get('@propsDialogModal')
           .find('input[type="checkbox"][value="access"]')
@@ -265,5 +267,5 @@ Cypress.Commands.add('assertPointerEventsDisabledForLabel', (buttontext) => {
   cy.get('@btn').should('have.class', 'disabled');
   // cy.get('@btn').click() // cy.click() failed because this element: button id="delete-tradition-button"... /button>has CSS pointer-events: none
   cy.get('@btn').should('have.css', 'pointer-events', 'none');
-  cy.get('stemmaweb-dialog').should('exist').and('not.be.visible');
+  cy.get('stemmaweb-dialog > div').should('exist').and('not.be.visible');
 });

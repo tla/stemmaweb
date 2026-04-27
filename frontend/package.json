@@ -21,6 +21,10 @@
     "sortablejs": "^1.15.2",
     "taboverride": "^4.0.3"
   },
+  "overrides": {
+    "braces": "^3.0.3",
+    "uuid": "^14.0.0"
+  },
   "devDependencies": {
     "@types/bootstrap": "^5.2.5",
     "@types/d3": "^7.4.0",
@@ -28,8 +32,8 @@
     "@types/feather-icons": "^4.7.0",
     "@types/stemmaweb": "file:types/stemmaweb",
     "live-server": "^1.2.2",
-    "patch-package": "^6.5.0",
-    "prettier": "^2.7.1",
+    "patch-package": "^8.0.1",
+    "prettier": "^3.8.3",
     "prettier-plugin-jsdoc": "^0.4.2"
   }
 }

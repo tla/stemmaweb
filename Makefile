@@ -26,7 +26,7 @@ build-dev:
 	@echo "==> 🏗 Build Dev Containers"
 	@docker compose --env-file .env.dev -f docker-compose.dev.yml build
 
-dev: build-dev
+dev: dev-down build-dev
 	@echo "==> 💻 Development"
 	@docker compose --env-file .env.dev -f docker-compose.dev.yml up
 

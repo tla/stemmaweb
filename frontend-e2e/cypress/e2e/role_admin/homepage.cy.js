@@ -6,6 +6,7 @@ const admin = users.filter(
   ({ username }) => username === 'admin@example.org'
 )[0];
 const selected_fill_color = 'rgb(207, 220, 238)';
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // for "equals" instead of "contains"
 
 if (Cypress.browser.isHeaded) {
   // skip when in headless mode until headless login is fixed
@@ -34,11 +35,12 @@ if (Cypress.browser.isHeaded) {
         .find('.folder-icon')
         .should('have.length', count);
       test_traditions.forEach((tradition) => {
-        cy.log('title: ' + tradition.title);
+        cy.log('tradition title: ' + tradition.title);
+        const text = tradition.title;
         // the test_tradition titles should all be found on the homepage
         // together with their stemmas
         cy.get('ul#traditions-list')
-          .contains(tradition.title)
+              .contains(new RegExp(`^${escapeRegExp(text)}$`)) // exact match
           .should('be.visible')
           .click();
         if (tradition.stemmata.length) {
@@ -83,6 +85,7 @@ if (Cypress.browser.isHeaded) {
       // skip until sequence of traditions is clarified.
       let n = 0; // check the first tradition at start
       test_traditions.forEach((tradition, i) => {
+        const text = tradition.title;
         // assert that traditions are displayed in alphabetical order
         // sort test_traditions explicitly
         test_traditions.sort((tradition_a, tradition_b) =>
@@ -104,7 +107,7 @@ if (Cypress.browser.isHeaded) {
           });
         cy.get('ul#traditions-list > li')
           .eq(i)
-          .contains(tradition.title)
+              .contains(new RegExp(`^${escapeRegExp(text)}$`)) // exact match
           .should('be.visible');
 
         // on load only the first tradition is selected and highlighted
@@ -187,36 +190,35 @@ if (Cypress.browser.isHeaded) {
 
         test_traditions.forEach((tradition) => {
           cy.log('title: ' + tradition.title);
-          if (!tradition.title.includes('Verbum')) { // test fails for the two Verbum traditions. UC / TODO.
-            cy.get('ul#traditions-list')
-              .contains(tradition.title)
-              .should('be.visible')
-              .click();
-            // Add a stemma (the default example stemma)
-            // to the second tradition (verbum fails at the moment )
-            // cy.get('ul#traditions-list > li').eq(2).wait(500).click()
-            // cy.pause()
-            cy.get('#add-stemma-button-link').click();
-            cy.get('#save-stemma-button-link').wait(500).click();
-            // cy.pause()
-            // when a stemma is saved it should have a message with the text "Stemma added"
-            cy.get('@messageconsole').contains(stemma_added_marker);
-            // delete the added stemma in order to reset the db
-            cy.get('#delete-stemma-button-link').click();
-            cy.get('.modal-content')
-              .contains('button', 'Yes, delete it')
-              .wait(500)
-              .click();
-            cy.get('#modalDialog').should('not.be.visible');
-            cy.get('@messageconsole').contains(stemma_deleted_marker);
+          const text = tradition.title;
+          cy.get('ul#traditions-list')
+            .contains(new RegExp(`^${escapeRegExp(text)}$`)) // exact match
+            .should('be.visible')
+            .click();
+          // Add a stemma (the default example stemma)
+          // to the second tradition (verbum fails at the moment )
+          // cy.get('ul#traditions-list > li').eq(2).wait(500).click()
+          // cy.pause()
+          cy.get('#add-stemma-button-link').click();
+          cy.get('#save-stemma-button-link').wait(500).click();
+          // cy.pause()
+          // when a stemma is saved it should have a message with the text "Stemma added"
+          cy.get('@messageconsole').contains(stemma_added_marker);
+          // delete the added stemma in order to reset the db
+          cy.get('#delete-stemma-button-link').click();
+          cy.get('.modal-content')
+            .contains('button', 'Yes, delete it')
+            .wait(500)
+            .click();
+          cy.get('#modalDialog').should('not.be.visible');
+          cy.get('@messageconsole').contains(stemma_deleted_marker);
 
-            // assert the content in the message console stays there also upon clicking on another tradition.
-            cy.get('ul#traditions-list > li').eq(-1).wait(500).click(); // ultimate tradition
-            cy.get('@messageconsole')
-              .should('be.visible')
-              .contains(stemma_deleted_marker);
-            cy.get('@messageconsole').contains(stemma_added_marker);
-          }
+          // assert the content in the message console stays there also upon clicking on another tradition.
+          cy.get('ul#traditions-list > li').eq(-1).wait(500).click(); // ultimate tradition
+          cy.get('@messageconsole')
+            .should('be.visible')
+            .contains(stemma_deleted_marker);
+          cy.get('@messageconsole').contains(stemma_added_marker);
         })
       });
     }

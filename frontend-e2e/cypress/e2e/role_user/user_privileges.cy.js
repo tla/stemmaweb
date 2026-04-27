@@ -1,4 +1,4 @@
-/*  User priviledges (anyone with role 'user'):
+/*  User privileges (anyone with role 'user'):
     Users except admins should only be allowed to see and manipulate their own traditions.
     They should not be able to see other users' traditions, nor edit or delete them.
       partially DONE: tests for Edit properties; TODO when feature is imlemented: Assert 'Save' edited properties.
@@ -67,7 +67,7 @@ if (Cypress.browser.isHeaded) {
         cy.log('end of test for this user')
       });
 
-      it('passes', () => {
+      it('asserts the user sees only public and their own traditions, and can only edit own traditions', () => {
 
         // User sees only public and their own traditions
         cy.get('ul#traditions-list')

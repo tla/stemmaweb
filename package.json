@@ -1,10 +1,13 @@
 {
   "dependencies": {
     "dotparser": "^1.1.1",
-    "sortablejs": "^1.15.0"
+    "sortablejs": "^1.15.7"
+  },
+  "overrides": {
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
-    "cypress": "^12.5.1",
-    "esbuild": "0.28.0"
+    "cypress": "^15.14.1",
+    "esbuild": "^0.28.0"
   }
 }
