@@ -32,7 +32,7 @@
     "@types/stemmaweb": "file:types/stemmaweb",
     "live-server": "^1.2.2",
     "patch-package": "^8.0.1",
-    "prettier": "^2.7.1",
+    "prettier": "^3.8.3",
     "prettier-plugin-jsdoc": "^0.4.2"
   }
 }
