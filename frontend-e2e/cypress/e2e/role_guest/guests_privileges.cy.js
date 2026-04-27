@@ -87,7 +87,7 @@ describe('A guest should not be able to upload a tradition', () => {
     cy.get('@addTraditionBtn').click();
     // assert that the 'Upload a new collation' modal is not visible
     // cy.contains('add-tradition-modal', 'Upload a new collation')
-    cy.get('add-tradition-modal').should('exist').and('not.be.visible'); // a place-holder only
+    cy.get('add-tradition-modal > div').should('exist').and('not.be.visible'); // a place-holder only
   });
 });
 
