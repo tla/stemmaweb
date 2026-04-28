@@ -70,8 +70,11 @@ class TraditionView extends HTMLElement {
   }
 
   static renderStemmaSelectors( stemmata ) {
+    // Clean out possibly existing data.
     const stemmaSelector = d3.select( '#stemma-selectors' );
     stemmaSelector.selectAll('*').remove();
+    d3.select( '#stemma-name' ).node().innerHTML = '';
+    // Insert new data.
     const hasData = stemmata && stemmata.length > 0;
     if ( hasData ) {
       stemmaSelector.insert( () => {
