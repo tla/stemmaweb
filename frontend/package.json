@@ -4,21 +4,22 @@
   "license": "MIT",
   "scripts": {
     "postinstall": "patch-package",
-    "build": "esbuild scripts/requirements.js --bundle --global-name=libraries --outfile=www/src/js/libraries.js && mv www/src/js/libraries.css www/src/css/libraries.css",
+    "build": "esbuild scripts/requirements.js --minify --bundle --global-name=libraries --outfile=www/src/js/libraries.js && mv www/src/js/libraries.css www/src/css/libraries.css",
     "serve": "scripts/serve",
     "serve:background": "scripts/serve &> /dev/null",
     "format": "prettier --write './**/*.{js,ts,css,md,json,html}' --config ./.prettierrc.json --ignore-path ./.prettierignore"
   },
   "dependencies": {
-    "@hpcc-js/wasm": "^2.18.0",
-    "bootstrap": "^5.2.2",
-    "d3": "^7.6.1",
-    "d3-graphviz": "^5.0.2",
+    "@hpcc-js/wasm": "^2.33.2",
+    "bootstrap": "^5.3.8",
+    "d3": "^7.9.0",
+    "d3-graphviz": "^5.6.0",
     "dotparser": "^1.1.1",
-    "feather-icons": "^4.29.0",
+    "feather-icons": "^4.29.2",
     "sanitize-filename": "^1.6.4",
     "save-svg-as-png": "^1.4.17",
-    "sortablejs": "^1.15.2",
+    "sortable": "^2.0.0",
+    "sortablejs": "^1.15.7",
     "taboverride": "^4.0.3"
   },
   "overrides": {
