@@ -132,15 +132,15 @@ class StemmaButtons extends HTMLElement {
         // In the case no section was selected by the user, we select the first section of the current tradition.
         if (!section) {
           section = document.querySelector( `section-list[trad-id="${traditionId}"]` ).getFirstSection();
-          SECTION_STORE.setSelectedSection( section ).then(
+          SECTION_STORE.setSelectedSection( section ).then( () => {
             this.getSectionDot( traditionId, section.id ).then( (resp) => {
               this.switchToRelationMapper( resp, section.id );
-            } )
-          );
+            } );
+          } );
         } else {
-          this.getSectionDot( traditionId, section.id ).then( (resp) => 
-            this.switchToRelationMapper(resp, section.id)
-          );
+          this.getSectionDot( traditionId, section.id ).then( (resp) => {
+            this.switchToRelationMapper( resp, section.id );
+          } );
         }
       }
       // Figure out which view we are closing, set that as element to 

@@ -8,9 +8,6 @@ const sectionSelectorsService = stemmarestService;
 
 class SectionSelectors extends HTMLElement {
 
-  #scrollMessage = ' (Scroll to view more sections.)';
-  #showScrollMessage = true;
-
   constructor() {
     super();
   }
@@ -20,17 +17,6 @@ class SectionSelectors extends HTMLElement {
     SECTION_STORE.subscribe( this.onSectionStateChanged );
     const sectionSelectorsContainer = document.querySelector( 'section-selectors' );
     const sectionSelectorsElement = document.querySelector( '#section-selectors' );
-    sectionSelectorsElement.addEventListener( 'scroll', this.scrollGage );
-  }
-
-  set showScrollMessage( bool ) {
-    this.#showScrollMessage = bool;
-  }
-  get showScrollMessage() {
-    return this.#showScrollMessage;
-  }
-  get scrollMessage() {
-    return this.#scrollMessage;
   }
 
   /**
@@ -42,6 +28,8 @@ class SectionSelectors extends HTMLElement {
   */
   onSectionStateChanged( prevState, state ) {
     // First off, we don't need to do anything if we're not visible…
+    // Effectively this function updates the collation graph and all the section stuff
+    // when a user selects a different section within the collation view.
     if ( window.getComputedStyle( document.querySelector( 'relation-mapper' ) ).display != 'none' ) { 
       // We only do something if there is a selected section and if the section really changed.
       if ( state.selectedSection && ( state.selectedSection != prevState.selectedSection ) ) { 
@@ -74,28 +62,9 @@ class SectionSelectors extends HTMLElement {
     }
   }
   
-  scrollGage( evt ) {
-    let sectionSelectorsContainer = document.querySelector( 'section-selectors' );  // => <section-selectors>
-    let sectionSelectorsElement = evt.currentTarget;  // => <div id="section-selectors">
-    // Note that the right padding here is a 100 px to have some decent scroll possibility if 
-    // the container is just a tad too narrow and only one or a few section selector buttons
-    // are not showing.
-    if ( sectionSelectorsElement.scrollLeft > 100 ) {
-      sectionSelectorsContainer.showScrollMessage = false;
-      sectionSelectorsElement.removeEventListener( 'scroll', sectionSelectorsContainer.scrollGage );
-    }
-  }
-
-  createTooltip( sectionName ) {
-    let tooltip = `Click to go to section ${sectionName}.`;
-    if ( this.#showScrollMessage && ( SECTION_STORE.state.availableSections.length > 17 ) ) {
-        tooltip += this.#scrollMessage;
-    }
-    return tooltip;
-  }
-
   static renderSectionSelectors() {
     const sections = SECTION_STORE.state.availableSections;
+    const dt = new Date().getTime();
     const stemmaSelector = d3.select('#section-selectors');
     stemmaSelector.selectAll('*').remove();
     const hasData = sections && sections.length > 0;
@@ -132,7 +101,6 @@ class SectionSelectors extends HTMLElement {
           SECTION_STORE.setSelectedSection( d );
         } );
     }
-
   }
 
   render() {

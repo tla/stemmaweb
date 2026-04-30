@@ -39,7 +39,7 @@ class SectionStore extends StateStore {
         } );
         document.querySelectorAll( 'section-list' ).forEach( (elem) => { elem.dispatchEvent( sectionSelectedEvent ) } );
       } else {
-        StemmawebAlert.show( `Error: ${resp.message}`, 'danger' );
+        StemmawebAlert.show( `Error: ${res.message}`, 'danger' );
       }
     } );
   }
