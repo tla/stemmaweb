@@ -88,7 +88,6 @@ if (Cypress.browser.isHeaded) {
           cy.log('title: ' + tradition.title);
           // admin may change metadata on their own and others' traditions
           const text = tradition.title;
-          // visible and editable, closed lock sign
           cy.get('ul#traditions-list li .tradition-list-item')
             .contains(new RegExp(`^${escapeRegExp(text)}$`)) // exact match
             .as('tradition_title_elem_in_nav')
