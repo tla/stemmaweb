@@ -72,13 +72,21 @@ if (Cypress.browser.isHeaded) {
             .click();
 
           // depending on the tradition, the stemma container is either empty or has a dropdown with one stemma pre-selected.
-          // text of the dropdown is "Select stemma"
-          // clicking on dropdown unfolds the select list with all stemmata of the active tradition
-          // the stemma title to the right of the dropdown title equals to the selected stemma in the select list
-          // clicking through the next stemmata 
-          //    updates the chosen stemma title to the richt of the dropdown
-          //    and closes the dropdown
-          // after adding a stemma, the dropdown includes also the new stemma
+          // cy.log('typeof tradition.stemmata, length: ' + typeof tradition.stemmata + ', ' + tradition.stemmata.length)
+          if (tradition.stemmata.length === 0) { // no stemma in test json
+            cy.get('#stemma-selectors').children().should('not.exist');
+          } else {
+            cy.get('#stemma-selectors').find('button').should('exist');
+
+            // stemma selected correctly:
+            // text of the dropdown is "Select stemma"
+            // clicking on dropdown unfolds the select list with all stemmata of the active tradition
+            // the stemma title to the right of the dropdown title equals to the selected stemma in the select list
+            // clicking through the next stemmata 
+            //    updates the chosen stemma title to the right of the dropdown
+            //    and closes the dropdown
+            // after adding a stemma, the dropdown includes also the new stemma
+          }
 
         });
       });
