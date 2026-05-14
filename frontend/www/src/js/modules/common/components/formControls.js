@@ -152,9 +152,9 @@ class FormControlFactory {
       colors.forEach( (color) => {
         var colorHtml = '';
         if ( color == item.value ) {
-          colorHtml = `<span class="relation-colors color-${color} selected">${feather_check_square_alt}</span>`;
+          colorHtml = `<span class="relation-colors color-${color} selected" data-value="${color}">${feather_check_square_alt}</span>`;
         } else {
-          colorHtml = `<span class="relation-colors color-${color}">${feather.icons['square'].toSvg()}</span>`;
+          colorHtml = `<span class="relation-colors color-${color}" data-value="${color}">${feather.icons['square'].toSvg()}</span>`;
         }
         colorPickerHtml += colorHtml;
       } );

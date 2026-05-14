@@ -17,7 +17,7 @@ class EditRelationType extends HTMLElement {
   constructor( relationType, color ) {
     super();
     this.#relationType = relationType;
-    this.#color = color;
+    this.#color = relationType.display.color;
     this.addEventListener( 'click', this.showDialog );
   }
 
@@ -133,14 +133,30 @@ class EditRelationType extends HTMLElement {
     StemmawebDialog.show(
       'Edit relation type',
       modal_body,
-      { onOk: this.processForm },
+      { onOk: () => { 
+        this.processForm.call( this )
+          .then( ( relationType ) => { 
+            if ( relationType ) {
+              const oldColor = `color-${this.#color}`;
+              this.#color = relationType.display.color;
+              const newColor = `color-${this.#color}`;
+              const colorElement = this.closest( 'tr' ).querySelector( '.relation-type-color-cell span.relation-colors' );
+              colorElement.classList.replace( oldColor, newColor );
+              const nameElement = this.closest( 'tr' ).querySelector( '.relation-type-name-cell' );
+              nameElement.innerHTML = relationType.name;
+              const deleteRelationElement = this.closest( 'div' ).querySelector( 'delete-relation-type-button' );
+              deleteRelationElement.relationName = relationType.name;
+            }
+          } );
+        } 
+      },
       {
         okLabel: 'Save',
         elemStyle: this.#createDialogStyle()
       }
     );
-    // TODO: Actually this (and the eventListener should be handled by the colorpicker form conrol.
-    // But form controls are returning strings and we cannot attach evenlisteners to those.
+    // TODO: Actually this (and the eventListener) should be handled by the colorPicker form control.
+    // But form controls are returning strings and we cannot attach evenListeners to those.
     // Probably form controls should become true web components that can be instantiated with data.
     document.querySelectorAll( '#edit-relation-type-form div.color-picker div.colors span.relation-colors' ).forEach( (element) => {
       element.addEventListener( 'click', this.selectColor );
@@ -150,65 +166,61 @@ class EditRelationType extends HTMLElement {
   selectColor( evt ) {
     const selectedElement = document.querySelector( '#edit-relation-type-form div.color-picker div.colors span.relation-colors.selected' );
     selectedElement.classList.remove( 'selected' );
-    selectedElement.querySelector( 'svg' ).innerHTML = feather.icons['square'].toSvg();
+    selectedElement.innerHTML = feather.icons['square'].toSvg();
     evt.currentTarget.classList.add( 'selected' );
-    evt.currentTarget.querySelector( 'svg' ).innerHTML = feather_check_square_alt;
+    evt.currentTarget.innerHTML = feather_check_square_alt;
   }
 
   /**
    * @returns {{
-   *   name: string;
-   *   userId: string;
-   *   language: string | null;
-   *   direction: string;
-   *   isPublic: boolean;
+   *   name: string
+   *   description: string | null
+   *   bindlevel: string | null
+   *   is_colocation: string
+   *   is_transitive: boolean
+   *   is_generalizable: boolean
+   *   use_regular: boolean
+   *   is_weak: boolean
    * }}
    */
-  static #extractFormValuesTradition() {
-    // const name = $('name_input').value;
-    // const language = $('language_input').value || null;
-    // const direction = $('direction_input').value;
-    // const isPublic = $('access_input').checked;
-    // return { name, language, direction, isPublic };
+  static #extractFormValuesRelationType() {
+    const name = $('name_input').value;
+    const description = $('description_input').value;
+    const bindlevel = $('bind-level_input').value;
+    const is_colocation = $('colocation_input').checked;
+    const is_transitive = $('transitive_input').checked;
+    const is_generalizable = $('generalizable_input').checked;
+    const use_regular = $('use-regularized-form_input').checked;
+    const is_weak = $('yielding_input').checked;
+    const selectedColorElement = document.querySelector( '#edit-relation-type-form div.color-picker div.colors span.relation-colors.selected' );
+    const color = selectedColorElement.dataset.value;
+    return { name, description, bindlevel, is_colocation, is_transitive, is_generalizable, use_regular, is_weak, 'display': { 'color': color } } 
   }
 
   /** @returns {Promise} */
   processForm() {
-    // const form = document.querySelector('#edit-tradition-properties-form');
-    // if (form.checkValidity()) {
-    //   const values = Object.values(
-    //     EditRelationType.#extractFormValuesTradition()
-    //   );
-    //   const tradId = TRADITION_STORE.state.selectedTradition.id;
-    //   const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
-    //   return editRelationTypeService
-    //     .updateTraditionMetadata( userId, tradId, ...values )
-    //     .then(EditRelationType.#handleUpdateTraditionMetadataResponse);
-    // } else {
-    //   form.classList.add('was-validated');
-    //   return Promise.resolve({
-    //     success: false,
-    //     message: 'Form validation error.'
-    //   });
-    // }
-  }
-
-  /** @param {BaseResponse<T>} resp */
-  static #handleUpdateTraditionMetadataResponse(resp) {
-    // if (resp.success) {
-    //   StemmawebAlert.show('Metadata properties updated.', 'success');
-    //   TRADITION_STORE.updateTradition(resp.data);
-    //   return Promise.resolve({
-    //     success: true,
-    //     message: 'Metadata properties updated.'
-    //   });
-    // } else {
-    //   StemmawebAlert.show(`Error: ${resp.message}`, 'danger');
-    //   return Promise.resolve({
-    //     success: false,
-    //     message: resp.message
-    //   });
-    // }
+    const form = document.querySelector('#edit-relation-type-form');
+    if ( form.checkValidity() ) {
+      const editedRelationType = EditRelationType.#extractFormValuesRelationType();
+      const tradId = TRADITION_STORE.state.selectedTradition.id;
+      const userId = AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null;
+      return editRelationTypeService
+        .updateRelationType( userId, tradId, editedRelationType )
+        .then( ( relationTypeFromResponse ) => {
+          if ( relationTypeFromResponse ) {
+            this.#relationType = relationTypeFromResponse;
+            StemmawebAlert.show( 'Relation type properties updated.', 'success' );
+            return this.#relationType;
+          } // We don't handle/signal a failed update here because
+            // stemmarestService.updateRelationType already does.
+        } );
+    } else {
+      form.classList.add('was-validated');
+      return Promise.resolve( {
+        success: false,
+        message: 'Form validation error.'
+      } );
+    }
   }
 
   render() {
