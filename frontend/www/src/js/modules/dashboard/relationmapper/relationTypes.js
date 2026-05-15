@@ -10,6 +10,20 @@ class RelationTypes extends HTMLElement {
 
   constructor() {
     super();
+    // AUTH_STORE.subscribe( ( state ) => {
+    //   const addRelationElementClassList = document.querySelector( 'add-relation-button-container a' ).classList;
+    //   if( state.user ){
+    //       if( addRelationElementClassList.contains( 'greyed-out' ) ){
+    //           addRelationElementClassList.remove( 'greyed-out' );
+    //           this.addEventListener( 'click', this.clickEventListener );
+    //       }
+    //   } else {
+    //       if( !addRelationElementClassList.contains( 'greyed-out' ) ){
+    //           addRelationElementClassList.add( 'greyed-out' );
+    //           this.removeEventListener( 'click', this.clickEventListener );
+    //       }
+    //   }
+    // } );
   }
 
   connectedCallback() {}
@@ -51,7 +65,7 @@ class RelationTypes extends HTMLElement {
       `;
     const divElement = trElement.querySelector( 'div' );
     divElement.appendChild( new DeleteRelationType( relationType ) );
-    divElement.appendChild( new EditRelationType( relationType, relationType.color ) );
+    divElement.appendChild( new EditRelationType( relationType ) );
     return trElement;
   }
 
@@ -83,9 +97,16 @@ class RelationTypes extends HTMLElement {
         relationTypes = this.sortedRelationTypes( relationTypes );
         this.innerHTML = `
             <div class="position-sticky pt-2" style="display: ${usedOptions.display}; opacity: ${usedOptions.opacity};">
-                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 text-muted">
-                    <span>Relation Types</span>
-                </h6>
+                <div id="relation-types-heading-container">
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 text-muted">
+                        <span>Relation Types</span>
+                    </h6>
+                    <div id="add-relation-button-container">
+                        <a class="link-secondary greyed-out" href="#" aria-label="Add a new relation type">
+                            <span><add-relation-type-button/></span>
+                        </a>
+                    </div>
+                </div>
                 <div class="table-responsive px-3 py-1">
                     <table class="table table-striped table-sm">
                         <tbody id="relation-type-info">
@@ -143,8 +164,6 @@ class RelationTypes extends HTMLElement {
   unrender() {
     fadeToDisplayNone( document.querySelector( 'relation-types div' ) );
   }
-
-  // render() {}
 
 }
 

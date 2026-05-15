@@ -13,26 +13,22 @@ class EditRelationType extends HTMLElement {
 
   #relationType = {};
   #color = '';
+  #defaultOptions = {
+    dialogTitle: 'Edit relation type',
+    closeLabel: 'Close',
+    onUpdated: this.onEndOfUpdate,
+    succesMessage: 'Relation type properties updated.'
+  };
+  #activeOptions = {} 
 
-  constructor( relationType, color ) {
+  constructor( relationType, options ) {
     super();
+    const defaultOptions = { 
+    }
+    this.#activeOptions = { ...this.#defaultOptions, ...options }
     this.#relationType = relationType;
     this.#color = relationType.display.color;
     this.addEventListener( 'click', this.showDialog );
-  }
-
-  /**
-   * @param {Tradition} tradition Tradition to render the metadata for.
-   * @returns {MetaItem[]} Array of metadata items to display on a form.
-   */
-  static metadataFromTradition(tradition) {
-    const metadata = PropertyTableView.metadataFromTradition(tradition);
-    metadata.push({
-      label: PropertyTableView.traditionMetadataLabels.name,
-      value: tradition.name,
-      inputOptions: { control: 'text', size: 40, required: true }
-    });
-    return metadata;
   }
 
   connectedCallback() {
@@ -119,6 +115,18 @@ class EditRelationType extends HTMLElement {
     );
   }
 
+  onEndOfUpdate( relationType ) {
+    const oldColor = `color-${this.#color}`;
+    this.#color = relationType.display.color;
+    const newColor = `color-${this.#color}`;
+    const colorElement = this.closest( 'tr' ).querySelector( '.relation-type-color-cell span.relation-colors' );
+    colorElement.classList.replace( oldColor, newColor );
+    const nameElement = this.closest( 'tr' ).querySelector( '.relation-type-name-cell' );
+    nameElement.innerHTML = relationType.name;
+    const deleteRelationElement = this.closest( 'div' ).querySelector( 'delete-relation-type-button' );
+    deleteRelationElement.relationName = relationType.name;
+  }
+
   showDialog() {
     const metaItems = this.relationTypeMeta();
     const modal_body = `
@@ -131,27 +139,20 @@ class EditRelationType extends HTMLElement {
             </form>
         `;
     StemmawebDialog.show(
-      'Edit relation type',
+      this.#activeOptions.dialogTitle,
       modal_body,
       { onOk: () => { 
         this.processForm.call( this )
           .then( ( relationType ) => { 
             if ( relationType ) {
-              const oldColor = `color-${this.#color}`;
-              this.#color = relationType.display.color;
-              const newColor = `color-${this.#color}`;
-              const colorElement = this.closest( 'tr' ).querySelector( '.relation-type-color-cell span.relation-colors' );
-              colorElement.classList.replace( oldColor, newColor );
-              const nameElement = this.closest( 'tr' ).querySelector( '.relation-type-name-cell' );
-              nameElement.innerHTML = relationType.name;
-              const deleteRelationElement = this.closest( 'div' ).querySelector( 'delete-relation-type-button' );
-              deleteRelationElement.relationName = relationType.name;
+              this.#activeOptions.onUpdated.call( this, relationType );
             }
           } );
         } 
       },
       {
         okLabel: 'Save',
+        closeLabel: this.#activeOptions.closeLabel,
         elemStyle: this.#createDialogStyle()
       }
     );
@@ -209,7 +210,7 @@ class EditRelationType extends HTMLElement {
         .then( ( relationTypeFromResponse ) => {
           if ( relationTypeFromResponse ) {
             this.#relationType = relationTypeFromResponse;
-            StemmawebAlert.show( 'Relation type properties updated.', 'success' );
+            StemmawebAlert.show( this.#activeOptions.succesMessage, 'success' );
             return this.#relationType;
           } // We don't handle/signal a failed update here because
             // stemmarestService.updateRelationType already does.
@@ -228,7 +229,7 @@ class EditRelationType extends HTMLElement {
             <a
             class="link-secondary"
             href="#"
-            aria-label="Edit relation type"
+            aria-label="${this.#activeOptions.dialogTitle}"
             >
                 <span>${feather.icons['edit'].toSvg()}</span>
             </a>
@@ -236,4 +237,4 @@ class EditRelationType extends HTMLElement {
   }
 }
 
-customElements.define('edit-relation-type-button', EditRelationType);
+customElements.define( 'edit-relation-type-button', EditRelationType );
