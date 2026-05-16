@@ -23,7 +23,8 @@ class AddRelationType extends EditRelationType {
         onUpdated: () => {
           document.querySelector( 'relation-types' ).renderRelationTypes( {'display': 'block', 'opacity': 1 } );
         },
-        succesMessage: 'New relation type saved.'
+        succesMessage: 'New relation type saved.',
+        constrained: false
       } 
     );
     this.addEventListener( 'click', this.showDialog );

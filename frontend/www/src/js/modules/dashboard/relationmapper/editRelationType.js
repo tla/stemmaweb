@@ -17,7 +17,8 @@ class EditRelationType extends HTMLElement {
     dialogTitle: 'Edit relation type',
     closeLabel: 'Close',
     onUpdated: this.onEndOfUpdate,
-    succesMessage: 'Relation type properties updated.'
+    succesMessage: 'Relation type properties updated.',
+    constrained: true
   };
   #activeOptions = {} 
 
@@ -72,7 +73,8 @@ class EditRelationType extends HTMLElement {
         value: this.#relationType.bindlevel,
         inputOptions: {
           control: 'text', 
-          size: 10
+          size: 10,
+          disabled: this.#activeOptions.constrained 
         }
       }
     ];
@@ -82,7 +84,8 @@ class EditRelationType extends HTMLElement {
         value: this.#relationType[prop],
         inputOptions: {
           control: 'checkbox',
-          checked: this.#relationType[prop]
+          checked: this.#relationType[prop],
+          disabled: this.#activeOptions.constrained 
         }
       } )
     } );
