@@ -1,17 +1,18 @@
 class Download {
 
-  static set_downloads( tradition, dot ) {
-    const traditionFilename = `${libraries.lib_SanitizeFilename.sanitize( tradition.name )}`;
+  static set_downloads( tradition, dot, stemma_name ) {
     const dropdownbtn_element = d3.select( '#stemma_image_downloadbtn' );
     if( dot ) {
+      const traditionFilename = `${libraries.lib_SanitizeFilename.sanitize( tradition.name )}`;
+      const stemmaFilename = `${traditionFilename}_${libraries.lib_SanitizeFilename.sanitize( stemma_name )}`;
       d3.select( '#download_dot' ).on( 'click', function (evt) {
         evt.preventDefault();
-        Download.download( `${traditionFilename}.dot`, dot, 'text/plain');
+        Download.download( `${stemmaFilename}.dot`, dot, 'text/plain');
       }); 
       d3.select( '#download_svg' ).on( 'click', function (evt) {
         evt.preventDefault();
         Download.download(
-          `${traditionFilename}.svg`,
+          `${stemmaFilename}.svg`,
           d3.select('#graph-area div').html(),
           'image/svg+xml'
         );
@@ -20,7 +21,7 @@ class Download {
         evt.preventDefault();
         libraries.lib_SaveSvgAsPng.saveSvgAsPng(
           d3.select('#graph-area div').select('svg').node(),
-          `${traditionFilename}.png`
+          `${stemmaFilename}.png`
         );
       });
       dropdownbtn_element.classed( 'disabled', false );
