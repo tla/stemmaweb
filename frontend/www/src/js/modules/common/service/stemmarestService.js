@@ -251,7 +251,7 @@ class StemmarestService extends BaseService {
    * @param {string} stemma_dot - The stemma in dot language representation.
    * @returns {Promise<BaseResponse<T>>}
    * 
-   * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/name/ }
+   * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/name/}
    */
   saveStemma( userId, tradId, stemmaId, stemmaName, stemmaDot ) {
     if (userId === null) {
@@ -283,7 +283,7 @@ class StemmarestService extends BaseService {
    * @param {string} stemma_dot - The stemma in dot language representation.
    * @returns {Promise<BaseResponse<T>>}
    * 
-   * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/ }
+   * @see {@link: https://dhuniwien.github.io/tradition_repo/#10946710861903867053 | Stemmarest endpoint: /tradition/tradId/stemma/}
    */
   addStemma( userId, tradId, stemmaName, stemmaDot ) {
     if (userId === null) {
@@ -401,50 +401,74 @@ class StemmarestService extends BaseService {
     });
   }
 
-  /**
-   * Fetches a list of relation types for a particular tradition.
-   *
-   * @param {string} traditionId
-   * @returns {Promise<BaseResponse<Section[]>>}
-   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/relationtypes}
-   */
-    listRelationTypes( traditionId ) {
-      return this.fetch(`/api/tradition/${traditionId}/relationtypes`);
-    }
-  
-  /** 
-   * Fetches the dot for a section.
-   * 
-   * @param {string} traditionId
-   * * @param {string} sectionId
-   * @returns {Promise<BaseResponse<T>>}
-   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/dot/
-   */
-    getSectionDot( traditionId, sectionId ) {
-      return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/dot`);
-    }
-
-  /** 
-   * Fetches the relations for a section.
-   * 
-   * @param {string} traditionId
-   * * @param {string} sectionId
-   * @returns {Promise<BaseResponse<T>>}
-   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/relations/
-   */
-  getSectionRelations( traditionId, sectionId ) {
-    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/relations`);
-  }
-
   /** 
    * Fetches the relation types for a tradition.
    * 
    * @param {string} traditionId
    * @returns {Promise<BaseResponse<T>>}
-   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/relationtypes/
+   * @see {@link https://dhuniwien.github.io/tradition_repo/} | Stemmarest Endpoint: /tradition/[tradId]/relationtypes/}
    */
   getRelationTypes( traditionId ) {
-    return this.fetch( `/api/tradition/${traditionId}/relationtypes` );
+    return this.fetch( `/api/tradition/${traditionId}/relationtypes` ).then( ( resp ) => {
+      if ( resp.success ) {
+        const relationTypesData = resp.data;
+        let relationTypes = relationTypesData.map( ( relationType ) => {
+          relationType.display = JSON.parse( relationType.display );
+          return relationType;
+        } );
+        return relationTypes;
+      } else {
+        StemmawebAlert.show( `Error: ${resp.message}`, 'danger' );
+      } 
+    } );
+  }
+
+  /**
+   * Convenience method to update several relation types at once.
+   *
+   * @param {string | null} userId
+   * @param {string} tradId - The ID of the tradition to which the section belongs.
+   * @param {array<object>} relationTypes - An array if objects containing relation type metadata.
+   * @returns {Promise<BaseResponse<T>>}
+   */
+  updateRelationTypes( userId, tradId, relationTypes ) {
+    // Damn, is this some await across all the updates? How do we handle this properly?
+    const promises = relationTypes.map( ( relationType ) => this.updateRelationType( userId, tradId, relationType ) );
+    return Promise.all( promises );
+  }
+
+  /**
+   * Updates metadata of an individual relation type.
+   *
+   * @param {string | null} userId
+   * @param {string} tradId - The ID of the tradition to which the section belongs.
+   * @param {object} relationType - An object containing relation type metadata.
+   * @returns {Promise<BaseResponse<T>>}
+   */
+  updateRelationType( userId, tradId, relationType ) {
+    if (userId === null) {
+      return Promise.resolve( {
+        success: false,
+        message: 'You need to be logged in to edit relation types.'
+      } );
+    }
+    relationType.display = JSON.stringify( relationType.display );
+    return this.fetch(`/api/tradition/${tradId}/relationtype/${relationType.name}`, {
+      method: 'PUT',
+      body: JSON.stringify( relationType ),
+      headers: new Headers( { 'Content-Type': 'application/json' } )
+    } ).then( (resp) => {
+      // No matter what happens we should return relationType to its full
+      // JS object form (i.e. reparse the JSON-in-JSON display property).
+      relationType.display = JSON.parse( relationType.display );
+      if ( resp.success ) {
+        relationType = resp.data;
+        relationType.display = JSON.parse( relationType.display );
+        return relationType;
+      } else {
+        StemmawebAlert.show( `Error: ${resp.message}`, 'danger' );
+      }
+    } );
   }
 
   /** 
@@ -452,7 +476,7 @@ class StemmarestService extends BaseService {
    * 
    * @param {string} traditionId
    * @returns {Promise<BaseResponse<T>>}
-   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/relationtypes/
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/relationtypes/}
    */
   deleteRelationType( traditionId, relationName ) {
     return this.fetch( `/api/tradition/${traditionId}/relationtype/${relationName}`, {
@@ -461,12 +485,36 @@ class StemmarestService extends BaseService {
   }
 
   /** 
+   * Fetches the dot for a section.
+   * 
+   * @param {string} traditionId
+   * * @param {string} sectionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/dot/}
+   */
+  getSectionDot( traditionId, sectionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/dot`);
+  }
+
+  /** 
+   * Fetches the relations for a section.
+   * 
+   * @param {string} traditionId
+   * * @param {string} sectionId
+   * @returns {Promise<BaseResponse<T>>}
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/relations/}
+   */
+  getSectionRelations( traditionId, sectionId ) {
+    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/relations`);
+  }
+
+  /** 
    * Fetches the readings for a section.
    * 
    * @param {string} traditionId
    * @param {string} sectionId
    * @returns {Promise<BaseResponse<T>>}
-   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/readings/
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/readings/}
    */
   getSectionReadings( traditionId, sectionId ) {
     return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/readings`);
@@ -477,7 +525,7 @@ class StemmarestService extends BaseService {
    * 
    * @param {string} traditionId
    * @returns {Promise<BaseResponse<T>>}
-   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/readings/
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/readings/}
    */
   getAllReadings( traditionId, sectionId ) {
     return this.fetch(`/api/tradition/${traditionId}/readings`);
@@ -490,7 +538,7 @@ class StemmarestService extends BaseService {
    * @param {string} sectionId
    * @param {string} readingId
    * @returns {Promise<BaseResponse<T>>}
-   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: tradition/[tradId]/section/[sectionId]/reading/[readingId]/
+   * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: tradition/[tradId]/section/[sectionId]/reading/[readingId]/}
    */
   getReading( traditionId, sectionId, readingId ) {
     return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/reading/${readingId}`);

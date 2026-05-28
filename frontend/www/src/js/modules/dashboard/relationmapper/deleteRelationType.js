@@ -10,11 +10,15 @@ const deleteRelationTypeService = stemmarestService;
 
 class DeleteRelationType extends HTMLElement {
 
-  #name = '';
+  #relationName = '';
 
-  constructor( relationTypeData ) {
+  set relationName( newValue ) {
+    this.#relationName = newValue;
+  }
+
+  constructor( relationType ) {
     super();
-    this.#name = relationTypeData.name;
+    this.#relationName = relationType.name;
     this.addEventListener( 'click', this.handleDelete );
   }
 
@@ -26,14 +30,14 @@ class DeleteRelationType extends HTMLElement {
     const { selectedTradition: tradition } = TRADITION_STORE.state;
     StemmawebDialog.show(
       'Delete Relation Type',
-      `<p>Are you sure you want to delete the relation type <span class="fst-italic">${this.#name}</span>?</p>`,
+      `<p>Are you sure you want to delete the relation type <span class="fst-italic">${this.#relationName}</span>?</p>`,
       {
         onOk: () => {
-          deleteRelationTypeService.deleteRelationType( tradition.id, this.#name ).then( (res) => {
+          deleteRelationTypeService.deleteRelationType( tradition.id, this.#relationName ).then( (res) => {
             if (res.success) {
               document.querySelector( 'relation-types' ).renderRelationTypes( {'display': 'block', 'opacity': 1 } );
               StemmawebAlert.show(
-                `<p class="d-inline">Deleted relation type <span class="fst-italic">${this.#name}</span></p>`,
+                `<p class="d-inline">Deleted relation type <span class="fst-italic">${this.#relationName}</span></p>`,
                 'success'
               );
               // SECTION_STORE.sectionDeleted( section.id, tradition.id );

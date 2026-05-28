@@ -250,7 +250,8 @@ edit-stemma-buttons a.greyed-out div,
 edit-properties-button a.greyed-out span,
 .edit-reading-button a.greyed-out span,
 edit-section-properties-button a.greyed-out span,
-text-directory a.greyed-out span {
+text-directory a.greyed-out span,
+add-relation-button-container a.greyed-out span {
   color: #ccc;
 }
 
@@ -402,22 +403,6 @@ text-directory a.greyed-out span {
   padding-left: 0.7em;
   font-size: 120%;
   line-height: 210%;
-}
-
-/* TODO: probably similar in case lots of stemma selectors */
-#section-selectors {
-  /* Because the height and width of svg icons are hard set to 24, we can just compute the space we need */
-  /* TODO: Nice to have, scaling icons. If we set height and width as 'em' we can have them scale nicely with the interface?
-     This should have a min+max setting though, as we don't want tiny nor giant icons. So maybe 24px fixed is not too bad? Not sure. */
-  /* height: 28px;
-  width: 280px; */
-  /* Note that the right padding here is a 100 px to have some decent scroll possibility if 
-     the container is just a tad too narrow and only one or a few section selector buttons
-     are not showing. This is relevant to the method scrollGage() in sectionSelectors.js */
-  /* padding-right: 100px;
-  overflow: scroll;
-  scrollbar-width: none; /* Firefox */
-  /* -ms-overflow-style: none;  IE 10+ */
 }
 
 #section-selectors::-webkit-scrollbar {
@@ -730,6 +715,16 @@ relation-mapper {
   display: none;
   opacity: 0;
 } */
+
+#relation-types-heading-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+#add-relation-button-container {
+  padding-right: 1.25rem;
+  padding-top: 5px;
+}
 
 .relation-type-name-cell {
   width: 100%;
