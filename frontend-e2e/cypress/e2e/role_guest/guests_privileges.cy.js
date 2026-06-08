@@ -50,14 +50,15 @@ const test_traditions_public = test_traditions.filter(
 
 // ToDo: close github issues  #170, #157, #155 when tests are passing for all roles.
 // Test for Feat/157 user auth (PR #235), related to 'guest':
+// guest sees public traditions in alphabetical order, no divider (#316)
 describe('Cross-check: guest sees only public traditions listed in the toc', () => {
   it('passes', () => {
     // the number of displayed traditions is equal to the number of public traditions
-    // no separation bar btw own and others' traditions, all are othres'
+    // no separation bar btw own and others' traditions, all are others'
     cy.get('ul#traditions-list')
       .children()
-      // .find('.folder-icon') // no separation line btw own and others' traditions or public and private
       .should('have.length', test_traditions_public.length);
+    cy.get('#traditions-list > li:has(.list-separator)').should('not.exist')
 
     test_traditions.forEach((tradition) => {
       if (tradition.access == 'Public') {

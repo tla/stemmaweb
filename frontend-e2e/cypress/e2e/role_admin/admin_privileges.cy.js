@@ -112,6 +112,7 @@ if (Cypress.browser.isHeaded) {
         });
       });
 
+      // admin sees all traditions in alphabetical order (#316)
       // own and others' traditions are each sorted alphabetically, before and after the separator
       // TODO: consider the case, own or others' traditions array to be empty
 

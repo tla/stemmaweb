@@ -67,6 +67,7 @@ if (Cypress.browser.isHeaded) {
         cy.log('end of test for this user')
       });
 
+      // only traditions accessible to user or public traditions should be visible. (#317)
       it('asserts the user sees only public and their own traditions, and can only edit own traditions', () => {
 
         // User sees only public and their own traditions
@@ -80,6 +81,7 @@ if (Cypress.browser.isHeaded) {
               test_traditions_others_public.length
         );
 
+        // if user is not the owner of the tradition the user cannot: ... edit properties of tradition ... (#317)
         // assert all the right traditions are displayed in the tradition list
         // assert the 'Edit properties' modal is visible
         // assert user can only edit his own traditions
@@ -183,7 +185,8 @@ if (Cypress.browser.isHeaded) {
         });
       });
 
-      // own and others' traditions are each sorted alphabetically, before and after the separator
+      // user sees owned traditions in alphabetical order, below that a divider, below the divider <others'> public traditions alphabetically. (#316)
+
       // TODO: consider the case, own or others' traditions array to be empty
 
       // own traditions:
