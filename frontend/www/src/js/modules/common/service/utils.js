@@ -52,18 +52,11 @@ async function baseFetch(endpoint, options, params = {}) {
           data: await res.text()
         };
       } else {
-        if( isJson ) {
-          return {
-            success: true,
-            message: res.statusText,
-            ...(isJson ? { data: await res.json() } : {})
-          };
-        } else {
-          return {
-            success: true,
-            data: await res.blob()
-          }
-        }
+        return {
+          success: true,
+          message: res.statusText,
+          ...(isJson ? { data: await res.json() } : {})
+        };
       }
     } else {
       return {

@@ -52,17 +52,18 @@ class StemmaButtons extends HTMLElement {
         'mimeType': 'text/plain'
       },
       'dot': {
-        'ext': 'gv',
-        'mimeType': 'text/vnd.graphviz'
+        'ext': 'dot',
+        'mimeType': 'text/plain'
       },
       'svg':  {
         'ext': 'svg',
         'mimeType': 'image/svg+xml'
       },
-      'graphml': {
-        'ext': 'zip',
-        'mimeType': 'application/zip'
-      }
+      // GraphML not supported yet.
+      // 'graphml': {
+      //   'ext': 'zip',
+      //   'mimeType': 'application/zip'
+      // }
     };
     for ( const[ format, ext_mimeType ] of Object.entries( formats_mimeTypes ) ) {
       d3.select( `#download_trad_${format}` ).on( 'click', function (evt) {

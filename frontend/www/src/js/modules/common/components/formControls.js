@@ -42,9 +42,6 @@ class FormControlFactory {
       input_element.setAttribute( 'type', 'text' );
       input_element.setAttribute( 'name', id_name_string );
       input_element.setAttribute( 'value', item.value );
-      if( item.inputOptions.disabled ) {
-        input_element.setAttribute( 'disabled', '' );
-      }
       const class_string = `form-control ${item.inputOptions.required ? 'has-validation' : ''}`;
       input_element.setAttribute( 'class', class_string );
       if ( item.inputOptions.size ) {
@@ -132,7 +129,7 @@ class FormControlFactory {
           <div class="form-check">
               <input class="form-check-input" type="checkbox" ${
                 item.inputOptions.checked ? 'checked ' : ''
-              }${item.inputOptions.disabled ? 'disabled ' : ''}value="${item.label.toLowerCase()}" id="${FormControlFactory.#toHtmlId( item.label )}_input" name="${FormControlFactory.#toHtmlId( item.label )}_input">
+              }value="${item.label.toLowerCase()}" id="${FormControlFactory.#toHtmlId( item.label )}_input" name="${FormControlFactory.#toHtmlId( item.label )}_input">
               <label
                   for="${FormControlFactory.#toHtmlId( item.label )}_input"
                   id="edit_property_${FormControlFactory.#toHtmlId( item.label )}_field"
@@ -155,9 +152,9 @@ class FormControlFactory {
       colors.forEach( (color) => {
         var colorHtml = '';
         if ( color == item.value ) {
-          colorHtml = `<span class="relation-colors color-${color} selected" data-value="${color}">${feather_check_square_alt}</span>`;
+          colorHtml = `<span class="relation-colors color-${color} selected">${feather_check_square_alt}</span>`;
         } else {
-          colorHtml = `<span class="relation-colors color-${color}" data-value="${color}">${feather.icons['square'].toSvg()}</span>`;
+          colorHtml = `<span class="relation-colors color-${color}">${feather.icons['square'].toSvg()}</span>`;
         }
         colorPickerHtml += colorHtml;
       } );

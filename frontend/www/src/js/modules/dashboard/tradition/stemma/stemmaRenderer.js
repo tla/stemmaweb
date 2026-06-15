@@ -73,7 +73,7 @@ class StemmaRenderer {
       };
       this.setRerootingListeners();
     }
-    Download.set_downloads( tradition, stemma && stemma.dot, stemma && stemma.name );
+    Download.set_downloads( tradition, stemma && stemma.dot );
   }
  
   rerootStemma( e, d ) {

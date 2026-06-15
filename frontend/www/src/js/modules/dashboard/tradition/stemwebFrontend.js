@@ -90,10 +90,10 @@ class StemwebFrontend {
   }
 
   setRelationTypesControls() {
-    stemmarestService.getRelationTypes( TRADITION_STORE.state.selectedTradition.id )
-      .then( (relationTypes) => { 
-        if( relationTypes ) {
-          const metaItems = relationTypes.map( variantTypeItem => { return {
+    stemmarestService.listRelationTypes( TRADITION_STORE.state.selectedTradition.id )
+      .then( (resp) => { 
+        if( resp.success ) {
+          const metaItems = resp.data.map( variantTypeItem => { return {
               label: variantTypeItem.name,
               value: variantTypeItem.name,
               inputOptions: { 
@@ -107,8 +107,10 @@ class StemwebFrontend {
           );
           var controlsHTML = stemwebFrontend.mapToHTMLTable( controls );
           document.querySelector( '#algorithm-variants-panel' ).innerHTML = controlsHTML; 
+        } else {
+          StemmawebAlert.show(`Error: ${resp.message}`, 'danger');
         }
-      } );
+    });
   }
 
   setDescriptionAndControls( evt ) {
