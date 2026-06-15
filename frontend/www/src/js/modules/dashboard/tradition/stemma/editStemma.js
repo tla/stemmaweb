@@ -72,17 +72,18 @@ class EditStemma extends HTMLElement {
       // We first fade out the existing graph…
       // TODO? The transition is a perfect copy of TraditionView.renderDefaultTraditionStemma.
       graphArea.transition().call( speedy_transition ).style( 'opacity', '0.0' ).on( 'end', () => {
-        const exampleDigraph = this.createExampleStemma();
+        const exampleDigraphName = 'New Stemma Name';
+        const exampleDigraph = this.createExampleStemma( exampleDigraphName );
         stemmaDotEditorTextarea.value = exampleDigraph;
         // Finally we need to render the example stemma.
-        const editorStemma = { dot: exampleDigraph }
+        const editorStemma = { dot: exampleDigraph, name: exampleDigraphName };
         const tradition = STEMMA_STORE.state.tradition;
         stemmaRenderer.renderStemma( tradition, editorStemma );
       } );
     };
   }
 
-  createExampleStemma() {
+  createExampleStemma( exampleStemmaName ) {
     // Let's create a simple bifurcating tree with the available witnesses as an example.
     const tab = '    ';
     var rootAndWitnesses = TRADITION_STORE.state.selectedTradition.witnesses.sort(); 
@@ -111,7 +112,7 @@ class EditStemma extends HTMLElement {
     // Add the archetype definition.
     witnessDefinitions.splice( 0, 0, `${tab}"\u03b1" [class=hypothetical label="\u03b1"];` );
     const witnessesString = witnessDefinitions.join( '\n' );
-    const exampleDigraph = `digraph "New Stemma Name" {\n${witnessesString}\n${taxaString}\n}\n`;
+    const exampleDigraph = `digraph "${exampleStemmaName}" {\n${witnessesString}\n${taxaString}\n}\n`;
     return exampleDigraph;
   }
 
@@ -226,8 +227,8 @@ class EditStemma extends HTMLElement {
   cancelEdits() {
     // reset the stemma rendered to the stemma in current state
     const { tradition, availableStemmata, selectedStemma } = STEMMA_STORE.state;
-    // Render the stemma, or an empty one if there's none. 
-    stemmaRenderer.renderStemma( tradition, selectedStemma || { dot: 'digraph {}' } );
+    // Render the stemma (or none). 
+    stemmaRenderer.renderStemma( tradition, selectedStemma );
     this.toggleStemmaEditor();    
     TraditionView.renderStemmaSelectors( availableStemmata );
   }

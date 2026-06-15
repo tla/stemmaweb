@@ -34,7 +34,7 @@ class SectionList extends HTMLElement {
                         // AND if this is a name change…
                         // well, THEN we do something (i.e. change the name in the Tradition/Section tree view).
                         if( state.selectedSection.name != prevState.selectedSection.name ) {
-                            this.querySelector( `ul li div[sect-id="${state.selectedSection.id}"] span` ).innerHTML = state.selectedSection.name;
+                            this.querySelector( `ul li div[sect-id="${state.selectedSection.id}"] span span` ).innerHTML = state.selectedSection.name;
                         };
                     };
                 };
