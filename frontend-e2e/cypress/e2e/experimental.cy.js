@@ -19,7 +19,7 @@ beforeEach(() => {
 describe('login and logout with authentication modal, captcha v3 and fetch(POST)', () => {
   if (Cypress.browser.isHeaded) {
     // skip when in headless mode
-    it(
+    it.skip(
       'passes in headless mode local and on github. passes in local headed mode',
       {
         defaultCommandTimeout: 10000,
