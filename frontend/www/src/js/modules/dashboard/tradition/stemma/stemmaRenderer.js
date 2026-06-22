@@ -75,8 +75,9 @@ class StemmaRenderer {
     } else {
       // The case where there is no stemma, e.g. when someone canceled
       // editing a stemma and there is no other.
-      if( tradition ) {
-         document.querySelector( '#graph-area #graph svg' ).remove();
+      const svg = document.querySelector( '#graph-area #graph svg' );
+      if( tradition && svg ) {
+         svg.remove();
       }
     }
     Download.set_downloads( tradition, stemma && stemma.dot, stemma && stemma.name );
