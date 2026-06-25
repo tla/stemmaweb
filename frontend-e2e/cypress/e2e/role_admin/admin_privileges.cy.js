@@ -6,7 +6,7 @@
     https://github.com/tla/stemmaweb/pull/235
     The following things should now be testable:
     - Admin sees all traditions
-    - Admin may change metadata on any tradition
+    - Admin may change metadata on any tradition (#332)
 
 */
 
@@ -67,6 +67,8 @@ if (Cypress.browser.isHeaded) {
         cy.log('end of test for this admin')
       });
 
+      // Admin sees all traditions (#332)
+      // Admin may change metadata on any tradition (#332)
       it('asserts admin can see and edit own and others\' traditions', () => {
 
         // Admin sees all traditions: own and others' public and private.
@@ -116,6 +118,7 @@ if (Cypress.browser.isHeaded) {
       // own and others' traditions are each sorted alphabetically, before and after the separator
       // TODO: consider the case, own or others' traditions array to be empty
 
+      // Admin sees all traditions (#332)
       // own traditions:
       it('asserts pre-separator tradition titles equal expected titles', () => {
         const test_traditions_own = test_traditions_own_private.concat(test_traditions_own_public)
@@ -136,6 +139,7 @@ if (Cypress.browser.isHeaded) {
         });
       });
 
+      // Admin sees all traditions (#332)
       // others' traditions:
       it('asserts post-separator tradition titles equal expected titles', () => {
         const test_traditions_others = test_traditions_others_private.concat(test_traditions_others_public)

@@ -20,8 +20,8 @@ A guest should further
 /*  test users & traditions (https://github.com/tla/stemmaweb/pull/152):
 ...
 Tests for Feat/157 user auth (PR #235), related to 'guest':
-- Guest sees only public traditions
-- Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
+- Guest sees only public traditions (#332)
+- Guest may not change any metadata on traditions (ideally the edit button wouldn't be there) (#332)
  */
 
 // TODO: When role user and admin tests are completed, check guest privileges to adapt or complete if necessary.
@@ -118,13 +118,13 @@ describe('A guest should not be offered or able to "Edit Collation" of any tradi
 
 // Feat/157 user auth (PR#235)
 // ToDo: close github issues  #170 and #157 when tests are passing for all roles.
+// Guest may not change any metadata on traditions (ideally the edit button wouldn't be there) (#332)
 describe('Guest may not change any metadata (Edit properties)', () => {
   it('passes', () => {
     // Guest sees only all public traditions -- asserted separately, above
     // assert the 'Edit properties' modal is not visible
     test_traditions_public.forEach((tradition) => {
       cy.log('title: ' + tradition.title);
-      // Guest may not change metadata on traditions (ideally the edit button wouldn't be there...)
       // the tradition is visible but not editable for a guest, opened lock sign
       cy.get('ul#traditions-list')
         .contains(tradition.title)

@@ -6,8 +6,8 @@
 
     https://github.com/tla/stemmaweb/pull/235
     - User sees only public and their own traditions
-    - User may change metadata on their own tradition // i.e. Edit properties
-    - User may not change metadata on traditions they don't own (ideally the edit button wouldn't be there...)
+    - User may change metadata on their own tradition // i.e. Edit properties (#332)
+    - User may not change metadata on traditions they don't own (#332)
 */
 
 import users_all from '../../fixtures/users.json';
@@ -68,6 +68,7 @@ if (Cypress.browser.isHeaded) {
       });
 
       // only traditions accessible to user or public traditions should be visible. (#317)
+      // User sees only public and their own traditions (#332)
       it('asserts the user sees only public and their own traditions, and can only edit own traditions', () => {
 
         // User sees only public and their own traditions
@@ -87,7 +88,7 @@ if (Cypress.browser.isHeaded) {
         // assert user can only edit his own traditions
         test_traditions.forEach((tradition) => {
           cy.log('title: ' + tradition.title);
-          // User may change metadata on their own tradition
+          // User may change metadata on their own tradition (#332)
           if (
             tradition.owner === user.username &&
             (
@@ -141,7 +142,7 @@ if (Cypress.browser.isHeaded) {
               .should('not.exist');
             // 'Edit properties' is not reachable anyways
           }
-          // User may not change metadata on traditions they don't own (ideally the edit button wouldn't be there...)
+          // User may not change metadata on traditions they don't own (#332)
           else if (
             tradition.owner !== user.username &&
             tradition.access === 'Public'
