@@ -110,7 +110,7 @@ class StemmaStore extends StateStore {
    */
   stemmaSaved( stemma ) {
     const availableStemmata = this.state.availableStemmata;
-    const stemmaIdx = this.state.availableStemmata.findIndex( availableStemma => availableStemma.identifier == stemma.identifier);
+    const stemmaIdx = this.state.availableStemmata.findIndex( availableStemma => availableStemma.stemmaid == stemma.stemmaid);
     availableStemmata[ stemmaIdx ] = stemma;
     this.setState({
       ...this.state,
@@ -132,7 +132,7 @@ class StemmaStore extends StateStore {
    */
   stemmaDeleted( stemma ) {
     const availableStemmata = this.state.availableStemmata;
-    var stemmaIdx = this.state.availableStemmata.findIndex( availableStemma => availableStemma.identifier == stemma.identifier);
+    var stemmaIdx = this.state.availableStemmata.findIndex( availableStemma => availableStemma.stemmaid == stemma.stemmaid );
     availableStemmata.splice( stemmaIdx, 1 );
     if( stemmaIdx > (availableStemmata.length - 1) ){
       stemmaIdx = availableStemmata.length - 1;
