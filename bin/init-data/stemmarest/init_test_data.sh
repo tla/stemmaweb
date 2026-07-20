@@ -85,9 +85,24 @@ else
 fi
 echo; echo Adding stemweb_jobid 2 to Florilegium
 $CURL --request PUT --header 'Content-Type: application/json' --data '{"stemweb_jobid":2}' $STEMMAREST_ENDPOINT/tradition/$FLOR_ID
-echo Uploading 4x20 sections
-for e in w x y z; do
-  for s in {1..20}; do
+
+# Defaults
+elements=(w x y z)
+start=1
+end=20
+msg="Uploading 4x20 sections"
+
+# Optional mode for mini testing
+if [[ ${1-} == mini ]]; then
+  elements=(w x)
+  start=1
+  end=2
+  msg="Uploading 2x2 sections"
+fi
+
+echo "$msg"
+for e in "${elements[@]}"; do
+  for ((s = start; s <= end; s++)); do
     NAME="section ${e}-${s}"
     echo ...uploading section $NAME
     $CURL --request POST --form name="$NAME" --form file=@data/florilegium_${e}.csv --form filetype=csv $STEMMAREST_ENDPOINT/tradition/$FLOR_ID/section > /tmp/stemmarest.response

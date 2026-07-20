@@ -40,7 +40,7 @@ https://github.com/tla/stemmaweb/pull/188#issue-2133307487
 
 */
 
-import test_traditions from '../../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions_mini.json';
 import stemweb_algorithms from '../../fixtures/stemweb_algorithms.json';
 import users from '../../fixtures/users.json';
 const len_stemweb_algorithms = stemweb_algorithms.length;

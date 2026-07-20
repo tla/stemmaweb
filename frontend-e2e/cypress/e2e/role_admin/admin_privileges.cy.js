@@ -11,7 +11,7 @@
 */
 
 import users_all from '../../fixtures/users.json';
-import test_traditions from '../../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions_mini.json';
 
 const users_admin = users_all.filter(({ role }) => role === 'admin');
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // for "equals" instead of "contains"

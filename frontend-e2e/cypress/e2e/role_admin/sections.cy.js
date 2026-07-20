@@ -28,7 +28,7 @@ reordering of sections. Functionalities to be tested:
 
 */
 
-import test_traditions from '../../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions_mini.json';
 import users from '../../fixtures/users.json';
 const admin = users.filter(
   ({ username }) => username === 'admin@example.org'

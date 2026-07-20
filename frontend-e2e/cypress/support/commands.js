@@ -66,7 +66,7 @@ Cypress.Commands.add('logoutViaUi', () => {
 // delete all traditions and users and re-upload them to the api
 Cypress.Commands.add('reseedDB', () => {
   cy.log(
-    'reseed the db:: delete all traditions and users, then refill with init_test_data'
+    'reseed the db:: delete all traditions and users, then refill with mini init_test_data'
   );
   cy.log('CY_STEMMAREST_ENDPOINT: ' + Cypress.env('CY_STEMMAREST_ENDPOINT'));
 
@@ -125,7 +125,7 @@ Cypress.Commands.add('reseedDB', () => {
   if (Cypress.browser.isHeaded) {
     // skip when in headless mode
     cy.log('Cypress.browser.isHeaded? ' + Cypress.browser.isHeaded);
-    cy.exec('./../bin/init-data/stemmarest/init_test_data.sh', {
+    cy.exec('./../bin/init-data/stemmarest/init_test_data.sh mini', {
       env: { STEMMAREST_ENDPOINT: Cypress.env('CY_STEMMAREST_ENDPOINT') }
     }).then(function (result) {
       cy.log(result.code);
@@ -135,7 +135,7 @@ Cypress.Commands.add('reseedDB', () => {
   } else {
     cy.log('Cypress.browser.isHeaded? ' + Cypress.browser.isHeaded); // browser.isHeadless? true
     cy.exec(
-      './cypress/.initdata4headless/init_test_data.sh', // from a volume, cf. docker-compose.test.yml
+      './cypress/.initdata4headless/init_test_data.sh mini', // from a volume, cf. docker-compose.test.yml
       { env: { STEMMAREST_ENDPOINT: Cypress.env('CY_STEMMAREST_ENDPOINT') } }
     ).then(function (result) {
       cy.log(result.code);

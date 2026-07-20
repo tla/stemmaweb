@@ -2,7 +2,7 @@
 */
 
 import users_all from '../../fixtures/users.json';
-import test_traditions from '../../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions_mini.json';
 
 const user = users_all.filter(
   ({ username }) => username === 'user@example.org'

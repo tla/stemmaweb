@@ -1,6 +1,6 @@
 /* Assert everything is visible for an admin on the homepage upon login */
 
-import test_traditions from '../../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions_mini.json';
 import users from '../../fixtures/users.json';
 const admin = users.filter(
   ({ username }) => username === 'admin@example.org'

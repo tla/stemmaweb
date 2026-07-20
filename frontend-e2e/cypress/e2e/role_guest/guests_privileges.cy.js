@@ -26,7 +26,7 @@ Tests for Feat/157 user auth (PR #235), related to 'guest':
 
 // TODO: When role user and admin tests are completed, check guest privileges to adapt or complete if necessary.
 
-import test_traditions from '../../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions_mini.json';
 
 beforeEach(() => {
   cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
