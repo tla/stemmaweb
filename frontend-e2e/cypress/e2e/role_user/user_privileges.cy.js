@@ -35,7 +35,7 @@ const users_user = users_all.filter(({ role }) => role === 'user');
  */
 
 
-if (Cypress.browser.isHeaded) {
+// if (Cypress.browser.isHeaded) {
   // skip when in headless mode until headless login is fixed
 
   // any tests are to be carried out for each of the users who have the role 'user'
@@ -230,4 +230,4 @@ if (Cypress.browser.isHeaded) {
       });
     })
   })
-}
+// }

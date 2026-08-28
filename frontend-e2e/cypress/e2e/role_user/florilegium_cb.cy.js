@@ -10,7 +10,7 @@ const user1 = users.filter(
   ({ username }) => username === 'user@example.org'
 )[0];
 
-if (Cypress.browser.isHeaded) {
+//  if (Cypress.browser.isHeaded) {
   // skip when in headless mode
 
   beforeEach(() => {
@@ -55,4 +55,4 @@ if (Cypress.browser.isHeaded) {
       );
     });
   });
-}
+// }

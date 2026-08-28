@@ -33,14 +33,14 @@ Cypress.Commands.add(
     responseTimeout: 10000
   },
   (userObj) => {
-    if (Cypress.browser.isHeadless) {
+    /* if (Cypress.browser.isHeadless) {
       // Sign-in with google recaptcha v3 in headless mode --> "TypeError: Cannot read properties of null (reading 'message')"
       cy.once('uncaught:exception', (err) => {
         if (err.message.includes('Cannot read properties of null')) {
           return false;
         }
       });
-    }
+    } */
     cy.log('Cypress.browser.isHeaded? ' + Cypress.browser.isHeaded);
     cy.log('userObj.username: ' + userObj.username)
     cy.contains('header a', 'Sign in').click();

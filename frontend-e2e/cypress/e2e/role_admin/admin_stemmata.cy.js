@@ -24,7 +24,7 @@ import test_traditions from '../../fixtures/test_traditions_mini.json';
 const users_admin = users_all.filter(({ role }) => role === 'admin');
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // for "equals" instead of "contains"
 
-if (Cypress.browser.isHeaded) {
+// if (Cypress.browser.isHeaded) {
   // skip when in headless mode until headless login is fixed
 
   // any tests are to be carried out for each of the users who have the role 'admin'
@@ -93,4 +93,4 @@ if (Cypress.browser.isHeaded) {
 
     })
   })
-}
+// }

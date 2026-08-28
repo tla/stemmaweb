@@ -10,7 +10,7 @@
     // - Creating user with existing name/id should fail. Don't overwrite users' passwords by re-registering existing ids.
 */
 
-if (Cypress.browser.isHeaded) {
+// if (Cypress.browser.isHeaded) {
   // skip when in headless mode
 
   beforeEach(() => {
@@ -187,4 +187,4 @@ if (Cypress.browser.isHeaded) {
       // ...
     });
   });
-}
+// }

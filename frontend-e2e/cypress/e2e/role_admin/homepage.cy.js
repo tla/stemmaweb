@@ -8,7 +8,7 @@ const admin = users.filter(
 const selected_fill_color = 'rgb(207, 220, 238)';
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // for "equals" instead of "contains"
 
-if (Cypress.browser.isHeaded) {
+if (Cypress.browser.isHeaded || Cypress.browser.isHeadless) {
   // skip when in headless mode until headless login is fixed
 
   beforeEach(() => {
@@ -179,7 +179,7 @@ if (Cypress.browser.isHeaded) {
   describe('message console logs errors and successes', () => {
     // TODO: test case where error message is expected:
 
-    if (Cypress.browser.isHeaded) {
+    // if (Cypress.browser.isHeaded) {
       it('"Stemma added" and "deleted" marker are displayed in the message console and remain', () => {
         // Login needed to add a stemma. Skip in headless mode for now.
         const stemma_added_marker = 'Stemma added';
@@ -222,5 +222,6 @@ if (Cypress.browser.isHeaded) {
         })
       });
     }
-  });
+  // }
+  );
 }

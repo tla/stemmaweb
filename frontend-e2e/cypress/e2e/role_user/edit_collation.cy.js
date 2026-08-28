@@ -28,7 +28,7 @@ const user = users_all.filter(
  */
 
 
-if (Cypress.browser.isHeaded) {
+// if (Cypress.browser.isHeaded) {
   // skip when in headless mode until headless login is fixed
 
   const test_traditions_own_private = test_traditions.filter(
@@ -112,4 +112,4 @@ if (Cypress.browser.isHeaded) {
     });
 
   })
-}
+// }
