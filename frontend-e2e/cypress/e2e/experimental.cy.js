@@ -15,56 +15,10 @@ beforeEach(() => {
   cy.log('Cypress.browser: ' + JSON.stringify(Cypress.browser));
 });
 
-// some fetch(POST) for headless mode
-describe('login and logout with authentication modal, captcha v3 and fetch(POST)', () => {
-  if (Cypress.browser.isHeaded) {
+describe('addStemma and deleteStemma with login', () => {
+  // if (Cypress.browser.isHeaded) {
     // skip when in headless mode
-    it.skip(
-      'passes in headless mode local and on github. passes in local headed mode',
-      {
-        defaultCommandTimeout: 10000,
-        requestTimeout: 10000,
-        responseTimeout: 10000
-      },
-      () => {
-        cy.log('Cypress.browser: ' + JSON.stringify(Cypress.browser));
-
-        cy.log('LOGIN:');
-        cy.log('Cypress.browser.isHeaded? ' + Cypress.browser.isHeaded);
-        if (Cypress.browser.isHeadless) {
-          // Sign-in with google recaptcha v3 in headless mode --> "TypeError: Cannot read properties of null (reading 'message')"
-          cy.once('uncaught:exception', (err) => {
-            if (err.message.includes('Cannot read properties of null')) {
-              return false;
-            }
-          });
-        }
-        cy.contains('header a', 'Sign in').click();
-        cy.get('#loginEmail').wait(500).type(admin.username, { delay: 50 });
-        cy.get('#loginPassword').wait(500).type(admin.password, { delay: 50 });
-        cy.get('button').contains('Sign in').wait(500).click();
-        cy.get('#authModal').should('not.be.visible');
-        cy.contains('Logged in as ' + admin.username);
-        cy.contains('header a', 'Sign out');
-        cy.get('header').should('not.contain', 'Sign in');
-        cy.log('Signed in as ' + admin.username + '!');
-
-        cy.log('LOGOUT:');
-        cy.log('Cypress.browser.isHeaded? ' + Cypress.browser.isHeaded);
-        cy.contains('header a', 'Sign out').click();
-        cy.contains('header a', 'Sign in');
-        cy.get('header').should('not.contain', 'Sign out');
-      }
-    );
-  }
-});
-
-// some fetch(POST) for headless mode
-describe('addStemma and deleteStemma with login, passes in headless mode despite fetch(POST)', () => {
-  if (Cypress.browser.isHeaded) {
-    // skip when in headless mode
-    // it('passes in headless mode local and on github. passes in local headed mode. with original guest config', { retries: 5 }, () => {
-    it('passes in headless mode local and on github. passes in local headed mode. with original guest config', () => {
+    it('passes in local headed mode', { retries: 5 }, () => {
       cy.loginViaUi(admin);
       const tradition = test_traditions.find((trad) =>
         trad.title.startsWith('John verse')
@@ -87,11 +41,12 @@ describe('addStemma and deleteStemma with login, passes in headless mode despite
       cy.logoutViaUi();
     });
   }
-});
+// }
+);
 
 // does intercept work at all on github actions?
 describe('intercept traditions', () => {
-  it.skip('fails on github, passes in local headed mode only', () => {
+  it('fails on github, passes in local headed mode only, at the moment', () => {
     cy.intercept(
       `${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/requests/api/traditions`
     ).as('apiCheck');
@@ -107,10 +62,10 @@ describe('intercept traditions', () => {
 });
 
 describe('intercept login request', () => {
-  if (Cypress.browser.isHeaded) {
+  // if (Cypress.browser.isHeaded) {
     // skip when in headless mode
     it(
-      'passes in headed mode but fails in headless mode: run only in headed mode',
+      'passes in headed mode but fails in headless mode, at the moment',
       { defaultCommandTimeout: 10000 },
       () => {
         cy.log('Cypress.browser.isHeaded? ' + Cypress.browser.isHeaded);
@@ -138,9 +93,9 @@ describe('intercept login request', () => {
         cy.get('header').contains('a', 'Sign out').wait(500).click();
       }
     );
-  } else {
+/*   } else {
     it("don't run test in headless mode", () => {
       cy.log('Cypress.browser.isHeaded? ' + Cypress.browser.isHeaded);
-    });
-  }
+    }); */
+  // }
 });
