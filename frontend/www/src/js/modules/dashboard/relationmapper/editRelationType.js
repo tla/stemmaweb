@@ -145,12 +145,7 @@ class EditRelationType extends HTMLElement {
       this.#activeOptions.dialogTitle,
       modal_body,
       { onOk: () => { 
-        this.processForm.call( this )
-          .then( ( relationType ) => { 
-            if ( relationType ) {
-              this.#activeOptions.onUpdated.call( this, relationType );
-            }
-          } );
+          return this.processForm.call( this );
         } 
       },
       {
@@ -214,15 +209,18 @@ class EditRelationType extends HTMLElement {
           if ( relationTypeFromResponse ) {
             this.#relationType = relationTypeFromResponse;
             StemmawebAlert.show( this.#activeOptions.succesMessage, 'success' );
-            return this.#relationType;
-          } // We don't handle/signal a failed update here because
-            // stemmarestService.updateRelationType already does.
+            this.#activeOptions.onUpdated.call( this, relationTypeFromResponse );
+            return Promise.resolve( {
+                success: true
+            } );
+          }
+          // We don't handle/signal a failed update here because
+          // stemmarestService.updateRelationType already does.
         } );
     } else {
       form.classList.add('was-validated');
       return Promise.resolve( {
-        success: false,
-        message: 'Form validation error.'
+        success: false
       } );
     }
   }

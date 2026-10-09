@@ -88,10 +88,10 @@ class EditSectionProperties extends HTMLElement {
                 .then( EditSectionProperties.#handleUpdateSectionMetadataResponse );
         } else {
             form.classList.add('was-validated');
-            return Promise.resolve({
-            success: false,
-            message: 'Form validation error.'
-            });
+            return Promise.resolve( {
+                success: false,
+                message: 'Form validation error.'
+            } );
         }
     }
 
@@ -101,16 +101,16 @@ class EditSectionProperties extends HTMLElement {
             StemmawebAlert.show( 'Section properties updated.', 'success' );
             // @todo: Should the next line be wrapped in a try..catch?
             SECTION_STORE.updateSection( resp.data );
-            return Promise.resolve({
+            return Promise.resolve( {
                 success: true,
                 message: 'Section properties updated.'
-            });
+            } );
         } else {
             StemmawebAlert.show( `Error: ${resp.message}`, 'danger' );
-            return Promise.resolve({
+            return Promise.resolve( {
                 success: false,
                 message: resp.message
-            });
+            } );
         }   
     }
 
