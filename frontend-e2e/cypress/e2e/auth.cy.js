@@ -27,3 +27,23 @@ describe('Login with reCAPTCHA', () => {
     cy.get('header').should('not.contain', 'Sign out');
   });
 });
+
+describe('Login via the API session helper', () => {
+  [
+    users.find(({ role }) => role === 'admin'),
+    user
+  ].forEach((account) => {
+    it(`shows ${account.username} as logged in after a page load`, () => {
+      cy.login(account);
+      cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
+      cy.contains('header a', `Logged in as ${account.username}`);
+      cy.contains('header a', 'Sign out');
+      cy.get('header').should('not.contain', 'Sign in');
+    });
+  });
+
+  it('starts each test logged out unless cy.login is called', () => {
+    cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
+    cy.contains('header a', 'Sign in');
+  });
+});

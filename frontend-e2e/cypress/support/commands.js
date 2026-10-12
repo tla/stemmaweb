@@ -38,6 +38,31 @@ Cypress.Commands.add('stubRecaptcha', (token = 'e2e-human-token') => {
   });
 });
 
+// Log in through the middleware API and cache the session, so that tests which
+// only need to *be* logged in don't pay for the login form. Call before `cy.visit`.
+// Use `loginViaUi` only when the login form itself is under test.
+Cypress.Commands.add('login', (user) => {
+  const middleware = Cypress.env('CY_STEMMAWEB_MIDDLEWARE_URL');
+  cy.session(
+    user.username,
+    () => {
+      cy.request('POST', `${middleware}/login`, {
+        recaptcha_token: 'e2e-human-token', // accepted by the recaptcha mock
+        id: user.username,
+        passphrase: user.password
+      });
+    },
+    {
+      validate: () => {
+        cy.request(`${middleware}/user`)
+          .its('body.user.id')
+          .should('eq', user.username);
+      },
+      cacheAcrossSpecs: true
+    }
+  );
+});
+
 // Login via user interface
 Cypress.Commands.add(
   'loginViaUi',

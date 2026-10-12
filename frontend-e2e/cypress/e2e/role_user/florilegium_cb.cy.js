@@ -14,16 +14,13 @@ const user1 = users.filter(
   // skip when in headless mode
 
   beforeEach(() => {
+    cy.login(user1);
     cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
     test_traditions.sort((tradition_a, tradition_b) =>
       tradition_a.title.localeCompare(tradition_b.title)
     );
-    cy.loginViaUi(user1);
   });
 
-  afterEach(() => {
-    cy.logoutViaUi();
-  });
 
   // TODO: should not be visible for a guest.
   describe("'Florilegium Coislinianum B' has the right owner and witnesses", function () {
