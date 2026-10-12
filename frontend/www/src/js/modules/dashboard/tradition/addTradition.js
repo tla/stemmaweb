@@ -214,7 +214,7 @@ class AddTraditionModal extends HTMLElement {
     { value: 'xls', name: 'Microsoft Excel (spreadsheet values)' },
     { value: 'teips', name: 'TEI parallel segmentation' },
     { value: 'cte', name: 'CTE export (TEI double-endpoint attachment)' },
-    { value: 'collatex', name: 'CollateX XML' },
+    { value: 'collatex', name: 'CollateX GraphML' },
     { value: 'cxjson', name: 'CollateX JSON' },
     { value: 'graphml', name: 'Native GraphML Zip' },
     { value: 'stemmaweb', name: 'Legacy Stemmaweb GraphML' }

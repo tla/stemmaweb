@@ -20,7 +20,7 @@ class AddRelationType extends EditRelationType {
       { 
         dialogTitle: 'Add relation type', 
         closeLabel: 'Cancel',
-        onUpdated: () => {
+        onUpdated: ( relationType ) => {
           document.querySelector( 'relation-types' ).renderRelationTypes( {'display': 'block', 'opacity': 1 } );
         },
         succesMessage: 'New relation type saved.',

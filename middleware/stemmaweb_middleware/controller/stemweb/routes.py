@@ -126,6 +126,10 @@ def blueprint_factory(
             client=stemweb_client,
             permission_handler=permission_handler,
             segments=segments,
+            # Stemweb is a Django app, and Django's APPEND_SLASH behaviour answers
+            # a request without a trailing slash with a redirect rather than the
+            # resource. 
+            force_trailing_slash=True,
         )
 
     return blueprint

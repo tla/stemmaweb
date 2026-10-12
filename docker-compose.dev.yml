@@ -7,7 +7,7 @@ services:
       - .:/usr/src
 
   stemmarest:
-    image: dhuniwien/stemmarest:latest
+    image: dhuniwien/stemmarest:main
     ports:
       - "8080:8080"
 
