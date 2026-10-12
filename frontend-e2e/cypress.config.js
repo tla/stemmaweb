@@ -1,5 +1,6 @@
 const { defineConfig } = require('cypress');
 const env = require('./env');
+const { reseedDB } = require('./seed');
 
 module.exports = defineConfig({
   e2e: {
@@ -12,7 +13,10 @@ module.exports = defineConfig({
     // other e2e options...
 
     setupNodeEvents(on, config) {
-      // implement node event listeners here
+      on('task', {
+        reseedDB: () =>
+          reseedDB(config.env.CY_STEMMAREST_ENDPOINT).then(() => null)
+      });
     }
   },
   env: {
