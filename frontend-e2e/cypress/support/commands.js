@@ -24,6 +24,20 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
+// Replace Google's reCAPTCHA v3 script with a stub that hands out a fixed token.
+// The middleware verifies the token against the local `recaptcha` mock service
+// (see docker-compose.test.yml), so the real verification path is still exercised.
+// 'e2e-human-token' is accepted (score 0.9); 'e2e-bot-token' is rejected (score 0.1).
+Cypress.Commands.add('stubRecaptcha', (token = 'e2e-human-token') => {
+  cy.intercept('GET', 'https://www.google.com/recaptcha/api.js*', {
+    headers: { 'content-type': 'application/javascript' },
+    body: `window.grecaptcha = {
+      ready: (callback) => callback(),
+      execute: () => Promise.resolve('${token}')
+    };`
+  });
+});
+
 // Login via user interface
 Cypress.Commands.add(
   'loginViaUi',

@@ -20,5 +20,6 @@ import './commands';
 // require('./commands')
 
 beforeEach(() => {
+  cy.stubRecaptcha();
   cy.reseedDB();
 });

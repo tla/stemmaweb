@@ -70,9 +70,13 @@ if not RECAPTCHA_SECRET_KEY:
         "You can set the RECAPTCHA_SECRET_KEY "
         "environment variable to configure reCAPTCHA."
     )
+# Overridable so that the end-to-end tests can verify tokens against a local fake
+RECAPTCHA_VERIFICATION_URL = env.str(
+    "RECAPTCHA_VERIFICATION_URL", default=constants.GOOGLE_RECAPTCHA_VERIFICATION_URL
+)
 RECAPTCHA_VERIFIER = RecaptchaVerifier(
     secret=RECAPTCHA_SECRET_KEY,
-    verification_url=constants.GOOGLE_RECAPTCHA_VERIFICATION_URL,
+    verification_url=RECAPTCHA_VERIFICATION_URL,
     threshold=constants.GOOGLE_RECAPTCHA_THRESHOLD,
 )
 

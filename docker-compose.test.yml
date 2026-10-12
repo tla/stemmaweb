@@ -19,14 +19,23 @@ services:
     ports:
       - "8000:8000"
 
+  # Stands in for Google's reCAPTCHA siteverify endpoint (see frontend-e2e/cypress/support)
+  recaptcha:
+    container_name: recaptcha
+    build: recaptcha_mock
+
   stemmaweb:
     container_name: stemmaweb
     build: .
     depends_on:
       - stemmarest
       - stemweb
+      - recaptcha
     env_file:
       - .env.test
+    environment:
+      # Takes precedence over .env.test
+      RECAPTCHA_VERIFICATION_URL: http://recaptcha:8001/recaptcha/api/siteverify
     volumes:
       - ./frontend/config/env.js.prod:/usr/src/app/stemmaweb_middleware/stemmaweb/src/js/env.js
 
