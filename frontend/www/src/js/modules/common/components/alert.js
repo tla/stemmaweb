@@ -28,6 +28,7 @@ class StemmawebAlert extends HTMLElement {
         // Check if the button is there. It might have been clicked already by the user.
         const closeButton = alert.querySelector('button');
         if( closeButton ) { closeButton.click() };
+        //TODO: This should actually remove the instance from the DOM. All alerts are now invisibly stacking at the bottom of the page!
       }, autoHideMs);
     }
   }
