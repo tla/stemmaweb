@@ -2,7 +2,7 @@
 */
 
 import users_all from '../../fixtures/users.json';
-import test_traditions from '../../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions_mini.json';
 
 const user = users_all.filter(
   ({ username }) => username === 'user@example.org'
@@ -28,7 +28,7 @@ const user = users_all.filter(
  */
 
 
-if (Cypress.browser.isHeaded) {
+// if (Cypress.browser.isHeaded) {
   // skip when in headless mode until headless login is fixed
 
   const test_traditions_own_private = test_traditions.filter(
@@ -112,4 +112,4 @@ if (Cypress.browser.isHeaded) {
     });
 
   })
-}
+// }

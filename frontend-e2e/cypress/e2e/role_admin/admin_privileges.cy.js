@@ -6,12 +6,12 @@
     https://github.com/tla/stemmaweb/pull/235
     The following things should now be testable:
     - Admin sees all traditions
-    - Admin may change metadata on any tradition
+    - Admin may change metadata on any tradition (#332)
 
 */
 
 import users_all from '../../fixtures/users.json';
-import test_traditions from '../../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions_mini.json';
 
 const users_admin = users_all.filter(({ role }) => role === 'admin');
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // for "equals" instead of "contains"
@@ -32,7 +32,7 @@ const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // for "eq
  */
 
 
-if (Cypress.browser.isHeaded) {
+// if (Cypress.browser.isHeaded) {
   // skip when in headless mode until headless login is fixed
 
   // any tests are to be carried out for each of the users who have the role 'admin'
@@ -67,6 +67,8 @@ if (Cypress.browser.isHeaded) {
         cy.log('end of test for this admin')
       });
 
+      // Admin sees all traditions (#332)
+      // Admin may change metadata on any tradition (#332)
       it('asserts admin can see and edit own and others\' traditions', () => {
 
         // Admin sees all traditions: own and others' public and private.
@@ -88,7 +90,6 @@ if (Cypress.browser.isHeaded) {
           cy.log('title: ' + tradition.title);
           // admin may change metadata on their own and others' traditions
           const text = tradition.title;
-          // visible and editable, closed lock sign
           cy.get('ul#traditions-list li .tradition-list-item')
             .contains(new RegExp(`^${escapeRegExp(text)}$`)) // exact match
             .as('tradition_title_elem_in_nav')
@@ -113,9 +114,11 @@ if (Cypress.browser.isHeaded) {
         });
       });
 
+      // admin sees all traditions in alphabetical order (#316)
       // own and others' traditions are each sorted alphabetically, before and after the separator
       // TODO: consider the case, own or others' traditions array to be empty
 
+      // Admin sees all traditions (#332)
       // own traditions:
       it('asserts pre-separator tradition titles equal expected titles', () => {
         const test_traditions_own = test_traditions_own_private.concat(test_traditions_own_public)
@@ -136,6 +139,7 @@ if (Cypress.browser.isHeaded) {
         });
       });
 
+      // Admin sees all traditions (#332)
       // others' traditions:
       it('asserts post-separator tradition titles equal expected titles', () => {
         const test_traditions_others = test_traditions_others_private.concat(test_traditions_others_public)
@@ -157,4 +161,4 @@ if (Cypress.browser.isHeaded) {
       });
     })
   })
-}
+// }

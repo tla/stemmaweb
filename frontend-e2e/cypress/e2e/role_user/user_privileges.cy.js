@@ -6,12 +6,12 @@
 
     https://github.com/tla/stemmaweb/pull/235
     - User sees only public and their own traditions
-    - User may change metadata on their own tradition // i.e. Edit properties
-    - User may not change metadata on traditions they don't own (ideally the edit button wouldn't be there...)
+    - User may change metadata on their own tradition // i.e. Edit properties (#332)
+    - User may not change metadata on traditions they don't own (#332)
 */
 
 import users_all from '../../fixtures/users.json';
-import test_traditions from '../../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions_mini.json';
 
 const users_user = users_all.filter(({ role }) => role === 'user');
 
@@ -35,7 +35,7 @@ const users_user = users_all.filter(({ role }) => role === 'user');
  */
 
 
-if (Cypress.browser.isHeaded) {
+// if (Cypress.browser.isHeaded) {
   // skip when in headless mode until headless login is fixed
 
   // any tests are to be carried out for each of the users who have the role 'user'
@@ -67,6 +67,8 @@ if (Cypress.browser.isHeaded) {
         cy.log('end of test for this user')
       });
 
+      // only traditions accessible to user or public traditions should be visible. (#317)
+      // User sees only public and their own traditions (#332)
       it('asserts the user sees only public and their own traditions, and can only edit own traditions', () => {
 
         // User sees only public and their own traditions
@@ -80,12 +82,13 @@ if (Cypress.browser.isHeaded) {
               test_traditions_others_public.length
         );
 
+        // if user is not the owner of the tradition the user cannot: ... edit properties of tradition ... (#317)
         // assert all the right traditions are displayed in the tradition list
         // assert the 'Edit properties' modal is visible
         // assert user can only edit his own traditions
         test_traditions.forEach((tradition) => {
           cy.log('title: ' + tradition.title);
-          // User may change metadata on their own tradition
+          // User may change metadata on their own tradition (#332)
           if (
             tradition.owner === user.username &&
             (
@@ -139,7 +142,7 @@ if (Cypress.browser.isHeaded) {
               .should('not.exist');
             // 'Edit properties' is not reachable anyways
           }
-          // User may not change metadata on traditions they don't own (ideally the edit button wouldn't be there...)
+          // User may not change metadata on traditions they don't own (#332)
           else if (
             tradition.owner !== user.username &&
             tradition.access === 'Public'
@@ -183,7 +186,8 @@ if (Cypress.browser.isHeaded) {
         });
       });
 
-      // own and others' traditions are each sorted alphabetically, before and after the separator
+      // user sees owned traditions in alphabetical order, below that a divider, below the divider <others'> public traditions alphabetically. (#316)
+
       // TODO: consider the case, own or others' traditions array to be empty
 
       // own traditions:
@@ -226,4 +230,4 @@ if (Cypress.browser.isHeaded) {
       });
     })
   })
-}
+// }

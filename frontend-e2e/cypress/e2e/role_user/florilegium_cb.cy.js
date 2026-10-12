@@ -4,13 +4,13 @@
         - the 'Owner user@example.org' should be displayed,
         - the 'Witnesses B,K,F,G,S,C,D,Q,A,H,T,P,E' should be displayed. */
 
-import test_traditions from '../../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions_mini.json';
 import users from '../../fixtures/users.json';
 const user1 = users.filter(
   ({ username }) => username === 'user@example.org'
 )[0];
 
-if (Cypress.browser.isHeaded) {
+//  if (Cypress.browser.isHeaded) {
   // skip when in headless mode
 
   beforeEach(() => {
@@ -55,4 +55,4 @@ if (Cypress.browser.isHeaded) {
       );
     });
   });
-}
+// }

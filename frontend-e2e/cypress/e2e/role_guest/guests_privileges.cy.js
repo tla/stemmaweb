@@ -20,13 +20,13 @@ A guest should further
 /*  test users & traditions (https://github.com/tla/stemmaweb/pull/152):
 ...
 Tests for Feat/157 user auth (PR #235), related to 'guest':
-- Guest sees only public traditions
-- Guest may not change any metadata (ideally the edit button wouldn't be there, but that isn't in this code)
+- Guest sees only public traditions (#332)
+- Guest may not change any metadata on traditions (ideally the edit button wouldn't be there) (#332)
  */
 
 // TODO: When role user and admin tests are completed, check guest privileges to adapt or complete if necessary.
 
-import test_traditions from '../../fixtures/test_traditions.json';
+import test_traditions from '../../fixtures/test_traditions_mini.json';
 
 beforeEach(() => {
   cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
@@ -50,14 +50,15 @@ const test_traditions_public = test_traditions.filter(
 
 // ToDo: close github issues  #170, #157, #155 when tests are passing for all roles.
 // Test for Feat/157 user auth (PR #235), related to 'guest':
+// guest sees public traditions in alphabetical order, no divider (#316)
 describe('Cross-check: guest sees only public traditions listed in the toc', () => {
   it('passes', () => {
     // the number of displayed traditions is equal to the number of public traditions
-    // no separation bar btw own and others' traditions, all are othres'
+    // no separation bar btw own and others' traditions, all are others'
     cy.get('ul#traditions-list')
       .children()
-      // .find('.folder-icon') // no separation line btw own and others' traditions or public and private
       .should('have.length', test_traditions_public.length);
+    cy.get('#traditions-list > li:has(.list-separator)').should('not.exist')
 
     test_traditions.forEach((tradition) => {
       if (tradition.access == 'Public') {
@@ -117,13 +118,13 @@ describe('A guest should not be offered or able to "Edit Collation" of any tradi
 
 // Feat/157 user auth (PR#235)
 // ToDo: close github issues  #170 and #157 when tests are passing for all roles.
+// Guest may not change any metadata on traditions (ideally the edit button wouldn't be there) (#332)
 describe('Guest may not change any metadata (Edit properties)', () => {
   it('passes', () => {
     // Guest sees only all public traditions -- asserted separately, above
     // assert the 'Edit properties' modal is not visible
     test_traditions_public.forEach((tradition) => {
       cy.log('title: ' + tradition.title);
-      // Guest may not change metadata on traditions (ideally the edit button wouldn't be there...)
       // the tradition is visible but not editable for a guest, opened lock sign
       cy.get('ul#traditions-list')
         .contains(tradition.title)

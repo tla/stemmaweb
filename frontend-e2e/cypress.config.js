@@ -5,9 +5,9 @@ module.exports = defineConfig({
   e2e: {
     // specPattern : 'cypress/e2e/experimental.cy.js', // default:: 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}'
 
-    // TODO: reset viewport to landscape format (e.g.1600 x 900) when the 50 added sections are accessible
-    viewportWidth: 1600,
-    viewportHeight: 3200,
+    // with 4x20 florilegium sections and all others unfolded, it would need width: 1600, and height: 3200 for not to need scrolling. Common viewport:
+    viewportWidth: 1920,
+    viewportHeight: 1080,
 
     // other e2e options...
 

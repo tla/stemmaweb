@@ -10,7 +10,7 @@
     // - Creating user with existing name/id should fail. Don't overwrite users' passwords by re-registering existing ids.
 */
 
-if (Cypress.browser.isHeaded) {
+// if (Cypress.browser.isHeaded) {
   // skip when in headless mode
 
   beforeEach(() => {
@@ -180,10 +180,11 @@ if (Cypress.browser.isHeaded) {
     });
   });
 
+  // login values are deleted from the form after successful login (#317)
   describe('After logout, the previous login credentials should not be retrieved in the respective input fields', () => {
     it.skip('issue #180', { defaultCommandTimeout: 10000 }, () => {
       // to do: set db to initial state: delete user after the tests.
       // ...
     });
   });
-}
+// }
