@@ -165,7 +165,7 @@ fi
 # No stemma
 
 echo; echo Creating Arabic test snippet 
-$CURL --request POST --form name="Arabic snippet" --form file=@data/arabic_snippet.csv --form filetype=csv --form userId=benutzer@example.org --form language=Arabic $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
+$CURL --request POST --form name="Arabic snippet" --form file=@data/arabic_snippet.csv --form filetype=csv --form userId=benutzer@example.org --form language=Arabic --form direction=RL $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
 ASNIP_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`
 if [ -z $ASNIP_ID ]; then
   echo Failed to create Arabic snippet
