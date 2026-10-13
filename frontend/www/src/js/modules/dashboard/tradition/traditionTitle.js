@@ -19,16 +19,18 @@ class TraditionTitle extends HTMLElement {
         // Check if we need to rerender whenever tradition or related stemma 
         // has changed.
         TRADITION_STORE.subscribe( ( prevState, state ) => {
-            const name = state.selectedTradition.name;
-            if ( prevState.selectedTradition == null ) {
-                this.#title = name;
-                this.render();
-                fadeIn( this );
-            } else {
-                if ( name != prevState.selectedTradition.name ) {
+            if ( state.selectedTradition ) {
+                const name = state.selectedTradition.name;
+                if ( prevState.selectedTradition == null ) {
                     this.#title = name;
                     this.render();
                     fadeIn( this );
+                } else {
+                    if ( name != prevState.selectedTradition.name ) {
+                        this.#title = name;
+                        this.render();
+                        fadeIn( this );
+                    }
                 }
             }
         });
