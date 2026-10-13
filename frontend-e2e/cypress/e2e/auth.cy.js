@@ -5,11 +5,11 @@ const user = users.find(({ username }) => username === 'user@example.org');
 describe('Login with reCAPTCHA', () => {
   beforeEach(() => {
     cy.intercept('POST', '**/login').as('login');
-    cy.visit(`${Cypress.env('CY_STEMMAWEB_FRONTEND_URL')}/`);
+    cy.visitHome();
   });
 
   it('accepts a login whose reCAPTCHA token scores as human', () => {
-    cy.loginViaUi(user);
+    cy.loginViaForm(user);
     cy.wait('@login').its('response.statusCode').should('eq', 200);
     cy.logoutViaUi();
   });
@@ -18,9 +18,12 @@ describe('Login with reCAPTCHA', () => {
     // the script is fetched on page load, so reload for the new stub to apply
     cy.stubRecaptcha('e2e-bot-token');
     cy.reload();
-    cy.contains('header a', 'Sign in').click();
+    cy.appReady();
+    cy.openLoginModal();
     cy.get('#loginEmail').type(user.username);
     cy.get('#loginPassword').type(user.password);
+    cy.get('#loginEmail').should('have.value', user.username);
+    cy.get('#loginPassword').should('have.value', user.password);
     cy.get('button').contains('Sign in').click();
 
     cy.wait('@login').its('response.statusCode').should('eq', 429);

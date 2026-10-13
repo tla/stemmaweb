@@ -19,7 +19,18 @@ import './commands';
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
 
+import './helpers';
+
+// Specs under e2e/role_* are the old suite: they mutate data freely and rely on a
+// fresh database for every test. New specs live directly in e2e/, reseed once per
+// file, and must call cy.reseedDB() themselves in any test that changes data.
+const isLegacySpec = () => Cypress.spec.relative.includes('/role_');
+
+before(() => {
+  if (!isLegacySpec()) cy.reseedDB();
+});
+
 beforeEach(() => {
   cy.stubRecaptcha();
-  cy.reseedDB();
+  if (isLegacySpec()) cy.reseedDB();
 });
