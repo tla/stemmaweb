@@ -27,6 +27,7 @@ Cypress.Commands.add('visitHome', () => {
 // Visit the home page as `user` (null for a guest).
 Cypress.Commands.add('visitAs', (user) => {
   if (user) cy.login(user);
+  else cy.clearCookies(); // a guest, even if the test was logged in earlier
   cy.visitHome();
 });
 

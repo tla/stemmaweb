@@ -27,12 +27,13 @@ export const SEPARATOR = '---';
 
 /**
  * The tradition list as it should render: own traditions alphabetically, then a
- * separator (only when the user owns any), then the rest alphabetically.
+ * separator, then the rest alphabetically. The separator only appears between two
+ * non-empty groups.
  */
 export function expectedTraditionList(user, traditions) {
   const visible = traditions.filter((t) => canSee(user, t));
   const own = visible.filter((t) => user && t.owner === user.username);
   const others = visible.filter((t) => !own.includes(t));
   const titles = (list) => [...list].sort(byTitle).map((t) => t.title);
-  return [...titles(own), ...(own.length ? [SEPARATOR] : []), ...titles(others)];
+  return [...titles(own), ...(own.length && others.length ? [SEPARATOR] : []), ...titles(others)];
 }

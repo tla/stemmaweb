@@ -20,6 +20,7 @@ import './commands';
 // require('./commands')
 
 import './helpers';
+import './properties';
 
 // Specs under e2e/role_* are the old suite: they mutate data freely and rely on a
 // fresh database for every test. New specs live directly in e2e/, reseed once per
