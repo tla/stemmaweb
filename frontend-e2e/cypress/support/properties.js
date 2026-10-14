@@ -25,7 +25,10 @@ Cypress.Commands.add('fillProperties', (values) => {
     cy.get('#name_input').clear();
     if (name) cy.get('#name_input').type(name);
   }
-  if (language !== undefined) cy.get('#language_input').clear().type(language);
+  if (language !== undefined) {
+    cy.get('#language_input').clear();
+    if (language) cy.get('#language_input').type(language);
+  }
   if (direction) cy.get('#direction_input').select(direction);
   if (isPublic !== undefined) {
     cy.get('#access_input')[isPublic ? 'check' : 'uncheck']();

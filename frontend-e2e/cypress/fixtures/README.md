@@ -12,8 +12,6 @@ Florilegium; 8 alignment columns) in each format the "add a section" upload acce
 | `armexample.xlsx` | xlsx (the upload dialog does not offer this type yet) |
 | `armexample.collatex.xml` | collatex (CollateX GraphML output) |
 | `armexample.cx.json` | cxjson (CollateX JSON output) |
+| `armexample.zip` | graphml (native GraphML export: `tradition.xml` plus one section file) |
 
-Not yet covered: `teips`, `cte`, `graphml`, `stemmaweb`.
-
-Known difference: `armexample.xls` has two Q cells that differ from every other file
-(`աւուրսն` instead of `աւուրսնս`, `այնոսիկ` instead of `այսոսիկ`).
+Not yet covered (no sample file): `teips`, `cte`, `stemmaweb`.

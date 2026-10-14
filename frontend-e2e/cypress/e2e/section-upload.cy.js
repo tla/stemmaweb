@@ -22,12 +22,7 @@ const EXPECTED_TEXT = {
 const FORMATS = [
   { type: 'csv', file: 'armexample.csv' },
   { type: 'tsv', file: 'armexample.tsv' },
-  // armexample.xls differs from the other files in two Q cells
-  {
-    type: 'xls',
-    file: 'armexample.xls',
-    text: { Q: 'Իսկ ընդ աւուրսն այնոսիկ' }
-  },
+  { type: 'xls', file: 'armexample.xls' },
   {
     type: 'xlsx',
     file: 'armexample.xlsx',
@@ -35,22 +30,35 @@ const FORMATS = [
       'the dialog has no "xlsx" option, and Stemmarest rejects an .xlsx sent as "xls"'
   },
   { type: 'collatex', file: 'armexample.collatex.xml' },
-  { type: 'cxjson', file: 'armexample.cx.json' }
-  // Still to add once sample files exist: teips, cte, graphml, stemmaweb
+  { type: 'cxjson', file: 'armexample.cx.json' },
+  // A native GraphML export carries its own section name, which wins over the form's.
+  // This export also names the witnesses Wit1-3, and has the older variant of Q's text.
+  {
+    type: 'graphml',
+    file: 'armexample.zip',
+    storedName: 'Arm example',
+    sigla: { B: 'Wit1', D: 'Wit2', Q: 'Wit3' },
+    text: { Q: 'Իսկ ընդ աւուրսն այնոսիկ' }
+  },
+  // No sample file yet; replace `pending` with `file` when one is added to fixtures/
+  { type: 'teips', pending: 'no TEI parallel-segmentation sample yet' },
+  { type: 'cte', pending: 'no CTE export sample yet' },
+  { type: 'stemmaweb', pending: 'no legacy Stemmaweb GraphML sample yet' }
 ];
 
 describe('Add a section dialog', () => {
   // These tests change data, so start each from the seed data.
   beforeEach(() => cy.reseedDB());
 
-  FORMATS.forEach(({ type, file, text, knownBug }) => {
+  FORMATS.forEach(({ type, file, text, sigla, storedName, knownBug, pending }) => {
     const title = `adds a section from a ${type} file, with the right text for every witness`;
-    if (knownBug) {
-      it.skip(`${title} (known bug: ${knownBug})`, () => {});
+    if (knownBug || pending) {
+      it.skip(`${title} (${knownBug ? `known bug: ${knownBug}` : pending})`, () => {});
       return;
     }
     it(title, () => {
       const name = `Uploaded ${type}`;
+      const listed = storedName ?? name;
       cy.visitAs(owner);
       cy.selectTradition(FLORILEGIUM.title);
       cy.openAddSectionDialog();
@@ -60,14 +68,14 @@ describe('Add a section dialog', () => {
 
       cy.contains('stemmaweb-alert', 'Section created');
       cy.addSectionDialogShouldBeClosed();
-      cy.sectionNamesShouldEqual(FLORILEGIUM.title, [...EXISTING_SECTIONS, name]);
+      cy.sectionNamesShouldEqual(FLORILEGIUM.title, [...EXISTING_SECTIONS, listed]);
 
       // what Stemmarest actually stored
       cy.storedSections(FLORILEGIUM.title).then(({ tradId, sections }) => {
-        expect(sections.map((s) => s.name)).to.deep.equal([...EXISTING_SECTIONS, name]);
+        expect(sections.map((s) => s.name)).to.deep.equal([...EXISTING_SECTIONS, listed]);
         const uploaded = sections[sections.length - 1];
         Object.entries({ ...EXPECTED_TEXT, ...text }).forEach(([sigil, expected]) => {
-          cy.witnessText(tradId, uploaded.id, sigil).should('equal', expected);
+          cy.witnessText(tradId, uploaded.id, sigla?.[sigil] ?? sigil).should('equal', expected);
         });
       });
 
@@ -75,7 +83,7 @@ describe('Add a section dialog', () => {
       cy.reload();
       cy.appReady();
       cy.selectTradition(FLORILEGIUM.title);
-      cy.sectionNamesShouldEqual(FLORILEGIUM.title, [...EXISTING_SECTIONS, name]);
+      cy.sectionNamesShouldEqual(FLORILEGIUM.title, [...EXISTING_SECTIONS, listed]);
     });
   });
 
