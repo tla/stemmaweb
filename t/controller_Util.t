@@ -102,7 +102,7 @@ section('stemma_info');
     ok( scalar @$stemmata, 'The fixture tradition has a stemma to describe' );
 
     my $info = stemma_info( $stemmata->[0] );
-    is( $info->{stemmaid}, $stemmata->[0]{stemmaid},
+    is( $info->{stemmaid}, $stemmata->[0]{id},
         'The stemma ID is carried over' );
     is( $info->{name}, $stemmata->[0]{name}, 'The stemma name is carried over' );
     is( ( $info->{directed} ? 'directed' : 'undirected' ),

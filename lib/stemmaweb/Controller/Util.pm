@@ -88,7 +88,7 @@ sub load_tradition {
 sub stemma_info {
     my ($stemmadata) = @_;
     my $sinfo = {
-        stemmaid => $stemmadata->{stemmaid},
+        stemmaid => $stemmadata->{id},
         name     => $stemmadata->{name},
         directed => json_bool(!$stemmadata->{is_undirected}),
         svg      => _as_svg($stemmadata, 'nonewline'),
@@ -112,7 +112,7 @@ sub load_stemma {
     return stemmaweb::Model::Stemma->new(
         dot           => $stemmadata->{dot},
         is_undirected => $stemmadata->{is_undirected} == JSON::true,
-        stemmaid      => $stemmadata->{stemmaid},
+        stemmaid      => $stemmadata->{id},
         name          => $stemmadata->{name},
     );
 }

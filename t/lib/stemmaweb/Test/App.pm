@@ -172,7 +172,7 @@ sub new_fixtures {
         $fx->{witnesses}{$key} = $trad->{witnesses} || [];
         my $stemmata =
           _directory_model()->ajax( 'get', "/tradition/$trad->{id}/stemmata" );
-        $fx->{stemmata}{$key} = [ map { $_->{stemmaid} } @$stemmata ];
+        $fx->{stemmata}{$key} = [ map { $_->{id} } @$stemmata ];
     }
 
     # Convenience: the first section of the tradition we use for the

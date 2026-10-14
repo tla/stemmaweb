@@ -48,8 +48,13 @@ sub find_user_by_id {
     croak "No user ID specified"
       unless defined $userid;
 
-    my $user_data =
-      $c->model($self->model_name)->ajax('get', '/user/' . $userid . '/');
+    my $user_data;
+    try {
+        $user_data =
+          $c->model($self->model_name)->ajax('get', '/user/' . $userid . '/');
+    } catch (stemmaweb::Error $e) {
+        die $e unless $e->status == 404;
+    }
     return $user_data ? $self->wrap($c, $userid, $user_data) : undef;
 }
 

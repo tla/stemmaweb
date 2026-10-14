@@ -41,7 +41,7 @@ services:
       - backend
 
   stemmarest:
-    image: "dhuniwien/stemmarest:latest"
+    image: "dhuniwien/stemmarest:main"
     container_name: stemmarest
     ports:
       - 127.0.0.1:8080:8080

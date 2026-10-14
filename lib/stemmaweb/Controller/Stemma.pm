@@ -62,7 +62,7 @@ sub index :Path :Args(2) {
         my $stemmamodel = { dot => $dot };
         my $method = 'post';
         if ($stemmaid ne '__NEW__') {
-            $stemmamodel->{stemmaid} = $stemmaid;
+            $stemmamodel->{id} = $stemmaid;
             $method = 'put';
         }
         try {

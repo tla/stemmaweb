@@ -301,7 +301,7 @@ my $reading_id = $real[0];
     # Stemmarest answers a node ID that is not a number with a server error,
     # which the controller passes straight through.
     my $res = request( get_req("$ownsec/reading/doesnotexist") );
-    is( $res->code, 500, 'GET .../reading/<unknown> reports the backend error' );
+    is( $res->code, 404, 'GET .../reading/<unknown> reports the backend error' );
 }
 
 {
