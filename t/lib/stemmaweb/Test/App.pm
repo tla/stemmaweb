@@ -55,6 +55,7 @@ our @EXPORT_OK = qw/
   new_fixtures
   traditions_by_name
   sections_of
+  stemmata_of
   body_of
   json_of
   is_json
@@ -126,6 +127,12 @@ sub traditions_by_name {
     my $trads = _directory_model()->ajax( 'get', '/traditions' );
     my %by_name = map { $_->{name} => $_ } @$trads;
     return \%by_name;
+}
+
+# Return the stemmata that Stemmarest currently holds for a tradition.
+sub stemmata_of {
+    my ($textid) = @_;
+    return _directory_model()->ajax( 'get', "/tradition/$textid/stemmata" );
 }
 
 # Return a list of section IDs for the given tradition ID.

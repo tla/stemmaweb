@@ -91,27 +91,36 @@ authentication store cannot resolve the user lookup that the
 `/auth/<id>/change-password` chain starts with, and nothing is chained from
 `Users::authenticated`.
 
+## Fixed defects
+
+These were found by this suite and have since been fixed, so the tests assert
+the corrected behaviour:
+
+1. `Stemma::index` called `_as_svg()`, which the package never imported, so
+   `GET /stemma/<tradition>/<stemma>` was a 500 unless the client sent
+   `Accept: application/json`. `Stemma::dot` had the same problem with
+   `_json_error()` on its error path. `_as_svg` is now exported by
+   `Util.pm`, and `dot` uses the `json_error` that it imports.
+2. Several actions called `json_error(...)` and then carried on, because there
+   was no `return`. The status was right (403, 405, ...) but the work was still
+   done: a refused write changed the data, and a refused read put the payload
+   in the body. Every call site now returns, and the actions that call
+   `load_tradition` stop when it has answered for itself; `t/controller_Relation.t`
+   checks that a read-only caller cannot change anything.
+
 ## Known defects recorded by the tests
 
 These are pre-existing problems in the controller layer that this suite
 documents rather than fixes. They show up as TODO tests.
 
-1. `Stemma::index` calls `_as_svg()`, which the package never imports, so
-   `GET /stemma/<tradition>/<stemma>` is a 500 unless the client sends
-   `Accept: application/json`. `Stemma::dot` has the same problem with
-   `_json_error()` on its error path.
-2. `Root::textinfo` sets `is_public` to false when the posted form does not
+1. `Root::textinfo` sets `is_public` to false when the posted form does not
    carry it, so renaming a tradition silently un-publishes it.
-3. Several actions call `json_error(...)` and then carry on, because there is
-   no `return`. The status is correct (403, 405, ...) but the work is still
-   done: a refused write can still change the data, and a refused read still
-   puts the payload in the body. `Root::variantgraph`, `Root::download`,
-   `Stemma::index` and `Stemma::dot` leak data this way, and `Relation`'s
-   permission checks for readings, compresses, merges, duplicates, splits,
-   emends and relation types still perform the write.
-4. The templates `auth/forgot-password.tt` and `reset-password-plain.tt` are
+2. The templates `auth/forgot-password.tt` and `reset-password-plain.tt` are
    not shipped, so the two password-recovery routes answer 500 whenever they
    try to render.
+3. `/auth/<id>/change-password` is unreachable: the authentication store
+   cannot resolve the user lookup that the chain starts with, so `Users::get`
+   croaks before `change_password` is matched.
 
 ## Notes on the other test files
 

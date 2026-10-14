@@ -314,6 +314,10 @@ sub request :Local :Args(0) {
     my $reqparams = $c->req->params;
     my $tid       = delete $reqparams->{tradition};
     my $textinfo  = load_tradition($c, $tid);
+
+    # load_tradition answers the error itself; carry on only if it did not.
+    return if exists $c->stash->{'result'};
+
     my $ok        = $textinfo->{permission};
     return (
         _json_error(

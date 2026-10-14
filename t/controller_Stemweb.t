@@ -200,11 +200,21 @@ section('request');
 }
 
 {
-    # Without a tradition the controller dereferences the failed tradition
-    # lookup; this is recorded rather than fixed.
+    # Without a tradition the lookup is attempted against the collection URL,
+    # which Stemmarest rejects; the error is passed straight through, so the
+    # exact status is the datastore's business.
     my $res = $mech->request( get_req('/stemweb/request?algorithm=1') );
-    is( $res->code, 500,
+    cmp_ok( $res->code, '>=', 400,
         'GET /stemweb/request without a tradition fails' );
+    ok( json_of($res)->{error}, 'The failure is reported as JSON' );
+}
+
+{
+    my $res = $mech->request(
+        get_req('/stemweb/request?tradition=nosucht tradition&algorithm=1') );
+    is( $res->code, 404, 'GET /stemweb/request for an unknown tradition is a 404' );
+    like( json_of($res)->{error}, qr/No such tradition/,
+        'The missing tradition is reported' );
 }
 
 # ---------------------------------------------------------------------------

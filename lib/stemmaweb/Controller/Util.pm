@@ -7,10 +7,15 @@ use stemmaweb::Model::Stemma;
 use TryCatch;
 use XML::LibXML;
 use XML::LibXML::XPathContext;
-use vars qw/ @EXPORT /;
+use vars qw/ @EXPORT @EXPORT_OK /;
 
 @EXPORT =
   qw/ load_tradition stemma_info section_metadata json_error json_bool /;
+
+# _as_svg is available to controllers that need to serve the SVG rendering on
+# its own, rather than the bundled information structure that stemma_info
+# returns.
+@EXPORT_OK = qw/ _as_svg /;
 
 =head1 NAME
 
@@ -43,7 +48,16 @@ sub _check_permission {
         'You do not have permission to view this tradition.');
 }
 
-# Helper to load and check the permissions on a tradition
+# Helper to load and check the permissions on a tradition.
+#
+# Note the return value: it is the tradition record, with a 'permission' key
+# added.  When the permission check fails, or the tradition cannot be fetched,
+# the error has already been answered through json_error, so the caller must
+# not carry on.  Check for that either with
+#
+#     return if exists $c->stash->{'result'};
+#
+# or by testing the permission that was recorded.
 sub load_tradition {
     my ($c, $textid, $opts) = @_;
     my $m = $c->model('Directory');

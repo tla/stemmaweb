@@ -29,7 +29,6 @@ use stemmaweb::Test::App qw/
   mech
   get_req
   post_form
-  post_json
   put_form
   delete_req
   request
@@ -43,8 +42,10 @@ my $fx = new_fixtures();
 my $anon   = mech( follow => 0 );
 my $mech   = login_mech( follow => 0 );
 my $ownsec = "/relation/$fx->{public_owned}/$fx->{owned_section}";
-my $rose  = "/relation/$fx->{public_readonly}/$fx->{sections}{public_readonly}[0]";
-my $prsec = "/relation/$fx->{private_owned}/$fx->{sections}{private_owned}[0]";
+my $rose   = "/relation/$fx->{public_readonly}/$fx->{sections}{public_readonly}[0]";
+my $prsec  = "/relation/$fx->{private_owned}/$fx->{sections}{private_owned}[0]";
+
+my $model = stemmaweb->model('Directory');
 
 # Readings of a section, keyed on reading ID, sorted by rank.
 sub readings_of {
@@ -89,7 +90,7 @@ section('/relation/<tradition>');
 }
 
 {
-    my $res = $anon->get("/relation/nosucht tradition");
+    my $res = $anon->get('/relation/nosucht tradition');
     is( $res->code, 404, 'GET /relation/<unknown tradition> returns 404' );
 }
 
@@ -112,15 +113,14 @@ section('/relation/<tradition>/<section>');
 }
 
 {
-    # The section capture action fetches the section from Stemmarest; if that
-    # fails, execution carries on into the main action anyway.
     my $res = $mech->get("/relation/$fx->{public_owned}/doesnotexist");
     ok( $res->code >= 400, 'GET /relation/<tradition>/<unknown section> fails' );
 }
 
 {
     my $res = $mech->request( post_form( $ownsec, [] ) );
-    ok( $res->code >= 400, 'POST to the viewer is refused' );
+    is( $res->code, 405, 'POST to the viewer is refused' );
+    like( json_of($res)->{error}, qr/Use GET instead/, 'Method error is reported' );
 }
 
 # ---------------------------------------------------------------------------
@@ -202,16 +202,23 @@ section('metadata');
 {
     my $res = $mech->request(
         put_form( "$ownsec/metadata", [ name => 'not allowed' ] ) );
-    # Note: the 403 signals the rejected method, but the action carries on and
-    # the body is the result of the (empty) update it then performs.
     is( $res->code, 403, 'PUT .../metadata is rejected as a method' );
+    like( json_of($res)->{error}, qr/Use POST or GET/, 'Method error is reported' );
+
+    # ...and the section is untouched.
+    my $info = json_of( $mech->request( get_req("$ownsec/metadata") ) );
+    is( $info->{name}, 'renamed by the mapper',
+        'The rejected method did not rename the section' );
 }
 
 {
-    my $res = request(
+    my $res = $anon->request(
         post_form( "$rose/metadata", [ name => 'renamed by anonymous user' ] ) );
     is( $res->code, 403,
         'POST .../metadata is refused for a read-only tradition' );
+    is( json_of($res)->{error},
+        'You do not have permission to modify this tradition.',
+        'Permission error is reported' );
 }
 
 # ---------------------------------------------------------------------------
@@ -238,6 +245,8 @@ section('download');
 {
     my $res = request( get_req("$prsec/download?format=JSON") );
     is( $res->code, 403, 'Section download is refused for a private tradition' );
+    unlike( body_of($res), qr/"alignment"/,
+        'The refusal does not carry the alignment' );
 }
 
 # ---------------------------------------------------------------------------
@@ -263,13 +272,14 @@ section('readings');
 {
     my $res = request( get_req("$prsec/readings") );
     is( $res->code, 403, 'GET .../readings is refused for a private tradition' );
+    unlike( body_of($res), qr/#START#/,
+        'The refusal does not carry the readings' );
 }
 
 {
-    # Note: the 405 is reported but the action carries on and replaces the body
-    # with the (freshly fetched) reading list.
     my $res = $mech->request( put_form( "$ownsec/readings", [] ) );
     is( $res->code, 405, 'PUT .../readings is a disallowed method' );
+    like( json_of($res)->{error}, qr/Use GET instead/, 'Method error is reported' );
 }
 
 # ---------------------------------------------------------------------------
@@ -314,21 +324,9 @@ my $reading_id = $real[0];
 }
 
 {
-    # The read-only tradition's own section, so that this cannot disturb the
-    # tests below.  Note that the status is 403 but the controller carries on
-    # and changes the reading anyway.
-    my ( $rrdgs, $rids ) =
-      readings_of($rose);
-    my ($rreal) = grep { $rrdgs->{$_}{text} !~ /^#/ } @$rids;
-    my $res = $anon->request(
-        post_form( "$rose/reading/$rreal", [ normal_form => 'not allowed' ] ) );
-    is( $res->code, 403,
-        'POST .../reading/<id> is refused for a read-only tradition' );
-}
-
-{
     my $res = $mech->request( put_form( "$ownsec/reading/$reading_id", [] ) );
     is( $res->code, 405, 'PUT .../reading/<id> is a disallowed method' );
+    like( json_of($res)->{error}, qr/You can GET or POST/, 'Method error is reported' );
 }
 
 # ---------------------------------------------------------------------------
@@ -384,6 +382,7 @@ ok( $witness, 'Fixture tradition has witnesses' );
 {
     my $res = $mech->request( post_form( "$ownsec/witnesstext/$witness", [] ) );
     is( $res->code, 405, 'POST .../witnesstext is a disallowed method' );
+    like( json_of($res)->{error}, qr/Use GET instead/, 'Method error is reported' );
 }
 
 # ---------------------------------------------------------------------------
@@ -406,22 +405,6 @@ section('relationships (GET)');
 {
     my $res = request( get_req("$prsec/relationships") );
     is( $res->code, 403, 'GET .../relationships is refused for a private tradition' );
-}
-
-{
-    my $res = $anon->request( post_form( "$rose/relationships",
-        [ source => $ra, target => $rb, type => 'spelling' ] ) );
-    is( $res->code, 403,
-        'POST .../relationships is refused for a read-only tradition' );
-    like( json_of($res)->{error}, qr/do not have permission to modify/,
-        'Write refusal is reported' );
-}
-
-{
-    my $res = $anon->request(
-        delete_req( "$rose/relationships", form => [ from_reading => $ra ] ) );
-    is( $res->code, 403,
-        'DELETE .../relationships is refused for a read-only tradition' );
 }
 
 {
@@ -485,6 +468,10 @@ section('relationships (POST and DELETE)');
         form => [ source_id => $ra, target_id => $rb, scopewide => 'true' ] ) );
     is( $res->code, 400,
         'DELETE .../relationships with scopewide is rejected by Stemmarest' );
+
+    # Tidy up so that the relationship does not affect the tests below.
+    $mech->request(
+        delete_req( "$ownsec/relationships", form => [ from_reading => $ra ] ) );
 }
 
 # ---------------------------------------------------------------------------
@@ -494,8 +481,16 @@ section('relationships (POST and DELETE)');
 section('relationtype');
 
 {
-    my $res = request( get_req("$ownsec/relationtype/spelling") );
-    is( $res->code, 405, 'GET .../relationtype/<name> is a disallowed method' );
+    # The action only accepts PUT and DELETE, and it checks permissions before
+    # it checks the method, so a read-only caller is refused first.
+    my $res = request( get_req("$rose/relationtype/spelling") );
+    is( $res->code, 403,
+        'GET .../relationtype/<name> is refused without permission' );
+
+    my $asowner = $mech->request( get_req("$ownsec/relationtype/spelling") );
+    is( $asowner->code, 405, 'GET .../relationtype/<name> is a disallowed method' );
+    like( json_of($asowner)->{error}, qr/Accepted methods are PUT and DELETE/,
+        'Method error is reported' );
 }
 
 {
@@ -511,15 +506,6 @@ section('relationtype');
     my $res = $mech->request(
         delete_req("$ownsec/relationtype/probe-type") );
     is( $res->code, 200, 'DELETE .../relationtype/<name> removes a relation type' );
-}
-
-{
-    # Note: the status is 403 but the controller carries on and creates the
-    # relation type on the read-only tradition anyway.
-    my $res = $anon->request(
-        put_form( "$rose/relationtype/probe-anonymous", [ name => 'probe-anonymous' ] ) );
-    is( $res->code, 403,
-        'PUT .../relationtype is refused for a read-only tradition' );
 }
 
 # ---------------------------------------------------------------------------
@@ -543,6 +529,74 @@ section('copynormal');
 {
     my $res = $anon->request( post_form( "$rose/copynormal/$ra/spelling", [] ) );
     is( $res->code, 403, 'copynormal is refused for a read-only tradition' );
+}
+
+# ---------------------------------------------------------------------------
+# Refused writes
+#
+# A caller who may only read a tradition must be refused, and the refusal must
+# leave the data alone.  The status alone is not enough: these actions used to
+# answer 403 and then do the work anyway.
+# ---------------------------------------------------------------------------
+
+section('refused writes');
+
+{
+    my ( $before, $beforeids ) = readings_of($rose);
+    my @readable = grep { $before->{$_}{text} !~ /^#/ } @$beforeids;
+    my ( $target, $other ) = @readable[ 0, 1 ];
+    my @adjacent = @readable[ 0 .. 2 ];
+    my $rwith    = $fx->{witnesses}{public_readonly}[0];
+    ok( $target && $other, 'Found readings in the read-only tradition to aim at' );
+
+    my @reltypes_before = map { $_->{name} }
+      @{ $model->ajax( 'get', "/tradition/$fx->{public_readonly}/relationtypes" ) };
+
+    my @attempts = (
+        [ 'change a reading',
+          post_form( "$rose/reading/$target", [ text => 'refused write' ] ) ],
+        [ 'compress readings',
+          post_form( "$rose/compress", [ 'readings[]' => \@adjacent ] ) ],
+        [ 'merge readings',
+          post_form( "$rose/merge",
+              [ source => $other, target => $target, single => 1 ] ) ],
+        [ 'duplicate a reading',
+          post_form( "$rose/duplicate",
+              [ 'readings[]' => $target, 'witnesses[]' => $rwith ] ) ],
+        [ 'split a reading',
+          post_form( "$rose/split",
+              [ reading => $target, rtext => $before->{$target}{text}, index => 1 ] ) ],
+        [ 'add an emendation',
+          post_form( "$rose/emend",
+              [ fromRank => 1, toRank => 2, text => 'refused', authority => 'probe' ] ) ],
+        [ 'create a relation type',
+          put_form( "$rose/relationtype/refused-type", [ name => 'refused-type' ] ) ],
+        [ 'create a relationship',
+          post_form( "$rose/relationships",
+              [ source => $target, target => $other, type => 'spelling', scope => 'local' ] ) ],
+        [ 'delete relationships',
+          delete_req( "$rose/relationships",
+              form => [ source_id => $target, target_id => $other ] ) ],
+    );
+
+    for my $attempt (@attempts) {
+        my ( $label, $req ) = @$attempt;
+        my $res = $anon->request($req);
+        is( $res->code, 403, "A read-only caller cannot $label" );
+    }
+
+    my ( $after, $afterids ) = readings_of($rose);
+    is( scalar @$afterids, scalar @$beforeids,
+        'The refused writes added and removed no readings' );
+    is( $after->{$target}{text}, $before->{$target}{text},
+        'The refused writes left the reading text alone' );
+    is( $after->{$target}{normal_form}, $before->{$target}{normal_form},
+        'The refused writes left the reading metadata alone' );
+
+    my @reltypes_after = map { $_->{name} }
+      @{ $model->ajax( 'get', "/tradition/$fx->{public_readonly}/relationtypes" ) };
+    is_deeply( [ sort @reltypes_after ], [ sort @reltypes_before ],
+        'The refused write created no relation type' );
 }
 
 # ---------------------------------------------------------------------------
@@ -573,11 +627,13 @@ section('merge');
 }
 
 {
-    # Note: the 404 is reported, but the action carries on and overwrites the
-    # body with its (empty) success response.
+    # An unknown reading is refused, and the error is what comes back: the
+    # action stops rather than overwriting it with an empty success.
     my $res = $mech->request(
         post_form( "$ownsec/merge", [ source => '99999999', target => '99999999' ] ) );
     is( $res->code, 404, 'Merging an unknown reading is refused by Stemmarest' );
+    my $error = eval { json_of($res)->{error} };
+    ok( $error, 'The refusal is reported rather than replaced by a success' );
 }
 
 {
@@ -594,8 +650,8 @@ section('compress');
 
 {
     my ( $now, $nowids ) = readings_of($ownsec);
-    my @real     = grep { $now->{$_}{text} !~ /^#/ } @$nowids;
-    my @adjacent = @real[ 0 .. 2 ];
+    my @creal    = grep { $now->{$_}{text} !~ /^#/ } @$nowids;
+    my @adjacent = @creal[ 0 .. 2 ];
     is( scalar @adjacent, 3, 'Found three adjacent readings to compress' );
 
     my $res = $mech->request(
@@ -647,7 +703,7 @@ section('duplicate');
     ok( ( grep { $_ eq $detach } @{ $newrdg->{witnesses} } ),
         'The detached witness is attached to the new reading' );
 
-    my ( $now2, $ids2 ) = readings_of($ownsec);
+    my ( $now2, $nowids2 ) = readings_of($ownsec);
     ok( !( grep { $_ eq $detach } @{ $now2->{$target}{witnesses} } ),
         'The detached witness is no longer on the original reading' );
 }
@@ -696,11 +752,17 @@ section('split');
     is( $res->code, 400,
         'POST .../split rejects a regular expression that is not zero-length' );
     like( json_of($res)->{error}, qr/must be zero-length/, 'The reason is reported' );
+
+    # ...and the reading was not split.
+    my ( $now2, $nowids2 ) = readings_of($ownsec);
+    is( scalar @$nowids2, scalar @$nowids,
+        'The rejected split did not add a reading' );
 }
 
 {
     my $res = $mech->request( get_req("$ownsec/split") );
     is( $res->code, 405, 'GET .../split is a disallowed method' );
+    like( json_of($res)->{error}, qr/Use POST instead/, 'Method error is reported' );
 }
 
 # ---------------------------------------------------------------------------

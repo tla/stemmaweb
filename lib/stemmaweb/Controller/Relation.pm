@@ -87,7 +87,7 @@ sub main :Chained('section') :PathPart('') :Args(0) {
     my $m         = $c->model('Directory');
     my $tradition = delete $c->stash->{'tradition'};
     if ($c->request->method ne 'GET') {
-        json_error($c, 405, "Use GET instead");
+        return json_error($c, 405, "Use GET instead");
     }
 
     # Stash text direction to use in JS.
@@ -273,7 +273,7 @@ sub relationships :Chained('section') :PathPart :Args(0) {
 
         # Check write permissions first of all
         if ($c->stash->{permission} ne 'full') {
-            json_error($c, 403,
+            return json_error($c, 403,
                 'You do not have permission to modify this tradition.');
         } elsif ($c->request->method eq 'POST') {
             my $opts = $c->request->params;
@@ -377,7 +377,7 @@ sub relationships :Chained('section') :PathPart :Args(0) {
                 $c->stash->{result} = { relationships => \@relpairs };
             }
         } else {
-            json_error($c, 405, "You can GET, POST, or DELETE");
+            return json_error($c, 405, "You can GET, POST, or DELETE");
         }
     }
     $c->forward('View::JSON');
@@ -408,7 +408,7 @@ sub relationtype :Chained('section') :PathPart :Args(1) {
     my ($self, $c, $rtypename) = @_;
     # Auth check. This can't be called with GET, so all calls need an auth check.
     if ($c->stash->{'permission'} ne 'full') {
-        json_error($c, 403,
+        return json_error($c, 403,
             'You do not have permission to modify this tradition.');
     }
     my $textid = $c->stash->{textid};
@@ -442,7 +442,7 @@ sub relationtype :Chained('section') :PathPart :Args(1) {
         push(@params, 'Content', encode_json($relreq));
     } elsif ($method ne 'delete') {
         # The request is invalid, bounce it.
-        json_error($c, 405, "Accepted methods are PUT and DELETE");
+        return json_error($c, 405, "Accepted methods are PUT and DELETE");
     }
     try {
         $c->stash->{result} = $m->ajax(@params);
@@ -482,7 +482,7 @@ my %read_write_keys = (
 sub readings :Chained('section') :PathPart :Args(0) {
     my ($self, $c) = @_;
     if ($c->request->method ne 'GET') {
-        json_error($c, 405, "Use GET instead");
+        return json_error($c, 405, "Use GET instead");
     }
     my $textid = $c->stash->{'textid'};
     my $sectid = $c->stash->{'sectid'};
@@ -544,7 +544,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
 
         # Auth check
         if ($c->stash->{'permission'} ne 'full') {
-            json_error($c, 403,
+            return json_error($c, 403,
                 'You do not have permission to modify this tradition.');
         }
 
@@ -599,7 +599,7 @@ sub reading :Chained('section') :PathPart :Args(1) {
 
         $c->stash->{result} = { readings => [ values(%$changelist) ] };
     } else {
-        json_error($c, 405, "You can GET or POST");
+        return json_error($c, 405, "You can GET or POST");
     }
     $c->forward('View::JSON');
 }
@@ -642,7 +642,7 @@ sub lemmatext :Chained('section') :PathPart :Args(0) {
             return json_error($c, $e->status, $e->message);
         }
     } else {
-        json_error($c, 405, "Use GET instead");
+        return json_error($c, 405, "Use GET instead");
     }
     $c->forward('View::JSON');
 }
@@ -674,7 +674,7 @@ sub witnesstext :Chained('section') :PathPart :Args(1) {
             return json_error($c, $e->status, $e->message);
         }
     } else {
-        json_error($c, 405, "Use GET instead");
+        return json_error($c, 405, "Use GET instead");
     }
     $c->forward('View::JSON');
 }
@@ -694,7 +694,7 @@ sub copynormal :Chained('section') :PathPart :Args(2) {
     if ($c->request->method eq 'POST') {
         # Auth check
         if ($c->stash->{'permission'} ne 'full') {
-            json_error($c, 403,
+            return json_error($c, 403,
                 'You do not have permission to modify this tradition.');
         }
         # Do the deed
@@ -705,7 +705,7 @@ sub copynormal :Chained('section') :PathPart :Args(2) {
             return json_error($c, $e->status, $e->message);
         }
     } else {
-        json_error($c, 405, "Use POST instead");
+        return json_error($c, 405, "Use POST instead");
     }
     $c->forward('View::JSON');
 }
@@ -736,7 +736,7 @@ sub emendations :Chained('section') :PathPart :Args(0) {
             return json_error($c, $e->status, $e->message);
         }
     } else {
-        json_error($c, 405, "Use GET instead");
+        return json_error($c, 405, "Use GET instead");
     }
     $c->forward('View::JSON');
 }
@@ -765,7 +765,7 @@ sub emend :Chained('section') :PathPart :Args(0) {
 
         # Auth check
         if ($c->stash->{'permission'} ne 'full') {
-            json_error($c, 403,
+            return json_error($c, 403,
                 'You do not have permission to modify this tradition.');
         }
 
@@ -786,7 +786,7 @@ sub emend :Chained('section') :PathPart :Args(0) {
             return json_error($c, $e->status, $e->message);
         }
     } else {
-        json_error($c, 405, "Use POST instead");
+        return json_error($c, 405, "Use POST instead");
     }
     $c->forward('View::JSON');
 }
@@ -816,7 +816,7 @@ sub compress :Chained('section') :PathPart :Args(0) {
 
         # Auth check
         if ($c->stash->{'permission'} ne 'full') {
-            json_error($c, 403,
+            return json_error($c, 403,
                 'You do not have permission to modify this tradition.');
         }
 
@@ -853,7 +853,7 @@ sub compress :Chained('section') :PathPart :Args(0) {
         $c->stash->{result} = $lastresult;
         $c->forward('View::JSON');
     } else {
-        json_error($c, 405, "Use POST instead");
+        return json_error($c, 405, "Use POST instead");
     }
 }
 
@@ -890,7 +890,7 @@ sub merge :Chained('section') :PathPart :Args(0) {
 
         # Auth check
         if ($c->stash->{'permission'} ne 'full') {
-            json_error($c, 403,
+            return json_error($c, 403,
                 'You do not have permission to modify this tradition.');
         }
         my $main   = $c->request->param('target');
@@ -930,7 +930,7 @@ sub merge :Chained('section') :PathPart :Args(0) {
                 $response->{failed} = [ keys %$failed ];
             } else {
                 my $error = assemble_failures($failed);
-                json_error($c, @$error);
+                return json_error($c, @$error);
             }
         } elsif (!$c->request->param('single')) {
             # Now look for any mergeable readings on the tradition.
@@ -965,7 +965,7 @@ sub merge :Chained('section') :PathPart :Args(0) {
         $c->stash->{'result'} = $response;
         $c->forward('View::JSON');
     } else {
-        json_error($c, 405, "Use POST instead");
+        return json_error($c, 405, "Use POST instead");
     }
 }
 
@@ -1030,7 +1030,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
 
         # Auth check
         if ($c->stash->{'permission'} ne 'full') {
-            json_error($c, 403,
+            return json_error($c, 403,
                 'You do not have permission to modify this tradition.');
         }
 
@@ -1052,7 +1052,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
             );
         }
         catch (stemmaweb::Error $e) {
-            json_error($c, $e->status, $e->message);
+            return json_error($c, $e->status, $e->message);
         }
 
         # Massage the response into the expected form. For this response
@@ -1064,7 +1064,7 @@ sub duplicate :Chained('section') :PathPart :Args(0) {
             $c->stash->{result}->{$r->{id}} = $r;
         }
     } else {
-        json_error($c, 405, "Use POST instead");
+        return json_error($c, 405, "Use POST instead");
     }
     $c->forward('View::JSON');
 }
@@ -1113,7 +1113,7 @@ sub split :Chained('section') :PathPart :Args(0) {
 
         # Auth check
         if ($c->stash->{'permission'} ne 'full') {
-            json_error($c, 403,
+            return json_error($c, 403,
                 'You do not have permission to modify this tradition.');
         }
 
@@ -1138,7 +1138,7 @@ sub split :Chained('section') :PathPart :Args(0) {
             my @test = split($regex, $rtext);
             my $joinchar = $separate ? ' ' : '';
             if (join($joinchar, @test) ne $rtext) {
-                json_error($c, 400,
+                return json_error($c, 400,
                     'The specified regular expression must be zero-length');
             }
             $model->{character} = $regex;
@@ -1156,7 +1156,7 @@ sub split :Chained('section') :PathPart :Args(0) {
             );
         }
         catch (stemmaweb::Error $e) {
-            json_error($c, $e->status, $e->message);
+            return json_error($c, $e->status, $e->message);
         }
 
         # Fill out the readings and return the result. This response
@@ -1167,7 +1167,7 @@ sub split :Chained('section') :PathPart :Args(0) {
         }
 
     } else {
-        json_error($c, 405, "Use POST instead");
+        return json_error($c, 405, "Use POST instead");
     }
     $c->forward('View::JSON');
 }

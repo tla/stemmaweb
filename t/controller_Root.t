@@ -20,6 +20,8 @@ use Test::More;
 use stemmaweb::Test::App qw/
   section
   new_fixtures
+  traditions_by_name
+  sections_of
   body_of
   json_of
   is_json
@@ -178,8 +180,8 @@ section('newsection');
     my $data = json_of($res);
     ok( $data->{sectionId}, 'Response contains the new section ID' );
 
-    my $now = stemmaweb::Test::App::sections_of( $fx->{public_owned} );
-    is( scalar @$now, $before + 1, 'Tradition now has one more section' );
+    is( scalar @{ sections_of( $fx->{public_owned} ) }, $before + 1,
+        'Tradition now has one more section' );
 }
 
 {
@@ -303,6 +305,10 @@ my $section = $fx->{owned_section};
     my $res = request( get_req("/sectioninfo/$fx->{private_owned}/1") );
     is( $res->code, 403,
         'GET /sectioninfo is refused for a private tradition' );
+
+    my $unknown = request( get_req('/sectioninfo/doesnotexist/1') );
+    is( $unknown->code, 404,
+        'GET /sectioninfo returns 404 for an unknown tradition' );
 }
 
 {
@@ -378,6 +384,9 @@ section('delete');
 {
     my $res = request( post_form( "/delete/$fx->{private_owned}", [] ) );
     is( $res->code, 403, 'POST /delete/<tradition> is refused without permission' );
+
+    ok( traditions_by_name()->{'Notre besoin'},
+        'The refused deletion left the tradition in place' );
 }
 
 {
@@ -386,6 +395,9 @@ section('delete');
         post_form( "/delete/$fx->{multisection}/$sections[0]", [] ) );
     is( $res->code, 403,
         'POST /delete/<tradition>/<section> is refused without permission' );
+
+    is( scalar @{ sections_of( $fx->{multisection} ) }, scalar @sections,
+        'The refused deletion left the section in place' );
 }
 
 {
@@ -405,7 +417,7 @@ section('delete');
         post_form( "/delete/$fx->{multisection}/$mine[0]", [] ) );
     is( $res->code, 200, 'POST /delete/<tradition>/<section> succeeds for the owner' );
     is( json_of($res)->{status}, 'ok', 'Section deletion is acknowledged' );
-    is( scalar @{ stemmaweb::Test::App::sections_of( $fx->{multisection} ) }, 1,
+    is( scalar @{ sections_of( $fx->{multisection} ) }, 1,
         'Section is gone from the tradition' );
 }
 
@@ -435,18 +447,13 @@ section('variantgraph');
 }
 
 {
-    # The permission check answers 403, but load_tradition then returns a
-    # truthy (autovivified) hash, so the action carries on regardless and the
-    # body still contains the variant graph.
+    # The permission check stops the action, so the refusal is all that comes
+    # back.
     my $res = request( get_req("/variantgraph/$fx->{private_owned}") );
     is( $res->code, 403, 'GET /variantgraph is refused for a private tradition' );
 
-    TODO: {
-        local $TODO =
-          'the refusal does not stop the controller from rendering the graph';
-        unlike( body_of($res), qr/<svg/,
-            'A refused variant graph does not carry the graph itself' );
-    }
+    unlike( body_of($res), qr/<svg/,
+        'A refused variant graph does not carry the graph itself' );
 }
 
 # ---------------------------------------------------------------------------
@@ -489,12 +496,8 @@ section('download');
         get_req( "/download?tradition=$fx->{private_owned}&format=JSON" ) );
     is( $res->code, 403, 'GET /download is refused for a private tradition' );
 
-    TODO: {
-        local $TODO =
-          'the refusal does not stop the controller from fetching the alignment';
-        unlike( body_of($res), qr/"alignment"/,
-            'A refused download does not carry the alignment' );
-    }
+    unlike( body_of($res), qr/"alignment"/,
+        'A refused download does not carry the alignment' );
 }
 
 {

@@ -174,6 +174,8 @@ name of the new tradition.
 sub newsection :Local :Args(1) {
     my ($self, $c, $textid) = @_;
     my $textinfo = load_tradition($c, $textid);
+    # load_tradition answers the error itself; carry on only if it did not.
+    return if exists $c->stash->{'result'};
     return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
       unless $c->req->method eq 'POST';
     return json_error($c, 403,
@@ -334,6 +336,8 @@ Returns and updates information about a particular sections.
 sub sectioninfo :Local :Args(2) {
     my ($self, $c, $textid, $sectionid) = @_;
     $c->stash->{tradition} = load_tradition($c, $textid);
+    # load_tradition answers the error itself; carry on only if it did not.
+    return if exists $c->stash->{'result'};
     return section_metadata($c, $textid, $sectionid);
 }
 
@@ -350,7 +354,8 @@ set to 'none'.
 sub orderafter :Local :Args(3) {
     my ($self, $c, $textid, $sectionid, $priorsectid) = @_;
     my $textinfo = load_tradition($c, $textid);
-    return unless $textinfo;
+    # load_tradition answers the error itself; carry on only if it did not.
+    return if exists $c->stash->{'result'};
     return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
       unless $c->req->method eq 'POST';
     return json_error($c, 403,
@@ -380,6 +385,8 @@ Deletes the specified tradition or section and all its data. Cannot be undone.
 sub deleteTradition :Path('delete') :Args(1) {
     my ($self, $c, $textid) = @_;
     my $textinfo = load_tradition($c, $textid);
+    # load_tradition answers the error itself; carry on only if it did not.
+    return if exists $c->stash->{'result'};
     return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
       unless $c->req->method eq 'POST';
     return json_error($c, 403,
@@ -400,6 +407,8 @@ sub deleteTradition :Path('delete') :Args(1) {
 sub deleteSection :Path('delete') :Args(2) {
     my ($self, $c, $textid, $sectionid) = @_;
     my $textinfo = load_tradition($c, $textid);
+    # load_tradition answers the error itself; carry on only if it did not.
+    return if exists $c->stash->{'result'};
     return json_error($c, 400, "Disallowed HTTP method " . $c->req->method)
       unless $c->req->method eq 'POST';
     return json_error($c, 403,
@@ -428,6 +437,8 @@ Returns the variant graph for the text specified at $textid, in SVG form.
 sub variantgraph :Local :Args(1) {
     my ($self, $c, $textid) = @_;
     my $textinfo = load_tradition($c, $textid);
+    # load_tradition answers the error itself; carry on only if it did not.
+    return if exists $c->stash->{'result'};
     try {
         $c->stash->{result} =
           $c->model('Directory')->tradition_as_svg($textinfo->{id});
@@ -454,6 +465,8 @@ sub download :Local :Args(0) {
     my $format   = delete $prm->{format};
     my $sectid   = delete $prm->{section}; # for single-section downloads
     my $textinfo = load_tradition($c, $textid);
+    # load_tradition answers the error itself; carry on only if it did not.
+    return if exists $c->stash->{'result'};
     ## Available formats are graphml, json, csv, tsv, dot. Dot -> SVG
 
     my $view = $format =~ /(dot|matrix)/ ? 'View::Plain' : "View::$format";

@@ -3,9 +3,8 @@
 # Tests for stemmaweb::Controller::Stemma.
 #
 # The Stemma controller is small but has an important quirk: the C<index>
-# action returns SVG unless the client asks for JSON with an Accept header, and
-# the SVG branch calls an C<_as_svg> that does not exist in this package.  Those
-# cases are marked TODO so that they are reported but do not fail the suite.
+# action returns SVG unless the client asks for JSON with an Accept header, so
+# both representations are checked here.
 
 use strict;
 use warnings;
@@ -19,6 +18,7 @@ use Test::More;
 use stemmaweb::Test::App qw/
   section
   new_fixtures
+  stemmata_of
   body_of
   json_of
   is_json
@@ -70,23 +70,20 @@ ok( $existing, 'Fixture tradition has a stemma to read' );
 {
     my $res =
       request( get_req( "/stemma/$fx->{public_readonly}/$existing", %$XML ) );
-    TODO: {
-        local $TODO =
-          'Controller::Stemma::index calls _as_svg(), which the package never imports';
-        is( $res->code, 200, 'GET /stemma/<tradition>/<stemma> returns SVG' );
-        is( $res->header('Content-Type'), 'image/svg+xml',
-            'SVG is served with the SVG content type' );
-    }
+    is( $res->code, 200, 'GET /stemma/<tradition>/<stemma> returns SVG' );
+    is( $res->header('Content-Type'), 'image/svg+xml',
+        'SVG is served with the SVG content type' );
+    like( body_of($res), qr/<svg/, 'The response really is an SVG document' );
 }
 
 {
+    # Without an Accept header the SVG is what the client gets.
     my $res = request( get_req( "/stemma/$fx->{public_readonly}/$existing" ) );
-    TODO: {
-        local $TODO =
-          'Controller::Stemma::index calls _as_svg(), which the package never imports';
-        is( $res->code, 200,
-            'GET /stemma/<tradition>/<stemma> defaults to SVG' );
-    }
+    is( $res->code, 200,
+        'GET /stemma/<tradition>/<stemma> defaults to SVG' );
+    is( $res->header('Content-Type'), 'image/svg+xml',
+        'SVG is the default representation' );
+    like( body_of($res), qr/<svg/, 'The default representation is an SVG document' );
 }
 
 {
@@ -97,19 +94,16 @@ ok( $existing, 'Fixture tradition has a stemma to read' );
 }
 
 {
-    # The permission check answers 403, but the action carries on and the body
-    # still contains the stemma.
+    # The permission check stops the action, so the refusal is all that comes
+    # back.
     my $res =
       request( get_req( "/stemma/$fx->{private_owned}/$fx->{stemmata}{private_owned}[0]",
             %$JSON ) );
     is( $res->code, 403,
         'GET /stemma/<tradition>/<stemma> is refused for a private tradition' );
 
-    TODO: {
-        local $TODO = 'the refusal does not stop the controller from reading the stemma';
-        ok( !defined( eval { json_of($res)->{stemmaid} } ),
-            'A refused stemma request does not carry stemma data' );
-    }
+    unlike( body_of($res), qr/"svg"/,
+        'The refusal does not carry the stemma' );
 }
 
 {
@@ -128,9 +122,13 @@ section('stemma index - creating and updating a stemma');
 
 my $new_stemma;
 {
-    my $res = request( post_form( "/stemma/$fx->{public_owned}/__NEW__",
+    my $before = scalar @{ $fx->{stemmata}{public_owned} };
+    my $res    = request( post_form( "/stemma/$fx->{public_owned}/__NEW__",
         [ dot => $dot ], %$JSON ) );
     is( $res->code, 403, 'Creating a stemma is refused without a session' );
+
+    is( scalar @{ stemmata_of( $fx->{public_owned} ) }, $before,
+        'The refused request did not create a stemma' );
 }
 
 {
@@ -180,21 +178,18 @@ section('stemma dot');
 }
 
 {
-    # Note: the status comes from the failed permission check, but the action
-    # carries on and the body still contains the dot definition.
     my $res =
       request( get_req( "/stemma/dot/$fx->{private_owned}/$fx->{stemmata}{private_owned}[0]" ) );
     is( $res->code, 403,
         'GET /stemma/dot is refused for a private tradition without a session' );
+    ok( !defined( eval { json_of($res)->{dot} } ),
+        'The refusal does not carry the dot definition' );
 }
 
 {
     my $res = request( get_req("/stemma/dot/$fx->{public_owned}/doesnotexist") );
-    TODO: {
-        local $TODO =
-          'Controller::Stemma::dot calls _json_error(), which the package never imports';
-        is( $res->code, 404, 'GET /stemma/dot returns 404 for an unknown stemma' );
-    }
+    is( $res->code, 404, 'GET /stemma/dot returns 404 for an unknown stemma' );
+    like( json_of($res)->{error}, qr/No stemma/, 'The reason is reported' );
 }
 
 # ---------------------------------------------------------------------------
@@ -230,13 +225,12 @@ my $owned_stemma = $fx->{stemmata}{private_owned}[0];
 }
 
 {
-    # Without a root, the controller builds a URL with an empty node name; the
-    # missing C<return> after the method check means that the 405 reported for
-    # a GET is then overwritten by whatever Stemmarest says about that URL.
+    # Only POST is accepted, and the refusal is what comes back.
     my $res = $mech->request(
         get_req("/stemma/reroot/$fx->{private_owned}/$owned_stemma") );
-    is( $res->code, 404,
-        'GET /stemma/reroot reports the resulting Stemmarest error' );
+    is( $res->code, 405, 'GET /stemma/reroot is a disallowed method' );
+    like( json_of($res)->{error}, qr/Call this method with POST/,
+        'Method error is reported' );
 }
 
 # ---------------------------------------------------------------------------
@@ -248,6 +242,13 @@ section('stemma delete');
 {
     my $res = request( post_form( "/stemma/delete/$fx->{private_owned}/$owned_stemma", [] ) );
     is( $res->code, 403, 'Deleting a stemma is refused without permission' );
+}
+
+{
+    my $res = $mech->request( get_req("/stemma/delete/$fx->{private_owned}/$owned_stemma") );
+    is( $res->code, 405, 'GET /stemma/delete is a disallowed method' );
+    like( json_of($res)->{error}, qr/Call this method with POST/,
+        'Method error is reported' );
 }
 
 {

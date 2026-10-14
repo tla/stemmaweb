@@ -7,7 +7,7 @@ use warnings;
 use JSON qw/ encode_json /;
 use TryCatch;
 use stemmaweb::Controller::Util
-  qw/ load_tradition stemma_info json_error json_bool /;
+  qw/ load_tradition stemma_info json_error json_bool _as_svg /;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -37,6 +37,9 @@ stemma will be added.
 sub index :Path :Args(2) {
     my ($self, $c, $textid, $stemmaid) = @_;
     my $textinfo = load_tradition($c, $textid);
+
+    # load_tradition answers the error itself; carry on only if it did not.
+    return if exists $c->stash->{'result'};
 
     # Send the request and get the response
     my $stemmadata;
@@ -122,13 +125,16 @@ sub dot :Local :Args(2) {
     my ($self, $c, $textid, $stemmaid) = @_;
     my $textinfo = load_tradition($c, $textid);
 
+    # load_tradition answers the error itself; carry on only if it did not.
+    return if exists $c->stash->{'result'};
+
     my $stemmadata;
     my $location = sprintf("/tradition/$textid/stemma/$stemmaid");
     try {
         $stemmadata = $c->model('Directory')->ajax('get', $location);
     }
     catch (stemmaweb::Error $e ) {
-        return _json_error($c, $e->status, $e->message);
+        return json_error($c, $e->status, $e->message);
     }
 
     # Get the dot and transmute its line breaks to literal '|n'
@@ -150,9 +156,10 @@ information structure for the new stemma.
 sub reroot :Local :Args(2) {
     my ($self, $c, $textid, $stemmaid) = @_;
     if ($c->request->method ne 'POST') {
-        json_error($c, 405, "Call this method with POST");
+        return json_error($c, 405, "Call this method with POST");
     }
     my $textinfo = load_tradition($c, $textid);
+    return if exists $c->stash->{'result'};
     if ($textinfo->{permission} eq 'full') {
         my $location = sprintf("/tradition/%s/stemma/%s/reorient/%s",
             $textid, $stemmaid, $c->req->param('root'));
@@ -182,10 +189,11 @@ Returns a list of the remaining stemmata (if any) for this text.
 sub delete :Local :Args(2) {
     my ($self, $c, $textid, $stemmaid) = @_;
     if ($c->request->method ne 'POST') {
-        json_error($c, 405, "Call this method with POST");
+        return json_error($c, 405, "Call this method with POST");
     }
     my $m = $c->model('Directory');
     my $textinfo = load_tradition($c, $textid);
+    return if exists $c->stash->{'result'};
     if ($textinfo->{permission} eq 'full') {
         # Delete the requested stemma
         my $location = sprintf("/tradition/%s/stemma/%s", $textid, $stemmaid);
