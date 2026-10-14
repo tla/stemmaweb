@@ -37,7 +37,7 @@ class TraditionList extends HTMLElement {
                 this.render( state.availableTraditions );
             } else {
                 // The case when a tradition was deleted or added.
-                if ( prevState.availableTraditions.length !=  state.availableTraditions.length ) {
+                if ( prevState.availableTraditions.length != state.availableTraditions.length ) {
                     // TODO: this really shouldn't rerender, because it adds eventListeners
                     // and sectionLists (and their eventListeners) with each rerender.
                     // Instead it should really *update* removing the deleted or adding the
@@ -48,16 +48,19 @@ class TraditionList extends HTMLElement {
                     // ourselves too, no?
                     this.render( state.availableTraditions );
                 }
-                // The case where a name was changed in the metadata.
-                if ( prevState.selectedTradition.name != state.selectedTradition.name ) {
-                    this.querySelector( `a[trad-id="${state.selectedTradition.id}"].nav-link span.tradition-nav-name` ).innerHTML = state.selectedTradition.name;
-                }
-                if ( prevState.selectedTradition.is_public != state.selectedTradition.is_public ) {
-                    this.setAccessIcon( state.selectedTradition );
-                }
-                // The case where another tradition was selected.
-                if ( prevState.selectedTradition != state.selectedTradition ) {
-                    this.highlightFolderIcon( state.selectedTradition );
+                // If there are still traditions left.
+                if ( state.availableTraditions.length > 0 ) {
+                    // The case where a name was changed in the metadata.
+                    if ( prevState.selectedTradition.name != state.selectedTradition.name ) {
+                        this.querySelector( `a[trad-id="${state.selectedTradition.id}"].nav-link span.tradition-nav-name` ).innerHTML = state.selectedTradition.name;
+                    }
+                    if ( prevState.selectedTradition.is_public != state.selectedTradition.is_public ) {
+                        this.setAccessIcon( state.selectedTradition );
+                    }
+                    // The case where another tradition was selected.
+                    if ( prevState.selectedTradition != state.selectedTradition ) {
+                        this.highlightFolderIcon( state.selectedTradition );
+                    }
                 }
             }
         });
