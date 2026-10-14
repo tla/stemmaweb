@@ -1,39 +1,269 @@
+#!/usr/bin/env perl
+#
+# Tests for stemmaweb::Controller::Stemma.
+#
+# The Stemma controller is small but has an important quirk: the C<index>
+# action returns SVG unless the client asks for JSON with an Accept header, and
+# the SVG branch calls an C<_as_svg> that does not exist in this package.  Those
+# cases are marked TODO so that they are reported but do not fail the suite.
+
 use strict;
 use warnings;
-use Test::More;
-use HTTP::Request::Common;
-
-
-use Catalyst::Test 'stemmaweb';
-use stemmaweb::Controller::Stemma;
 
 use FindBin;
 use lib ("$FindBin::Bin/lib");
 
-use stemmaweb::Test::DB;
-my $textids = stemmaweb::Test::DB::new_db("$FindBin::Bin/data");
+use HTTP::Request::Common qw/ GET POST PUT /;
+use Test::More;
 
-# Test /stemma GET, POST/0, POST/n
-my $dnestemma = request('/stemma/' . $textids->{public}->[0] . '/doesnotexist');
-is( $dnestemma->code, 404, "Returned 404 on nonexistent stemma" );
-like( $dnestemma->header('Content-Type'), qr/application\/json/,
-    "Returned JSON answer for missing stemma" );
+use stemmaweb::Test::App qw/
+  section
+  new_fixtures
+  body_of
+  json_of
+  is_json
+  login_mech
+  get_req
+  post_form
+  put_form
+  request
+  install_action_log
+/;
 
-is( request( '/stemma/' . $textids->{private}->[0] . '/stemma' )->code, 403,
-    "Permission denied to view stemma on private tradition" );
-my $pubstemurl = '/stemma/' . $textids->{public}->[0];
-my $psreq = request( "$pubstemurl/0" );
-TODO: {
-    local $TODO = "Is this correct?";
-    ok( $psreq->is_success, "Got OK even on nonexistent stemma" );
-    like( $psreq->header('Content-Type'), qr/xml/,
-        "Returned SVG answer for stemma by default" );
-    is( $psreq->content, '', "Got empty svg for nonexistent stemma" );
+install_action_log();
+
+my $fx = new_fixtures();
+
+my $mech = login_mech( follow => 0 );
+
+my $JSON = { accept => 'application/json' };
+my $XML  = { accept => 'text/xml' };
+
+# The dot definition of a stemma with the witness classes that Stemmarest
+# requires; it is used to create a fresh stemma for the owner.
+my $dot = do {
+    local ( @ARGV, $/ ) = ("$stemmaweb::Test::App::T_DATA/florilegium.dot");
+    <>;
+};
+
+# ---------------------------------------------------------------------------
+# GET /stemma/<tradition>/<stemmaid>
+# ---------------------------------------------------------------------------
+
+section('stemma index - reading a stemma');
+
+my $existing = $fx->{stemmata}{public_readonly}[0];
+ok( $existing, 'Fixture tradition has a stemma to read' );
+
+{
+    my $res =
+      request( get_req( "/stemma/$fx->{public_readonly}/$existing", %$JSON ) );
+    is( $res->code, 200, 'GET /stemma/<tradition>/<stemma> succeeds' );
+    ok( is_json($res), 'Response is JSON when JSON is requested' );
+    my $info = json_of($res);
+    is( $info->{stemmaid}, $existing, 'Response identifies the stemma' );
+    ok( $info->{name}, 'Response carries the stemma name' );
+    ok( defined $info->{directed}, 'Response says whether the stemma is directed' );
+    like( $info->{svg}, qr/<svg/, 'Response carries the rendered SVG' );
 }
-my $pspost = request POST "$pubstemurl/n", [
-    dot => 'digraph stemma { A -> B; A -> C }'];
-is( $pspost->code, 403, "Permission denied trying to create new stemma" );
 
-# Test /stemmadot GET/0
+{
+    my $res =
+      request( get_req( "/stemma/$fx->{public_readonly}/$existing", %$XML ) );
+    TODO: {
+        local $TODO =
+          'Controller::Stemma::index calls _as_svg(), which the package never imports';
+        is( $res->code, 200, 'GET /stemma/<tradition>/<stemma> returns SVG' );
+        is( $res->header('Content-Type'), 'image/svg+xml',
+            'SVG is served with the SVG content type' );
+    }
+}
+
+{
+    my $res = request( get_req( "/stemma/$fx->{public_readonly}/$existing" ) );
+    TODO: {
+        local $TODO =
+          'Controller::Stemma::index calls _as_svg(), which the package never imports';
+        is( $res->code, 200,
+            'GET /stemma/<tradition>/<stemma> defaults to SVG' );
+    }
+}
+
+{
+    my $res = request( get_req( "/stemma/$fx->{public_owned}/doesnotexist", %$JSON ) );
+    is( $res->code, 404, 'GET /stemma/<tradition>/<unknown> returns 404' );
+    like( json_of($res)->{error}, qr/No stemma/,
+        'Unknown stemma is reported by name' );
+}
+
+{
+    # The permission check answers 403, but the action carries on and the body
+    # still contains the stemma.
+    my $res =
+      request( get_req( "/stemma/$fx->{private_owned}/$fx->{stemmata}{private_owned}[0]",
+            %$JSON ) );
+    is( $res->code, 403,
+        'GET /stemma/<tradition>/<stemma> is refused for a private tradition' );
+
+    TODO: {
+        local $TODO = 'the refusal does not stop the controller from reading the stemma';
+        ok( !defined( eval { json_of($res)->{stemmaid} } ),
+            'A refused stemma request does not carry stemma data' );
+    }
+}
+
+{
+    my $res = request(
+        put_form( "/stemma/$fx->{public_owned}/$existing", [], %$JSON ) );
+    is( $res->code, 400, 'PUT /stemma/<tradition>/<stemma> is a disallowed method' );
+    like( json_of($res)->{error}, qr/Disallowed HTTP method/,
+        'Method error is reported' );
+}
+
+# ---------------------------------------------------------------------------
+# POST /stemma/<tradition>/__NEW__ and updating an existing stemma
+# ---------------------------------------------------------------------------
+
+section('stemma index - creating and updating a stemma');
+
+my $new_stemma;
+{
+    my $res = request( post_form( "/stemma/$fx->{public_owned}/__NEW__",
+        [ dot => $dot ], %$JSON ) );
+    is( $res->code, 403, 'Creating a stemma is refused without a session' );
+}
+
+{
+    my $res = $mech->request( post_form( "/stemma/$fx->{public_owned}/__NEW__",
+        [ dot => $dot ], %$JSON ) );
+    is( $res->code, 200, 'POST /stemma/<tradition>/__NEW__ creates a stemma' );
+    my $info = json_of($res);
+    ok( $info->{stemmaid}, 'Response contains the new stemma ID' );
+    $new_stemma = $info->{stemmaid};
+
+    my $list = stemmaweb::Test::App::traditions_by_name();
+    ok( $list, 'Fixture traditions are still listable after the new stemma' );
+}
+
+{
+    my $res = $mech->request(
+        get_req( "/stemma/$fx->{public_owned}/$new_stemma", %$JSON ) );
+    is( $res->code, 200, 'The newly created stemma can be read back' );
+    my $info = json_of($res);
+    is( $info->{stemmaid}, $new_stemma, 'The new stemma has the expected ID' );
+    like( $info->{svg}, qr/<svg/, 'The new stemma has rendered SVG' );
+}
+
+{
+    my $res = $mech->request( post_form( "/stemma/$fx->{public_owned}/$new_stemma",
+        [ dot => $dot ], %$JSON ) );
+    is( $res->code, 200, 'POST /stemma/<tradition>/<stemma> updates a stemma' );
+    my $info = json_of($res);
+    is( $info->{stemmaid}, $new_stemma, 'The same stemma comes back' );
+}
+
+# ---------------------------------------------------------------------------
+# GET /stemma/dot/<tradition>/<stemmaid>
+# ---------------------------------------------------------------------------
+
+section('stemma dot');
+
+{
+    my $res =
+      request( get_req( "/stemma/dot/$fx->{public_readonly}/$existing" ) );
+    is( $res->code, 200, 'GET /stemma/dot/<tradition>/<stemma> succeeds' );
+    my $info = json_of($res);
+    like( $info->{dot}, qr/^\s*(di)?graph/, 'Returned value is a dot definition' );
+    unlike( $info->{dot}, qr/\n/,
+        'Line breaks are escaped as |n for transport' );
+    like( $info->{dot}, qr/\|n/, 'Escaped line breaks are present' );
+}
+
+{
+    # Note: the status comes from the failed permission check, but the action
+    # carries on and the body still contains the dot definition.
+    my $res =
+      request( get_req( "/stemma/dot/$fx->{private_owned}/$fx->{stemmata}{private_owned}[0]" ) );
+    is( $res->code, 403,
+        'GET /stemma/dot is refused for a private tradition without a session' );
+}
+
+{
+    my $res = request( get_req("/stemma/dot/$fx->{public_owned}/doesnotexist") );
+    TODO: {
+        local $TODO =
+          'Controller::Stemma::dot calls _json_error(), which the package never imports';
+        is( $res->code, 404, 'GET /stemma/dot returns 404 for an unknown stemma' );
+    }
+}
+
+# ---------------------------------------------------------------------------
+# POST /stemma/reroot/<tradition>/<stemmaid>
+# ---------------------------------------------------------------------------
+
+section('stemma reroot');
+
+my $owned_stemma = $fx->{stemmata}{private_owned}[0];
+{
+    my $res = request(
+        post_form( "/stemma/reroot/$fx->{private_owned}/$owned_stemma",
+            [ root => 'A' ] ) );
+    is( $res->code, 403, 'Rerooting is refused without permission' );
+}
+
+{
+    my $res = $mech->request(
+        post_form( "/stemma/reroot/$fx->{private_owned}/$owned_stemma",
+            [ root => 'A' ] ) );
+    is( $res->code, 200, 'POST /stemma/reroot succeeds for the owner' );
+    my $info = json_of($res);
+    is( $info->{stemmaid}, $owned_stemma, 'The same stemma is returned' );
+    like( $info->{svg}, qr/<svg/, 'The rerooted stemma has rendered SVG' );
+}
+
+{
+    # Only extant witnesses can be made the root.
+    my $res = $mech->request(
+        post_form( "/stemma/reroot/$fx->{private_owned}/$owned_stemma",
+            [ root => 'not-a-witness' ] ) );
+    is( $res->code, 404, 'Rerooting on an unknown node is refused by Stemmarest' );
+}
+
+{
+    # Without a root, the controller builds a URL with an empty node name; the
+    # missing C<return> after the method check means that the 405 reported for
+    # a GET is then overwritten by whatever Stemmarest says about that URL.
+    my $res = $mech->request(
+        get_req("/stemma/reroot/$fx->{private_owned}/$owned_stemma") );
+    is( $res->code, 404,
+        'GET /stemma/reroot reports the resulting Stemmarest error' );
+}
+
+# ---------------------------------------------------------------------------
+# POST /stemma/delete/<tradition>/<stemmaid>
+# ---------------------------------------------------------------------------
+
+section('stemma delete');
+
+{
+    my $res = request( post_form( "/stemma/delete/$fx->{private_owned}/$owned_stemma", [] ) );
+    is( $res->code, 403, 'Deleting a stemma is refused without permission' );
+}
+
+{
+    my $res = $mech->request(
+        post_form( "/stemma/delete/$fx->{public_owned}/$new_stemma", [], %$JSON ) );
+    is( $res->code, 200, 'POST /stemma/delete succeeds for the owner' );
+    my $remaining = json_of($res);
+    ok( ref $remaining eq 'ARRAY', 'Remaining stemmata are returned as a list' );
+    my @ids = map { $_->{stemmaid} } @$remaining;
+    ok( !( grep { $_ eq $new_stemma } @ids ), 'Deleted stemma is not in the list' );
+}
+
+{
+    my $res = $mech->request(
+        get_req( "/stemma/$fx->{public_owned}/$new_stemma", %$JSON ) );
+    is( $res->code, 404, 'Deleted stemma can no longer be read' );
+}
 
 done_testing();

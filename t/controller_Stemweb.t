@@ -1,148 +1,431 @@
 #!/usr/bin/env perl
+#
+# Tests for stemmaweb::Controller::Stemweb.
+#
+# The Stemweb controller is a client for an external Stemweb server, so the
+# tests stand a fake Stemweb in front of LWP (with LWP::Protocol::PSGI) and
+# drive every branch of the client protocol against it.  Nothing else in the
+# application is mocked: the resulting stemmata are really created in
+# Stemmarest.
+#
+# The C<pars> branch of C<request> runs the real Phylip C<pars> binary, which
+# the development image installs.
 
 use strict;
 use warnings;
-use feature 'say';
-use HTTP::Request::Common;
-use JSON qw/ decode_json /;
-use Test::More skip_all => "Stemweb is currently out of commission";
-use Test::WWW::Mechanize::Catalyst;
-use Text::Tradition::Directory;
 
-use Catalyst::Test 'stemmaweb';
-use LWP::UserAgent;
+use FindBin;
+use lib ("$FindBin::Bin/lib");
 
-eval { no warnings; $DB::deep = 1000; };
+use HTTP::Request::Common qw/ GET POST /;
+use JSON qw/ decode_json encode_json /;
+use LWP::Protocol::PSGI;
+use Test::More;
+use URI;
 
-# Set up the test data
-use vars qw( $orig_db $was_link );
-my $textids;
-my $dbfile = 'db/traditions.db';
-( $orig_db, $was_link, $textids ) = _make_testing_database();
+use stemmaweb::Test::App qw/
+  section
+  new_fixtures
+  body_of
+  json_of
+  is_json
+  login_mech
+  get_req
+  post_json
+  post_raw
+  post_form
+  request
+  install_action_log
+/;
+use stemmaweb;
 
-# Here is the test data we will use
-my $answer = '{"status": 0, "job_id": "4", "algorithm": "RHM", "format": "newick", "start_time": "2013-10-26 10:44:14.050263", "result": "((((((((((((F,U),V),S),T1),T2),A),J),B),L),D),M),C);\n", "end_time": "2013-10-26 10:45:55.398944"}';
+install_action_log();
 
-# First try without a job ID in the database anywhere
-my $unclaimed_request = request POST '/stemweb/result',
-    'Content-Type' => 'application/json',
-    'Content' => $answer;
-like( $unclaimed_request->header('Content-Type'), qr/application\/json/,
-    "Returned JSON answer for unclaimed request" );
-is( $unclaimed_request->code, 400, "No tradition found with given job ID" );
-like( $unclaimed_request->content, qr/No tradition found with Stemweb job ID/,
-    "Correct error message returned" );
+my $fx = new_fixtures();
 
-# Now add the relevant job ID to two traditions and test for that error
+my $mech = login_mech( follow => 0 );
+
+# ---------------------------------------------------------------------------
+# The fake Stemweb server
+# ---------------------------------------------------------------------------
+
+my $stemweb_url  = stemmaweb->controller('Stemweb')->stemweb_url;
+my $stemweb_host = URI->new($stemweb_url)->host;
+ok( $stemweb_host, "Stemweb is configured to talk to $stemweb_url" );
+
+my $textid = $fx->{public_owned};
+
+# Canned responses; individual tests replace these before making a request.
+our $available_body =
+  encode_json( [ { pk => 1, model => 'algorithms.algorithm',
+                   fields => { name => 'RHM', desc => 'fake', args => [] } } ] );
+our $process_body = encode_json( { jobid => 4242 } );
+our $status_body  = encode_json( { status => 0, jobid => 4242, algorithm => 'RHM',
+        format => 'newick', start_time => '2024-01-01 10:00:00',
+        textid => $textid, result => '(Ba96,Er16);' } );
+
+our $available_response = sub { [ 200, [ 'Content-Type' => 'application/json' ], [$available_body] ] };
+our $process_response   = sub { [ 200, [ 'Content-Type' => 'application/json' ], [$process_body] ] };
+our $status_response    = sub { [ 200, [ 'Content-Type' => 'application/json' ], [$status_body] ] };
+
+my @requests_to_stemweb;
+my $stemweb_app = sub {
+    my $env  = shift;
+    my $path = $env->{PATH_INFO};
+    push @requests_to_stemweb, $path;
+    if ( $path eq '/algorithms/available' ) {
+        return $available_response->();
+    }
+    elsif ( $path =~ m{^/algorithms/process/} ) {
+        return $process_response->();
+    }
+    elsif ( $path =~ m{^/algorithms/jobstatus/} ) {
+        return $status_response->();
+    }
+    return [ 404, [ 'Content-Type' => 'text/plain' ], ["no fake for $path"] ];
+};
+
+# Only requests to the Stemweb host are intercepted; the application's own
+# calls to Stemmarest go to the real backend.
+my $guard = LWP::Protocol::PSGI->register( $stemweb_app, host => $stemweb_host );
+ok( $guard, 'Fake Stemweb server is installed' );
+
+# ---------------------------------------------------------------------------
+# GET /stemweb/available
+# ---------------------------------------------------------------------------
+
+section('available');
+
 {
-    my $dsn = "dbi:SQLite:dbname=$dbfile";
-    my $dir = Text::Tradition::Directory->new( 'dsn' => $dsn );
-    my $scope = $dir->new_scope();
-    my $t1 = $dir->lookup( $textids->{'public'} );
-    $t1->set_stemweb_jobid( '4' );
-    $dir->save( $t1 );
-    my $t2 = $dir->lookup( $textids->{'private'} );
-    $t2->set_stemweb_jobid( '4' );
-    $dir->save( $t2 );
-}
-# Now try with the job ID in more than one place in the database
-my $oversubscribed_request = request POST '/stemweb/result',
-    'Content-Type' => 'application/json',
-    'Content' => $answer;
-like( $oversubscribed_request->header('Content-Type'), qr/application\/json/,
-    "Returned JSON answer for oversubscribed request" );
-is( $oversubscribed_request->code, 500, "Multiple traditions found with given job ID" );
-like( $oversubscribed_request->content, qr/Multiple traditions with Stemweb job ID/,
-    "Correct error message returned" );
+    my $res = request( get_req('/stemweb/available') );
+    is( $res->code, 200, 'GET /stemweb/available succeeds' );
+    ok( is_json($res), 'Available algorithms are returned as JSON' );
+    my $algos = json_of($res);
+    ok( ref $algos eq 'ARRAY', 'Algorithms are returned as a list' );
+    my ($rhm) = grep { $_->{fields}{name} eq 'RHM' } @$algos;
+    ok( $rhm, 'The algorithm offered by Stemweb is passed through' );
 
-# Finally, try with the job ID on only one tradition.
+    # The controller adds Phylip Pars as a pseudo-algorithm when pars is
+    # installed.
+    my ($pars) = grep { $_->{fields}{name} eq 'Pars' } @$algos;
+    ok( $pars, 'Pars is offered alongside the Stemweb algorithms' );
+    is( $pars->{pk}, 100, 'Pars has the reserved algorithm key 100' );
+}
+
 {
-    my $dsn = "dbi:SQLite:dbname=$dbfile";
-    my $dir = Text::Tradition::Directory->new( 'dsn' => $dsn );
-    my $scope = $dir->new_scope();
-    my $t2 = $dir->lookup( $textids->{'private'} );
-    $t2->_clear_stemweb_jobid;
-    $dir->save( $t2 );
+    # A Stemweb that answers with something other than JSON yields no
+    # algorithms at all (but still offers Pars).
+    local $available_response = sub {
+        [ 500, [ 'Content-Type' => 'text/html' ], ['broken'] ];
+    };
+    my $res = request( get_req('/stemweb/available') );
+    is( $res->code, 200, 'GET /stemweb/available survives a broken Stemweb' );
+    my $algos = json_of($res);
+    my ($pars) = grep { $_->{fields}{name} eq 'Pars' } @$algos;
+    ok( $pars, 'Pars is still offered' );
+    my ($rhm) = grep { $_->{fields}{name} eq 'RHM' } @$algos;
+    ok( !$rhm, 'No algorithms come back from the broken Stemweb' );
 }
-my $expected_request = request POST '/stemweb/result',
-    'Content-Type' => 'application/json',
-    'Content' => $answer;
-like( $expected_request->header('Content-Type'), qr/application\/json/,
-    "Returned JSON answer for expected request" );
-is( $expected_request->code, 200, "Request processed successfully" );
-like( $expected_request->content, qr/success/,
-    "Correct success message returned" );
 
-# Now check that the tradition in question actually has a stemma!
-my $stemma_request = request('/stemmadot/' . $textids->{'public'} . '/0' );
-like( $stemma_request->header('Content-Type'), qr/application\/json/,
-    "Returned JSON answer for stemma request" );
-my $new_stemma = decode_json( $stemma_request->content );
-# It will be undirected.
-like( $new_stemma->{dot}, qr/^graph .RHM 1382777054_0/,
-    "Found an undirected stemma DOT file where we expected" );
+# ---------------------------------------------------------------------------
+# GET /stemweb/request
+# ---------------------------------------------------------------------------
 
-# And check that the job ID was in fact removed.
-my $duplicate_request = request POST '/stemweb/result',
-    'Content-Type' => 'application/json',
-    'Content' => $answer;
-like( $duplicate_request->header('Content-Type'), qr/application\/json/,
-    "Returned JSON answer for duplicate request" );
-like( $duplicate_request->content, qr/No tradition found with Stemweb job ID/,
-    "Job ID was removed from relevant tradition" );
+section('request');
+
+{
+    my $res = request( get_req("/stemweb/request?tradition=$textid&algorithm=1") );
+    is( $res->code, 403, 'Submitting a job is refused without a session' );
+    like( json_of($res)->{error}, qr/do not have permission to update/,
+        'Permission error is reported' );
+}
+
+{
+    my $res = request(
+        get_req( "/stemweb/request?tradition=$fx->{public_readonly}&algorithm=1" ) );
+    is( $res->code, 403,
+        'Submitting a job is refused for a tradition we only may read' );
+}
+
+{
+    # The conflate option names one of the tradition's own relation types.
+    my $reltypes = json_of( $mech->request( get_req("/api/$textid/relationtypes") ) );
+    my ($conflate) = map { $_->{name} } @$reltypes;
+    ok( $conflate, 'The tradition has a relation type to conflate on' );
+
+    my $res = $mech->request( get_req(
+            "/stemweb/request?tradition=$textid&algorithm=1&conflate=$conflate" ) );
+    is( $res->code, 200, 'GET /stemweb/request submits a job' );
+    is( json_of($res)->{jobid}, 4242, 'The job ID from Stemweb is returned' );
+
+    # The request that we sent to Stemweb should carry the alignment data and
+    # the callback details.
+    my $body = $requests_to_stemweb[-1];
+    is( $body, '/algorithms/process/1/',
+        'The job was submitted to the process endpoint for the algorithm' );
+
+    # The job ID is recorded against the tradition.
+    my $info = json_of( $mech->request( get_req("/textinfo/$textid") ) );
+    is( $info->{stemweb_jobid}, 4242, 'The job ID is recorded on the tradition' );
+}
+
+{
+    my $res = $mech->request(
+        get_req("/stemweb/request?tradition=$textid&algorithm=1") );
+    is( $res->code, 200, 'A second job can be submitted' );
+}
+
+{
+    # Stemweb being unreachable is reported as 503.
+    local $process_response = sub {
+        [ 500, [ 'Content-Type' => 'text/html', 'Client-Warning' => 'Internal response' ],
+            ['unreachable'] ];
+    };
+    my $res = $mech->request(
+        get_req("/stemweb/request?tradition=$textid&algorithm=1") );
+    is( $res->code, 503, 'An unreachable Stemweb is reported as 503' );
+    like( json_of($res)->{error}, qr/unreachable/,
+        'The error says that Stemweb is unreachable' );
+}
+
+{
+    # Any other failure is passed on as a 500.
+    local $process_response = sub {
+        [ 400, [ 'Content-Type' => 'text/plain' ], ['bad request'] ];
+    };
+    my $res = $mech->request(
+        get_req("/stemweb/request?tradition=$textid&algorithm=1") );
+    is( $res->code, 500, 'A Stemweb error is reported as 500' );
+    like( json_of($res)->{error}, qr/Stemweb error/, 'The error mentions Stemweb' );
+}
+
+{
+    # Without a tradition the controller dereferences the failed tradition
+    # lookup; this is recorded rather than fixed.
+    my $res = $mech->request( get_req('/stemweb/request?algorithm=1') );
+    is( $res->code, 500,
+        'GET /stemweb/request without a tradition fails' );
+}
+
+# ---------------------------------------------------------------------------
+# POST /stemweb/result
+# ---------------------------------------------------------------------------
+
+section('result - protocol');
+
+{
+    my $res = request( get_req('/stemweb/result') );
+    is( $res->code, 403, 'GET /stemweb/result is refused' );
+    like( json_of($res)->{error}, qr/Please use POST/, 'The refusal asks for POST' );
+}
+
+{
+    my $res = request(
+        post_raw( '/stemweb/result', 'this is not json', 'application/json' ) );
+    is( $res->code, 400, 'Malformed JSON is rejected' );
+    like( json_of($res)->{error}, qr/Could not parse/, 'The parse failure is reported' );
+}
+
+{
+    my $res = request( post_json( '/stemweb/result',
+        { textid => 'nosucht tradition', status => 0, jobid => 1 } ) );
+    is( $res->code, 400, 'A result for an unknown tradition is rejected' );
+    like( json_of($res)->{error}, qr/No tradition found/, 'The reason is reported' );
+}
+
+# ---------------------------------------------------------------------------
+# POST /stemweb/result - a successful run
+# ---------------------------------------------------------------------------
+
+section('result - successful run');
+
+{
+    # Give the tradition a job ID to match against.
+    my $submit = $mech->request(
+        get_req("/stemweb/request?tradition=$textid&algorithm=1") );
+    is( $submit->code, 200, 'A job was submitted for the owner' );
+
+    my $res = $mech->request( post_json( '/stemweb/result', {
+        status     => 0,
+        jobid      => 4242,
+        algorithm  => 'RHM',
+        format     => 'newick',
+        start_time => '2024-01-01 10:00:00',
+        textid     => $textid,
+        result     => '(Ba96,Er16);(Gr314,Kf133);',
+    } ) );
+    is( $res->code, 200, 'POST /stemweb/result accepts a finished run' );
+    my $data = json_of($res);
+    is( $data->{status}, 'success', 'The result is reported as a success' );
+    is( scalar @{ $data->{stemmata} }, 2,
+        'One stemma was created for each tree in the Newick result' );
+    my ($stemma) = @{ $data->{stemmata} };
+    ok( $stemma->{stemmaid}, 'The created stemma has an ID' );
+    is( $stemma->{from_jobid}, 4242, 'The stemma records the job it came from' );
+    like( $stemma->{name}, qr/^RHM /, 'The stemma is named after the algorithm' );
+    like( $stemma->{svg}, qr/<svg/, 'The new stemma was rendered to SVG' );
+}
+
+{
+    # 'Neighbour Net' results are a graph specification rather than Newick.
+    my $submit = $mech->request(
+        get_req("/stemweb/request?tradition=$textid&algorithm=2") );
+    is( $submit->code, 200, 'A second job was submitted' );
+
+    my $graph = encode_json( {
+        directed => JSON::false,
+        nodes    => [ { id => 'Ba96' }, { id => 'Er16' }, { id => '1' } ],
+        links    => [ { source => 'Ba96', target => '1' },
+                      { source => '1',    target => 'Er16' } ],
+    } );
+    my $res = $mech->request( post_json( '/stemweb/result', {
+        status     => 0,
+        jobid      => 4242,
+        algorithm  => 'Neighbour Net',
+        format     => 'json',
+        start_time => '2024-01-01 10:00:00',
+        textid     => $textid,
+        result     => $graph,
+    } ) );
+    is( $res->code, 200, 'POST /stemweb/result accepts a Neighbour Net run' );
+    my $data = json_of($res);
+    is( $data->{status}, 'success', 'The graph was turned into a stemma' );
+    my ($stemma) = @{ $data->{stemmata} };
+    like( $stemma->{name}, qr/^Neighbour Net /,
+        'The stemma is named after the algorithm' );
+}
+
+# ---------------------------------------------------------------------------
+# POST /stemweb/result - the run is not ready
+# ---------------------------------------------------------------------------
+
+section('result - run not ready');
+
+for my $status ( 1, -1 ) {
+    my $res = $mech->request( post_json( '/stemweb/result', {
+        status    => $status,
+        jobid     => 4242,
+        algorithm => 'RHM',
+        textid    => $textid,
+        result    => 'still going',
+    } ) );
+    is( $res->code, 200, "POST /stemweb/result with status $status succeeds" );
+    is( json_of($res)->{status}, 'running',
+        "Status $status is reported as still running" );
+}
+
+{
+    # A finished run whose job ID does not match the tradition's is not ours.
+    my $res = $mech->request( post_json( '/stemweb/result', {
+        status     => 0,
+        jobid      => 999999,
+        algorithm  => 'RHM',
+        format     => 'newick',
+        start_time => '2024-01-01 10:00:00',
+        textid     => $textid,
+        result     => '(Ba96,Er16);',
+    } ) );
+    is( $res->code, 200, 'A result with an unexpected job ID is accepted' );
+    is( json_of($res)->{status}, 'notfound',
+        '...but no stemma is created for it' );
+}
+
+# ---------------------------------------------------------------------------
+# POST /stemweb/result - a failed run
+# ---------------------------------------------------------------------------
+
+section('result - failed run');
+
+{
+    my $res = $mech->request( post_json( '/stemweb/result', {
+        status    => 2,
+        jobid     => 4242,
+        algorithm => 'RHM',
+        textid    => $textid,
+        result    => 'the algorithm fell over',
+    } ) );
+    is( $res->code, 200, 'POST /stemweb/result accepts a failed run' );
+    my $data = json_of($res);
+    is( $data->{status}, 'failed', 'The failure is reported' );
+    is( $data->{message}, 'the algorithm fell over',
+        'The message from Stemweb is passed on' );
+}
+
+# ---------------------------------------------------------------------------
+# POST /stemweb/result - results from pars, which has no job ID of its own
+# ---------------------------------------------------------------------------
+
+section('result - pars');
+
+{
+    my $res = $mech->request( post_json( '/stemweb/result', {
+        status     => 0,
+        jobid      => -1,
+        algorithm  => 'pars',
+        format     => 'newick',
+        start_time => '2024-01-01 10:00:00',
+        textid     => $textid,
+        result     => '(Ba96,Er16);',
+    } ) );
+    is( $res->code, 200, 'A pars result is accepted' );
+    is( json_of($res)->{status}, 'success', 'A stemma is created for pars' );
+}
+
+# ---------------------------------------------------------------------------
+# GET /stemweb/query/<jobid>
+# ---------------------------------------------------------------------------
+
+section('query');
+
+{
+    my $res = request( get_req('/stemweb/query/4242') );
+    is( $res->code, 200, 'GET /stemweb/query/<jobid> succeeds' );
+    my $data = json_of($res);
+    is( $data->{status}, 'success', 'A finished job is processed like a push' );
+    ok( scalar @{ $data->{stemmata} }, 'A stemma is created for the queried job' );
+}
+
+{
+    local $status_body = encode_json( { status => 1, jobid => 4242, algorithm => 'RHM',
+            textid => $textid, result => 'running' } );
+    my $res = request( get_req('/stemweb/query/4242') );
+    is( $res->code, 200, 'GET /stemweb/query succeeds while the job runs' );
+    is( json_of($res)->{status}, 'running', 'A running job is reported as running' );
+}
+
+{
+    local $status_body = encode_json( { status => 2, jobid => 4242, algorithm => 'RHM',
+            textid => $textid, result => 'boom' } );
+    my $res = request( get_req('/stemweb/query/4242') );
+    is( $res->code, 200, 'GET /stemweb/query succeeds for a failed job' );
+    is( json_of($res)->{status}, 'failed', 'A failed job is reported as failed' );
+}
+
+{
+    local $status_response = sub {
+        [ 500, [ 'Content-Type' => 'text/html', 'Client-Warning' => 'Internal response' ],
+            ['unreachable'] ];
+    };
+    my $res = request( get_req('/stemweb/query/4242') );
+    is( $res->code, 503, 'An unreachable Stemweb is reported as 503' );
+}
+
+{
+    local $status_response = sub {
+        [ 404, [ 'Content-Type' => 'text/plain' ], ['no such job'] ];
+    };
+    my $res = request( get_req('/stemweb/query/4242') );
+    is( $res->code, 500, 'A Stemweb error is reported as 500' );
+}
+
+{
+    local $status_response = sub {
+        [ 200, [ 'Content-Type' => 'application/json' ], ['not json at all'] ];
+    };
+    my $res = request( get_req('/stemweb/query/4242') );
+    is( $res->code, 500, 'An unparseable Stemweb answer is reported as 500' );
+    like( json_of($res)->{error}, qr/Could not parse/,
+        'The parse failure is reported' );
+}
 
 done_testing();
-
-
-sub _make_testing_database {
-    my $fh = File::Temp->new();
-    my $file = $fh->filename;
-    $fh->unlink_on_destroy( 0 );
-    $fh->close;
-    my $dsn = 'dbi:SQLite:dbname=' . $file;
-    my $dir = Text::Tradition::Directory->new( 'dsn' => $dsn,
-        'extra_args' => { 'create' => 1 } );
-    my $scope = $dir->new_scope;
-
-    my $textids = {};
-    # Create a (public) tradition
-    my $pubtrad = Text::Tradition->new( input => 'Self', file => 't/data/besoin.xml' );
-    $pubtrad->public( 1 );
-    $textids->{'public'} = $dir->store( $pubtrad );
-
-    # Create a user
-    my $adminobj = $dir->add_user( { username => 'stadmin', password => 'stadminpass', role => 'admin' } );
-    my $userobj = $dir->add_user( { username => 'swtest', password => 'swtestpass' } );
-    # Create a tradition for the normal user
-    my $privtrad = Text::Tradition->new( input => 'Tabular', sep_char => ',',
-        file => 't/data/florilegium.csv' );
-    $userobj->add_tradition( $privtrad );
-    $privtrad->add_stemma( dotfile => 't/data/florilegium.dot' );
-    $textids->{'private'} = $dir->store( $privtrad );
-    $dir->store( $userobj );
-
-    ## Now replace the existing traditions database with the test one
-    my( $orig, $was_link );
-    if( -l $dbfile ) {
-        $was_link = 1;
-        $orig = readlink( $dbfile );
-        unlink( $dbfile ) or die "Could not replace database file $dbfile";
-    } elsif( -e $dbfile ) {
-        my $suffix = '.backup.' . time();
-        $orig = $dbfile.$suffix;
-        rename( $dbfile, $orig ) or die "Could not move database file $dbfile";
-    }
-    symlink( $file, $dbfile );
-    return( $orig, $was_link, $textids );
-}
-
-END {
-    # Restore the original database
-    unlink( readlink( $dbfile ) );
-    unlink( $dbfile );
-    if( $was_link ) {
-        symlink( $orig_db, $dbfile );
-    } elsif( $orig_db ) {
-        rename( $orig_db, $dbfile );
-    }
-}

@@ -18,6 +18,11 @@ use stemmaweb::Test::DB;
 
 stemmaweb::Test::DB::new_db("$FindBin::Bin/data");
 
+# stemmaweb_tests.conf turns the reCaptcha requirement off, but ConfigLoader
+# ignores the local-suffix files once STEMMAWEB_CONFIG names a config file,
+# which is what happens inside the development container.  Set it directly.
+stemmaweb->config->{Registration}{no_recaptcha} = 1;
+
 my $n4jurl = stemmaweb->config->{'Model::Directory'}->{tradition_repo};
 LWP::Protocol::PSGI->register(
     stemmaweb->psgi_app,
@@ -71,7 +76,10 @@ $ua->content_contains('That username already exists.', 'We cannot register an al
 $ua->get('/logout');
 $ua->get('http://localhost/register');
 
-$ua->submit_form;
+# Submit with explicitly empty values: a field that was never sent is not
+# reported on by the form handler.
+$ua->submit_form(
+    fields => { username => '', password => '', confirm_password => '' } );
 
 $ua->content_contains('Your username is required.', 'We get an error if username is empty');
 $ua->content_contains('Your password is required.', 'We get an error if password is empty');

@@ -40,7 +40,12 @@ $ua->content_contains('Hello! user@example.org', 'We are logged in.');
 $ua->get('/logout');
 $ua->get('/login');
 
-$ua->submit_form;
+# Submit the local sign-in form with empty values: submitting the page's first
+# form (the Google one) leaves the username and password fields unset, which
+# the form handler does not report on.
+$ua->submit_form(
+    form_id => 'login_local_form',
+    fields  => { username => '', password => '' } );
 
 $ua->content_contains('Your username is required.', 'Username is required to log in');
 $ua->content_contains('Your password is required.', 'Password is required to log in.');

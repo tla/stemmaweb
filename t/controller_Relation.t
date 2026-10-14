@@ -1,321 +1,752 @@
+#!/usr/bin/env perl
+#
+# Tests for stemmaweb::Controller::Relation.
+#
+# The relationship mapper is the largest controller in the application, so the
+# tests here are grouped by action.  Read-only behaviour is checked first on
+# the public fixture tradition; the tests that change readings are grouped at
+# the end, and the permission failures are checked against the read-only
+# tradition so that they cannot disturb the data the other tests rely on.
+#
+# Expectations record the behaviour of the application as it stands.
+
 use strict;
 use warnings;
-use Test::More;
-use HTTP::Request::Common qw/ GET POST DELETE /;
-use JSON qw/from_json/;
-
-use Catalyst::Test 'stemmaweb';
-use Test::WWW::Mechanize::Catalyst;
-use stemmaweb::Controller::Relation;
 
 use FindBin;
 use lib ("$FindBin::Bin/lib");
 
-use stemmaweb::Test::DB;
-my $textids = stemmaweb::Test::DB::new_db("$FindBin::Bin/data");
+use HTTP::Request::Common qw/ GET POST PUT DELETE /;
+use Test::More;
 
-# Traditions used to test
-my $pubrelurl = '/relation/' . $textids->{public}->[2];
-my $privrelurl = '/relation/' . $textids->{private}->[2];
+use stemmaweb::Test::App qw/
+  section
+  new_fixtures
+  body_of
+  json_of
+  is_json
+  login_mech
+  mech
+  get_req
+  post_form
+  post_json
+  put_form
+  delete_req
+  request
+  install_action_log
+/;
 
-### While not logged in:
+install_action_log();
 
-# test GET public text
-my $attempt = request GET $pubrelurl;
-ok($attempt->is_redirect, "Got redirect to first section");
-$pubrelurl = $attempt->header('location');
-$attempt = request GET $pubrelurl;
-ok($attempt->is_success, "Loaded viewer for public tradition");
-like($attempt->decoded_content, qr!"readonly" === "full"!, "Viewer is in readonly mode");
+my $fx = new_fixtures();
 
-# test GET private text (403)
-$attempt = request GET $privrelurl;
-is($attempt->code, 403, "Permission denied for private tradition");
+my $anon   = mech( follow => 0 );
+my $mech   = login_mech( follow => 0 );
+my $ownsec = "/relation/$fx->{public_owned}/$fx->{owned_section}";
+my $rose  = "/relation/$fx->{public_readonly}/$fx->{sections}{public_readonly}[0]";
+my $prsec = "/relation/$fx->{private_owned}/$fx->{sections}{private_owned}[0]";
 
-# test GET, POST, DELETE relationships
-
-$attempt = request GET $pubrelurl . "/relationships";
-ok($attempt->is_success, "Requested relationships on public tradition section");
-like( $attempt->header('Content-Type'), qr/application\/json/, "Got a JSON response");
-my $rels = from_json($attempt->decoded_content);
-is(scalar @$rels, 96, "Found the correct number of relationships");
-
-$attempt = request POST $pubrelurl . "/relationships",
-    [source_id => $rels->[0]->{source}, target_id => $rels->[0]->{target}];
-is($attempt->code, 403, "Permission denied for relationship push");
-
-$attempt = request DELETE $pubrelurl . "/relationships",
-    [ source_id => $rels->[0]->{source}, target_id => $rels->[0]->{target} ];
-is($attempt->code, 403, "Permission denied for relationship deletion");
-
-# test GET readings
-$attempt = request GET $pubrelurl . "/readings";
-ok($attempt->is_success, "Requested reading list for public tradition section");
-like( $attempt->header('Content-Type'), qr/application\/json/, "Got a JSON response");
-my $pubrdgs = from_json($attempt->decoded_content);
-is(scalar keys %$pubrdgs, 990, "Found the correct number of readings");
-
-# test GET, POST reading
-my @rdgsearch = grep { $_->{rank} == 7 && $_->{text} eq 'uirginem'} values %$pubrdgs;
-my $virginem = shift(@rdgsearch);
-ok($virginem, "Found test reading in list");
-$attempt = request GET $pubrelurl . "/reading/" . $virginem->{id};
-ok($attempt->is_success, "Got reading information");
-my $rdgdata = from_json($attempt->decoded_content);
-is($rdgdata->{normal_form}, 'uirginem', "Reading information look right");
-
-$attempt = request POST $pubrelurl . "/reading/" . $virginem->{id},
-    [id => $virginem->{id}, normal_form => 'wirginem'];
-is($attempt->code, 403, "Permission denied trying to change reading");
-
-# test POST compress/merge/duplicate/split (403)
-
-### While logged in:
-
-my $mech = Test::WWW::Mechanize::Catalyst->new( catalyst_app => 'stemmaweb' );
-$mech->get_ok( '/login', "Requested the login page successfully" );
-$mech->submit_form(
-    form_id => 'login_local_form',
-    fields => {  username => 'user@example.org', password => 'UserPass' } );
-$mech->get_ok( '/' );
-$mech->content_contains( 'Hello! user@example.org', "Successfully logged in" );
-
-# test GET private text / next section
-$attempt = $mech->get($privrelurl);
-ok($attempt->is_success, "Loaded viewer for private tradition");
-ok($attempt->previous, "We got here via a redirection");
-like($attempt->decoded_content, qr!"full" === "full"!, "Viewer is in editing mode");
-# Get the section URL for all remaining requests
-$privrelurl = $mech->uri;
-
-done_testing();
-__END__
-
-# TODO Reinstate the following tests
-$attempt = $mech->follow_link(text => 'section test');
-ok($attempt->is_success, "Loaded second section of the text");
-my $privsection2 = $mech->uri;
-
-# test GET, DELETE, POST relationships
-
-$attempt = $mech->get($privrelurl . "/relationships");
-ok($attempt->is_success, "Requested relationships on private tradition section");
-like($mech->ct, qr/application\/json/, "Got a JSON response");
-$rels = from_json($attempt->decoded_content);
-is(scalar @$rels, 13, "Found the correct number of relationships");
-
-my $testrel = $rels->[0];
-## Horrible hackish way to construct a DELETE request
-my $del = POST $privrelurl . "/relationships",
-    [source_id => $testrel->{source}, target_id => $testrel->{target}];
-$del->method('DELETE');
-$attempt = $mech->request($del);
-ok($attempt->is_success, "Deleted a relationship");
-
-$attempt = $mech->get($privrelurl . "/relationships");
-$rels = from_json($attempt->decoded_content);
-is(scalar @$rels, 12, "Relationship is gone");
-
-my $replace = POST $privrelurl . "/relationships",
-    [source => $testrel->{source},
-     target => $testrel->{target},
-     scope => $testrel->{scope},
-     type => $testrel->{type}];
-$attempt = $mech->request($replace);
-ok($attempt->is_success, "Replaced the relationship");
-$attempt = $mech->get($privrelurl . "/relationships");
-$rels = from_json($attempt->decoded_content);
-ok(grep{$_->{source} eq $testrel->{source} && $_->{target} eq $testrel->{target}} @$rels);
-is(scalar @$rels, 23, "Transitive relationships were created too");
-
-# test GET, POST reading(s)
-$attempt = $mech->get($privrelurl . "/readings");
-ok($attempt->is_success, "Requested reading list for private tradition section");
-like( $attempt->header('Content-Type'), qr/application\/json/, "Got a JSON response");
-my $rdgs = from_json($attempt->decoded_content);
-is(scalar keys %$rdgs, 30, "Found the correct number of readings");
-
-@rdgsearch = grep { $_->{text} eq 'uenerabilis' } values %$rdgs;
-my $ven = shift @rdgsearch;
-ok($ven, "Got a test reading");
-$attempt = $mech->request(POST($privrelurl . "/reading/" . $ven->{id},
-    [normal_form => 'venerabilis', is_lemma => 'true']));
-ok($attempt->is_success, "Altered data of a reading");
-
-$attempt = $mech->get($privrelurl . "/reading/" . $ven->{id});
-my $newven = from_json($attempt->decoded_content);
-isnt($newven->{normal_form}, $ven->{normal_form}, "Normal form changed");
-isnt($newven->{is_lemma}, $ven->{is_lemma}, "is_lemma setting changed");
-
-# Get our marked readings from the public tradition for duplicate/merge
-# operations
-my( $wrong, $right );
-@rdgsearch = grep { $_->{text} eq 'et' } values %$pubrdgs;
-foreach my $r (@rdgsearch) {
-    $wrong = $r if $r->{is_nonsense};
-    $right = $r if $r->{grammar_invalid};
-}
-ok($right, "Found our marked target reading");
-ok($wrong, "Found our marked target reading");
-
-# test POST duplicate, now with the public tradition
-$attempt = $mech->request(POST($pubrelurl . "/duplicate",
-    ['readings[]' => $wrong->{id},
-     'witnesses[]' => 'Ba96']));
-ok($attempt->is_success, "Duplicated target reading");
-my $resp = from_json($attempt->decoded_content);
-is(scalar keys %$resp, 2, "Response has two keys");
-ok(exists $resp->{DELETED}, "A relationship was deleted during duplicate");
-is($resp->{DELETED}->[0]->[2], 'transposition', "It was a transposition relationship");
-is($pubrdgs->{$resp->{DELETED}->[0]->[0]}->{text}, 'asserendo', '...between the expected readings');
-delete($resp->{DELETED});
-my $fixed = (values %$resp)[0];
-ok(!exists $pubrdgs->{$fixed->{id}}, "Resulting reading is new");
-
-# test POST merge
-$attempt = $mech->request(POST($pubrelurl . "/merge",
-    [source => $right->{id},
-     target => $fixed->{id}]));
-ok($attempt->is_success, "Merged a pair of 'et' readings");
-$resp = from_json($attempt->decoded_content);
-is($resp->{status}, "ok", "Merge succeeded");
-ok($resp->{checkalign}, "Found more mergeable readings");
-
-my $singletest;
-foreach my $pair (@{$resp->{checkalign}}) {
-    if ($pubrdgs->{$pair->[0]}->{text} eq 'asserendo') {
-        $singletest = $pair;
-        last;
-    }
-}
-$attempt = $mech->request(POST($pubrelurl . "/merge",
-    [source => $singletest->[0],
-     target => $singletest->[1],
-     single => 1]));
-ok($attempt->is_success, "Merged a pair of 'asserendo' readings");
-$resp = from_json($attempt->decoded_content);
-is($resp->{status}, "ok", "Merge succeeded");
-ok(!exists $resp->{checkalign}, "Did not return any more mergeable readings");
-
-$attempt = $mech->get($pubrelurl . "/readings");
-ok($attempt->is_success, "Re-requested reading list for public tradition section");
-$pubrdgs = from_json($attempt->decoded_content);
-is(scalar keys %$pubrdgs, 989, "New number of readings correct");
-
-# test POST compress
-my @cnodes = sort { $a->{rank} <=> $b->{rank} }
-    grep { $_->{rank} > 7 && $_->{rank} < 11}
-    values %$pubrdgs;
-my $query = [];
-map {push(@$query, 'readings[]', $_->{id})} @cnodes;
-$attempt = $mech->request(POST($pubrelurl . "/compress", $query));
-ok($attempt->is_success, "Compressed some readings");
-$resp = from_json($attempt->decoded_content);
-is($resp->{success}, 1, "Compress succeeded");
-is(scalar @{$resp->{nodes}}, 3, "Returned the right list of nodes");
-my $firstmerge = $cnodes[0]->{id};
-
-# now try it with a query that should only partially succeed
-@cnodes = sort { $a->{rank} <=> $b->{rank} }
-    grep { $_->{rank} > 0 && $_->{rank} < 5}
-    values %$pubrdgs;
-pop @cnodes;
-$query = [];
-map {push(@$query, 'readings[]', $_->{id})} @cnodes;
-$attempt = $mech->request(POST($pubrelurl . "/compress", $query));
-ok($attempt->is_success, "Compressed some readings");
-$resp = from_json($attempt->decoded_content);
-is($resp->{success}, 0, "Compress flagged as erroneous");
-is($resp->{warning}, "graph forks between these readings. could not compress",
-    "Compress has expected warning message");
-is(scalar @{$resp->{nodes}}, 3, "Only the first three nodes returned");
-
-# check the resulting graph
-$attempt = $mech->get($pubrelurl . "/readings");
-ok($attempt->is_success, "Re-requested reading list for public tradition section");
-$pubrdgs = from_json($attempt->decoded_content);
-is(scalar keys %$pubrdgs, 985, "New number of readings correct");
-$attempt = $mech->get($pubrelurl . '/reading/' . $cnodes[0]->{id});
-$resp = from_json($attempt->decoded_content);
-is($resp->{text}, 'Verbum Ista sequencia', "Second new node has right reading text");
-$attempt = $mech->get($pubrelurl . '/reading/' . $firstmerge);
-$resp = from_json($attempt->decoded_content);
-is($resp->{text}, 'canitur diuiditur in', "First new node has right reading text");
-is($resp->{rank}, 6, "First new node has correct rank");
-
-# test POST split
-$attempt = $mech->get($privsection2 . "/readings");
-ok($attempt->is_success, "Requested reading list for private tradition section 2");
-my $privrdgs = from_json($attempt->decoded_content);
-is(scalar keys %$privrdgs, 47, "New number of readings correct");
-@cnodes = grep { $_->{text} eq 'ac magis' } values %$privrdgs;
-is(scalar @cnodes, 1, "Found our target reading");
-
-# Simple whitespace split
-$query = [reading => $cnodes[0]->{id},
-          rtext => 'ac magis',
-          separate => 'on'];
-$attempt = $mech->request(POST($privsection2 . "/split", $query));
-ok($attempt->is_success, "Split a multi-word reading");
-$resp = from_json($attempt->decoded_content);
-$rels = delete $resp->{relationships};
-is(scalar @$rels, 2, "Returned graph model has two relationships in");
-is(scalar keys %$resp, 2, "Returned graph model has two new readings");
-foreach my $id (keys %$resp) {
-    my $rdg = $resp->{$id};
-    if ($id == $cnodes[0]->{id}) {
-        is($rdg->{text}, "ac", "First reading has correct text");
-    } else {
-        is($rdg->{text}, "magis", "Second reading has correct text");
-    }
+# Readings of a section, keyed on reading ID, sorted by rank.
+sub readings_of {
+    my ($sec) = @_;
+    my $rdgs = json_of( $mech->request( get_req("$sec/readings") ) );
+    return ( $rdgs, [ sort { $rdgs->{$a}{rank} <=> $rdgs->{$b}{rank} } keys %$rdgs ] );
 }
 
-# Split of compound word
-@cnodes = grep { $_->{text} eq 'magisque' } values %$privrdgs;
-is(scalar @cnodes, 1, "Found our target reading");
-$query = [reading => $cnodes[0]->{id},
-          rtext => 'magisque',
-          index => 5];
-$attempt = $mech->request(POST($privsection2 . "/split", $query));
-ok($attempt->is_success, "Split a compound-word reading");
-$resp = from_json($attempt->decoded_content);
-$rels = delete $resp->{relationships};
-is(scalar @$rels, 3, "Returned graph model has three relationships in");
-is(scalar keys %$resp, 2, "Returned graph model has two new readings");
-foreach my $id (keys %$resp) {
-    my $rdg = $resp->{$id};
-    if ($id == $cnodes[0]->{id}) {
-        is($rdg->{text}, "magis", "First reading has correct text");
-    } else {
-        is($rdg->{text}, "que", "Second reading has correct text");
-        ok($rdg->{join_prior}, "Second reading is marked as joined");
-    }
-}
-# Check re-ranking
-foreach my $r (@$rels) {
-    if ($r->{source} != $cnodes[0]->{id}) {
-        $attempt = $mech->get($privrelurl . "/reading/" . $r->{target});
-        $resp = from_json($attempt->decoded_content);
-        is($resp->{rank}, $cnodes[0]->{rank} + 2,
-            "Following reading " . $resp->{text} . " correctly re-ranked");
-    }
+my ( $rdgs, $ids ) = readings_of($ownsec);
+my @real = grep { $rdgs->{$_}{text} !~ /^#/ } @$ids;
+BAIL_OUT('Fixture section has no readings to work with') unless @real;
+
+# Two variants of the same rank, so that they can be related to one another.
+my %byrank;
+push( @{ $byrank{ $rdgs->{$_}{rank} } }, $_ ) for @real;
+my ($variant_rank) = grep { scalar @{ $byrank{$_} } > 1 && $_ > 0 }
+  sort { $a <=> $b } keys %byrank;
+BAIL_OUT('Fixture section has no two variants at the same rank')
+  unless defined $variant_rank;
+my ( $ra, $rb ) = @{ $byrank{$variant_rank} }[ 0, 1 ];
+
+# ---------------------------------------------------------------------------
+# text / firstsection / section / main
+# ---------------------------------------------------------------------------
+
+section('/relation/<tradition>');
+
+{
+    my $res = $anon->get("/relation/$fx->{public_owned}");
+    is( $res->code, 302, 'GET /relation/<tradition> redirects to the first section' );
+    my $location = $res->header('Location') || '';
+    like( $location, qr{/relation/\Q$fx->{public_owned}\E/\d+},
+        'Redirect points at the first section of the tradition' );
 }
 
-### Log out and try a few things with known data
+{
+    my $res = $anon->get("/relation/$fx->{private_owned}");
+    is( $res->code, 403,
+        'GET /relation/<private tradition> is refused without a session' );
+    like( json_of($res)->{error}, qr/do not have permission to view/,
+        'Permission error is reported' );
+}
 
-$mech->get_ok('/logout', "Logged out successfully");
+{
+    my $res = $anon->get("/relation/nosucht tradition");
+    is( $res->code, 404, 'GET /relation/<unknown tradition> returns 404' );
+}
 
-# test GET second section (403)
-$attempt = $mech->get($privsection2);
-is($attempt->code, 403, "Attempt to get known section of private text fails");
+section('/relation/<tradition>/<section>');
 
-# test GET private relationships (403)
-$attempt = $mech->get($privrelurl . "/relationships");
-is($attempt->code, 403, "Attempt to get relationships of known private text fails");
+{
+    my $res = request( get_req($rose) );
+    is( $res->code, 200, 'GET /relation/<tradition>/<section> loads the viewer' );
+    like( $res->header('Content-Type'), qr{text/html},
+        'Viewer is served as HTML' );
+    like( body_of($res), qr/"readonly" === "full"/,
+        'Viewer is in read-only mode for a public tradition' );
+}
 
-# test GET private reading(s) (403)
-$attempt = $mech->get($privrelurl . "/readings");
-is($attempt->code, 403, "Attempt to get readings of known private text fails");
+{
+    my $res = $mech->get($prsec);
+    is( $res->code, 200, 'The owner can load the viewer for their own tradition' );
+    like( body_of($res), qr/"full" === "full"/,
+        'Viewer is in editing mode for the owner' );
+}
 
+{
+    # The section capture action fetches the section from Stemmarest; if that
+    # fails, execution carries on into the main action anyway.
+    my $res = $mech->get("/relation/$fx->{public_owned}/doesnotexist");
+    ok( $res->code >= 400, 'GET /relation/<tradition>/<unknown section> fails' );
+}
+
+{
+    my $res = $mech->request( post_form( $ownsec, [] ) );
+    ok( $res->code >= 400, 'POST to the viewer is refused' );
+}
+
+# ---------------------------------------------------------------------------
+# get_graph
+# ---------------------------------------------------------------------------
+
+section('get_graph');
+
+{
+    my $res = $mech->request( get_req("$ownsec/get_graph") );
+    is( $res->code, 200, 'GET .../get_graph succeeds' );
+    is( $res->header('Content-Type'), 'image/svg+xml',
+        'Variant graph is served as SVG by default' );
+    like( body_of($res), qr/<svg/, 'Returned graph is an SVG document' );
+}
+
+{
+    my $res = $mech->request( get_req("$ownsec/get_graph?type=Plain") );
+    is( $res->code, 200, 'GET .../get_graph accepts a type parameter' );
+    like( $res->header('Content-Type'), qr{text/plain},
+        'The requested view is used' );
+}
+
+{
+    my $res = $anon->get(
+        "/relation/$fx->{private_owned}/$fx->{sections}{private_owned}[0]/get_graph" );
+    is( $res->code, 403, 'get_graph is refused for a private tradition' );
+
+    # The tradition capture action detaches when the permission check fails, so
+    # unlike some of the other endpoints this one really does stop.
+    unlike( body_of($res), qr/<svg/,
+        'A refused graph does not carry the graph itself' );
+}
+
+# ---------------------------------------------------------------------------
+# help
+# ---------------------------------------------------------------------------
+
+section('help');
+
+{
+    my $res = request( get_req("/relation/$fx->{public_owned}/help") );
+    is( $res->code, 200, 'GET /relation/<tradition>/help succeeds' );
+    like( $res->header('Content-Type'), qr{text/html},
+        'Help window is served as HTML' );
+}
+
+{
+    my $res = request( get_req("/relation/$fx->{private_owned}/help") );
+    is( $res->code, 403, 'help is refused for a private tradition' );
+}
+
+# ---------------------------------------------------------------------------
+# metadata
+# ---------------------------------------------------------------------------
+
+section('metadata');
+
+{
+    my $res = request( get_req("$ownsec/metadata") );
+    is( $res->code, 200, 'GET .../metadata succeeds' );
+    my $info = json_of($res);
+    is( $info->{id}, $fx->{owned_section}, 'Metadata is for the requested section' );
+    ok( $info->{witnesses}, 'Metadata includes the witnesses' );
+}
+
+{
+    my $res = request( get_req("$prsec/metadata") );
+    is( $res->code, 403, 'GET .../metadata is refused for a private tradition' );
+}
+
+{
+    my $res = $mech->request(
+        post_form( "$ownsec/metadata", [ name => 'renamed by the mapper' ] ) );
+    is( $res->code, 200, 'POST .../metadata succeeds for the owner' );
+    is( json_of($res)->{name}, 'renamed by the mapper', 'Section was renamed' );
+}
+
+{
+    my $res = $mech->request(
+        put_form( "$ownsec/metadata", [ name => 'not allowed' ] ) );
+    # Note: the 403 signals the rejected method, but the action carries on and
+    # the body is the result of the (empty) update it then performs.
+    is( $res->code, 403, 'PUT .../metadata is rejected as a method' );
+}
+
+{
+    my $res = request(
+        post_form( "$rose/metadata", [ name => 'renamed by anonymous user' ] ) );
+    is( $res->code, 403,
+        'POST .../metadata is refused for a read-only tradition' );
+}
+
+# ---------------------------------------------------------------------------
+# download
+# ---------------------------------------------------------------------------
+
+section('download');
+
+{
+    my $res = request( get_req("$ownsec/download?format=JSON") );
+    is( $res->code, 200, 'GET .../download succeeds' );
+    ok( is_json($res), 'Section download is served as JSON' );
+    my $data = json_of($res);
+    ok( $data->{alignment}, 'Section download contains alignment data' );
+}
+
+{
+    my $res = request( get_req("$rose/download?format=TSV") );
+    is( $res->code, 200, 'A public section can be downloaded anonymously' );
+    is( $res->header('Content-Type'), 'text/tab-separated-values',
+        'TSV is served with the TSV content type' );
+}
+
+{
+    my $res = request( get_req("$prsec/download?format=JSON") );
+    is( $res->code, 403, 'Section download is refused for a private tradition' );
+}
+
+# ---------------------------------------------------------------------------
+# readings
+# ---------------------------------------------------------------------------
+
+section('readings');
+
+{
+    my $res = request( get_req("$ownsec/readings") );
+    is( $res->code, 200, 'GET .../readings succeeds' );
+    my $data = json_of($res);
+    is( scalar keys %$data, scalar @$ids,
+        'Every reading of the section is returned' );
+    my ($sample) = values %$data;
+    ok( $sample->{id}, 'A reading has an ID' );
+    ok( defined $sample->{rank}, 'A reading has a rank' );
+    ok( ref $sample->{witnesses} eq 'ARRAY', 'A reading has witnesses' );
+    my ($start) = grep { $data->{$_}{text} eq '#START#' } keys %$data;
+    ok( $start, 'The start marker is present among the readings' );
+}
+
+{
+    my $res = request( get_req("$prsec/readings") );
+    is( $res->code, 403, 'GET .../readings is refused for a private tradition' );
+}
+
+{
+    # Note: the 405 is reported but the action carries on and replaces the body
+    # with the (freshly fetched) reading list.
+    my $res = $mech->request( put_form( "$ownsec/readings", [] ) );
+    is( $res->code, 405, 'PUT .../readings is a disallowed method' );
+}
+
+# ---------------------------------------------------------------------------
+# reading
+# ---------------------------------------------------------------------------
+
+section('reading');
+
+my $reading_id = $real[0];
+{
+    my $res = request( get_req("$ownsec/reading/$reading_id") );
+    is( $res->code, 200, 'GET .../reading/<id> succeeds' );
+    my $rdg = json_of($res);
+    is( $rdg->{id}, $reading_id, 'The requested reading comes back' );
+    ok( defined $rdg->{text}, 'The reading has text' );
+}
+
+{
+    # Stemmarest answers a node ID that is not a number with a server error,
+    # which the controller passes straight through.
+    my $res = request( get_req("$ownsec/reading/doesnotexist") );
+    is( $res->code, 500, 'GET .../reading/<unknown> reports the backend error' );
+}
+
+{
+    my $res = $mech->request( post_form( "$ownsec/reading/$reading_id",
+        [ normal_form => 'probe normal form', grammar_invalid => 'true' ] ) );
+    is( $res->code, 200, 'POST .../reading/<id> succeeds for the owner' );
+    my $data = json_of($res);
+    ok( ref $data->{readings} eq 'ARRAY', 'The changed readings are returned' );
+    my ($rdg) = grep { $_->{id} eq $reading_id } @{ $data->{readings} };
+    ok( $rdg, 'The changed reading is in the response' );
+    ok( $rdg->{grammar_invalid}, 'The boolean property was stored as a boolean' );
+}
+
+{
+    my $res = $mech->request( post_form( "$ownsec/reading/$reading_id",
+        [ is_lemma => 'true' ] ) );
+    is( $res->code, 200, 'POST .../reading/<id> can set is_lemma' );
+    my $data = json_of($res);
+    ok( scalar @{ $data->{readings} }, 'The lemma change is reported' );
+}
+
+{
+    # The read-only tradition's own section, so that this cannot disturb the
+    # tests below.  Note that the status is 403 but the controller carries on
+    # and changes the reading anyway.
+    my ( $rrdgs, $rids ) =
+      readings_of($rose);
+    my ($rreal) = grep { $rrdgs->{$_}{text} !~ /^#/ } @$rids;
+    my $res = $anon->request(
+        post_form( "$rose/reading/$rreal", [ normal_form => 'not allowed' ] ) );
+    is( $res->code, 403,
+        'POST .../reading/<id> is refused for a read-only tradition' );
+}
+
+{
+    my $res = $mech->request( put_form( "$ownsec/reading/$reading_id", [] ) );
+    is( $res->code, 405, 'PUT .../reading/<id> is a disallowed method' );
+}
+
+# ---------------------------------------------------------------------------
+# lemmatext
+# ---------------------------------------------------------------------------
+
+section('lemmatext');
+
+{
+    my $res = request( get_req("$ownsec/lemmatext") );
+    is( $res->code, 200, 'GET .../lemmatext succeeds' );
+    my $data = json_of($res);
+    ok( defined $data->{text}, 'Lemmatised text is returned in a text key' );
+}
+
+{
+    my $res = request( get_req("$prsec/lemmatext") );
+    is( $res->code, 403, 'GET .../lemmatext is refused for a private tradition' );
+}
+
+{
+    my $res = $mech->request( post_form( "$ownsec/lemmatext", [] ) );
+    is( $res->code, 405, 'POST .../lemmatext is a disallowed method' );
+    like( json_of($res)->{error}, qr/Use GET instead/, 'Method error is reported' );
+}
+
+# ---------------------------------------------------------------------------
+# witnesstext
+# ---------------------------------------------------------------------------
+
+section('witnesstext');
+
+my $witness = $fx->{witnesses}{public_owned}[0];
+ok( $witness, 'Fixture tradition has witnesses' );
+
+{
+    my $res = request( get_req("$ownsec/witnesstext/$witness") );
+    is( $res->code, 200, 'GET .../witnesstext/<sigil> succeeds' );
+    my $data = json_of($res);
+    ok( $data->{text}, 'The witness text is returned' );
+}
+
+{
+    my $res = request( get_req("$ownsec/witnesstext/$witness?layer=1") );
+    is( $res->code, 200, 'GET .../witnesstext/<sigil> with a layer succeeds' );
+}
+
+{
+    my $res = request( get_req("$prsec/witnesstext/$witness") );
+    is( $res->code, 403, 'GET .../witnesstext is refused for a private tradition' );
+}
+
+{
+    my $res = $mech->request( post_form( "$ownsec/witnesstext/$witness", [] ) );
+    is( $res->code, 405, 'POST .../witnesstext is a disallowed method' );
+}
+
+# ---------------------------------------------------------------------------
+# relationships - reading
+# ---------------------------------------------------------------------------
+
+section('relationships (GET)');
+
+{
+    my $res = request( get_req("$ownsec/relationships") );
+    is( $res->code, 200, 'GET .../relationships succeeds' );
+    my $rels = json_of($res);
+    ok( ref $rels eq 'ARRAY', 'Relationships are returned as a list' );
+    ok( scalar @$rels, 'The fixture tradition has relationships' );
+    my ($rel) = @$rels;
+    ok( $rel->{source} && $rel->{target}, 'A relationship has a source and target' );
+    ok( $rel->{type}, 'A relationship has a type' );
+}
+
+{
+    my $res = request( get_req("$prsec/relationships") );
+    is( $res->code, 403, 'GET .../relationships is refused for a private tradition' );
+}
+
+{
+    my $res = $anon->request( post_form( "$rose/relationships",
+        [ source => $ra, target => $rb, type => 'spelling' ] ) );
+    is( $res->code, 403,
+        'POST .../relationships is refused for a read-only tradition' );
+    like( json_of($res)->{error}, qr/do not have permission to modify/,
+        'Write refusal is reported' );
+}
+
+{
+    my $res = $anon->request(
+        delete_req( "$rose/relationships", form => [ from_reading => $ra ] ) );
+    is( $res->code, 403,
+        'DELETE .../relationships is refused for a read-only tradition' );
+}
+
+{
+    my $res = $mech->request( put_form( "$ownsec/relationships", [] ) );
+    is( $res->code, 405, 'PUT .../relationships is a disallowed method' );
+    like( json_of($res)->{error}, qr/You can GET, POST, or DELETE/,
+        'Method error is reported' );
+}
+
+# ---------------------------------------------------------------------------
+# relationships - writing
+# ---------------------------------------------------------------------------
+
+section('relationships (POST and DELETE)');
+
+{
+    my $res = $mech->request( post_form( "$ownsec/relationships",
+        [ source => $ra, target => $rb, type => 'spelling', scope => 'local' ] ) );
+    is( $res->code, 200, 'POST .../relationships creates a relationship' );
+    my $data = json_of($res);
+    is( $data->{status}, 'ok', 'Relationship creation is acknowledged' );
+    ok( ref $data->{relationships} eq 'ARRAY', 'Created relationships are returned' );
+    my ($created) =
+      grep { $_->{source} eq $ra && $_->{target} eq $rb }
+      @{ $data->{relationships} };
+    ok( $created, 'The requested relationship was created' );
+    is( $created->{type}, 'spelling', 'The relationship has the requested type' );
+}
+
+{
+    my $res = $mech->request(
+        delete_req( "$ownsec/relationships", form => [ source_id => $ra, target_id => $rb ] ) );
+    is( $res->code, 200, 'DELETE .../relationships removes a relationship' );
+    my $data = json_of($res);
+    my ($pair) = grep { $_->[0] eq $ra && $_->[1] eq $rb } @{ $data->{relationships} };
+    ok( $pair, 'The removed relationship is reported as a source/target tuple' );
+
+    my $again = $mech->request(
+        delete_req( "$ownsec/relationships", form => [ source_id => $ra, target_id => $rb ] ) );
+    is( $again->code, 404, 'Deleting the same relationship twice is a 404' );
+}
+
+{
+    # Deleting by reading removes every relationship that touches it.
+    $mech->request( post_form( "$ownsec/relationships",
+        [ source => $ra, target => $rb, type => 'spelling', scope => 'local' ] ) );
+    my $res = $mech->request(
+        delete_req( "$ownsec/relationships", form => [ from_reading => $ra ] ) );
+    is( $res->code, 200, 'DELETE .../relationships by reading succeeds' );
+    my $data = json_of($res);
+    ok( ref $data->{relationships} eq 'ARRAY',
+        'Removed relationships are returned as a list' );
+}
+
+{
+    # The "delete all" variant asks for a document-wide scope, which Stemmarest
+    # does not accept.
+    $mech->request( post_form( "$ownsec/relationships",
+        [ source => $ra, target => $rb, type => 'spelling', scope => 'local' ] ) );
+    my $res = $mech->request( delete_req( "$ownsec/relationships",
+        form => [ source_id => $ra, target_id => $rb, scopewide => 'true' ] ) );
+    is( $res->code, 400,
+        'DELETE .../relationships with scopewide is rejected by Stemmarest' );
+}
+
+# ---------------------------------------------------------------------------
+# relationtype
+# ---------------------------------------------------------------------------
+
+section('relationtype');
+
+{
+    my $res = request( get_req("$ownsec/relationtype/spelling") );
+    is( $res->code, 405, 'GET .../relationtype/<name> is a disallowed method' );
+}
+
+{
+    my $res = $mech->request( put_form( "$ownsec/relationtype/probe-type",
+        [ name => 'probe-type', description => 'probe', bindlevel => 1, is_weak => 'on' ] ) );
+    is( $res->code, 200, 'PUT .../relationtype/<name> creates a relation type' );
+    my $type = json_of($res);
+    is( $type->{name}, 'probe-type', 'The relation type has the requested name' );
+    ok( $type->{is_weak}, 'Tick-box values are sent as JSON true' );
+}
+
+{
+    my $res = $mech->request(
+        delete_req("$ownsec/relationtype/probe-type") );
+    is( $res->code, 200, 'DELETE .../relationtype/<name> removes a relation type' );
+}
+
+{
+    # Note: the status is 403 but the controller carries on and creates the
+    # relation type on the read-only tradition anyway.
+    my $res = $anon->request(
+        put_form( "$rose/relationtype/probe-anonymous", [ name => 'probe-anonymous' ] ) );
+    is( $res->code, 403,
+        'PUT .../relationtype is refused for a read-only tradition' );
+}
+
+# ---------------------------------------------------------------------------
+# copynormal
+# ---------------------------------------------------------------------------
+
+section('copynormal');
+
+{
+    my $res = $mech->request( post_form( "$ownsec/copynormal/$ra/spelling", [] ) );
+    is( $res->code, 200, 'POST .../copynormal/<reading>/<type> succeeds' );
+    ok( ref json_of($res) eq 'ARRAY', 'Changed readings are returned as a list' );
+}
+
+{
+    my $res = $mech->request( get_req("$ownsec/copynormal/$ra/spelling") );
+    is( $res->code, 405, 'GET .../copynormal is a disallowed method' );
+    like( json_of($res)->{error}, qr/Use POST instead/, 'Method error is reported' );
+}
+
+{
+    my $res = $anon->request( post_form( "$rose/copynormal/$ra/spelling", [] ) );
+    is( $res->code, 403, 'copynormal is refused for a read-only tradition' );
+}
+
+# ---------------------------------------------------------------------------
+# merge
+#
+# The structural changes below all rearrange readings, so they run last, and
+# each of them re-reads the section before choosing what to work on.
+# ---------------------------------------------------------------------------
+
+section('merge');
+
+{
+    my ( $now, $nowids ) = readings_of($ownsec);
+    my %rank;
+    push( @{ $rank{ $now->{$_}{rank} } }, $_ )
+      for grep { $now->{$_}{text} !~ /^#/ } @$nowids;
+    my ($r) = grep { scalar @{ $rank{$_} } > 1 } sort { $a <=> $b } keys %rank;
+    ok( defined $r, 'Found two readings at the same rank to merge' );
+
+    my ( $main, $second ) = @{ $rank{$r} }[ 0, 1 ];
+    my $res = $mech->request( post_form( "$ownsec/merge",
+        [ source => $second, target => $main, single => 1 ] ) );
+    is( $res->code, 200, 'POST .../merge succeeds' );
+    my $data = json_of($res);
+    is( $data->{status}, 'ok', 'Merge is acknowledged' );
+    ok( ref $data->{readings} eq 'ARRAY', 'The merged reading is returned' );
+    ok( defined $data->{sequences}, 'The affected sequences are reported' );
+}
+
+{
+    # Note: the 404 is reported, but the action carries on and overwrites the
+    # body with its (empty) success response.
+    my $res = $mech->request(
+        post_form( "$ownsec/merge", [ source => '99999999', target => '99999999' ] ) );
+    is( $res->code, 404, 'Merging an unknown reading is refused by Stemmarest' );
+}
+
+{
+    my $res = $mech->request( get_req("$ownsec/merge") );
+    is( $res->code, 405, 'GET .../merge is a disallowed method' );
+    like( json_of($res)->{error}, qr/Use POST instead/, 'Method error is reported' );
+}
+
+# ---------------------------------------------------------------------------
+# compress
+# ---------------------------------------------------------------------------
+
+section('compress');
+
+{
+    my ( $now, $nowids ) = readings_of($ownsec);
+    my @real     = grep { $now->{$_}{text} !~ /^#/ } @$nowids;
+    my @adjacent = @real[ 0 .. 2 ];
+    is( scalar @adjacent, 3, 'Found three adjacent readings to compress' );
+
+    my $res = $mech->request(
+        post_form( "$ownsec/compress", [ 'readings[]' => \@adjacent ] ) );
+    is( $res->code, 200, 'POST .../compress succeeds' );
+    my $data = json_of($res);
+    ok( ref $data->{merged} eq 'ARRAY', 'The merged readings are reported' );
+    is( scalar @{ $data->{merged} }, scalar @adjacent,
+        'All requested readings were merged' );
+    my ($merged) = @{ $data->{readings} };
+    ok( $merged->{text}, 'The concatenated reading is returned' );
+}
+
+{
+    # No input validation: with no readings at all the action still answers 200.
+    my $res = $mech->request( post_form( "$ownsec/compress", [] ) );
+    is( $res->code, 200, 'POST .../compress without readings is not rejected' );
+}
+
+{
+    my $res = $mech->request( get_req("$ownsec/compress") );
+    is( $res->code, 405, 'GET .../compress is a disallowed method' );
+    like( json_of($res)->{error}, qr/Use POST instead/, 'Method error is reported' );
+}
+
+# ---------------------------------------------------------------------------
+# duplicate
+# ---------------------------------------------------------------------------
+
+section('duplicate');
+
+{
+    my ( $now, $nowids ) = readings_of($ownsec);
+    my ($target) =
+      grep { $now->{$_}{text} !~ /^#/ && @{ $now->{$_}{witnesses} || [] } } @$nowids;
+    ok( $target, 'Found a reading with a witness to detach' );
+    my $detach = $now->{$target}{witnesses}[0];
+
+    my $res = $mech->request( post_form( "$ownsec/duplicate",
+        [ 'readings[]' => $target, 'witnesses[]' => $detach ] ) );
+    is( $res->code, 200, 'POST .../duplicate succeeds' );
+    my $data = json_of($res);
+    ok( exists $data->{DELETED}, 'Response lists the deleted relationships' );
+    ok( ref $data->{DELETED} eq 'ARRAY', 'Deleted relationships are a list' );
+    my @new = grep { $_ ne 'DELETED' } keys %$data;
+    ok( scalar @new, 'Response contains the reading(s) that were created' );
+    my ($newrdg) = map { $data->{$_} } @new;
+    is( $newrdg->{orig_reading}, $target, 'The new reading records its origin' );
+    ok( ( grep { $_ eq $detach } @{ $newrdg->{witnesses} } ),
+        'The detached witness is attached to the new reading' );
+
+    my ( $now2, $ids2 ) = readings_of($ownsec);
+    ok( !( grep { $_ eq $detach } @{ $now2->{$target}{witnesses} } ),
+        'The detached witness is no longer on the original reading' );
+}
+
+{
+    my $res = $mech->request( get_req("$ownsec/duplicate") );
+    is( $res->code, 405, 'GET .../duplicate is a disallowed method' );
+    like( json_of($res)->{error}, qr/Use POST instead/, 'Method error is reported' );
+}
+
+# ---------------------------------------------------------------------------
+# split
+# ---------------------------------------------------------------------------
+
+section('split');
+
+{
+    my ( $now, $nowids ) = readings_of($ownsec);
+    my ($long) =
+      grep { length( $now->{$_}{text} ) > 5 && $now->{$_}{text} !~ /\s/ } @$nowids;
+    ok( $long, 'Found a reading long enough to split' );
+
+    my $text = $now->{$long}{text};
+    my $res  = $mech->request( post_form( "$ownsec/split",
+        [ reading => $long, rtext => $text, index => 3 ] ) );
+    is( $res->code, 200, 'POST .../split splits a reading' );
+    my $data = json_of($res);
+    ok( ref $data->{relationships} eq 'ARRAY',
+        'Response contains the new relationships' );
+    my @new = grep { $_ ne 'relationships' } keys %$data;
+    ok( scalar @new >= 2, 'Response contains the two halves of the reading' );
+    my @texts = sort map { $data->{$_}{text} } @new;
+    is( join( '', @texts ), $text, 'The two halves join back into the original' );
+}
+
+{
+    my ( $now, $nowids ) = readings_of($ownsec);
+    my ($multi) =
+      grep { $now->{$_}{text} =~ /\s/ && $now->{$_}{text} !~ /^#/ } @$nowids;
+    ok( $multi, 'Found a multi-word reading' );
+
+    # With separate=on the pieces are rejoined with a space, so a trailing
+    # space in the claimed text means the split is not zero-length.
+    my $res = $mech->request( post_form( "$ownsec/split",
+        [ reading => $multi, rtext => $now->{$multi}{text} . ' ', separate => 'on' ] ) );
+    is( $res->code, 400,
+        'POST .../split rejects a regular expression that is not zero-length' );
+    like( json_of($res)->{error}, qr/must be zero-length/, 'The reason is reported' );
+}
+
+{
+    my $res = $mech->request( get_req("$ownsec/split") );
+    is( $res->code, 405, 'GET .../split is a disallowed method' );
+}
+
+# ---------------------------------------------------------------------------
+# emendations / emend
+# ---------------------------------------------------------------------------
+
+section('emendations and emend');
+
+{
+    my $res = request( get_req("$ownsec/emendations") );
+    is( $res->code, 200, 'GET .../emendations succeeds' );
+    my $data = json_of($res);
+    ok( exists $data->{readings}, 'Response has a readings key' );
+    ok( exists $data->{sequences}, 'Response has a sequences key' );
+}
+
+{
+    my $res = $mech->request( post_form( "$ownsec/emendations", [] ) );
+    is( $res->code, 405, 'POST .../emendations is a disallowed method' );
+    like( json_of($res)->{error}, qr/Use GET instead/, 'Method error is reported' );
+}
+
+{
+    my $res = $mech->request( get_req("$ownsec/emend") );
+    is( $res->code, 405, 'GET .../emend is a disallowed method' );
+    like( json_of($res)->{error}, qr/Use POST instead/, 'Method error is reported' );
+}
+
+{
+    my $res = $anon->request( post_form( "$prsec/emend",
+        [ fromRank => 3, toRank => 5, text => 'not allowed', authority => 'probe' ] ) );
+    is( $res->code, 403, 'POST .../emend is refused for a private tradition' );
+}
+
+{
+    my $res = $mech->request( post_form( "$ownsec/emend",
+        [ fromRank => 3, toRank => 5, text => 'probe emendation', authority => 'probe' ] ) );
+    is( $res->code, 200, 'POST .../emend adds an emendation' );
+    my $data = json_of($res);
+    ok( ref $data->{readings} eq 'ARRAY' && scalar @{ $data->{readings} },
+        'The new reading is returned' );
+    ok( ref $data->{sequences} eq 'ARRAY', 'The new sequences are returned' );
+    my ($new) =
+      grep { ( $_->{text} // '' ) eq 'probe emendation' } @{ $data->{readings} };
+    ok( $new, 'The emendation has the requested text' );
+    ok( $new->{is_emendation}, 'The new reading is marked as an emendation' );
+}
 
 done_testing();
