@@ -109,3 +109,26 @@ describe('Who may change stemmata', () => {
     });
   });
 });
+
+describe('Examine Stemma', () => {
+  // A placeholder: the button is there for everyone and is never enabled.
+  [
+    { user: null, title: 'Notre besoin' },
+    { user: users.find(({ username }) => username === 'user@example.org'), title: 'Notre besoin' },
+    { user: admin, title: 'Notre besoin' },
+    { user: admin, title: 'John verse' }
+  ].forEach(({ user, title }) => {
+    it(`is shown disabled to ${user ? roleOf(user) + ' ' + user.username : 'a guest'} for "${title}", and does nothing`, () => {
+      cy.visitAs(user);
+      cy.selectTradition(title);
+      cy.contains('#view-selectors button', 'Examine Stemma')
+        .should('be.visible')
+        .and('have.class', 'disabled')
+        .and('have.css', 'pointer-events', 'none');
+      // it is not the selected view, and activating it (as the keyboard would) changes nothing
+      cy.contains('#view-selectors button', 'Examine Stemma').should('not.have.class', 'selected-view').click({ force: true });
+      cy.get('#view-stemmata-button').should('have.class', 'selected-view');
+      cy.get('.modal.show').should('not.exist');
+    });
+  });
+});

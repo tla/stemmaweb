@@ -121,3 +121,22 @@ Cypress.Commands.add('signOut', () => {
   cy.contains('header a', 'Sign in');
   cy.get('header').should('not.contain', 'Sign out');
 });
+
+// Click "Delete" for the selected tradition and wait for the confirmation dialog.
+Cypress.Commands.add('openDeleteTradition', () => {
+  cy.get('#delete-tradition-button').click();
+  cy.get('#modalDialog').should('be.visible');
+  cy.focused().should('have.id', 'modalDialog');
+  cy.get('#modalDialogLabel').should('have.text', 'Delete Tradition');
+});
+
+// Exactly one tradition is highlighted in the list, and it is the one shown as the current tradition.
+Cypress.Commands.add('currentTraditionShouldBeHighlighted', () => {
+  cy.get('#traditions-list .folder-icon.selected').should('have.length', 1);
+  cy.get('#tradition-name').invoke('text').then((shown) => {
+    cy.get('#traditions-list .folder-icon.selected')
+      .closest('li')
+      .find('span.tradition-nav-name')
+      .should(($name) => expect($name.text().trim()).to.equal(shown.trim()));
+  });
+});

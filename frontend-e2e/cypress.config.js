@@ -1,6 +1,7 @@
 const { defineConfig } = require('cypress');
 const env = require('./env');
 const { reseedDB } = require('./seed');
+const { clearDownloads, listDownloads } = require('./downloads');
 
 module.exports = defineConfig({
   e2e: {
@@ -15,7 +16,9 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       on('task', {
         reseedDB: () =>
-          reseedDB(config.env.CY_STEMMAREST_ENDPOINT).then(() => null)
+          reseedDB(config.env.CY_STEMMAREST_ENDPOINT).then(() => null),
+        clearDownloads: () => clearDownloads(config.downloadsFolder),
+        listDownloads: () => listDownloads(config.downloadsFolder)
       });
     }
   },

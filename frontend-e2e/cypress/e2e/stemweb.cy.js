@@ -190,3 +190,27 @@ describe('Job status', () => {
     cy.jobStatusShouldBe({ job: 1, status: 'Done' });
   });
 });
+
+describe('Who may start a job', () => {
+  // Known bug: the middleware passes POST /stemweb/algorithms/process/<id> through for anyone, a guest
+  // included, and takes the user and the tradition from the request body rather than the session.
+  // It answers 200 with a job id. Starting a job should need an owner of the tradition.
+  [
+    { who: 'a guest', user: null },
+    { who: 'a user who does not own the tradition', user: users.find(({ username }) => username === 'benutzer@example.org') }
+  ].forEach(({ who, user }) => {
+    it.skip(`has the server refuse ${who} starting a job (known bug: it is accepted)`, () => {
+      if (user) cy.login(user);
+      else cy.clearCookies();
+      cy.request(`${api()}/traditions`).then(({ body }) => {
+        const id = body.find((t) => t.name === LEGEND.title)?.id ?? body[0].id;
+        cy.request({
+          method: 'POST',
+          url: `${Cypress.env('CY_STEMMAWEB_MIDDLEWARE_URL')}/stemweb/algorithms/process/3`,
+          failOnStatusCode: false,
+          body: { userid: owner.username, tradid: id, data: null, parameters: [], return_host: '', return_path: '/result' }
+        }).its('status').should('be.within', 401, 403);
+      });
+    });
+  });
+});
