@@ -18,6 +18,12 @@ class EditStemma extends HTMLElement {
     STEMMA_STORE.subscribe( ( state ) => {
         this.greyOut();
     } );
+    // It could be there is no tradition left…
+    TRADITION_STORE.subscribe( ( state ) => {
+      if ( state.availableTraditions.length == 0 ) {
+        this.greyOut();
+      }
+    } );
   }
 
   connectedCallback() {  
@@ -347,9 +353,7 @@ class EditStemma extends HTMLElement {
         </a>
       </div>
     `;
-    if( userIsOwner() ) {
-      this.greyOut();
-    }
+    this.greyOut();
     this.addEditStemmaButtonListeners();
   }
 

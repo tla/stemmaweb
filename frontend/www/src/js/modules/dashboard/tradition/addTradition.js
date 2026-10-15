@@ -66,23 +66,29 @@ class AddTraditionModal extends HTMLElement {
         this.#initStyles();
       }; 
     } );
-    // Make sure, on cancel the form is returned to pristine state
-    add_tradition_modal_elem.addEventListener('transitionend', function (evt) {
-      if (
-        evt.target === add_tradition_modal_elem &&
-        !add_tradition_modal_elem.classList.contains('show')
-      ) {
-        [
-          'add_tradition_partial',
-          'new_tradition_partial',
-          'new_section_partial'
-        ].forEach(function (elem) {
-          $(elem).classList.add('hide');
-        });
-        $('add_tradition_modal_addition_type_choice').classList.remove('hide');
-        $('add_tradition_form').classList.remove('was-validated');
+    // Make sure, whenever the modal is hidden (on cancel/close as well as after
+    // a successful submit), the form is returned to pristine state
+    add_tradition_modal_elem.addEventListener('hidden.bs.modal', (evt) => {
+      if (evt.target === add_tradition_modal_elem) {
+        AddTraditionModal.#resetForm();
       }
     });
+  }
+
+  static #resetForm() {
+    const form = $('add_tradition_form');
+    form.reset();
+    form.classList.remove('was-validated');
+    [
+      'add_tradition_partial',
+      'new_tradition_partial',
+      'new_section_partial'
+    ].forEach(function (elem) {
+      $(elem).classList.add('hide');
+    });
+    $('add_tradition_modal_addition_type_choice').classList.remove('hide');
+    $('texttradition_literal').innerText = 'text / tradition';
+    $('tradition_literal').innerText = 'tradition';
   }
 
   /**
@@ -94,6 +100,7 @@ class AddTraditionModal extends HTMLElement {
    *   userId: string;
    *   fileType: import('@types/stemmarest').TraditionFileType;
    *   direction: string;
+   *   sectionName: string | null;
    * }}
    */
   static #extractFormValuesTradition() {
@@ -104,7 +111,8 @@ class AddTraditionModal extends HTMLElement {
       userId: AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null,
       language: $('new_lang').value || null,
       direction: $('direction').value,
-      isPublic: $('new_public').checked
+      isPublic: $('new_public').checked,
+      sectionName: $('new_section_name').value || null
     }
   }
 
@@ -337,6 +345,18 @@ class AddTraditionModal extends HTMLElement {
 
                   <!-- Shows when 'Create a new tradition' button is clicked -->
                   <div id="new_tradition_partial" class="hide">
+                    <label for="new_section_name" class="form-label"
+                      >Name for first section</label
+                    >
+                    <div class="form-textfield">
+                      <input
+                        id="new_section_name"
+                        type="text"
+                        name="sectionName"
+                        class="form-control"
+                        size="20"
+                      />
+                    </div>
                     <label for="new_lang" class="form-label"
                       >Primary language of the text</label
                     >
