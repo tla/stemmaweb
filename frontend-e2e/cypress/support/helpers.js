@@ -87,8 +87,7 @@ Cypress.Commands.add('openLoginModal', () => {
 });
 
 // Sign in by filling in the login form. Use only when the form itself is under test;
-// everything else should use `cy.login`. (The old `loginViaUi` stays for the legacy
-// specs, which depend on its fixed waits.)
+// everything else should use `cy.login`.
 Cypress.Commands.add('loginViaForm', (user) => {
   cy.openLoginModal();
   cy.get('#loginEmail').type(user.username);
@@ -97,4 +96,28 @@ Cypress.Commands.add('loginViaForm', (user) => {
   cy.get('button').contains('Sign in').click();
   cy.get('#authModal').should('not.be.visible');
   cy.contains('header a', `Logged in as ${user.username}`);
+});
+
+// Switch the open sign-in modal to the registration form ("Register" link) and wait for it.
+Cypress.Commands.add('showRegisterForm', () => {
+  cy.contains('#authModal a', 'Register').click();
+  cy.get('#registerEmail').should('be.visible');
+});
+
+// Fill in the registration form; `confirm` defaults to the password.
+Cypress.Commands.add('fillRegisterForm', ({ email, password, confirm = password }) => {
+  if (email) cy.get('#registerEmail').type(email);
+  if (password) cy.get('#registerPassword').type(password);
+  if (confirm) cy.get('#registerConfirmPassword').type(confirm);
+});
+
+Cypress.Commands.add('submitRegisterForm', () => {
+  cy.contains('#authModal button', /Sign (u|U)p/).click();
+});
+
+// Sign out through the header link and wait for the signed-out header.
+Cypress.Commands.add('signOut', () => {
+  cy.contains('header a', 'Sign out').click();
+  cy.contains('header a', 'Sign in');
+  cy.get('header').should('not.contain', 'Sign out');
 });

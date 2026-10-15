@@ -149,6 +149,8 @@ def run_job(algo):
         return {"jobid":1,"status":1}
     elif algo == '4':   # NN: will error out
         return {"jobid":3,"status":1}
+    elif algo == '100': # Pars: is running forever, like RHM
+        return {"jobid":4,"status":1}
 
 
 # Allow query of a job ID.
@@ -168,6 +170,8 @@ def query_job(jobid):
         }}
     elif jobid == '2':
         return {"jobid":2,"status":1}
+    elif jobid == '4':
+        return {"jobid":4,"status":1}
     else:
         return {"jobid":jobid,"status":55,"result":"Pretend we had an error here."}
 

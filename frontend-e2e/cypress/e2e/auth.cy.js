@@ -11,7 +11,7 @@ describe('Login with reCAPTCHA', () => {
   it('accepts a login whose reCAPTCHA token scores as human', () => {
     cy.loginViaForm(user);
     cy.wait('@login').its('response.statusCode').should('eq', 200);
-    cy.logoutViaUi();
+    cy.signOut();
   });
 
   it('rejects a login whose reCAPTCHA token scores as a bot', () => {

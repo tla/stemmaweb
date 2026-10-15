@@ -23,17 +23,15 @@ import './helpers';
 import './properties';
 import './sections';
 import './stemmata';
+import './stemweb';
+import './collation';
 
-// Specs under e2e/role_* are the old suite: they mutate data freely and rely on a
-// fresh database for every test. New specs live directly in e2e/, reseed once per
-// file, and must call cy.reseedDB() themselves in any test that changes data.
-const isLegacySpec = () => Cypress.spec.relative.includes('/role_');
-
+// Every spec file starts from the seed data and then reseeds itself only where a test changes
+// data: call cy.reseedDB() in a beforeEach (or inside the test) in those places.
 before(() => {
-  if (!isLegacySpec()) cy.reseedDB();
+  cy.reseedDB();
 });
 
 beforeEach(() => {
   cy.stubRecaptcha();
-  if (isLegacySpec()) cy.reseedDB();
 });
