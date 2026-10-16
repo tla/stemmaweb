@@ -40,3 +40,14 @@ Cypress.Commands.add('actionButtonsShouldBe', (expected) => {
 });
 
 export const ACTION_BUTTONS = [...Object.keys(BAR_BUTTONS), ...Object.keys(STEMMA_LINKS)];
+
+// What a directory without any tradition looks like: nothing listed, no title, the properties table
+// with its heading but no rows, and every button that acts on a tradition or stemma greyed out.
+Cypress.Commands.add('emptyDirectoryShouldShow', () => {
+  cy.get('#traditions-list .folder-icon').should('not.exist');
+  cy.get('#tradition-name').should(($n) => expect($n.text().trim()).to.be.empty);
+  cy.get('property-table-view').contains('Tradition Properties').should('be.visible');
+  cy.get('#tradition_info tr').should('not.exist');
+  cy.editPropertiesShouldBe(false);
+  cy.actionButtonsShouldBe(Object.fromEntries(ACTION_BUTTONS.map((label) => [label, false])));
+});

@@ -1,6 +1,6 @@
 // A directory without any tradition: the page must load without errors, the buttons that
-// act on a tradition are greyed out, and the first tradition can be added. The data set
-// is the 'empty' one (users, no traditions); see seed.js.
+// act on a tradition are greyed out, the first tradition can be added, and deleting it brings the
+// empty state back. The data set is the 'empty' one (users, no traditions); see seed.js.
 import users from '../fixtures/users.json';
 import { ACTION_BUTTONS } from '../support/empty';
 
@@ -63,16 +63,24 @@ describe('A directory without traditions', () => {
     });
   });
 
-  // Known gap: nothing greys these buttons out when there is no tradition. The button bar and the stemma
-  // links only look at the owner of the selected tradition (stemmaButtons.js, editStemma.js), and none is
-  // selected, so "View stemmata", "View collation" and both downloads are always offered, and the stemma
-  // links stay in their initial state. Drop the `.skip` when that is fixed.
   ACTION_BUTTONS.forEach((label) => {
-    it.skip(`greys out "${label}" when there is no tradition (known gap: nothing does)`, () => {
+    it(`greys out "${label}" when there is no tradition`, () => {
       cy.login(owner);
       cy.visitEmptyHome();
       cy.actionButtonShouldBe(label, false);
     });
+  });
+
+  it('shows the properties table with its title but no rows, and edit properties greyed out', () => {
+    cy.login(owner);
+    cy.visitEmptyHome();
+    cy.emptyDirectoryShouldShow();
+  });
+
+  it('shows the same for a guest', () => {
+    cy.clearCookies();
+    cy.visitEmptyHome();
+    cy.emptyDirectoryShouldShow();
   });
 
   it('lets a user add a tradition, which becomes the current one', () => {
@@ -96,6 +104,40 @@ describe('A directory without traditions', () => {
     addTradition({ name: 'No stemma', file: 'armexample.csv', type: 'csv' });
     cy.stemmaListShouldEqual([]);
     cy.actionButtonsShouldBe(NO_STEMMA);
+  });
+
+  it('shows the title, the list entry and the properties of a tradition added without a stemma', () => {
+    cy.login(owner);
+    cy.visitEmptyHome();
+    addTradition({ name: 'No stemma', file: 'armexample.csv', type: 'csv' });
+    cy.get('#tradition-name').should('be.visible');
+    cy.traditionListShouldEqual(['No stemma']);
+    cy.currentTraditionShouldBeHighlighted();
+    cy.get('property-table-view').contains('Tradition Properties').should('be.visible');
+    cy.get('#tradition_info tr').then(($rows) => {
+      const labels = [...$rows].map((tr) => tr.querySelector('td').textContent.trim());
+      expect(labels).to.include.members(['Tradition', 'Owner', 'Access', 'Language', 'Direction', 'Witnesses']);
+      const owned = [...$rows].find((tr) => tr.querySelector('td').textContent.trim() === 'Owner');
+      expect(owned.querySelectorAll('td')[1].textContent.trim()).to.equal(owner.username);
+    });
+    cy.editPropertiesShouldBe(true);
+  });
+
+  it('is back to the empty state after the only tradition is deleted', () => {
+    cy.login(owner);
+    cy.visitEmptyHome();
+    addTradition({ name: 'No stemma', file: 'armexample.csv', type: 'csv' });
+    cy.openDeleteTradition();
+    cy.clickDialogButton('Yes, delete it');
+    cy.contains('stemmaweb-alert', 'Deleted No stemma');
+    cy.dialogShouldBeClosed();
+    cy.emptyDirectoryShouldShow();
+    cy.request(`${api()}/traditions`).its('body').should('have.length', 0);
+
+    // and after a reload
+    cy.reload();
+    cy.wait('@traditions');
+    cy.emptyDirectoryShouldShow();
   });
 
   it('offers every button after adding a tradition with a stemma', () => {

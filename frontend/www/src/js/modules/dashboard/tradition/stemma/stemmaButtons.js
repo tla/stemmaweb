@@ -28,8 +28,8 @@ class StemmaButtons extends HTMLElement {
 
     this.setTraditionDownloadListeners();
 
-    AUTH_STORE.subscribe( ( state ) => { this.greyOut(); } )
-    TRADITION_STORE.subscribe( (state) => { this.greyOut(); } );
+    AUTH_STORE.subscribe( ( state ) => { this.setButtonStates(); } )
+    TRADITION_STORE.subscribe( (state) => { this.setButtonStates(); } );
     fadeIn(this);
   }
 
@@ -93,23 +93,44 @@ class StemmaButtons extends HTMLElement {
    * This should take care of correctly greying out buttons of this
    * component when a user logs in or out.
    */
-  greyOut() {
-    const buttonIds = ['run-stemweb-button', 'delete-tradition-button'];
-    buttonIds.forEach((buttonId) => {
-      document.querySelector(`#${buttonId}`).classList.remove('disabled');
-      if (!userIsOwner()) {
-        document.querySelector(`#${buttonId}`).classList.add('disabled');
+  setButtonStates() {
+    if ( TRADITION_STORE.state.availableTraditions.length == 0 ) {
+      // There is no tradition, disable all buttons.
+      const buttonIds = [ 
+        'view-stemmata-button', 'run-stemweb-button', 'delete-tradition-button', 
+        'tradition-download-button', 'stemma_image_downloadbtn',
+        'edit-collation-button' 
+      ];
+      buttonIds.forEach( (buttonId) => {
+        document.querySelector( `#${buttonId}` ).classList.add( 'disabled' );
+      } );
+    } else {
+      const buttonAnyUserIds = [
+        'view-stemmata-button', 'tradition-download-button', 'stemma_image_downloadbtn'
+      ];
+      const buttonOwnerIds = [
+        'run-stemweb-button', 'delete-tradition-button'
+      ];
+      buttonAnyUserIds.forEach((buttonId) => {
+        document.querySelector(`#${buttonId}`).classList.remove('disabled');
+      });
+      buttonOwnerIds.forEach((buttonId) => {
+        if( userIsOwner() ) {
+          document.querySelector(`#${buttonId}`).classList.remove('disabled');
+        } else {
+          document.querySelector(`#${buttonId}`).classList.add('disabled');
+        }
+      });
+      const editCollationButton = document.querySelector( '#edit-collation-button' );
+      editCollationButton.classList.remove( 'disabled' );
+      const VIEW_COLLATION = 'View Collation';
+      const EDIT_COLLATION = 'Edit Collation';
+      let editCollationButtonText = VIEW_COLLATION;
+      if ( userIsOwner() ) {
+        editCollationButtonText = EDIT_COLLATION;
       }
-    });
-    const editCollationButton = document.querySelector(`#edit-collation-button`);
-    editCollationButton.classList.remove( 'disabled' );
-    const VIEW_COLLATION = 'View Collation';
-    const EDIT_COLLATION = 'Edit Collation';
-    let editCollationButtonText = VIEW_COLLATION;
-    if ( userIsOwner() ) {
-      editCollationButtonText = EDIT_COLLATION;
+      editCollationButton.innerHTML = editCollationButtonText;
     }
-    editCollationButton.innerHTML = editCollationButtonText;
   }
 
   setView(evt) {

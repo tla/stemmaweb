@@ -27,11 +27,15 @@ class SectionPropertiesView extends HTMLElement {
         this.addEventListener( 'sectionDeleted', () => { this.innerHTML = '' } );
         // Whenever a tradition is selected that is not me, I go away.
         TRADITION_STORE.subscribe( ( prevState, state ) => {
-            // Check on id because other metadata may have changed.
-            if( prevState.selectedTradition && ( prevState.selectedTradition.id != state.selectedTradition.id ) ) {
+            // There is no tradition or nothing selected.
+            if ( !state.selectedTradition ) {
                 this.innerHTML = '';
-            };
-            
+            } else {
+                // Check on id because other metadata may have changed.
+                if( prevState.selectedTradition && ( prevState.selectedTradition.id != state.selectedTradition.id ) ) {
+                    this.innerHTML = '';
+                };
+            }
         });
         // Whenever an item in the section list is selected, update the table
         SECTION_STORE.subscribe( ( { availableSections, selectedSection } ) => {

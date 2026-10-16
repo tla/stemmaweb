@@ -32,6 +32,13 @@ class TraditionTitle extends HTMLElement {
                         fadeIn( this );
                     }
                 }
+            } else {
+                // There is no tradition left, remove any title
+                this.innerHTML = `<div style="display: flex;">
+                    <h4 id="tradition-name" class="pt-3"></h4>
+                </div>
+                `;
+
             }
         });
     }

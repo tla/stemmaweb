@@ -25,6 +25,12 @@ class PropertyTableView extends HTMLElement {
     STEMMA_STORE.subscribe( ( { tradition, selectedStemma } ) => {
       this.render( tradition, selectedStemma );
     } );
+    // In case there might not be a tradition left (empty repo).
+    TRADITION_STORE.subscribe( ( { selectedTradition } ) => {
+      if( !selectedTradition ) {
+        this.render( null, null )
+      }
+    } );
   }
 
   /** @type {TraditionMetaLabels} */
