@@ -94,6 +94,7 @@ class AddTraditionModal extends HTMLElement {
    *   userId: string;
    *   fileType: import('@types/stemmarest').TraditionFileType;
    *   direction: string;
+   *   sectionName: string | null;
    * }}
    */
   static #extractFormValuesTradition() {
@@ -104,7 +105,8 @@ class AddTraditionModal extends HTMLElement {
       userId: AUTH_STORE.state.user ? AUTH_STORE.state.user.id : null,
       language: $('new_lang').value || null,
       direction: $('direction').value,
-      isPublic: $('new_public').checked
+      isPublic: $('new_public').checked,
+      sectionName: $('new_section_name').value || null
     }
   }
 
@@ -337,6 +339,18 @@ class AddTraditionModal extends HTMLElement {
 
                   <!-- Shows when 'Create a new tradition' button is clicked -->
                   <div id="new_tradition_partial" class="hide">
+                    <label for="new_section_name" class="form-label"
+                      >Name for first section</label
+                    >
+                    <div class="form-textfield">
+                      <input
+                        id="new_section_name"
+                        type="text"
+                        name="sectionName"
+                        class="form-control"
+                        size="20"
+                      />
+                    </div>
                     <label for="new_lang" class="form-label"
                       >Primary language of the text</label
                     >
