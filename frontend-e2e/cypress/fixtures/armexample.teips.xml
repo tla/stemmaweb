@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng" type="application/xml"
+	schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+      <fileDesc>
+         <titleStmt>
+            <title>armexample</title>
+         </titleStmt>
+         <publicationStmt>
+            <p>sample text for testing</p>
+         </publicationStmt>
+         <sourceDesc>
+            <listWit>
+               <witness xml:id="B">witness B
+               </witness>
+               <witness xml:id="D">witness D
+               </witness>
+               <witness xml:id="Q">witness Q
+               </witness>
+            </listWit>
+         </sourceDesc>
+      </fileDesc>
+  </teiHeader>
+  <text>
+      <body>
+         <p>
+            <app xml:id="a1"><rdg wit="#B #D #Q"><witStart/></rdg></app>
+            Իսկ ընդ 
+            <app xml:id="a1.1_0">
+               <lem wit="#B #D">աւուրսն</lem>
+               <rdg wit="#Q">աւուրսնս այսոսիկ</rdg>
+            </app>
+            <app xml:id="a2"><rdg wit="#Q"><witEnd/></rdg></app>
+            <app xml:id="a2.1_1">
+               <lem wit="#B">և</lem>
+               <rdg wit="#D"/>
+            </app> ի
+            <app xml:id="a2.1_2">
+               <lem wit="#B">թվականութիւն</lem>
+               <rdg wit="#D">թուականու՟ի</rdg>
+            </app> ՆԱ</p>
+         <app xml:id="a3"><rdg wit="#B #D"><witEnd/></rdg></app>
+      </body>
+  </text>
+</TEI>

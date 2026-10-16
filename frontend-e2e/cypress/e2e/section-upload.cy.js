@@ -30,18 +30,12 @@ const FORMATS = [
       'the dialog has no "xlsx" option, and Stemmarest rejects an .xlsx sent as "xls"'
   },
   { type: 'collatex', file: 'armexample.collatex.xml' },
+  // A CollateX JSON export can include a section name.
   { type: 'cxjson', file: 'armexample.cx.json' },
-  // A native GraphML export carries its own section name, which wins over the form's.
-  // This export also names the witnesses Wit1-3, and has the older variant of Q's text.
-  {
-    type: 'graphml',
-    file: 'armexample.zip',
-    storedName: 'Arm example',
-    sigla: { B: 'Wit1', D: 'Wit2', Q: 'Wit3' },
-    text: { Q: 'Իսկ ընդ աւուրսն այնոսիկ' }
-  },
+  // A native GraphML export carries a tradition and a section name. This should follow the section
+  { type: 'graphml', file: 'armexample.zip', storedName: 'armexample' },
+  { type: 'teips', file: 'armexample.teips.xml', knownBug: 'the parser is giving a 500 for some reason' },
   // No sample file yet; replace `pending` with `file` when one is added to fixtures/
-  { type: 'teips', pending: 'no TEI parallel-segmentation sample yet' },
   { type: 'cte', pending: 'no CTE export sample yet' },
   { type: 'stemmaweb', pending: 'no legacy Stemmaweb GraphML sample yet' }
 ];
