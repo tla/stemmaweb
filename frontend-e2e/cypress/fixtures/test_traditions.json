@@ -113,7 +113,7 @@
     "language": "Greek",
     "access": "Public",
     "sectionscount": 1,
-    "sections": [{ "name": "DEFAULT", "language": "Greek" }],
+    "sections": [{ "name": "John verse", "language": "Greek" }],
     "direction": "Left to Right",
     "witnesses": [
       "P60",
@@ -155,7 +155,7 @@
     "access": "Private",
     "sectionscount": 2,
     "sections": [
-      { "name": "DEFAULT", "language": "Latin" },
+      { "name": "Legend's fragment", "language": "Latin" },
       { "name": "section 2", "language": "Latin" }
     ],
     "direction": "Left to Right",
@@ -207,7 +207,7 @@
     "language": "French",
     "access": "Public",
     "sectionscount": 1,
-    "sections": [{ "name": "DEFAULT", "language": "French" }],
+    "sections": [{ "name": "Notre besoin", "language": "French" }],
     "direction": "Left to Right",
     "witnesses": [
       "A",
@@ -233,7 +233,7 @@
     "language": "Latin",
     "access": "Private",
     "sectionscount": 1,
-    "sections": [{ "name": "DEFAULT", "language": "Latin" }],
+    "sections": [{ "name": "Verbum uncorrected", "language": "Latin" }],
     "direction": "Left to Right",
     "witnesses": [
       "Ba96",
@@ -259,7 +259,7 @@
     "language": "Latin",
     "access": "Private",
     "sectionscount": 1,
-    "sections": [{ "name": "DEFAULT", "language": "Latin" }],
+    "sections": [{ "name": "Verbum", "language": "Latin" }],
     "direction": "Left to Right",
     "witnesses": [
       "Ba96",
@@ -327,7 +327,7 @@
     "language": "Arabic",
     "access": "Private",
     "sectionscount": 1,
-    "sections": [{ "name": "DEFAULT", "language": "Arabic" }],
+    "sections": [{ "name": "Arabic snippet", "language": "Arabic" }],
     "direction": "Right to Left",
     "witnesses": ["A", "B"],
     "stemmata": []

@@ -37,18 +37,18 @@ CY_NPM_COMMAND="cy:run"
 build-tests:
 	@echo "==> 🏗 Build Test Containers"
 	@docker build -t stemmaweb-middleware ./middleware
-	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker compose --env-file .env.test -f docker-compose.test.yml build
+	@CY_NPM_COMMAND="$(CY_NPM_COMMAND)" docker compose --env-file .env.test -f docker-compose.test.yml build
 
 build-tests-arm:
 	@make build-tests CY_NPM_COMMAND="cy:run:arm"
 
 tests: tests-down build-tests
 	@echo "==> 🧪 Run E2E Tests"
-	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) ./bin/tests.sh
+	@CY_NPM_COMMAND="$(CY_NPM_COMMAND)" ./bin/tests.sh
 
 tests-down:
 	@echo "==> 🛑 Stop Test Containers"
-	@CY_NPM_COMMAND=$(CY_NPM_COMMAND) docker compose --env-file .env.test -f docker-compose.test.yml down
+	@CY_NPM_COMMAND="$(CY_NPM_COMMAND)" docker compose --env-file .env.test -f docker-compose.test.yml down
 
 tests-arm:
 	@make tests CY_NPM_COMMAND="cy:run:arm"

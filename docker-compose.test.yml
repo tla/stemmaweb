@@ -2,22 +2,16 @@ services:
   stemmarest:
     image: "dhuniwien/stemmarest:latest"
 
-  stemmarest-initializer:
-    build: bin
-    env_file:
-      - .env.test
-    depends_on:
-      - stemmarest
-    volumes:
-      - ./bin/init-data/stemmarest/:/init-data
-    entrypoint: >
-      /bin/bash -c "./wait-for-it.sh --host=${STEMMAREST_HOST} --port=${STEMMAREST_PORT} -- /init-data/init_test_data.sh"
-
   stemweb:
     container_name: stemweb
     build: stemweb_mock
     ports:
       - "8000:8000"
+
+  # Stands in for Google's reCAPTCHA siteverify endpoint (see frontend-e2e/cypress/support)
+  recaptcha:
+    container_name: recaptcha
+    build: recaptcha_mock
 
   stemmaweb:
     container_name: stemmaweb
@@ -25,8 +19,12 @@ services:
     depends_on:
       - stemmarest
       - stemweb
+      - recaptcha
     env_file:
       - .env.test
+    environment:
+      # Takes precedence over .env.test
+      RECAPTCHA_VERIFICATION_URL: http://recaptcha:8001/recaptcha/api/siteverify
     volumes:
       - ./frontend/config/env.js.prod:/usr/src/app/stemmaweb_middleware/stemmaweb/src/js/env.js
 
@@ -35,13 +33,12 @@ services:
     build: frontend-e2e
     depends_on:
       - stemmaweb
-      - stemmarest-initializer
     env_file:
       - .env.test
     volumes:
       - ./frontend-e2e/:/app
       - ./bin/init-data/stemmarest/:/app/cypress/.initdata4headless
     entrypoint: >
-      /bin/bash -c "sleep 120 &&  # Waiting for other services to be ready
+      /bin/bash -c "./wait-for-stack.sh &&
                     npm install &&
                     npm run ${CY_NPM_COMMAND}"

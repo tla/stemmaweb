@@ -19,6 +19,20 @@ import './commands';
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
 
-beforeEach(() => {
+import './helpers';
+import './properties';
+import './sections';
+import './stemmata';
+import './stemweb';
+import './collation';
+import './downloads';
+
+// Every spec file starts from the seed data and then reseeds itself only where a test changes
+// data: call cy.reseedDB() in a beforeEach (or inside the test) in those places.
+before(() => {
   cy.reseedDB();
+});
+
+beforeEach(() => {
+  cy.stubRecaptcha();
 });
