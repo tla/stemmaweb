@@ -26,6 +26,7 @@ import './stemmata';
 import './stemweb';
 import './collation';
 import './downloads';
+import './empty';
 
 // Every spec file starts from the seed data and then reseeds itself only where a test changes
 // data: call cy.reseedDB() in a beforeEach (or inside the test) in those places.

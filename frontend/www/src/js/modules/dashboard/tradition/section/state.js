@@ -124,14 +124,18 @@ const SECTION_STORE = new SectionStore({
 });
 
 function initSectionState() {
-  sectionStoreService.listSections( TRADITION_STORE.state.selectedTradition.id ).then((res) => {
-    if (res.success) {
-      /** @type {Section[]} */
-      const availableSections = res.data;
-      const selectedSection = null;
-      /** @type {SectionState} */
-      const state = { availableSections, selectedSection };
-      SECTION_STORE.setState( state );
-    }
-  });
+  /** @type {Section[]} */
+  var availableSections = [];
+  const selectedSection = null;
+  if ( TRADITION_STORE.state.selectedTradition ) {
+    sectionStoreService.listSections( TRADITION_STORE.state.selectedTradition.id ).then( (res) => {
+      if (res.success) {
+        availableSections = res.data;
+      }
+    } );
+  }
+  /** @type {SectionState} */
+  const state = { availableSections, selectedSection };
+  SECTION_STORE.setState( state );
+
 }

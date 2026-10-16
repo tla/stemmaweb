@@ -47,6 +47,12 @@ $CURL --request PUT --header 'Content-Type: application/json' --data '{ "role":"
 #  exit 1
 #fi
 
+# Optional mode for testing an empty repository: the users only, no traditions
+if [[ ${1-} == empty ]]; then
+  echo; echo Created no traditions
+  exit 0
+fi
+
 echo; echo Uploading Notre besoin
 $CURL --request POST --form name="Notre besoin" --form file=@data/besoin.xml --form filetype=stemmaweb --form userId=user@example.org --form language=French --form public=true $STEMMAREST_ENDPOINT/tradition > /tmp/stemmarest.response
 BESOIN_ID=`jq -e -r ".tradId" /tmp/stemmarest.response`

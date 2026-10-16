@@ -63,7 +63,8 @@ Cypress.Commands.add('login', (user) => {
   );
 });
 
-// Delete all traditions and users, then reload the mini test data set (see seed.js)
-Cypress.Commands.add('reseedDB', () => {
-  cy.task('reseedDB', null, { timeout: 120000 });
+// Delete all traditions and users, then reload the mini test data set (see seed.js), or
+// with 'empty' the users only
+Cypress.Commands.add('reseedDB', (dataSet = 'mini') => {
+  cy.task('reseedDB', dataSet, { timeout: 120000 });
 });
