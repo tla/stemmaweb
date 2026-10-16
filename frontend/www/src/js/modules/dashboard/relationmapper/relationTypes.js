@@ -70,6 +70,23 @@ class RelationTypes extends HTMLElement {
   }
 
   /**
+  * @param None
+  * @returns {string} HTML representation to indicate there are no relation types defined yet.
+  */
+  renderNoRelationsDefined( relationType ) {
+    const trElement = document.createElement( 'tr' );
+    trElement.innerHTML = `
+        <tr>
+            <td class="relation-type-color-cell"></td>
+            <td class="relation-type-name-cell">No relation types defined</td>
+            <td class="relation-type-buttons-cell">
+            </td>
+        </tr>
+      `;
+    return trElement;
+  }
+
+  /**
    * Sorts RelationTypes according to bindlevel.
    *
    * @param {RelationType[]} relationsTypes Array of relation types to sort.
@@ -93,8 +110,6 @@ class RelationTypes extends HTMLElement {
     const usedOptions = { ...defaultOptions, ...options };
     const traditionId = TRADITION_STORE.state.selectedTradition.id;
     relationTypesService.getRelationTypes( traditionId ).then( ( relationTypes ) => {
-      if ( relationTypes && relationTypes.length > 0 ) {          
-        relationTypes = this.sortedRelationTypes( relationTypes );
         this.innerHTML = `
             <div class="position-sticky pt-2" style="display: ${usedOptions.display}; opacity: ${usedOptions.opacity};">
                 <div id="relation-types-heading-container">
@@ -116,13 +131,13 @@ class RelationTypes extends HTMLElement {
             </div>
         `;
 
+      if ( relationTypes && relationTypes.length > 0 ) {          
+        relationTypes = this.sortedRelationTypes( relationTypes );
+
         // Closure for the migration code below.
         const renderRelationTypeElements = () => {
           const relationTypesElements = colorSuppliedRelationTypes.map( this.renderRelationType );
           this.querySelector( '#relation-type-info' ).append( ...relationTypesElements  );
-          if( usedOptions.onEnd ) {
-            usedOptions.onEnd();
-          }
         }
 
         /**
@@ -158,6 +173,14 @@ class RelationTypes extends HTMLElement {
         /* End migration code. */
 
       }
+      else {
+        this.querySelector( '#relation-type-info' ).append( this.renderNoRelationsDefined() );
+      }
+      
+      if( usedOptions.onEnd ) {
+        usedOptions.onEnd();
+      }
+
     } );
   }
 

@@ -11,9 +11,41 @@ from stemmaweb_middleware.resources.base import APIClient
 from stemmaweb_middleware.utils import abort, files_to_bytes
 
 
+def build_api_endpoint(segments: str, *, force_trailing_slash: bool = False) -> str:
+    """
+    Builds the upstream path for a passthrough request from the wildcard
+    ``segments`` captured by the Flask route.
+
+    :param segments: the wildcard path segments, as captured by Flask.
+    :param force_trailing_slash: whether the target backend requires a trailing
+        slash regardless of how it was addressed.
+    :return: the path to request from the upstream API.
+    """
+    path_segments = [segment for segment in segments.split("/") if segment]
+    endpoint = "/" + "/".join(path_segments)
+    if path_segments and (force_trailing_slash or segments.endswith("/")):
+        endpoint += "/"
+    return endpoint
+
+
 def handle_passthrough_request(
-    client: APIClient, permission_handler: BasePermissionHandler, segments: str
+    client: APIClient,
+    permission_handler: BasePermissionHandler,
+    segments: str,
+    *,
+    force_trailing_slash: bool = False,
 ):
+    """
+    Checks permissions for the incoming request and, if it is allowed,
+    forwards it to the upstream API.
+
+    :param client: `APIClient` to forward the request with.
+    :param permission_handler: `BasePermissionHandler` used to authorize it.
+    :param segments: the wildcard path segments, as captured by Flask.
+    :param force_trailing_slash: whether the target backend requires a trailing
+        slash. Defaults to forwarding the path exactly as it was addressed.
+    :return: a Flask response.
+    """
     path_segments = tuple(segment for segment in segments.split("/") if segment)
     args = PermissionArguments(
         method=request.method,
@@ -26,7 +58,9 @@ def handle_passthrough_request(
         user_role=determine_user_role(current_user),
     )
 
-    api_endpoint = "/" + "/".join(path_segments) + "/"
+    api_endpoint = build_api_endpoint(
+        segments, force_trailing_slash=force_trailing_slash
+    )
     logger.debug(f'Passthrough requested for "{api_endpoint}" with args {args}')
 
     # The heavy-lifting for permission checking is done in `permission_handler.check`
@@ -85,7 +119,7 @@ def handle_passthrough_request(
             if content_is_json:
                 content = json.dumps(content, ensure_ascii=False)
             else:
-                content = content.encode('utf-8')
+                content = content.encode("utf-8")
 
         # Patching response headers
         # Needed, since Stemweb returns a Content-Type of "text/html" in some cases

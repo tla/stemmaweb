@@ -43,6 +43,8 @@ def blueprint_factory(stemmarest_client: APIClient):
             client=stemmarest_client,
             permission_handler=permission_handler,
             segments=segments,
+            # Keep the slashes as passed by the client
+            force_trailing_slash=False,
         )
 
     return blueprint
