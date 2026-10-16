@@ -15,8 +15,8 @@ module.exports = defineConfig({
 
     setupNodeEvents(on, config) {
       on('task', {
-        reseedDB: () =>
-          reseedDB(config.env.CY_STEMMAREST_ENDPOINT).then(() => null),
+        reseedDB: (dataSet) =>
+          reseedDB(config.env.CY_STEMMAREST_ENDPOINT, dataSet).then(() => null),
         clearDownloads: () => clearDownloads(config.downloadsFolder),
         listDownloads: () => listDownloads(config.downloadsFolder)
       });

@@ -36,11 +36,14 @@ async function deleteAll(endpoint, listPath, itemPath) {
   );
 }
 
-/** Delete all traditions and users, then load the "mini" test data set. */
-async function reseedDB(endpoint) {
+/**
+ * Delete all traditions and users, then load a test data set: "mini" (the default) or
+ * "empty" (the users only, no traditions).
+ */
+async function reseedDB(endpoint, dataSet = 'mini') {
   await deleteAll(endpoint, '/traditions', '/tradition');
   await deleteAll(endpoint, '/users', '/user');
-  const { stdout } = await run(findInitScript(), ['mini'], {
+  const { stdout } = await run(findInitScript(), [dataSet], {
     env: { ...process.env, STEMMAREST_ENDPOINT: endpoint }
   });
   return stdout.trim().split('\n').slice(-1)[0];

@@ -72,6 +72,18 @@ Cypress.Commands.add('openAddSectionDialog', () => {
   cy.get('#new_section_partial').should('not.have.class', 'hide');
 });
 
+// Open the upload dialog in "add a new tradition" mode and wait for it to settle.
+Cypress.Commands.add('openAddTraditionDialog', () => {
+  cy.contains('h6', 'Text directory')
+    .find('svg.feather-plus-circle')
+    .parents('a')
+    .click();
+  cy.get('#add_tradition_modal').should('be.visible');
+  cy.focused().should('have.id', 'add_tradition_modal');
+  cy.get('#button_new_tradition').click();
+  cy.get('#new_tradition_partial').should('not.have.class', 'hide');
+});
+
 // Fill in the section form; `file` is a path relative to the Cypress project root.
 Cypress.Commands.add('fillSectionForm', ({ name, file, type }) => {
   if (name) cy.get('#new_name').type(name);

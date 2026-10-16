@@ -14,4 +14,6 @@ Florilegium; 8 alignment columns) in each format the "add a section" upload acce
 | `armexample.cx.json` | cxjson (CollateX JSON output) |
 | `armexample.zip` | graphml (native GraphML export: `tradition.xml` plus one section file) |
 
+`matthew401.graphml.zip` is a native GraphML export holding a tradition with two stemmata; `empty-directory.cy.js` uploads it to add a tradition that has a stemma.
+
 Not yet covered (no sample file): `teips`, `cte`, `stemmaweb`.
