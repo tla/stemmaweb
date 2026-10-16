@@ -132,10 +132,7 @@ describe('Delete a tradition', () => {
     });
   });
 
-  // Known bug: deleting the last tradition sets the selected tradition to null, and the tradition list
-  // (traditionList.js:52) then reads `state.selectedTradition.name`, throwing "Cannot read properties of
-  // null (reading 'name')" as an unhandled rejection.
-  it.skip('can delete every tradition, leaving an empty directory (known bug: crashes on the last one)', () => {
+  it('can delete every tradition, leaving an empty directory', () => {
     cy.visitAs(admin);
     let left = traditions.map((t) => t.title);
     traditions.forEach((t) => {
