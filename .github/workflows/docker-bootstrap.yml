@@ -8,6 +8,7 @@ on:
     paths:
       - Makefile.PL
       - Dockerfile-bootstrap
+  workflow_dispatch:
     
 env:
   # TODO: Change variable to your image's name.
