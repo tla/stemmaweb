@@ -29,24 +29,25 @@ RUN apk update \
 
 # download, compile and install Phylip Pars
 WORKDIR /tmp
-RUN wget --no-check-certificate http://evolution.gs.washington.edu/phylip/download/phylip-3.697.tar.gz \
+RUN wget https://phylipweb.github.io/phylip/download/phylip-3.697.tar.gz \
  && tar -xzvf phylip-3.697.tar.gz
 WORKDIR /tmp/phylip-3.697/src
-RUN sed -e 's/^CFLAGS =/CFLAGS = -fcommon/' Makefile.unx > Makefile \
+RUN sed -e 's/^CFLAGS =/CFLAGS = -fcommon -Wno-error=implicit-function-declaration/' Makefile.unx > Makefile \
  && make install \
  && cp ../exe/pars /usr/local/bin
 
 # some of stemmaweb's dependencies fail tests or don't install cleanly from CPAN
 RUN apk add --no-cache \
     perl-plack \
-    perl-crypt-rijndael
+    perl-crypt-rijndael \
+    perl-net-ssleay
 
 RUN wget --no-check-certificate https://cpanmin.us -O cpanm && \
     perl cpanm App::cpanminus
 
 # a few tests will fail in the build container
 # in a not containerised environment the tests succeeed
-RUN cpanm --notest IO::All Net::SSLeay
+RUN cpanm --notest IO::All Catalyst::Plugin::Cache IO::Socket::SSL::Utils JSON::WebToken 
 
 # install the other ones honestly, with tests
 # First get the modules whose dependents don't record them accurately

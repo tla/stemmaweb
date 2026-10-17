@@ -42,7 +42,7 @@ requires 'Cache::FileCache';
 requires 'Crypt::OpenSSL::X509';
 requires 'Crypt::OpenSSL::RSA';
 requires 'Date::Parse';
-requires 'Digest::SHA256';
+# requires 'Digest::SHA256';
 requires 'File::chdir';
 requires 'File::Temp';
 requires 'File::Which';
