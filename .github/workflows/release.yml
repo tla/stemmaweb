@@ -9,7 +9,7 @@ env:
   IMAGE_NAME: dhuniwien/stemmaweb
 
 jobs:
-  # Push bootstrap image to GitHub Packages.
+  # Push most recently tagged image to Docker Hub and update 'latest'.
   push:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
@@ -20,34 +20,34 @@ jobs:
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v4
 
       - name: Log into ghcr.io
-        uses: docker/login-action@v1
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log into DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PW }}
 
       - name: Build and push development image
         id: docker_build
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v7
         with:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.VERSION }},${{ env.IMAGE_NAME }}:latest
       - name: Build and push FCGI image
         id: docker_build_fcgi
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v7
         with:
           file: Dockerfile-fcgi
           push: true
