@@ -66,23 +66,29 @@ class AddTraditionModal extends HTMLElement {
         this.#initStyles();
       }; 
     } );
-    // Make sure, on cancel the form is returned to pristine state
-    add_tradition_modal_elem.addEventListener('transitionend', function (evt) {
-      if (
-        evt.target === add_tradition_modal_elem &&
-        !add_tradition_modal_elem.classList.contains('show')
-      ) {
-        [
-          'add_tradition_partial',
-          'new_tradition_partial',
-          'new_section_partial'
-        ].forEach(function (elem) {
-          $(elem).classList.add('hide');
-        });
-        $('add_tradition_modal_addition_type_choice').classList.remove('hide');
-        $('add_tradition_form').classList.remove('was-validated');
+    // Make sure, whenever the modal is hidden (on cancel/close as well as after
+    // a successful submit), the form is returned to pristine state
+    add_tradition_modal_elem.addEventListener('hidden.bs.modal', (evt) => {
+      if (evt.target === add_tradition_modal_elem) {
+        AddTraditionModal.#resetForm();
       }
     });
+  }
+
+  static #resetForm() {
+    const form = $('add_tradition_form');
+    form.reset();
+    form.classList.remove('was-validated');
+    [
+      'add_tradition_partial',
+      'new_tradition_partial',
+      'new_section_partial'
+    ].forEach(function (elem) {
+      $(elem).classList.add('hide');
+    });
+    $('add_tradition_modal_addition_type_choice').classList.remove('hide');
+    $('texttradition_literal').innerText = 'text / tradition';
+    $('tradition_literal').innerText = 'tradition';
   }
 
   /**
