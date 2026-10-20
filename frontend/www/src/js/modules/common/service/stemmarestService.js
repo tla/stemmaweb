@@ -136,9 +136,10 @@ class StemmarestService extends BaseService {
    * @param {string | null} language
    * @param {string} direction
    * @param {boolean} isPublic
+   * @param {string | null} sectionName - Name for the first section.
    * @returns {Promise<BaseResponse<{ tradId: string }>>}
    */
-  addTradition(name, file, fileType, userId, language, direction, isPublic) {
+  addTradition(name, file, fileType, userId, language, direction, isPublic, sectionName) {
     if (userId === null) {
       return Promise.resolve({
         success: false,
@@ -155,6 +156,9 @@ class StemmarestService extends BaseService {
     }
     formData.append('direction', direction);
     formData.append('public', isPublic );
+    if (sectionName !== null) {
+      formData.append('sectionName', sectionName);
+    }
     return this.fetch('/api/tradition', {
       method: 'POST',
       'Content-Type': 'multipart/form-data',
