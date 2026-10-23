@@ -56,6 +56,11 @@ sub ajax {
 
     # Did it work?
     unless ($resp->is_success) {
+        # "User doesn't exist" changed in Stemmarest from 204 to 404; handle this so that
+        # new users can still be created
+        if ($resp->code == 404 && $location =~ /^\/user\//) {
+            return undef;
+        }
         throw_ua($resp);
     }
     if ($resp->code == 204) {
