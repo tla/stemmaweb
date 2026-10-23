@@ -3,8 +3,8 @@ from base64 import b64encode
 
 import requests
 from authlib.integrations.flask_client import OAuth
+from flask import current_app
 
-import stemmaweb_middleware.constants as constants
 from stemmaweb_middleware.models import StemmawebUser
 from stemmaweb_middleware.resources.base import APIClient
 
@@ -53,8 +53,16 @@ class StemmarestAuthService:
             method="GET",
             path=f"/user/{user_id}",
         )
-        no_such_user = response.status_code == 204
-        return None if no_such_user else StemmawebUser.parse_raw(response.content)
+        # If the user is unknown we're going to create it
+        if response.status_code == 404:
+            return None
+        # If there's another bad response, we need to raise it
+        if not response.ok:
+            raise RuntimeError(
+                f"Stemmarest returned status {response.status_code} "
+                f"when loading user {user_id}"
+            )
+        return StemmawebUser.parse_raw(response.content)
 
     def user_credentials_valid(
         self, credentials: models.LoginUserDTO
@@ -143,7 +151,7 @@ class StemmarestAuthService:
         code: str, client_id: str, client_secret: str
     ) -> str:
         data = dict(code=code, client_id=client_id, client_secret=client_secret)
-        url = constants.GITHUB_API_ACCESS_TOKEN_URL
+        url = current_app.config["GITHUB_API_ACCESS_TOKEN_URL"]
         headers = {"Accept": "application/json"}
         response = requests.post(url, data=data, headers=headers)
         return response.json()["access_token"]
@@ -194,7 +202,7 @@ class StemmarestAuthService:
                              to authenticate with the GitHub API.
         :return: The login name of the GitHub user.
         """
-        url = constants.GITHUB_API_USER_URL
+        url = current_app.config["GITHUB_API_USER_URL"]
         headers = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(url, headers=headers)
         return response.json()["login"]
@@ -233,7 +241,7 @@ class StemmarestAuthService:
                              to authenticate with the GitHub API.
         :return: The user's primary email address.
         """
-        url = constants.GITHUB_API_USER_EMAILS_URL
+        url = current_app.config["GITHUB_API_USER_EMAILS_URL"]
         headers = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(url, headers=headers)
         emails: list[dict] = response.json()

@@ -47,7 +47,7 @@ def register_extensions(app: Flask):
         name="github",
         client_id=app.config["GITHUB_CLIENT_ID"],
         client_secret=app.config["GITHUB_CLIENT_SECRET"],
-        authorize_url=constants.GITHUB_AUTHORIZATION_URL,
+        authorize_url=app.config["GITHUB_AUTHORIZATION_URL"],
         client_kwargs={"scope": "user:email"},
     )
 

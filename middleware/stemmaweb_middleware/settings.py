@@ -55,6 +55,21 @@ if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
 
 GITHUB_CLIENT_ID = env.str("GITHUB_CLIENT_ID", None)
 GITHUB_CLIENT_SECRET = env.str("GITHUB_CLIENT_SECRET", None)
+# Overridable so that the end-to-end tests can run the flow against a local fake.
+# The authorization URL is opened by the user's browser; the others are called by
+# the middleware itself, so they may need different hosts.
+GITHUB_AUTHORIZATION_URL = env.str(
+    "GITHUB_AUTHORIZATION_URL", default=constants.GITHUB_AUTHORIZATION_URL
+)
+GITHUB_API_ACCESS_TOKEN_URL = env.str(
+    "GITHUB_API_ACCESS_TOKEN_URL", default=constants.GITHUB_API_ACCESS_TOKEN_URL
+)
+GITHUB_API_USER_URL = env.str(
+    "GITHUB_API_USER_URL", default=constants.GITHUB_API_USER_URL
+)
+GITHUB_API_USER_EMAILS_URL = env.str(
+    "GITHUB_API_USER_EMAILS_URL", default=constants.GITHUB_API_USER_EMAILS_URL
+)
 if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
     logger.warning(
         "GitHub OAuth not configured, login will not work. "

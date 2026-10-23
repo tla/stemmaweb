@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 import flask_login
 from flask import Blueprint, current_app, redirect, request
 from flask.wrappers import Response
@@ -119,11 +121,23 @@ def blueprint_factory(
             redirect_uri = redirect_uri[:-1]
         return redirect(redirect_uri)
 
+    def oauth_callback_uri(callback_path: str) -> str:
+        """
+        Absolute URL of an OAuth callback endpoint of this middleware.
+
+        OAuth providers require an absolute `redirect_uri`, but
+        `STEMMAWEB_MIDDLEWARE_URL` may be a path relative to the frontend
+        (e.g. `/stemmaweb/requests`), so it is resolved against
+        `STEMMAWEB_FRONTEND_URL` in that case.
+        """
+        middleware_url = current_app.config["STEMMAWEB_MIDDLEWARE_URL"]
+        frontend_url = current_app.config["STEMMAWEB_FRONTEND_URL"]
+        base = urljoin(frontend_url, middleware_url).rstrip("/")
+        return f"{base}/{callback_path}"
+
     @blueprint.route("/oauth-google")
     def google_login():
-        redirect_uri = (
-            f"{current_app.config['STEMMAWEB_MIDDLEWARE_URL']}/oauthcallback-google"
-        )
+        redirect_uri = oauth_callback_uri("oauthcallback-google")
         return oauth.google.authorize_redirect(redirect_uri)
 
     def oauth_redirect(
@@ -188,9 +202,7 @@ def blueprint_factory(
 
     @blueprint.route("/oauth-github")
     def github_login():
-        redirect_uri = (
-            f"{current_app.config['STEMMAWEB_MIDDLEWARE_URL']}/oauthcallback-github"
-        )
+        redirect_uri = oauth_callback_uri("oauthcallback-github")
         # TODO: proper `state` parameter handling to prevent CSRF
         # See: https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps#parameters  # noqa: E501
         return oauth.github.authorize_redirect(
