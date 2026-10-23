@@ -13,6 +13,11 @@ services:
     container_name: recaptcha
     build: recaptcha_mock
 
+  # Stands in for GitHub's OAuth and REST API (see frontend-e2e/cypress/e2e/github-login.cy.js)
+  oauthmock:
+    container_name: oauthmock
+    build: oauth_mock
+
   stemmaweb:
     container_name: stemmaweb
     build: .
@@ -20,11 +25,20 @@ services:
       - stemmarest
       - stemweb
       - recaptcha
+      - oauthmock
     env_file:
       - .env.test
     environment:
       # Takes precedence over .env.test
       RECAPTCHA_VERIFICATION_URL: http://recaptcha:8001/recaptcha/api/siteverify
+      # GitHub login runs against the oauthmock service. The OAuth callback and the final
+      # redirect need absolute URLs, so tell the middleware where it is served.
+      STEMMAWEB_MIDDLEWARE_URL: http://stemmaweb:3000
+      STEMMAWEB_FRONTEND_URL: http://stemmaweb:3000/
+      GITHUB_AUTHORIZATION_URL: http://oauthmock:8002/login/oauth/authorize
+      GITHUB_API_ACCESS_TOKEN_URL: http://oauthmock:8002/login/oauth/access_token
+      GITHUB_API_USER_URL: http://oauthmock:8002/user
+      GITHUB_API_USER_EMAILS_URL: http://oauthmock:8002/user/emails
     volumes:
       - ./frontend/config/env.js.prod:/usr/src/app/stemmaweb_middleware/stemmaweb/src/js/env.js
 
