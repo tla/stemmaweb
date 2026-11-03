@@ -31,8 +31,9 @@ container.
 ## What is covered
 
 `t/controller_*.t` covers every public action of every controller in
-`lib/stemmaweb/controller/`, with the exception of `Stexaminer.pm`, which is
-out of commission and is tested by nothing.
+`lib/stemmaweb/controller/`, with the exception of `Stexaminer.pm`, whose analysis code lives in
+`stemmaweb::Model::Analysis` and is tested by `t/model_Analysis.t` against a
+stand-in for the Stexaminer service.
 
 | File | Controller |
 | --- | --- |

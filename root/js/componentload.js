@@ -216,7 +216,7 @@ function load_stemma(idx) {
     }
     if (stemmadata.directed) {
       // Stexaminer submit action
-      var stexpath = _get_url(["stexaminer", selectedTextID, idx]);
+      var stexpath = _get_url(["stexaminer", selectedTextID, stemmadata.stemmaid]);
       $('#run_stexaminer').attr('action', stexpath);
       $('#stexaminer_button').show();
     }

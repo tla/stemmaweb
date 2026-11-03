@@ -5,4 +5,5 @@ scratch/
 META.yml
 .DS_Store
 .vscode
+.ghcr_token
 munge.pl

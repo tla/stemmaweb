@@ -10,6 +10,10 @@ services:
       - MARIADB_PASSWORD=StemWeb-DevPassWord
       - MARIADB_DATABASE=stemwebdb_v1
       - MARIADB_RANDOM_ROOT_PASSWORD=yes
+    volumes:
+      ## Creates the stexaminer database and grants the stemweb user access
+      ## (only runs when the DB is first initialised)
+      - ./dev/mariadb/initdb:/docker-entrypoint-initdb.d:ro
     networks:
       - backend
     
@@ -39,6 +43,39 @@ services:
       - redis
     networks:
       - backend
+
+  stexaminer:
+    image: dhuniwien/stexaminer
+    ## The idp solver binaries inside the image are x86-64 only, so the image
+    ## has to be built (docker build --platform linux/amd64) and run as amd64
+    platform: linux/amd64
+    container_name: stexaminer
+    environment:
+      - STEX_DEBUG=true
+      - STEX_SECRET_KEY=stexaminer-dev-secret-key
+      ## Celery broker / result store; use redis DB 1 to stay clear of stemweb
+      - STEX_REDIS=redis://redis:6379/1
+      - STEX_DBENGINE=mysql
+      - STEX_DBNAME=stexaminer_db
+      - STEX_DBUSER=stemweb
+      - STEX_DBPASSW=StemWeb-DevPassWord
+      - STEX_DBHOST=mariadb
+      - STEX_DBPORT=3306
+    volumes:
+      ## Stopgap fix for the result cache in the stexaminer image, which
+      ## returns the wrong number of results (or none) for repeated groupings
+      - ./dev/stexaminer/views.py:/home/idp/api_app/views.py:ro
+    ports:
+      - 127.0.0.1:8000:8000
+    depends_on:
+      - mariadb
+      - redis
+    networks:
+      backend:
+        ## Stexaminer's Django settings only accept requests addressed to
+        ## the host name "idp" (or localhost)
+        aliases:
+          - idp
 
   stemmarest:
     image: "dhuniwien/stemmarest:main"
