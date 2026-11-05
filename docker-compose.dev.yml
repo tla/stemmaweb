@@ -61,10 +61,6 @@ services:
       - STEX_DBPASSW=StemWeb-DevPassWord
       - STEX_DBHOST=mariadb
       - STEX_DBPORT=3306
-    volumes:
-      ## Stopgap fix for the result cache in the stexaminer image, which
-      ## returns the wrong number of results (or none) for repeated groupings
-      - ./dev/stexaminer/views.py:/home/idp/api_app/views.py:ro
     ports:
       - 127.0.0.1:8000:8000
     depends_on:
