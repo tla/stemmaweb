@@ -206,7 +206,11 @@ sub new_db {
 	];
 	$res = $ua->post( "$n4jurl/tradition/$t6id/section", 'Content-Type' => 'form-data', Content => $t6data);
 	die errorout("Second half of multi-section tradition could not be created", $res) unless $res->code == 201;
+	$res = $ua->post( "$n4jurl/tradition/$t6id/stemma", 'Content-Type' => 'application/json',
+	  Content => to_json({ dot => filejstr("$datadir/legend.dot") }));
+	die errorout("Multi-section stemma could not be added", $res) unless $res->code == 201;
 	say("$t6id: Legend segments");
+	push(@{$created->{private}}, $t6id);
 	say("Test data setup complete.");
 	return $created;
 }
