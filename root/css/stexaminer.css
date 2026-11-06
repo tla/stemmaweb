@@ -137,3 +137,16 @@
 #aggregates {
   clear: left;
 }
+
+#analysis_waitbox {
+  text-align: center;
+  margin: 2em;
+}
+
+#status .notice {
+  display: block;
+  margin: 0.5em 0;
+  padding: 0.5em 1em;
+  background: #fff8dc;
+  border: 1px solid #e6d58a;
+}

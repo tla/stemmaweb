@@ -11,7 +11,7 @@ use Test::More;
 
 use stemmaweb::Model::Stemma;
 
-BEGIN { use_ok('stemmaweb::Model::Analysis', qw/ run_analysis wit_stringify /) }
+BEGIN { use_ok('stemmaweb::Model::Analysis', qw/ run_analysis /) }
 
 my $stemma = stemmaweb::Model::Stemma->new(dot => <<'DOT');
 digraph "test" {
@@ -129,14 +129,6 @@ ok(!exists $loc{4}->{layerwits}, 'Layer notes are only present where there is a 
 # Options
 # ---------------------------------------------------------------------------
 
-# Merging spelling variants makes rank 5 one reading (A,B,C,D all agree) and
-# the location disappears.
-@calls = ();
-$t = run_analysis($stemma, [$section], solver => $solver, max_parallel => 1,
-    merge_types => ['spelling']);
-is_deeply([ map { $_->{id} } @{ $t->{variants} } ], [ 2, 3, 4 ],
-    'Merging spelling variants removes the location that only varied in spelling');
-
 # A location where only one leaf witness has its own reading is type-1 variation.
 {
     my @same = map { rdg(20, 1, 'cat') } 1 .. 3;
@@ -166,6 +158,96 @@ is($t->{variant_count}, 4, 'The same locations came out');
 my $par = run_analysis($stemma, [$section], solver => $solver, max_parallel => 3, max_batch => 1);
 is_deeply($par, $t, 'Requests made in parallel give the same analysis');
 
+# ---------------------------------------------------------------------------
+# Calculations that are still running
+# ---------------------------------------------------------------------------
+
+# Nothing has finished: the locations are listed, unsolved but not in error.
+$t = run_analysis($stemma, [$section], solver => sub { { pending => 1 } }, max_parallel => 1);
+ok(!$t->{error}, 'A calculation that is still running is not an error');
+is($t->{incomplete}, 4, 'All the locations are incomplete');
+is($t->{genealogical_count}, 0, 'and none are counted as genealogical');
+is_deeply([ map { $_->{unsolved} } @{ $t->{variants} } ], [ ('pending') x 4 ],
+    'The locations are marked as pending');
+is_deeply([ map { $_->{group} } @{ $t->{variants}->[0]->{readings} } ], [ [ 'A', 'B' ], [ 'C', 'D' ] ],
+    'and keep their groups');
+
+# One slow batch among quick ones: only its locations are incomplete
+{
+    my $slow_one = sub {
+        my ($command, $dot, $groupings) = @_;
+        return { pending => 1 } if grep { @$_ == 3 } @$groupings;    # the location with the omission
+        return $solver->(@_);
+    };
+    $t = run_analysis($stemma, [$section], solver => $slow_one, max_parallel => 1, max_batch => 1);
+    ok(!$t->{error}, 'No error with one slow location');
+    is($t->{incomplete}, 1, 'Only the slow location is incomplete');
+    is_deeply([ map { $_->{id} } grep { $_->{unsolved} } @{ $t->{variants} } ], [3],
+        'and it is the right one');
+    is($t->{genealogical_count}, 3, 'The rest are analyzed as usual');
+}
+
+# The client for the service, against a stand-in for it
+{
+    require LWP::Protocol::PSGI;
+
+    # mode: 'quick' answers at once; 'slow' needs $polls status checks before it
+    # is finished; 'fail' is a job that ends in failure.
+    my ($mode, $polls, %job, $next, $posts) = ('quick', 3, (), 0, 0);
+    my $reply = sub { [ $_[0], [ 'Content-Type' => 'application/json' ], [ JSON::encode_json($_[1]) ] ] };
+    LWP::Protocol::PSGI->register(sub {
+        my $env = shift;
+        if ($env->{PATH_INFO} eq '/calc-items/') {
+            $posts++;
+            my $id = ++$next;
+            return $reply->(201, { jobid => $id, result => [ ['quick'] ], result_source => 'algorithm' })
+                if $mode eq 'quick';
+            $job{$id} = { polls_left => $polls, fail => $mode eq 'fail' };
+            return $reply->(201, { 'Feedback ' => "The calculation is ongoing, please request the result/status later via the jobid $id" });
+        }
+        if ($env->{PATH_INFO} =~ m!^/jobstatus/(\d+)/$!) {
+            my $this = $job{$1} or return [ 400, [], ["There was no calculation with id $1"] ];
+            return $reply->(200, { jobid => $1, status => 2, result => 'idp fell over' }) if $this->{fail};
+            return $reply->(200, { jobid => $1, status => 1, result => 'The calculation is ongoing' })
+                if $this->{polls_left}-- > 0;
+            return $reply->(200, { jobid => $1, status => 0, result => [ ['slow'] ] });
+        }
+        return [ 404, [], ['nope'] ];
+    }, host => 'stex.test');
+
+    my @request = ('findGroupings', 'digraph {}', [ [ ['A'], ['B'] ] ]);
+    my $call = sub {
+        stemmaweb::Model::Analysis::_call_stexaminer({ stexaminer_url => 'http://stex.test',
+            poll_interval => 0.01, @_ }, @request);
+    };
+
+    is_deeply($call->(deadline => time + 30), [ ['quick'] ], 'A quick answer comes straight back');
+    is($posts, 1, 'after a single request');
+
+    # A job that outlasts the wait is reported as pending, not as an error...
+    ($mode, $posts) = ('slow', 0);
+    my $answer = $call->(deadline => time - 1);
+    is_deeply([ @{$answer}{qw/ pending jobid /} ], [ 1, 2 ], 'A slow calculation is reported as pending, with its job');
+
+    # ...but is waited for if there is time
+    is_deeply($call->(deadline => time + 30), [ ['slow'] ], 'A calculation that finishes within the wait gives its result');
+
+    # A failed job is a failure, and not a pending calculation
+    ($mode, $posts) = ('fail', 0);
+    eval { $call->(deadline => time + 30) };
+    like($@, qr/failed: idp fell over/, 'A job that ended in failure is an error');
+
+    # A job the service has lost track of while we wait is an error too
+    ($mode, $polls) = ('slow', 1);
+    %job = ();
+    {
+        no warnings 'redefine';
+        local *stemmaweb::Model::Analysis::_job_status = sub { undef };
+        eval { $call->(deadline => time + 30) };
+        like($@, qr/lost track of job/, 'A job the service no longer knows is an error');
+    }
+}
+
 # Failure of the service leaves the table in place, marked as unsolved.
 $t = run_analysis($stemma, [$section], solver => sub { die "no service here\n" }, max_parallel => 1);
 like($t->{error}, qr/no service here/, 'Solver failure is reported');
@@ -189,12 +271,5 @@ $t = run_analysis($stemma, [ $section, { %$section, id => 2, name => 'T' } ],
     solver => $solver, max_parallel => 1);
 is($t->{variants}->[0]->{id}, 'S:2', 'Locations are labelled by section when there is more than one');
 is(scalar @{ $t->{variants} }, 8, 'Both sections were analyzed');
-
-# ---------------------------------------------------------------------------
-# wit_stringify
-# ---------------------------------------------------------------------------
-
-is(wit_stringify([ 'A', 'B' ]), "['A','B']", 'A flat list of witnesses is one group');
-is(wit_stringify([ [ 'A', 'B' ], ['C'] ]), "['A','B'] / ['C']", 'Groups are separated by slashes');
 
 done_testing();

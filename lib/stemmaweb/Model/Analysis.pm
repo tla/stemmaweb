@@ -8,7 +8,7 @@ use LWP::UserAgent;
 use POSIX ();
 use vars qw/ @EXPORT_OK /;
 
-@EXPORT_OK = qw/ run_analysis wit_stringify /;
+@EXPORT_OK = qw/ run_analysis /;
 
 =head1 NAME
 
@@ -17,12 +17,11 @@ alignment data held in Stemmarest
 
 =head1 DESCRIPTION
 
-This replaces the old Text::Tradition::Analysis. It turns the alignment of a
-tradition section (as served by Stemmarest at C</tradition/$id/section/$sid/json>)
-into a list of witness groupings, one per variant location; sends these, along
-with the stemma, to the Stexaminer service for the C<findGroupings> and
-C<findClasses> calculations; and folds the answers back into the per-location
-structure that the Stexaminer page expects.
+Turn the JSON alignment of a Stemmarest tradition section into a list of 
+witness groupings, one per variant location, and send them, along with the 
+stemma, to the Stexaminer service for the C<findGroupings> and C<findClasses> 
+calculations. Fold the answers back into the per-location structure that 
+the Stexaminer page expects.
 
 =head1 FUNCTIONS
 
@@ -45,22 +44,25 @@ that should return the decoded Stexaminer result list. Mostly useful for testing
 =item * exclude_type1 - Leave out locations where the variation is uninformative
 (only singleton readings in witnesses that have no descendants.)
 
-=item * merge_types - Array of relation types whose readings should be treated
-as the same reading.
-
 =item * max_parallel - How many requests to have in flight at once (default 8.)
 
 =item * max_batch - How many locations to send to the service in one request
 (default 20.)
 
-=item * poll_timeout - How many seconds to wait for a slow calculation.
+=item * wait_timeout - How many seconds in all to wait for the calculations
+to finish (default 60.) Some calculations take hours, and these are left to run
+on the service; the locations that depend on them come back unsolved and
+marked C<pending>, and are counted in C<incomplete>.
+
+=item * poll_interval - How many seconds to leave between asking the service
+whether a calculation has finished (default 2.)
 
 =back
 
 Returns a hash with the keys C<variants>, C<variant_count>, C<genealogical_count>,
-C<conflict_count> and C<reversion_count>. If the Stexaminer could not be reached
-or did not answer sensibly, the variants are returned unsolved and the key
-C<error> is set.
+C<conflict_count>, C<reversion_count> and C<incomplete>. If the Stexaminer could
+not be reached or did not answer sensibly, the variants are returned unsolved and
+the key C<error> is set.
 
 =cut
 
@@ -69,7 +71,7 @@ my $OMITTED = '(omitted)';
 
 sub run_analysis {
     my ($stemma, $sections, %opts) = @_;
-    die "This stemma has no root, so there is no direction of copying to analyze. Choose a root for it on the stemma page first.\n" if $stemma->is_undirected;
+    die "This stemma has no root, so there is no direction of copying to analyze. Choose a root for it on the dashboard first.\n" if $stemma->is_undirected;
 
     my @locations;
     my $multi = @$sections > 1;
@@ -111,6 +113,7 @@ sub run_analysis {
             }
         }
     }
+    $opts{deadline} = time + (exists $opts{wait_timeout} ? $opts{wait_timeout} : 60);
     my $solver = $opts{solver} || sub { _call_stexaminer(\%opts, @_) };
     my @answers = _parallel_map(
         exists $opts{max_parallel} ? $opts{max_parallel} : 8,
@@ -120,6 +123,7 @@ sub run_analysis {
             my $batch = $problem->{batches}->[ $job->{batch} ];
             my $answer = eval { $solver->($job->{command}, $problem->{dot}, $batch) };
             return { error => $@ } if $@;
+            return { pending => 1 } if ref $answer eq 'HASH' && $answer->{pending};
             return { error => "Stexaminer returned "
                   . (ref $answer eq 'ARRAY' ? scalar(@$answer) : 'no')
                   . " results for " . scalar(@$batch) . " locations\n" }
@@ -132,6 +136,8 @@ sub run_analysis {
         my ($job, $answer) = ($jobs[$i], $answers[$i]);
         if ($answer->{error}) {
             $fail->($job->{problem}, $answer->{error});
+        } elsif ($answer->{pending}) {
+            $job->{problem}->{pending}->{ $job->{batch} } = 1;
         } else {
             $job->{problem}->{answers}->{ $job->{command} }->[ $job->{batch} ] =
               $answer->{answer};
@@ -144,9 +150,10 @@ sub run_analysis {
     }
     my $error = join('; ', @errors);
 
-    my ($genealogical, $conflicts, $reversions) = (0, 0, 0);
+    my ($genealogical, $conflicts, $reversions, $incomplete) = (0, 0, 0, 0);
     foreach my $loc (@locations) {
         if ($loc->{unsolved}) {
+            $incomplete++ if $loc->{unsolved} eq 'pending';
             _init_unsolved($loc);
         } else {
             $genealogical++ if $loc->{genealogical};
@@ -177,6 +184,7 @@ sub run_analysis {
         genealogical_count => $genealogical,
         conflict_count     => $conflicts,
         reversion_count    => $reversions,
+        incomplete         => $incomplete,
     };
     $result->{error} = "Stexaminer calculation failed: $error" if $error;
     return $result;
@@ -189,43 +197,40 @@ sub _section_locations {
     my $aln = $section->{alignment};
     my $graph = $stemma->graph;
     my %extant = map { $_ => 1 } $stemma->witnesses;
-    my @hypotheticals = $stemma->hypotheticals;
 
-    # Which readings should we treat as one?
-    my $collapse = _collapse_classes($section->{relations}, $opts->{merge_types});
-
-    # Sort the alignment rows into main witnesses and their layers
+    # Sort the aligned columns into main witnesses and their layers
     my (@main, @layers, %present);
-    foreach my $row (@{ $aln->{alignment} }) {
-        my $wit = $row->{witness};
-        next unless $extant{$wit};
-        $present{$wit} = 1;
-        if (!$row->{layer}) {
-            push(@main, { wit => $wit, label => $wit, tokens => $row->{tokens} });
-        } elsif ($row->{layer} eq 'a.c.') {
-            push(@layers, { wit => $wit, label => $wit . $AC_LABEL,
-                tokens => $row->{tokens} });
+    foreach my $col (@{ $aln->{alignment} }) {
+        my $sigil = $col->{witness};
+        next unless $extant{$sigil};
+        $present{$sigil} = 1;
+        if (!$col->{layer}) {
+            push(@main, { wit => $sigil, label => $sigil, tokens => $col->{tokens} });
+        } elsif ('(' . $col->{layer} . ')' eq $AC_LABEL) {
+            # TODO: support layers besides a.c. when we have the graph alteration logic to support it
+            push(@layers, { wit => $sigil, label => $sigil . $AC_LABEL,
+                tokens => $col->{tokens} });
         }
     }
 
-    # Stemma witnesses that have no text here are always missing
-    my @never = grep { !$present{$_} } keys %extant;
+    # Keep track of which witnesses are missing from the section
+    my @absent = grep { !$present{$_} } keys %extant;
 
-    # Relation lookup for the parent analysis
+    # Make relation lookup map for the parent analysis
     my $relinfo = _relation_lookup($section->{relations});
 
     my @locations;
     foreach my $rank (1 .. $aln->{length}) {
         my $idx = $rank - 1;
         my (%group, %reading, %lacuna, @gap);
-        foreach my $row (@main) {
-            my $tok = $row->{tokens}->[$idx];
+        foreach my $witness (@main) {
+            my $tok = $witness->{tokens}->[$idx];
             if (!defined $tok) {
-                push(@gap, $row->{label});
+                push(@gap, $witness->{label});
             } elsif ($tok->{is_lacuna}) {
-                $lacuna{ $row->{wit} } = 1;
+                $lacuna{ $witness->{wit} } = 1;
             } else {
-                push(@{ $group{ $tok->{id} } }, $row->{label});
+                push(@{ $group{ $tok->{id} } }, $witness->{label});
                 $reading{ $tok->{id} } = $tok;
             }
         }
@@ -245,23 +250,6 @@ sub _section_locations {
             }
         }
 
-        # Merge readings that are to be treated as the same
-        if ($collapse) {
-            my %merged;
-            foreach my $rid (keys %group) {
-                my $class = $collapse->{$rid};
-                push(@{ $merged{ defined $class ? "c$class" : "r$rid" } }, $rid);
-            }
-            my (%mgroup, %mreading);
-            foreach my $rids (values %merged) {
-                my ($rep) = sort { @{ $group{$b} } <=> @{ $group{$a} } || $a cmp $b }
-                    @$rids;
-                $mgroup{$rep} = [ map { @{ $group{$_} } } @$rids ];
-                $mreading{$rep} = $reading{$rep};
-            }
-            %group = %mgroup;
-            %reading = %mreading;
-        }
         $group{$OMITTED} = \@gap if @gap;
         next unless keys %group > 1;
 
@@ -284,7 +272,7 @@ sub _section_locations {
             next unless $useful > 1;
         }
 
-        my %missing = map { $_ => 1 } @hypotheticals, @never, keys %lacuna;
+        my %missing = map { $_ => 1 } $stemma->hypotheticals, @absent, keys %lacuna;
         my @layerwits;
         foreach my $rid (@rids) {
             foreach (@{ $group{$rid} }) {
@@ -307,33 +295,11 @@ sub _section_locations {
     return @locations;
 }
 
-# Return a hash of reading ID -> class ID for readings joined by relations of
-# the given types, or undef if there are no types to merge.
-sub _collapse_classes {
-    my ($relations, $types) = @_;
-    return undef unless $types && @$types && $relations;
-    my %merge = map { $_ => 1 } @$types;
-    my %parent;
-    my $find;
-    $find = sub {
-        my $x = shift;
-        $parent{$x} = $x unless exists $parent{$x};
-        $parent{$x} = $find->($parent{$x}) if $parent{$x} ne $x;
-        return $parent{$x};
-    };
-    foreach my $rel (@$relations) {
-        next unless $merge{ $rel->{type} };
-        $parent{ $find->($rel->{source}) } = $find->($rel->{target});
-    }
-    my %class;
-    $class{$_} = $find->($_) for keys %parent;
-    return \%class;
-}
-
 sub _relation_lookup {
     my ($relations) = @_;
     my %info;
     foreach my $rel (@{ $relations || [] }) {
+        # HACK - this should really be checking if the relation type is weak
         next if $rel->{type} eq 'collated';
         $info{ join("\0", sort $rel->{source}, $rel->{target}) } = $rel;
     }
@@ -381,68 +347,81 @@ sub _prepare {
     } @$locs;
 
     # The service stores each request in a column of limited size, so send the
-    # groupings in batches that fit. It only caches the answers to requests it
-    # can finish within a couple of seconds, so keep the batches smallish too.
+    # groupings in batches that fit. 
     my $json = JSON->new->canonical;
     my $budget = ($opts->{max_request_size} || 4096) - length($dot) - 120;
     die "The stemma is too large for the Stexaminer\n" if $budget < 200;
     my $max_batch = $opts->{max_batch} || 20;
-    my (@batches, @batch, $size);
-    foreach my $g (@groupings) {
+    my (@batches, @batch, @members, @batch_locs, $size);
+    foreach my $i (0 .. $#groupings) {
+        my $g = $groupings[$i];
         my $enc = $json->encode($g);
         my $glen = length($enc) + ($enc =~ tr/,//) + 2;
         if (@batch && ($size + $glen > $budget || @batch >= $max_batch)) {
             push(@batches, [@batch]);
-            (@batch, $size) = ();
+            push(@batch_locs, [@members]);
+            (@batch, @members, $size) = ();
         }
         push(@batch, $g);
+        push(@members, $i);
         $size += $glen;
     }
-    push(@batches, \@batch) if @batch;
+    if (@batch) {
+        push(@batches, \@batch);
+        push(@batch_locs, \@members);
+    }
 
     $problem->{batches} = \@batches;
+    $problem->{batch_locs} = \@batch_locs;
     $problem->{dot}     = $dot;
     $problem->{graph}   = $graph;
     $problem->{from}    = \%from;
 }
 
-# Record what the Stexaminer said about the locations of a problem.
+# Record what the Stexaminer said about the locations of a problem. Locations
+# whose calculation is still running are marked as pending.
 sub _assemble {
     my ($problem) = @_;
-    my $locs  = $problem->{locations};
     my $graph = $problem->{graph};
     my %from  = %{ $problem->{from} };
-    my $grp_answer = [ map { @$_ } @{ $problem->{answers}->{findGroupings} } ];
-    my $cls_answer = [ map { @$_ } @{ $problem->{answers}->{findClasses} } ];
 
-    foreach my $i (0 .. $#$locs) {
-        my $loc = $locs->[$i];
-        $loc->{graph} = $graph;
-        my ($grp, $genealogical) = @{ $grp_answer->[$i] };
-        my ($cgrp, $classes) = @{ $cls_answer->[$i] };
-        my $unmap = sub { [ map { $from{$_} // $_ } @{ $_[0] } ] };
-        $loc->{genealogical} = $genealogical ? 1 : 0;
-
-        # Prefer the grouping that goes with the classes, if we have it
-        my $use = _group_list($cgrp);
-        $use = _group_list($grp) unless @$use == @{ $loc->{order} };
-        die "Stexaminer returned the wrong number of groups for location "
-            . $loc->{id} . "\n" unless @$use == @{ $loc->{order} };
-
-        my %classof;
-        if (ref $classes eq 'HASH') {
-            foreach my $class (keys %$classes) {
-                $classof{ $from{$_} // $_ } = $class for @{ $classes->{$class} };
-            }
-        } elsif (ref $classes eq 'ARRAY') {
-            foreach my $pair (@$classes) { $classof{ $from{ $pair->[0] } // $pair->[0] } = $pair->[1] }
+    foreach my $bi (0 .. $#{ $problem->{batch_locs} }) {
+        my @locs = @{ $problem->{locations} }[ @{ $problem->{batch_locs}->[$bi] } ];
+        if ($problem->{pending}->{$bi}) {
+            $_->{unsolved} = 'pending' for @locs;
+            next;
         }
-        $loc->{witcopy_types} = \%classof;
-        $loc->{reading_roots} = { map { $_ => 1 } grep { $classof{$_} eq 'source' } keys %classof };
-        $loc->{readings} = [
-            map { { readingid => $loc->{order}->[$_], group => $unmap->($use->[$_]) } }
-              0 .. $#$use
-        ];
+        my $grp_answer = $problem->{answers}->{findGroupings}->[$bi];
+        my $cls_answer = $problem->{answers}->{findClasses}->[$bi];
+        foreach my $i (0 .. $#locs) {
+            my $loc = $locs[$i];
+            $loc->{graph} = $graph;
+            my ($grp, $genealogical) = @{ $grp_answer->[$i] };
+            my ($cgrp, $classes) = @{ $cls_answer->[$i] };
+            my $unmap = sub { [ map { $from{$_} // $_ } @{ $_[0] } ] };
+            $loc->{genealogical} = $genealogical ? 1 : 0;
+
+            # Prefer the grouping that goes with the classes, if we have it
+            my $use = _group_list($cgrp);
+            $use = _group_list($grp) unless @$use == @{ $loc->{order} };
+            die "Stexaminer returned the wrong number of groups for location "
+                . $loc->{id} . "\n" unless @$use == @{ $loc->{order} };
+
+            my %classof;
+            if (ref $classes eq 'HASH') {
+                foreach my $class (keys %$classes) {
+                    $classof{ $from{$_} // $_ } = $class for @{ $classes->{$class} };
+                }
+            } elsif (ref $classes eq 'ARRAY') {
+                foreach my $pair (@$classes) { $classof{ $from{ $pair->[0] } // $pair->[0] } = $pair->[1] }
+            }
+            $loc->{witcopy_types} = \%classof;
+            $loc->{reading_roots} = { map { $_ => 1 } grep { $classof{$_} eq 'source' } keys %classof };
+            $loc->{readings} = [
+                map { { readingid => $loc->{order}->[$_], group => $unmap->($use->[$_]) } }
+                  0 .. $#$use
+            ];
+        }
     }
 }
 
@@ -492,6 +471,9 @@ sub _group_list {
     return [ map { $g->{$_} } sort { $a <=> $b } keys %$g ];
 }
 
+# Ask the Stexaminer service for a calculation. Returns the answer (a list with
+# one result per grouping) or, if the calculation is still running when we run
+# out of time to wait for it, the hash { pending => 1, jobid => $jobid }.
 sub _call_stexaminer {
     my ($opts, $command, $dot, $groupings) = @_;
     my $base = $opts->{stexaminer_url}
@@ -501,6 +483,8 @@ sub _call_stexaminer {
     my $request = encode_json({
         content => { command => $command, graph => $dot, groupings => $groupings }
     });
+    my $interval = $opts->{poll_interval} || 2;
+    my $deadline = $opts->{deadline} // time + 60;
 
     # The service sometimes falls over under load with a bare 500 error page;
     # asking again is harmless.
@@ -513,24 +497,20 @@ sub _call_stexaminer {
     }
     my $answer = _decode_answer($resp, $command);
 
-    # The service answers right away only if the calculation is quick.
-    my $deadline = time + ($opts->{poll_timeout} || 600);
+    # The service answers with the result right away only if the calculation is
+    # quick; otherwise it says what the job ID is.
     my $jobid = $answer->{jobid};
     if (!exists $answer->{result} && !$answer->{failure}) {
         my ($fb) = grep { /^Feedback/ } keys %$answer;
         ($jobid) = $answer->{$fb} =~ /jobid (\d+)/ if $fb;
-    }
-    while (!exists $answer->{result} && !$answer->{failure}) {
         die "Stexaminer sent an answer we did not understand\n" unless $jobid;
-        die "Timed out waiting for Stexaminer job $jobid\n" if time > $deadline;
-        sleep 2;
-        $resp = $ua->get("$base/jobstatus/$jobid/");
-        $answer = _decode_answer($resp, $command);
-        if (exists $answer->{status} && $answer->{status} == 2) {
-            die "Stexaminer $command failed: $answer->{result}\n";
-        } elsif (exists $answer->{status} && $answer->{status} == 1) {
-            delete $answer->{result};
-        }
+    }
+
+    while (!exists $answer->{result} && !$answer->{failure}) {
+        return { pending => 1, jobid => $jobid } if time >= $deadline;
+        sleep $interval;
+        $answer = _job_status($ua, $base, $jobid, $command)
+          or die "Stexaminer has lost track of job $jobid\n";
     }
     die "Stexaminer $command failed: $answer->{failure}\n" if $answer->{failure};
     my $result = $answer->{result};
@@ -539,6 +519,23 @@ sub _call_stexaminer {
         $result = decode_json($result);
     }
     return $result;
+}
+
+# What the service says about a job: a hash that has a result if it has
+# finished, or undef if the service does not know the job.
+sub _job_status {
+    my ($ua, $base, $jobid, $command) = @_;
+    my $resp = $ua->get("$base/jobstatus/$jobid/");
+    return undef if $resp->code == 400 || $resp->code == 404;
+    my $answer = _decode_answer($resp, $command);
+    my $status = $answer->{status} // -1;
+    if ($status == 2) {
+        $answer->{failure} = $answer->{result};
+        delete $answer->{result};
+    } elsif ($status != 0) {
+        delete $answer->{result};
+    }
+    return $answer;
 }
 
 sub _decode_answer {
@@ -644,7 +641,7 @@ sub _analyze_location {
 
         unless ($loc->{genealogical}) {
             $rdg->{is_conflict} = @roots != 1 ? 1 : 0;
-            $rdg->{is_reverted} = scalar @reversions;
+            $rdg->{is_reverted} = @reversions ? 1 : 0;
         }
         _add_text($loc, $rdg);
     }
@@ -701,28 +698,6 @@ sub _resolve_parents {
         }
         $parents->{$p} = $phash;
     }
-}
-
-=head2 wit_stringify( $groups )
-
-Takes an array of witness groupings and produces a string like
-['A','B'] / ['C','D','E'] / ['F']
-
-=cut
-
-sub wit_stringify {
-    my $groups = shift;
-    my @gst;
-
-    # If we were passed an array of witnesses instead of an array of
-    # groupings, then "group" the witnesses first.
-    unless (ref($groups->[0])) {
-        $groups = [$groups];
-    }
-    foreach my $g (@$groups) {
-        push(@gst, '[' . join(',', map { "'$_'" } @$g) . ']');
-    }
-    return join(' / ', @gst);
 }
 
 # Use Algorithm::Diff to get a sense of how close the words are to each other.

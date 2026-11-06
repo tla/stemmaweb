@@ -6,12 +6,9 @@
   <script type="text/javascript">
     var baseurl = "[% c.uri_for( '/stexaminer/' ) %]";
     var textid = '[% text_id %]';
+    var stemid = '[% stem_id %]';
     var original_svg = '[% svg %]';
-[% IF error -%]
     var readingstats = [];
-[% ELSE -%]
-    var readingstats = [% reading_statistics %];
-[% END -%]
     var graphdot = '[% graphdot %]';
   </script>
 [% END -%]
@@ -24,16 +21,12 @@
       <h2>[% text_title %]</h2>
     </div>
     <div id="status">
-[% IF error -%]
-      <span class="error">[% error %]</span>
-[% END -%]
     </div>
     <div id="variants_table">
-      <table>
-[% FOREACH row IN variants -%]
-[% INCLUDE variantrow %]
-[% END -%]
-      </table>
+      <div id="analysis_waitbox">
+        <h3>Analyzing variation, please wait...</h3>
+        <img src="[% c.uri_for( '/images/ajax-loader.gif' ) %]" alt="Analyzing variation..." />
+      </div>
     </div>
     <div>
       <div id="stemma_graph">
@@ -47,10 +40,9 @@
         </div>
         <div id="stats_container">
           <ul id="aggregates">
-            <li>Total number of variant locations analyzed: [% total %]</li>
-            <li>Number of fully genealogical locations: [% genealogical %]</li>
-            <li>Number of readings that conflict with the stemma: [% conflict %]</li>
-            <li>Genealogical reading transitions by relationship type: [% todo %]</li>
+            <li>Total number of variant locations analyzed: <span id="agg_total">...</span></li>
+            <li>Number of fully genealogical locations: <span id="agg_genealogical">...</span></li>
+            <li>Number of readings that conflict with the stemma: <span id="agg_conflict">...</span></li>
           </ul>
           <p>(Choose a row in the table to display statistics about individual readings.)</p>
         </div>
@@ -88,28 +80,20 @@
 
   <div id="options" title="Analysis options...">
     <form id="use_variants_form" name="use_variants_form">
+[% IF normalizable.size -%]
       <fieldset>
-        <input type="radio" name="ignore_variant" value="none" [% 'checked="true"' IF !ignore_variant %]>Analyze all variation</input><br />
-        <input type="radio" name="ignore_variant" value="orthographic" [% 'checked="true"' IF ignore_variant=='orthographic' %]>Ignore orthographic variation</input><br />
-        <input type="radio" name="ignore_variant" value="spelling" [% 'checked="true"' IF ignore_variant=='spelling' %]>Ignore orthographic and spelling variation</input>
+        <label for="normalize">Normalize on relation type</label>
+        <select name="normalize" id="normalize">
+          <option value="" [% 'selected="selected"' IF !normalize %]>(none)</option>
+[% FOREACH reltype IN normalizable -%]
+          <option value="[% reltype | html %]" [% 'selected="selected"' IF normalize == reltype %]>[% reltype | html %]</option>
+[% END -%]
+        </select>
       </fieldset>
+[% END -%]
       <fieldset>
         <input type="checkbox" name="show_type1" [% 'checked="true"' IF show_type1 %]>Include type-1 variation</input>
       </fieldset>
     </form>
   </div>
 [% PROCESS footer.tt %]
-[% BLOCK variantrow -%]
-[% SET rowclass = 'coincidental' -%]
-[% SET rowclass = 'genealogical' IF row.genealogical -%]
-[% SET rowclass = "$rowclass unsolved" IF row.unsolved -%]
-      <tr class="[% rowclass %]">
-        <th><span class="rowid" onclick="handle_row_click($(this))">[% row.id %]</span></th>
-[% FOREACH reading IN row.readings -%]
-[% SET cellclass = 'clickable' -%]
-[% SET cellclass = 'clickable reversion' IF reading.is_reverted -%]
-[% SET cellclass = 'clickable conflict' IF reading.is_conflict -%]
-        <td class="[% cellclass %]"><span onclick="color_nodes($(this).parent().index(), [% reading.group %], [% row.missing %]);$(this).parents('tr').addClass('active_variant_row');$(this).parent().addClass('active_variant_cell cellb'+($(this).parent().index()-1))">[% reading.text %]</span></td>
-[% END -%]
-      </tr>
-[% END -%]

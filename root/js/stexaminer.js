@@ -192,9 +192,87 @@ function fill_parent_template(rdghash, type) {
   }
 }
 
+// Fetch the analysis from the server and fill in the table and statistics.
+function load_analysis() {
+  $.ajax({
+    type: "GET",
+    url: baseurl + 'analysis/' + textid + '/' + stemid + window.location.search,
+    dataType: 'json',
+    success: function(data) {
+      build_table(data.variants);
+      $('#agg_total').text(data.total);
+      $('#agg_genealogical').text(data.genealogical);
+      $('#agg_conflict').text(data.conflict);
+      if (data.error) {
+        show_error(data.error);
+      } else if (data.incomplete) {
+        show_notice('The calculation is not yet complete for ' + data.incomplete + ' of the ' + 
+          (data.total + data.incomplete) + ' variant locations. For large or complex stemmata, ' +
+          'calculations can take multiple hours. Interim results (if any) are shown here; please ' +
+          'check back later for the rest.');
+      }
+    },
+    error: function(jqXHR) {
+      var msg = 'Could not get the analysis from the server.';
+      try {
+        msg = JSON.parse(jqXHR.responseText).error || msg;
+      } catch (e) {}
+      $('#analysis_waitbox').remove();
+      $('#agg_total, #agg_genealogical, #agg_conflict').text('n/a');
+      show_error(msg);
+    }
+  });
+}
+
+function show_notice(msg) {
+  $('#status').empty().append($('<span>').attr('class', 'notice').text(msg));
+}
+
+function show_error(msg) {
+  $('#status').empty().append($('<span>').attr('class', 'error').text(msg));
+}
+
+function build_table(variants) {
+  readingstats = variants;
+  var table = $('<table>');
+  $.each(variants, function(i, row) {
+    var rowclass = row.genealogical ? 'genealogical' : 'coincidental';
+    if (row.unsolved) {
+      rowclass += ' unsolved';
+    }
+    var tr = $('<tr>').addClass(rowclass);
+    var rowid = $('<span>').addClass('rowid').text(row.id).click(function() {
+      handle_row_click($(this));
+    });
+    tr.append($('<th>').append(rowid));
+    $.each(row.readings, function(j, reading) {
+      var cellclass = 'clickable';
+      if (reading.is_reverted) {
+        cellclass = 'clickable reversion';
+      }
+      if (reading.is_conflict) {
+        cellclass = 'clickable conflict';
+      }
+      var span = $('<span>').text(reading.text).click(function() {
+        var cell = $(this).parent();
+        color_nodes(cell.index(), reading.group, row.missing);
+        $(this).parents('tr').addClass('active_variant_row');
+        cell.addClass('active_variant_cell cellb' + (cell.index() - 1));
+      });
+      tr.append($('<td>').addClass(cellclass).append(span));
+    });
+    table.append(tr);
+  });
+  $('#variants_table').empty().append(table);
+  if (!variants.length) {
+    $('#variants_table').append($('<p>').text('No variant locations to analyze.'));
+  }
+}
+
 // Save the original unextended SVG for when we need it.
 $(document).ready(function() {
   loadSVG(original_svg);
+  load_analysis();
 
   $('#aboutlink').popupWindow({
     height: 500,

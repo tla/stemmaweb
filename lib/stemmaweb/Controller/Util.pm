@@ -14,8 +14,8 @@ use vars qw/ @EXPORT @EXPORT_OK /;
 
 # _as_svg is available to controllers that need to serve the SVG rendering on
 # its own, rather than the bundled information structure that stemma_info
-# returns.
-@EXPORT_OK = qw/ _as_svg /;
+# returns; load_stemma to those that need the stemma object itself.
+@EXPORT_OK = qw/ _as_svg load_stemma /;
 
 =head1 NAME
 

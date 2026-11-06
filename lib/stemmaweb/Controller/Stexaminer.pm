@@ -2,10 +2,11 @@ package stemmaweb::Controller::Stexaminer;
 use Moose;
 use namespace::autoclean;
 use JSON;
-use stemmaweb::Model::Analysis qw/ run_analysis wit_stringify /;
+use stemmaweb::Model::Analysis qw/ run_analysis /;
 use stemmaweb::Model::Stemma;
-use stemmaweb::Controller::Util qw/ load_tradition json_error /;
+use stemmaweb::Controller::Util qw/ load_tradition load_stemma json_error /;
 use TryCatch;
+use URI::Escape ();
 
 BEGIN { extends 'Catalyst::Controller' }
 
@@ -13,6 +14,14 @@ has stexaminer_url => (
     is        => 'ro',
     isa       => 'Str',
     predicate => 'has_stexaminer_url',
+);
+
+# How many seconds a request for the analysis waits for the calculations before
+# displaying incomplete results and the 'pending' message
+has wait_timeout => (
+    is      => 'ro',
+    isa     => 'Int',
+    default => 60,
 );
 
 =head1 NAME
@@ -28,18 +37,20 @@ The stemma analysis tool with the pretty colored table.
 =head2 index
 
  GET stexaminer/$textid/$stemmaid
+     normalize: <relation type to normalize on>
+     show_type1: <on, to include type-1 variation>
 
 Renders the application for the text identified by $textid, using the stemma
-graph identified by $stemmaid.
+graph identified by $stemmaid. The page is sent at once, with a waiting message
+where the table of variants goes; the page then fetches the analysis from
+the 'analysis' action.
 
 =cut
 
 sub index :Path :Args(2) {
     my ($self, $c, $textid, $stemid) = @_;
-    my $m = $c->model('Directory');
     $c->stash->{template} = 'stexaminer.tt';
 
-    # load_tradition answers the error itself; carry on only if it did not.
     my $textinfo = load_tradition($c, $textid);
     return if exists $c->stash->{'result'};
 
@@ -51,41 +62,59 @@ sub index :Path :Args(2) {
         return;
     }
 
-    my $stemmadata;
-    try {
-        $stemmadata = $m->ajax('get', "/tradition/$textid/stemma/$stemid");
-    }
-    catch (stemmaweb::Error $e ) {
-        return json_error($c, $e->status, $e->message);
-    }
-    my $stemma = stemmaweb::Model::Stemma->new(
-        dot           => $stemmadata->{dot},
-        is_undirected => $stemmadata->{is_undirected} == JSON::true,
-        stemmaid      => $stemmadata->{id},
-        name          => $stemmadata->{name},
-    );
+    my $stemma = _fetch_stemma($c, $textid, $stemid);
+    return if exists $c->stash->{'result'};
     my $svgstr = $stemma->as_svg();
     $svgstr =~ s/\n/ /g;
     $c->stash->{svg}        = $svgstr;
     $c->stash->{graphdot}   = $stemma->editable({ linesep => ' ' });
     $c->stash->{text_id}    = $textid;
+    $c->stash->{stem_id}    = $stemid;
     $c->stash->{text_title} = $textinfo->{name};
+    $c->stash->{show_type1} = $c->req->param('show_type1') ? 1 : 0;
+    _normalize_option($c, $textid);
+}
 
-    # Get the analysis options
-    my $use_type1   = $c->req->param('show_type1') ? 1 : 0;
-    my $ignore_sort = $c->req->param('ignore_variant') || '';
-    $c->stash->{'show_type1'}     = $use_type1;
-    $c->stash->{'ignore_variant'} = $ignore_sort;
-    my %analysis_options = (exclude_type1 => !$use_type1);
-    if ($ignore_sort eq 'spelling') {
-        $analysis_options{'merge_types'} = [qw/ spelling orthographic /];
-    } elsif ($ignore_sort eq 'orthographic') {
-        $analysis_options{'merge_types'} = ['orthographic'];
-    }
+=head2 analysis
+
+ GET stexaminer/analysis/$textid/$stemmaid
+     normalize: <relation type to normalize on>
+     show_type1: <on, to include type-1 variation>
+
+Runs the analysis for the text and stemma and returns it as JSON: 
+- the C<variants> table data,
+- the C<total> (of locations that have been analyzed), 
+- C<genealogical> and
+- C<conflict> counts. 
+ 
+Any locations whose calculation is still running are returned unsolved (with
+C<unsolved> set to C<pending>) and counted in C<incomplete>.
+
+Populate C<error> if the analysis failed.
+
+=cut
+
+sub analysis :Local :Args(2) {
+    my ($self, $c, $textid, $stemid) = @_;
+    my $m = $c->model('Directory');
+
+    my $textinfo = load_tradition($c, $textid);
+    return if exists $c->stash->{'result'};
+    my $stemma = _fetch_stemma($c, $textid, $stemid);
+    return if exists $c->stash->{'result'};
     unless ($self->has_stexaminer_url) {
         return json_error($c, 500, 'No Stexaminer service has been configured.');
     }
-    $analysis_options{'stexaminer_url'} = $self->stexaminer_url;
+
+    my %analysis_options = (
+        exclude_type1  => $c->req->param('show_type1') ? 0 : 1,
+        stexaminer_url => $self->stexaminer_url,
+        wait_timeout   => $self->wait_timeout,
+    );
+    # Validate the relation type we were asked to normalise on
+    my $normalize = _normalize_option($c, $textid);
+    return if exists $c->stash->{'result'};
+    my $conflate = $normalize ? '?conflate=' . URI::Escape::uri_escape($normalize) : '';
 
     # Get the alignment of each section of the text from the repository
     my @sections;
@@ -96,11 +125,10 @@ sub index :Path :Args(2) {
             push(@sections, {
                 id        => $sid,
                 name      => $section->{name},
-                alignment => $m->ajax('get', "/tradition/$textid/section/$sid/json"),
+                alignment => $m->ajax('get', "/tradition/$textid/section/$sid/json$conflate"),
                 relations => $m->ajax('get', "/tradition/$textid/section/$sid/relations"),
             });
         }
-        # TODO Run the analysis as AJAX from the loaded page.
         $t = run_analysis($stemma, \@sections, %analysis_options);
     }
     catch (stemmaweb::Error $e ) {
@@ -110,26 +138,58 @@ sub index :Path :Args(2) {
         $e =~ s/\s+$//;
         return json_error($c, 500, "Could not analyze this text: $e");
     }
-    $c->stash->{error} = $t->{error} if $t->{error};
 
-    # Stringify the reading groups
+    # The page shows these as text
     foreach my $loc (@{ $t->{'variants'} }) {
-        $loc->{'missing'} = wit_stringify($loc->{'missing'});
         foreach my $rhash (@{ $loc->{'readings'} }) {
-            $rhash->{'group'} = wit_stringify($rhash->{'group'});
             _stringify_element($rhash, 'independent_occurrence');
             _stringify_element($rhash, 'reversions');
         }
     }
+    $c->stash->{'result'} = {
+        variants     => $t->{'variants'},
+        total        => $t->{'variant_count'} - $t->{'incomplete'},
+        genealogical => $t->{'genealogical_count'},
+        conflict     => $t->{'conflict_count'},
+        incomplete   => $t->{'incomplete'},
+        ($t->{error} ? (error => $t->{error}) : ()),
+    };
+    $c->forward('View::JSON');
+}
 
-    # Values for TT rendering
-    $c->stash->{variants}     = $t->{'variants'};
-    $c->stash->{total}        = $t->{'variant_count'};
-    $c->stash->{genealogical} = $t->{'genealogical_count'};
-    $c->stash->{conflict}     = $t->{'conflict_count'};
+# Fetch the stemma from the repository. On failure the error has been answered
+# and the caller should check for $c->stash->{'result'}.
+sub _fetch_stemma {
+    my ($c, $textid, $stemid) = @_;
+    my $stemmadata;
+    try {
+        $stemmadata = $c->model('Directory')->ajax('get', "/tradition/$textid/stemma/$stemid");
+    }
+    catch (stemmaweb::Error $e ) {
+        json_error($c, $e->status, $e->message);
+        return undef;
+    }
+    return load_stemma($stemmadata);
+}
 
-    # Also make a JSON stash of the data for the statistics tables
-    $c->stash->{reading_statistics} = to_json($t->{'variants'});
+# Get the available relation types that can be used for normalisation, and default to 
+# the one selected
+sub _normalize_option {
+    my ($c, $textid) = @_;
+    my $reltypes;
+    try {
+        $reltypes = $c->model('Directory')->ajax('get', "/tradition/$textid/relationtypes");
+    }
+    catch (stemmaweb::Error $e ) {
+        json_error($c, $e->status, $e->message);
+        return undef;
+    }
+    my @normalizable = sort map { $_->{name} } grep { !$_->{is_weak} } @$reltypes;
+    my $normalize = $c->req->param('normalize') || '';
+    $normalize = '' unless grep { $_ eq $normalize } @normalizable;
+    $c->stash->{'normalizable'} = \@normalizable;
+    $c->stash->{'normalize'}    = $normalize;
+    return $normalize;
 }
 
 sub _stringify_element {
