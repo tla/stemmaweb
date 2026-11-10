@@ -24,8 +24,7 @@ RUN apk update \
     openssh \
     libc-dev \
     perl \
-    perl-dev \
-    perl-ipc-system-simple
+    perl-dev 
 
 # download, compile and install Phylip Pars
 WORKDIR /tmp
@@ -36,18 +35,20 @@ RUN sed -e 's/^CFLAGS =/CFLAGS = -fcommon -Wno-error=implicit-function-declarati
  && make install \
  && cp ../exe/pars /usr/local/bin
 
-# some of stemmaweb's dependencies fail tests or don't install cleanly from CPAN
+# get what modules we can that don't install cleanly from CPANM
 RUN apk add --no-cache \
     perl-plack \
     perl-crypt-rijndael \
-    perl-net-ssleay
+    perl-net-ssleay \
+    perl-json-webtoken \
+    perl-io-socket-ssl \
+    perl-ipc-system-simple
 
-RUN wget --no-check-certificate https://cpanmin.us -O cpanm && \
-    perl cpanm App::cpanminus
+RUN wget https://cpanmin.us -O cpanm && perl cpanm App::cpanminus
 
-# a few tests will fail in the build container
-# in a not containerised environment the tests succeeed
-RUN cpanm --notest IO::All Catalyst::Plugin::Cache IO::Socket::SSL::Utils JSON::WebToken 
+# tests here will fail in the build container
+# and I don't feel like installing perl-doc just for one test in IO::All
+RUN cpanm --notest IO::All
 
 # install the other ones honestly, with tests
 # First get the modules whose dependents don't record them accurately
@@ -58,6 +59,7 @@ RUN cpanm \
     HTTP::Entity::Parser \
     HTTP::Headers::Fast \
     Module::Install::Catalyst \
+    Class::Accessor::Fast \
     || (cat /root/.cpanm/work/*/build.log; exit 1)
 
 # Then get the modules referenced directly in the Makefile.PL

@@ -53,23 +53,21 @@ requires 'IPC::Run';
 requires 'JSON::WebToken';
 requires 'JSON::XS';
 requires 'List::Util';
-requires 'LWP::Protocol::https';
 requires 'MIME::Base64';
 requires 'Moose';
+requires 'namespace::autoclean';
 requires 'strictures' => '2';
 requires 'Throwable::X';
 requires 'TryCatch';
 requires 'URI::Escape';
 requires 'XML::LibXML';
-requires 'namespace::autoclean';
-requires 'strictures';
 
-test_requires 'Test::More' => '0.88';
-test_requires 'LWP::Protocol::PSGI';
-test_requires 'Test::WWW::Mechanize';
-test_requires 'IPC::System::Simple';
 test_requires 'Config::Any';
+test_requires 'IPC::System::Simple';
+test_requires 'LWP::Protocol::PSGI';
 test_requires 'LWP::UserAgent';
+test_requires 'Test::More' => '0.88';
+test_requires 'Test::WWW::Mechanize';
 catalyst;
 
 install_script glob('script/*.pl');
