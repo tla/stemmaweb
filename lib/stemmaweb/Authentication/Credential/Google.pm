@@ -2,6 +2,7 @@ package stemmaweb::Authentication::Credential::Google;
 
 use Crypt::OpenSSL::X509;
 use JSON::WebToken;
+use Crypt::OpenSSL::RSA;
 use IO::All;
 use JSON::MaybeXS;
 use MIME::Base64;
@@ -23,6 +24,45 @@ cert using L<Crypt::OpenSSL::X509>. Finally, uses the pubkey to decrypt a
 Google token using L<JSON::WebToken>.
 
 =cut
+
+# JSON::WebToken's RSA signing class never asks for PKCS#1 v1.5 padding, which
+# Google's RS256 tokens use. Crypt::OpenSSL::RSA 0.35 and later default to PSS
+# unless it is requested, so every Google token failed with "Invalid signature".
+# Use our own class for the RSA algorithms that sets the padding explicitly.
+# (It sets hash and padding itself, so it works on old and new versions alike.)
+{
+    package stemmaweb::Authentication::Credential::Google::RSA;
+    use parent 'JSON::WebToken::Crypt::RSA';
+
+    my %HASH_METHOD = (
+        RS256 => 'use_sha256_hash',
+        RS384 => 'use_sha384_hash',
+        RS512 => 'use_sha512_hash',
+    );
+
+    sub sign {
+        my ($class, $algorithm, $message, $key) = @_;
+        my $rsa = Crypt::OpenSSL::RSA->new_private_key($key);
+        my $method = $HASH_METHOD{$algorithm};
+        $rsa->$method;
+        $rsa->use_pkcs1_padding;
+        return $rsa->sign($message);
+    }
+
+    sub verify {
+        my ($class, $algorithm, $message, $key, $signature) = @_;
+        my $rsa = Crypt::OpenSSL::RSA->new_public_key($key);
+        my $method = $HASH_METHOD{$algorithm};
+        $rsa->$method;
+        $rsa->use_pkcs1_padding;
+        return $rsa->verify($message, $signature) ? 1 : 0;
+    }
+}
+
+# Must happen before JSON::WebToken first resolves these algorithms
+$JSON::WebToken::ALGORITHM_MAP->{$_} =
+    '+stemmaweb::Authentication::Credential::Google::RSA'
+    for qw(RS256 RS384 RS512);
 
 sub new {
     my ($class, $config, $app, $realm) = @_;
