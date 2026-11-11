@@ -68,7 +68,7 @@ Cypress.Commands.add('stemmaLinksShouldBe', ({ add, edit, del }) => {
   });
 });
 
-// What Stemmarest holds: [{ stemmaid, name, dot, ... }] for a tradition, in order.
+// What Stemmarest holds: [{ id, name, dot, ... }] for a tradition, in order.
 Cypress.Commands.add('storedStemmata', (traditionTitle) => {
   const api = `${Cypress.env('CY_STEMMAWEB_MIDDLEWARE_URL')}/api`;
   cy.request(`${api}/traditions`).then(({ body }) => {

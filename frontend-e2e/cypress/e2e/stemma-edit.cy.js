@@ -227,7 +227,7 @@ describe('Edit a stemma', () => {
       cy.stemmaNodes().should('include', 'β');
       cy.storedStemmata(FLORILEGIUM.title).then(([after, ...rest]) => {
         expect(rest).to.have.length(0);
-        expect(after.stemmaid).to.equal(before.stemmaid);
+        expect(after.id).to.equal(before.id);
         expect(after.name).to.equal(newName);
         expect(after.dot).to.contain('"β" -> T');
       });

@@ -265,7 +265,7 @@ class StemmarestService extends BaseService {
       });
     }
     const formData = {
-      stemmaid: stemmaId,
+      id: stemmaId,
       name: stemmaName,
       dot: stemmaDot
       // jobid: null,
@@ -316,7 +316,7 @@ class StemmarestService extends BaseService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/stemma}
    */
   deleteStemma( tradId, stemma ) {
-    return this.fetch(`/api/tradition/${tradId}/stemma/${stemma.stemmaid}`, {
+    return this.fetch(`/api/tradition/${tradId}/stemma/${stemma.id}`, {
       method: 'DELETE'
     });
   }

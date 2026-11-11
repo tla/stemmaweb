@@ -50,8 +50,11 @@ export interface Stemma {
   /** A string that holds the dot specification of the stemma or tree topology. */
   dot: string;
 
-  /** The name (identifier) of the stemma. Must be unique within the tradition. */
-  identifier: string;
+  /** The id of the stemma. */
+  id: string;
+
+  /** The name of the stemma. Must be unique within the tradition. */
+  name: string;
 }
 
 /**

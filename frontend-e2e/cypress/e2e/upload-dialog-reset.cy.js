@@ -5,7 +5,7 @@ import users from '../fixtures/users.json';
 
 const owner = users.find(({ username }) => username === 'user@example.org');
 const FLORILEGIUM = traditions.find(({ title }) => title.startsWith('Florilegium'));
-const FILE = 'cypress/fixtures/armexample.csv';
+const FILE = 'cypress/fixtures/armexample.tsv';
 
 // Every way of closing the dialog without saving
 const CLOSERS = {

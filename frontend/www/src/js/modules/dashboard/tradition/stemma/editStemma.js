@@ -184,7 +184,7 @@ class EditStemma extends HTMLElement {
         if( this.buttonAction == 'add' ) {
           return( editStemmaService.addStemma( userId, tradId, stemmaName, stemmaDot ).then( (resp) => { return this.handleResponse( resp ) } ) );
         } else {
-          const stemmaId = STEMMA_STORE.state.selectedStemma.stemmaid;
+          const stemmaId = STEMMA_STORE.state.selectedStemma.id;
           return( editStemmaService.saveStemma( userId, tradId, stemmaId, stemmaName, stemmaDot ).then( (resp) => { return this.handleResponse( resp ) } ) );
         }
       }
