@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/.env*)",
+      "Edit(**/.env*)",
+      "Read(**/env.zip)",
+      "Edit(**/env.zip)",
+      "Read(**/env_passphrase)",
+      "Edit(**/env_passphrase)",
+      "Bash(*.env.*)",
+      "Bash(*env.zip*)",
+      "Bash(*env_passphrase*)"
+    ]
+  }
+}

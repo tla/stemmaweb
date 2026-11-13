@@ -180,3 +180,6 @@ relationmapper_theory/
 
 # volume bind folder for the init script in headless mode
 .initdata4headless
+
+# Claude local settings
+settings.local.json
