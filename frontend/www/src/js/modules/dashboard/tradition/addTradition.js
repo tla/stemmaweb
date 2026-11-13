@@ -313,6 +313,7 @@ class AddTraditionModal extends HTMLElement {
                       class="form-control has-validation"
                       size="40"
                       required=""
+                      pattern=".*\S.*"
                     />
                     <div class="invalid-feedback">
                       We need at least a name to reference to this
