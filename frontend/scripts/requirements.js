@@ -7,7 +7,7 @@ export const lib_bootstrap = {
 }
 
 export { Graphviz } from '@hpcc-js/wasm/graphviz'
-export * as lib_d3graphviz from 'd3-graphviz'
+export * as lib_d3graphviz from 'd3-graphviz-stemma'
 export * as lib_d3 from 'd3'
 
 export * as lib_SaveSvgAsPng from 'save-svg-as-png'
