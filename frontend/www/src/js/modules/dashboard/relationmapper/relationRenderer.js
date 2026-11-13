@@ -69,6 +69,8 @@ class RelationRenderer {
      * @param {Object} options
      */
     renderRelationsGraph( dot, options={} ) {
+        dot = dot.replace( /\tsubgraph.*\n.*\n.*/, '' );
+        console.log( dot );
         const defaultOptions =  { 
             'onEnd': () => {}
         };

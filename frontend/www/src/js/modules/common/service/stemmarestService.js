@@ -497,7 +497,7 @@ class StemmarestService extends BaseService {
    * @see {@link https://dhuniwien.github.io/tradition_repo/|Stemmarest Endpoint: /tradition/[tradId]/section/[sectionId]/dot/}
    */
   getSectionDot( traditionId, sectionId ) {
-    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/dot`);
+    return this.fetch(`/api/tradition/${traditionId}/section/${sectionId}/dot?rank_as_attribute=true`);
   }
 
   /** 
