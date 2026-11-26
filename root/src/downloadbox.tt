@@ -15,13 +15,14 @@
         [% ELSE %]
         <select id="download_format" name="format">
         [% END %]
-          <option value="JSON">JSON table (collation only)</option>
+          <option value="json">Native JSON table (collation only, full metadata)</option>
+          <option value="cxjson">CollateX JSON table (collation only, limited metadata)</option>
           <option value="CSV">Comma-separated values (collation only)</option>
           <option value="TSV">Tab-separated values (collation only)</option>
           <option value="matrix">Phylip character matrix (collation only)</option>
           <option value="dot">Graphviz dot format (collation and relationships)</option>
           <option value="SVG">SVG graph display (collation and relationships)</option>
-          <option value="GraphML">Native GraphML ZIP format</option>
+          <option value="GraphML">Native GraphML ZIP format (all data)</option>
           <!-- option value="tei_ps" -->
           <!-- option value="tei_dea" -->
         </select><br>

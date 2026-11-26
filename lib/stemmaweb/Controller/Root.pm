@@ -469,7 +469,8 @@ sub download :Local :Args(0) {
     return if exists $c->stash->{'result'};
     ## Available formats are graphml, json, csv, tsv, dot. Dot -> SVG
 
-    my $view = $format =~ /(dot|matrix)/ ? 'View::Plain' : "View::$format";
+    my $view = $format =~ /(dot|matrix)/ ? 'View::Plain' : 
+        $format =~ /json/ ? 'View::JSON' : "View::$format";
     $c->stash->{'name'}   ||= $textinfo->{name};
     $c->stash->{'download'} = 1;
 
