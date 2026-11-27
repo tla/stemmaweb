@@ -67,6 +67,10 @@ class DeleteRelationType extends HTMLElement {
             aria-label="Delete relation type"
         ><span class="btn-outline-danger">${feather.icons['trash-2'].toSvg()}</span></a>
     `;
+    // Initially grey out if needed.
+    if( !userIsOwner() ) {
+      this.querySelector( 'a' ).classList.add( 'greyed-out' );
+    }
   }
 
 }

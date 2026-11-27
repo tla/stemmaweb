@@ -60,7 +60,12 @@ class SectionPropertiesView extends HTMLElement {
     }
     
     show() {
-        fadeToDisplayNone( document.querySelector( 'section-properties-view div' ), { 'reverse': true } );
+        const divElement = document.querySelector( 'section-properties-view div' );
+        // In case of logging out from the relation mapper, a user is returned
+        // to the main page, and section may be(?) deselected.
+        if( divElement ) {
+            fadeToDisplayNone( document.querySelector( 'section-properties-view div' ), { 'reverse': true } );
+        }
     }
     
     /**

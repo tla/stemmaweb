@@ -10,23 +10,37 @@ class RelationTypes extends HTMLElement {
 
   constructor() {
     super();
-    // AUTH_STORE.subscribe( ( state ) => {
-    //   const addRelationElementClassList = document.querySelector( 'add-relation-button-container a' ).classList;
-    //   if( state.user ){
-    //       if( addRelationElementClassList.contains( 'greyed-out' ) ){
-    //           addRelationElementClassList.remove( 'greyed-out' );
-    //           this.addEventListener( 'click', this.clickEventListener );
-    //       }
-    //   } else {
-    //       if( !addRelationElementClassList.contains( 'greyed-out' ) ){
-    //           addRelationElementClassList.add( 'greyed-out' );
-    //           this.removeEventListener( 'click', this.clickEventListener );
-    //       }
-    //   }
-    // } );
+    AUTH_STORE.subscribe( ( state ) => {
+      this.greyOut();
+    } );
+    TRADITION_STORE.subscribe( (state) => {
+      this.greyOut();
+    } );
   }
 
   connectedCallback() {}
+
+  greyOut() {
+    const addRelationElement = document.querySelector( '#add-relation-button-container' );
+    if ( addRelationElement ) {
+      const addRelationElementClassList = addRelationElement.querySelector( 'a' ).classList;
+      if( userIsOwner() ){
+        if( addRelationElementClassList.contains( 'greyed-out' ) ){
+          addRelationElementClassList.remove( 'greyed-out' );
+          [ 'delete-relation-type-button a', 'edit-relation-type-button a' ].forEach( (cssSelector) => {
+            document.querySelectorAll( cssSelector ).forEach( (elem) => elem.classList.remove( 'greyed-out' ) );
+          } );
+        }
+      } else {
+        if( !addRelationElementClassList.contains( 'greyed-out' ) ){
+          addRelationElementClassList.add( 'greyed-out' );
+          [ 'delete-relation-type-button a', 'edit-relation-type-button a' ].forEach( (cssSelector) => {
+            document.querySelectorAll( cssSelector ).forEach( (elem) => elem.classList.add( 'greyed-out' ) );
+          } );
+        }
+      }
+    } 
+  }
 
   createMigrationColorPicker = () => {
     const colors = [ 'sky', 'blue', 'mint', 'green', 'pink', 'red', 'peach', 'orange', 'plum', 'purple', 'lemon', 'brown' ];
@@ -110,26 +124,26 @@ class RelationTypes extends HTMLElement {
     const usedOptions = { ...defaultOptions, ...options };
     const traditionId = TRADITION_STORE.state.selectedTradition.id;
     relationTypesService.getRelationTypes( traditionId ).then( ( relationTypes ) => {
-        this.innerHTML = `
-            <div class="position-sticky pt-2" style="display: ${usedOptions.display}; opacity: ${usedOptions.opacity};">
-                <div id="relation-types-heading-container">
-                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 text-muted">
-                        <span>Relation Types</span>
-                    </h6>
-                    <div id="add-relation-button-container">
-                        <a class="link-secondary greyed-out" href="#" aria-label="Add a new relation type">
-                            <span><add-relation-type-button/></span>
-                        </a>
-                    </div>
-                </div>
-                <div class="table-responsive px-3 py-1">
-                    <table class="table table-striped table-sm">
-                        <tbody id="relation-type-info">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
+      this.innerHTML = `
+          <div class="position-sticky pt-2" style="display: ${usedOptions.display}; opacity: ${usedOptions.opacity};">
+              <div id="relation-types-heading-container">
+                  <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 text-muted">
+                      <span>Relation Types</span>
+                  </h6>
+                  <div id="add-relation-button-container">
+                      <a class="link-secondary greyed-out" href="#" aria-label="Add a new relation type">
+                          <span><add-relation-type-button/></span>
+                      </a>
+                  </div>
+              </div>
+              <div class="table-responsive px-3 py-1">
+                  <table class="table table-striped table-sm">
+                      <tbody id="relation-type-info">
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+      `;
 
       if ( relationTypes && relationTypes.length > 0 ) {          
         relationTypes = this.sortedRelationTypes( relationTypes );
@@ -153,8 +167,9 @@ class RelationTypes extends HTMLElement {
           relationType.display = { ...relationDisplay, 'color':relationColor }
           return relationType;
         } );
-         // If any RelationType was migrated we now need to persist them.
-        if ( migrationColorPicker.getNumberOfColorsProvided() > 0 ) {
+        // If any RelationType was migrated we now need to persist them.
+        // But only if we are the owner.
+        if ( userIsOwner() && migrationColorPicker.getNumberOfColorsProvided() > 0 ) {
           const userId = AUTH_STORE.state.user.id;
           /**
            * WE need to wait for the relationTypes to persist/update because
@@ -181,7 +196,9 @@ class RelationTypes extends HTMLElement {
         usedOptions.onEnd();
       }
 
-    } );
+    } ).then(
+      () => { this.greyOut(); }
+    );
   }
 
   unrender() {
