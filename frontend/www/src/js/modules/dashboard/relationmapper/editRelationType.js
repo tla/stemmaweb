@@ -235,6 +235,10 @@ class EditRelationType extends HTMLElement {
                 <span>${feather.icons['edit'].toSvg()}</span>
             </a>
         `;
+    // Initially grey out if needed.
+    if( !userIsOwner() ) {
+      this.querySelector( 'a' ).classList.add( 'greyed-out' );
+    }
   }
 }
 

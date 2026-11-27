@@ -213,7 +213,10 @@ edit-stemma-buttons {
   padding-top: 3px;
 }
 
-#edit-stemma-buttons-right .greyed-out {
+#edit-stemma-buttons-right .greyed-out,
+#add-relation-button-container .greyed-out,
+delete-relation-type-button:has(.greyed-out),
+edit-relation-type-button:has(.greyed-out) {
   pointer-events: none;
 }
 
@@ -251,7 +254,9 @@ edit-properties-button a.greyed-out span,
 .edit-reading-button a.greyed-out span,
 edit-section-properties-button a.greyed-out span,
 text-directory a.greyed-out span,
-add-relation-button-container a.greyed-out span {
+#add-relation-button-container a.greyed-out span,
+delete-relation-type-button a.greyed-out span,
+edit-relation-type-button a.greyed-out span {
   color: #ccc;
 }
 
